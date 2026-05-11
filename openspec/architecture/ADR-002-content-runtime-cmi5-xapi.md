@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-002
 title: Content runtime — cmi5 + xAPI as primary, SCORM 1.2/2004 compatibility shim
-status: proposed
+status: accepted
 category: architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
 supersedes: []
@@ -19,7 +20,7 @@ applies_to:
 # ADR-002 — Content runtime: cmi5 + xAPI primary, SCORM compatibility shim
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea` status.
+**accepted** (2026-05-11) — binding before any Phase 1 spec moves from `idea` to `planned`. Implementation reviewers MUST verify conformance with §4 (Decision) on every spec PR. Supersession requires a new ADR plus migration plan for already-emitted xAPI statements.
 
 ## Context
 

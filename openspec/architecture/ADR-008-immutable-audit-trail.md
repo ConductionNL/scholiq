@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-008
 title: Immutable audit trail as architectural foundation
-status: proposed
+status: accepted
 category: architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
   - dpo
@@ -23,7 +24,7 @@ applies_to:
 # ADR-008 — Immutable audit trail as architectural foundation
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea`. This is the most foundational of the three Phase 1 ADRs.
+**accepted** (2026-05-11) — foundational. Every state-changing controller endpoint MUST emit an `audit_event` via `Scholiq\Service\AuditTrail::record()` in the same DB transaction as the projection-table write. PHPStan custom rule + integration test in `tests/Unit/AuditTrailEnforcementTest.php` (to land with the wedge implementation) enforce this. ADR-002 (xAPI statements) and ADR-005 (AI decisions) are specialisations of this pattern.
 
 ## Context
 
