@@ -12,7 +12,7 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "ci": "npm ci --legacy-peer-deps && npm run build"
+    "ci": "npm install --legacy-peer-deps && npm run build"
   },
   "dependencies": {
     "@docusaurus/core": "^3.7.0",
