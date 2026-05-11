@@ -51,17 +51,11 @@ The system MUST capture a signed attestation when a learner completes a mandator
 ```
 GIVEN a learner has a cmi5.completed xAPI statement for a lesson with mandatory_training=true, regulation_slug='AVG'
 WHEN the learner clicks the attestation checkbox and submits
-THEN the system MUST call AttestationService::capture() with:
-  - learner_id (opaque UUID)
-  - lesson_id
-  - course_id
-  - regulation_slug
-  - actor_ip (from OCP\IRequest)
-  - score (from xAPI result if present, else null)
-  - timestamp (server-set, UTC)
-AND the Attestation MUST be persisted as an append-only object in OpenRegister
-AND the Attestation.signature MUST be HMAC-SHA256(key, canonicalized_attestation_minus_signature)
-AND an audit event 'attestation.signed' MUST be emitted per ADR-008 with the attestation UUID as subject_id
+THEN the frontend MUST POST an Attestation object to OpenRegister via `ObjectService::saveObject('scholiq-attestation', { learnerId, lessonId, courseId, regulationSlug, score, lifecycleState: 'signed' })` (no AttestationService PHP class)
+AND the `AttestationSigningGuard` (declared as the `x-openregister-lifecycle.transitions.sign.requires` on the Attestation schema) MUST validate the precondition (matching cmi5.completed statement exists for the learner+lesson)
+AND the guard MUST compute Attestation.signature = HMAC-SHA256(OpenRegister's current tenant key from the audit-trail abstraction, canonicalized payload minus signature)
+AND the Attestation MUST persist in OpenRegister as an `appendOnly: true` object (per ADR-022 — consumed from OR, not an app-local append-only store)
+AND an OR audit-trail entry MUST be emitted automatically by the lifecycle transition with `event_type = attestation.signed` and `subject_id = the Attestation UUID` (per ADR-008's "consume OR audit-trail" rule)
 ```
 
 #### Scenario CA-002-B: Attestation without prior xAPI completion is rejected
@@ -193,8 +187,8 @@ The system MUST enforce that attestation and audit-event records cannot be modif
 #### Scenario CA-008-A: Attempted modification of attestation is rejected
 ```
 GIVEN an Attestation record exists with id=abc123
-WHEN any code path attempts to call ObjectService::updateObject('scholiq-attestation', 'abc123', ...)
-THEN OpenRegister MUST return an error (HTTP 405 or schema violation)
+WHEN any code path attempts to call `ObjectService::updateObject('scholiq-attestation', 'abc123', ...)` or `ObjectService::deleteObject('scholiq-attestation', 'abc123')`
+THEN OpenRegister MUST reject the call (HTTP 405 or schema violation) because the Attestation schema declares `appendOnly: true` — consumed from OR per ADR-022, not enforced by an app-local guard
   AND the Attestation record MUST remain unchanged
-  AND a security audit event 'security.config.changed' MUST be emitted if the attempt comes from outside normal application flow
+  AND OR's audit-trail abstraction MUST emit a `security.config.changed` entry per ADR-008 if the attempt comes from outside the lifecycle-driven flow
 ```
