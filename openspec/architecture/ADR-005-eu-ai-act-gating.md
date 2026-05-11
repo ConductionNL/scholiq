@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-005
 title: EU AI Act compliance — feature-flag + mandatory audit trail per AI decision
-status: proposed
+status: accepted
 category: legal-architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
   - dpo
@@ -22,7 +23,7 @@ applies_to:
 # ADR-005 — EU AI Act compliance gate
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea`, even though no AI features ship in v0.1.
+**accepted** (2026-05-11) — binding for every PR that introduces AI/ML behaviour, even if no AI ships in v0.1. The `AiFeatureRegistry` skeleton + `ai_decisions` schema MUST land before the first AI-bearing capability (assessment-engine proctoring or course-management adaptive paths). DPO sign-off required to flip any high-risk feature flag from off to on.
 
 ## Context
 
