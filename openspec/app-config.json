@@ -1,0 +1,34 @@
+{
+  "id": "scholiq",
+  "name": "Scholiq",
+  "namespace": "Scholiq",
+  "summary": "Open-source LVS + LMS for Nextcloud — student tracking, course creation, certification, and compliance training.",
+  "goal": "Scholiq combines a leerlingvolgsysteem (LVS) for primary, secondary, and higher education with a leeromgeving / LMS for corporate L&D and government employee training. v0.1 wedge ships compliance-audit (NIS2, BIO2, AVG) for Dutch corporate and government buyers; later phases add K-12 (BRON/UWLR/OSO/Edukoppeling/SchoolID/ECK iD), higher education (SURFconext, Studielink, OOAPI), and full assessment authoring (IMS QTI 3.0 + EDCI/Open Badges 3.0 credentials).",
+  "category": "organization",
+  "version": "0.1.0",
+  "license": "EUPL-1.2",
+  "author": "Conduction B.V.",
+  "repository": "https://github.com/ConductionNL/scholiq",
+  "dependencies": {
+    "requiresOpenRegister": true,
+    "additionalCiApps": [
+      { "repo": "ConductionNL/openregister", "app": "openregister", "ref": "main" },
+      { "repo": "ConductionNL/openconnector", "app": "openconnector", "ref": "main" }
+    ]
+  },
+  "cicd": {
+    "phpVersions": ["8.3", "8.4"],
+    "nextcloudRefs": ["stable31", "stable32"],
+    "enableNewman": false
+  },
+  "predecessors": ["learniq", "edudesk"],
+  "wedge": "compliance-audit",
+  "wedgePlan": "openspec/WEDGE-PLAN.md",
+  "adrs": [
+    { "id": "ADR-002", "title": "Content runtime: cmi5 + xAPI primary, SCORM compatibility shim", "status": "proposed" },
+    { "id": "ADR-005", "title": "EU AI Act compliance gate: feature-flag + mandatory audit trail per AI decision", "status": "proposed" },
+    { "id": "ADR-008", "title": "Immutable audit trail as architectural foundation", "status": "proposed" }
+  ],
+  "createdAt": "2026-05-11",
+  "updatedAt": "2026-05-11"
+}
