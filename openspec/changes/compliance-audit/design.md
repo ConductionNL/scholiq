@@ -1,410 +1,358 @@
-# Design — Compliance Audit
+# Design — Compliance Audit (the wedge core)
 
-## 1. OpenRegister Schemas
+> **Declarative-vs-imperative decision (per [hydra ADR-031 §"How to apply this rule"](../../../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md))** — coverage % per audience, attestation count, board-proof aggregations, officer-alert-on-coverage-drop, NIS2-due alerts, evidence-log queries — ALL fit `x-openregister-aggregations` / `x-openregister-calculations` / `x-openregister-notifications`. The "immutable evidence log" IS OR's audit trail; there is no separate evidence-log substrate. The audit-pack export is a single thin controller (legitimate PHP — document/ZIP generation).
+>
+> **OR abstractions consumed (per [hydra ADR-022](../../../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md))** — audit trail (immutable, hash-chained, retention-aware), aggregations engine, notifications, RBAC, archival, MCP discovery. **Critical: ADR-022 §"Anti-patterns" explicitly prohibits "Home-grown audit trails. An app writing to a private events table instead of OR's audit trail for actions on OR-owned objects." The v1 `AttestationService` + `Scholiq\Service\AuditTrail::record()` + `HmacKeyService` + parallel `scholiq-audit-event` schema were the textbook example of this anti-pattern.**
+>
+> **Frontend (per [hydra ADR-024](../../../../hydra/openspec/architecture/adr-024-app-manifest.md))** — `Compliance` dashboard page is declared in `src/manifest.json` with widgets sourced from `x-openregister-widgets` on the Regulation schema. The audit-pack export is a manifest action wired to a single PHP controller.
 
-### 1.1 `scholiq-regulation`
+## 1. Schema patches on `lib/Settings/scholiq_register.json`
 
-```json
-{
-  "title": "scholiq-regulation",
-  "properties": {
-    "id":                       { "type": "string", "format": "uuid" },
-    "slug":                     { "type": "string", "pattern": "^[A-Z0-9_-]+$" },
-    "name":                     { "type": "string" },
-    "description":              { "type": ["string","null"] },
-    "applicability_criteria":   { "type": ["string","null"] },
-    "audience_scope":           { "type": "string", "enum": ["all-employees","board","role-specific","department"] },
-    "requires_annual_renewal":  { "type": "boolean", "default": true },
-    "renewal_cycle_months":     { "type": "integer", "default": 12 },
-    "active":                   { "type": "boolean", "default": true },
-    "tenant_id":                { "type": "string", "format": "uuid" },
-    "created_at":               { "type": "string", "format": "date-time" },
-    "updated_at":               { "type": "string", "format": "date-time" }
+### 1.1 `Regulation`
+
+```jsonc
+"Regulation": {
+  "slug": "regulation",
+  "icon": "GavelOutline",
+  "version": "0.1.0",
+  "title": "Regulation",
+  "description": "Compliance regulation (AVG, BIO, NIS2, etc.)",
+  "type": "object",
+  "x-openregister": {
+    "active": true,
+    "searchable": true
   },
-  "required": ["slug","name","audience_scope","tenant_id"],
-  "indexes": [["slug","tenant_id"],["active","tenant_id"]]
+  "required": ["slug", "name", "audienceScope", "tenant_id"],
+  "properties": {
+    "slug":                  { "type": "string", "pattern": "^[A-Z0-9_-]+$" },
+    "name":                  { "type": "string" },
+    "description":           { "type": ["string","null"] },
+    "applicabilityCriteria": { "type": ["string","null"] },
+    "audienceScope":         { "type": "string", "enum": ["all-employees","board","role-specific","department"] },
+    "requiresAnnualRenewal": { "type": "boolean", "default": true },
+    "renewalCycleMonths":    { "type": "integer", "default": 12 },
+    "active":                { "type": "boolean", "default": true },
+    "ragRedThreshold":       { "type": "number",  "default": 70  },
+    "ragAmberThreshold":     { "type": "number",  "default": 90  },
+    "tenant_id":             { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "draft",
+    "transitions": {
+      "publish":  { "from": "draft",     "to": "published" },
+      "archive":  { "from": "published", "to": "archived" }
+    }
+  },
+  "x-openregister-aggregations": {
+    "mandatoryEnrolledCount": {
+      "metric": "count",
+      "schema": "Enrolment",
+      "filter": { "mandatory": true, "regulationSlug": "@self.slug", "lifecycleIn": ["active","completed","failed"] }
+    },
+    "mandatoryCompletedCount": {
+      "metric": "count",
+      "schema": "Enrolment",
+      "filter": { "mandatory": true, "regulationSlug": "@self.slug", "lifecycle": "completed" }
+    },
+    "attestationCount": {
+      "metric": "count",
+      "schema": "Attestation",
+      "filter": { "regulationSlug": "@self.slug", "lifecycle": "signed" }
+    },
+    "validCredentialCount": {
+      "metric": "count_distinct",
+      "schema": "Credential",
+      "field": "learnerId",
+      "filter": { "regulationSlug": "@self.slug", "lifecycle": "issued" }
+    }
+  },
+  "x-openregister-calculations": {
+    "coveragePercent": {
+      "type": "number",
+      "materialise": true,
+      "expression": {
+        "if": [
+          { "gt": [ { "prop": "mandatoryEnrolledCount" }, 0 ] },
+          { "mul": [ { "div": [ { "prop": "mandatoryCompletedCount" }, { "prop": "mandatoryEnrolledCount" } ] }, 100 ] },
+          0
+        ]
+      }
+    },
+    "ragStatus": {
+      "type": "string",
+      "materialise": true,
+      "expression": {
+        "case": [
+          { "when": { "lt":  [ { "prop": "coveragePercent" }, { "prop": "ragRedThreshold" }   ] }, "then": "red" },
+          { "when": { "lt":  [ { "prop": "coveragePercent" }, { "prop": "ragAmberThreshold" } ] }, "then": "amber" },
+          { "default": "green" }
+        ]
+      }
+    }
+  },
+  "x-openregister-notifications": {
+    "officerAlertOnCoverageDrop": {
+      "trigger":   { "calculatedChange": "ragStatus", "to": "red" },
+      "channel":   "nc-notification",
+      "subject":   "scholiq.compliance.coverage.dropped",
+      "recipientFromTenantRole": "compliance-officer"
+    }
+  },
+  "x-openregister-widgets": {
+    "coverageGrid": {
+      "type": "regulation-coverage-grid",
+      "title": "scholiq.widget.regulation.coverage",
+      "props": {
+        "metrics": ["coveragePercent","mandatoryEnrolledCount","mandatoryCompletedCount","attestationCount"],
+        "rag":     ["ragStatus"],
+        "actions": [
+          { "id": "campaign",   "manifestPage": "BulkEnrol",       "presetField": "regulationSlug" },
+          { "id": "exportPack", "manifestPage": "AuditPackExport", "presetField": "regulationSlug" }
+        ]
+      }
+    },
+    "boardProof": {
+      "type": "stats-block",
+      "title": "scholiq.widget.regulation.board",
+      "filter": { "audienceScope": "board" },
+      "props":  { "primary": "coveragePercent", "secondary": "validCredentialCount" }
+    }
+  }
 }
 ```
 
-### 1.2 `scholiq-attestation` (append-only, ADR-008 §2)
+**What each block replaces:**
 
-```json
-{
-  "title": "scholiq-attestation",
-  "append_only": true,
-  "properties": {
-    "id":              { "type": "string", "format": "uuid" },
-    "learner_id":      { "type": "string" },
-    "lesson_id":       { "type": "string", "format": "uuid" },
-    "course_id":       { "type": "string", "format": "uuid" },
-    "regulation_slug": { "type": "string" },
-    "timestamp":       { "type": "string", "format": "date-time" },
-    "actor_ip":        { "type": "string" },
-    "employee_id":     { "type": ["string","null"] },
-    "score":           { "type": ["number","null"] },
-    "xapi_statement_id":{ "type": ["string","null"], "format": "uuid" },
-    "signature":       { "type": "string" },
-    "key_rotation_id": { "type": "string" },
-    "tenant_id":       { "type": "string", "format": "uuid" }
+| v1 element | Replaced by |
+|---|---|
+| `ComplianceController::regulations*` CRUD | `CnAppRoot` index/detail page bound to Regulation |
+| `CoverageComputationService::computeCoverage` | `x-openregister-aggregations` + `x-openregister-calculations` |
+| Manual APCu caching | OR's aggregation engine handles cache invalidation; tied to the source schemas' audit events |
+| Cache invalidation listener on `xapi.statement.received` | OR's engine recomputes calculations on dependent source-schema events |
+| RAG-status threshold computation | `x-openregister-calculations.ragStatus` with per-regulation `ragRedThreshold` / `ragAmberThreshold` fields |
+| Officer-alert dispatch | `x-openregister-notifications.officerAlertOnCoverageDrop` with `calculatedChange` trigger |
+| Dashboard widget definition | `x-openregister-widgets.coverageGrid` consumed by `CnDashboardPage` |
+| Board-proof report | `x-openregister-widgets.boardProof` with audienceScope filter |
+
+### 1.2 `Attestation`
+
+```jsonc
+"Attestation": {
+  "slug": "attestation",
+  "icon": "FileCertificateOutline",
+  "version": "0.1.0",
+  "title": "Attestation",
+  "description": "Signed learner attestation that mandatory training was completed and understood",
+  "type": "object",
+  "x-openregister": {
+    "active": true,
+    "hardDelete": false,
+    "appendOnly": true
   },
-  "required": ["learner_id","lesson_id","course_id","regulation_slug","timestamp","actor_ip","signature","tenant_id"],
-  "indexes": [
-    ["learner_id","regulation_slug","tenant_id","timestamp"],
-    ["course_id","regulation_slug","timestamp"],
-    ["lesson_id","timestamp"]
+  "required": ["learnerId", "lessonId", "courseId", "regulationSlug", "tenant_id"],
+  "properties": {
+    "learnerId":         { "type": "string" },
+    "lessonId":          { "type": "string", "format": "uuid" },
+    "courseId":          { "type": "string", "format": "uuid" },
+    "regulationSlug":    { "type": "string" },
+    "actorIp":           { "type": ["string","null"] },
+    "employeeId":        { "type": ["string","null"] },
+    "score":             { "type": ["number","null"] },
+    "xapiStatementId":   { "type": ["string","null"], "format": "uuid" },
+    "signature":         { "type": "string" },
+    "keyRotationId":     { "type": "string" },
+    "tenant_id":         { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "drafted",
+    "transitions": {
+      "sign":   { "from": "drafted", "to": "signed", "requires": "OCA\\Scholiq\\Lifecycle\\AttestationSigningGuard" },
+      "revoke": { "from": "signed",  "to": "revoked" }
+    }
+  },
+  "x-openregister-relations": {
+    "learner": { "register": "scholiq", "schema": "LearnerProfile", "cardinality": "many-to-one", "joinOn": "learnerId" },
+    "course":  { "register": "scholiq", "schema": "Course",         "cardinality": "many-to-one", "joinOn": "courseId" },
+    "lesson":  { "register": "scholiq", "schema": "Lesson",         "cardinality": "many-to-one", "joinOn": "lessonId" }
+  }
+}
+```
+
+The `appendOnly: true` consumes OR's append-only abstraction (ADR-022). The `AttestationSigningGuard` is the only behaviour-PHP — it verifies the xAPI completion exists for `(learnerId, lessonId)` AND computes the HMAC signature using the **OR audit-trail-managed tenant key** (per ADR-022, hash-chain keys live in OR, not in a Scholiq `HmacKeyService`).
+
+**The "immutable evidence log" UI surface is OR's audit-trail tab on the Regulation detail page** — filtered to `event_type IN (attestation.signed, attestation.revoked, credential.issued, credential.revoked, credential.expired, enrolment.completed)`. No `scholiq-audit-event` schema, no `Scholiq\Service\AuditTrail`, no `AuditedController`. OR is the evidence-log substrate.
+
+### 1.3 No `ComplianceCampaign` schema
+
+The v1 design had a `scholiq-compliance-campaign` schema with its own status enum and bulk_job_id field. That's an unnecessary wrapper: a campaign IS a set of Enrolment objects with the same `regulationSlug` + `bulkJobId`. The `BulkEnrolModal` (declared in the enrolment change) already produces those — Compliance's "Campaign" view in the manifest is a saved query, not a separate schema.
+
+If a future feature needs per-campaign metadata that can't be expressed on Enrolment (e.g. campaign-level cancel-all action), revisit and add the schema then.
+
+---
+
+## 2. PHP files that ship in this change (ADR-031 exceptions only)
+
+| File | ADR-031 category | Why kept |
+|---|---|---|
+| `lib/Lifecycle/AttestationSigningGuard.php` | Lifecycle guard | Verifies xAPI completion exists for `(learnerId, lessonId)` AND computes HMAC signature via OR's tenant-key API. Single-method. Called by OR's lifecycle engine when `Attestation.lifecycle: drafted → signed` fires. |
+| `lib/Controller/AuditPackExportController.php` | Document generation | Streams a ZIP containing `audit-trail.ndjson` + `audit-trail.csv` + `manifest.json` + `signature-verification.txt`. The ndjson/csv content is OR's audit-trail-query response, filtered by event_type + regulation + period; the signature-verification report is OR's verification-endpoint response. Single legitimate PHP per ADR-031 §"Document/PDF/document-template generation". |
+
+**Explicitly NOT in this change** (ADR-031 + ADR-022 anti-patterns):
+- `AttestationService::capture` — replaced by `Attestation.lifecycle: drafted → signed` with the signing guard. The Vue component creates the drafted object then dispatches the `sign` transition through OR's REST API.
+- `CoverageComputationService` — replaced by `Regulation.x-openregister-aggregations` + `-calculations`.
+- `AuditPackExportService` (the original 2-pass query + ZIP code) — collapsed into the thin controller; OR's audit-trail-query handles the heavy work.
+- `HmacKeyService` — OR's audit-trail tenant-key API replaces it per ADR-022.
+- `ComplianceHmacRotationJob` (TimedJob) — OR's audit-trail abstraction owns key rotation.
+- `EvidenceLogService` — OR's audit trail IS the evidence log.
+- `ComplianceController` (the 11-endpoint controller) — every endpoint reduces to either `CnAppRoot` index/detail of Regulation/Attestation, or the single audit-pack export action.
+- `AttestationController` — replaced by Attestation index/detail page + the schema-declared signing-transition action.
+
+---
+
+## 3. Frontend — `CnAppRoot` consumption
+
+### 3.1 Manifest extension
+
+```jsonc
+{
+  "pages": [
+    /* ... existing pages ... */
+    { "id": "RegulationDetail", "route": "/compliance/regulations/:slug", "type": "detail",
+      "config": { "register": "scholiq", "schema": "Regulation", "tabs": ["details", "auditTrail"] } },
+    { "id": "AuditPackExport", "route": "/compliance/export",             "type": "custom",
+      "config": { "component": "AuditPackExportModal" } },
+    { "id": "Compliance", "route": "/compliance", "type": "dashboard", "title": "scholiq.page.compliance.title",
+      "config": {
+        "widgets": [
+          { "id": "regulation-coverage", "type": "widget-ref",
+            "ref": { "register": "scholiq", "schema": "Regulation", "widget": "coverageGrid" } },
+          { "id": "board-proof", "type": "widget-ref",
+            "ref": { "register": "scholiq", "schema": "Regulation", "widget": "boardProof" } }
+        ]
+      } }
   ]
 }
 ```
 
-The `key_rotation_id` references the HMAC key rotation cycle (annual), enabling offline verification even after key rotation. The `xapi_statement_id` links the attestation to its originating xAPI completion statement for chain-of-custody.
+The Compliance dashboard's widgets are `widget-ref` entries pointing at `Regulation.x-openregister-widgets`. **This is the canonical declarative-widget pattern**: the schema declares the widget definition once; every consumer (this dashboard, MyDash, the regulation detail page) reads the same definition.
 
-### 1.3 `scholiq-compliance-campaign`
+### 3.2 `AuditPackExportModal.vue`
 
-```json
-{
-  "title": "scholiq-compliance-campaign",
-  "properties": {
-    "id":                { "type": "string", "format": "uuid" },
-    "regulation_slug":   { "type": "string" },
-    "name":              { "type": "string" },
-    "audience":          { "type": "object" },
-    "course_section_id": { "type": "string", "format": "uuid" },
-    "due_date":          { "type": "string", "format": "date" },
-    "notification_days": { "type": "array", "items": {"type":"integer"}, "default": [30,7,1] },
-    "bulk_job_id":       { "type": ["string","null"] },
-    "status":            { "type": "string", "enum": ["draft","active","completed","cancelled"] },
-    "tenant_id":         { "type": "string", "format": "uuid" },
-    "created_by":        { "type": "string" },
-    "created_at":        { "type": "string", "format": "date-time" },
-    "updated_at":        { "type": "string", "format": "date-time" }
-  },
-  "required": ["regulation_slug","name","audience","course_section_id","due_date","tenant_id","created_by"],
-  "indexes": [["regulation_slug","tenant_id","status"],["due_date","status"]]
-}
-```
+Modal: regulation dropdown (sources from `GET /api/openregister/scholiq/Regulation?lifecycle=published`), date-from + date-to pickers, "Export" button that POSTs `/api/compliance/audit/export` with `{regulationSlug, dateFrom, dateTo}`. Server streams the ZIP back as `Content-Disposition: attachment`.
+
+### 3.3 `AttestationView` (embedded in `LessonPlayer`)
+
+After a `cmi5.completed` event arrives from the AU, the Vue `LessonPlayer` (declared in course-management change) renders an inline attestation card with:
+- Checkbox "Ik verklaar dat ik de training heb voltooid en begrepen"
+- "Onderteken attestatie" button
+
+On submit:
+1. Browser POSTs `POST /api/openregister/scholiq/Attestation` with `{learnerId, lessonId, courseId, regulationSlug, xapiStatementId}` (lifecycle defaults to `drafted`).
+2. Browser POSTs `PATCH /api/openregister/scholiq/Attestation/:id/transition/sign`.
+3. `AttestationSigningGuard` fires; if xAPI completion is missing OR signing fails, the transition is rejected with a 422 surface.
+4. On success: OR emits `attestation.signed` audit; the schema-declared notification (none in v0.1; future feature can add one) fires.
+
+No `/api/attestations` Scholiq controller. The Vue view talks to OR directly; the guard runs server-side inside OR's lifecycle engine.
+
+### 3.4 No app-local store, no app-local Vue Router code
+
+Per ADR-031 + ADR-024: no `useComplianceStore`, no `ComplianceDashboard.vue`, no `RegulationListView.vue`, no `RegulationDetailView.vue`, no `CampaignListView.vue`. `CnAppRoot`'s built-in dashboard / index / detail renderers consume the schema-declared widgets and pages.
 
 ---
 
-## 2. PHP Services
-
-### 2.1 `AttestationService`
-
-```php
-class AttestationService
-{
-    public function capture(
-        string $learnerId,
-        string $lessonId,
-        string $courseId,
-        string $regulationSlug,
-        string $actorIp,
-        ?float $score,
-        ?string $xapiStatementId,
-        string $tenantId
-    ): Attestation
-    {
-        // 1. Verify xAPI completed statement exists for learner + lesson
-        $completed = $this->lrsClient->hasCompletion($learnerId, $lessonId);
-        if (!$completed) {
-            throw new AttestationPreconditionException('Content must be completed before attestation');
-        }
-
-        // 2. Build attestation payload (minus signature)
-        $payload = compact('learnerId','lessonId','courseId','regulationSlug','actorIp','score','xapiStatementId','tenantId');
-        $payload['timestamp'] = (new \DateTimeImmutable())->format('c');
-        $payload['employee_id'] = $this->resolveEmployeeId($learnerId);
-
-        // 3. Sign: HMAC-SHA256(canonicalized_payload)
-        $keyData = $this->hmacKeyService->getCurrentKey($tenantId);
-        $payload['key_rotation_id'] = $keyData['rotation_id'];
-        $payload['signature'] = hash_hmac('sha256', $this->canonicalize($payload), $keyData['key']);
-
-        // 4. Persist (append-only — ObjectService::saveObject only; no updateObject)
-        $saved = $this->objectService->saveObject('scholiq-attestation', $payload);
-
-        // 5. Emit audit event
-        $this->auditTrail->record('attestation.signed', [
-            'subject_type' => 'attestation',
-            'subject_id'   => $saved['id'],
-            'after'        => $saved,
-            'lawful_basis' => 'legal-obligation',
-        ]);
-
-        return Attestation::fromArray($saved);
-    }
-
-    private function canonicalize(array $payload): string
-    {
-        // Sort keys alphabetically, exclude 'signature' field, JSON-encode
-        ksort($payload);
-        unset($payload['signature']);
-        return json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
-    }
-}
-```
-
-### 2.2 `CoverageComputationService`
-
-```php
-class CoverageComputationService
-{
-    public function computeCoverage(string $regulationSlug, string $tenantId): CoverageResult
-    {
-        // 1. Get all mandatory lessons for this regulation
-        $lessons = $this->objectService->getObjects('scholiq-lesson', [
-            'mandatory_training' => true,
-            'regulation_slug'    => $regulationSlug,
-        ]);
-        $lessonIds = array_column($lessons, 'id');
-        $courseIds = array_unique(array_column($lessons, 'course_id'));
-
-        // 2. Denominator: active Enrolments in course sections for these courses
-        $enrolments = $this->objectService->getObjects('scholiq-enrolment', [
-            'course_id_in' => $courseIds,
-            'mandatory'    => true,
-            'status_in'    => ['active','completed','overdue'],
-            'tenant_id'    => $tenantId,
-        ]);
-        $totalEnrolled = count($enrolments);
-        $learnerIds = array_unique(array_column($enrolments, 'learner_id'));
-
-        // 3. Numerator: distinct learners with xAPI 'completed' or 'passed' verb for these lessons
-        $completedStatements = $this->objectService->getObjects('scholiq-xapi-statement', [
-            'verb_id_in'    => ['http://adlnet.gov/expapi/verbs/completed','http://adlnet.gov/expapi/verbs/passed'],
-            'lesson_id_in'  => $lessonIds,
-            'actor_id_in'   => $learnerIds,
-            'tenant_id'     => $tenantId,
-        ]);
-        $completedLearners = count(array_unique(array_column($completedStatements, 'actor_id')));
-
-        // 4. Compute and cache
-        $coveragePct = $totalEnrolled > 0 ? round(($completedLearners / $totalEnrolled) * 100, 1) : 0;
-        $ragStatus = $coveragePct >= 90 ? 'green' : ($coveragePct >= 70 ? 'amber' : 'red');
-
-        $result = new CoverageResult($regulationSlug, $totalEnrolled, $completedLearners, $coveragePct, $ragStatus);
-        $this->cache->set("coverage:{$tenantId}:{$regulationSlug}", $result, 60); // 60s TTL
-        return $result;
-    }
-}
-```
-
-Cache invalidation: `xapi.statement.received` audit event listener calls `$this->cache->clear("coverage:{$tenantId}:*")`.
-
-### 2.3 `AuditPackExportService`
-
-Per ADR-008 §6 export format exactly.
-
-```php
-class AuditPackExportService
-{
-    public function export(
-        string $regulationSlug,
-        \DateTimeInterface $dateFrom,
-        \DateTimeInterface $dateTo,
-        string $tenantId
-    ): string // returns temp file path of the ZIP
-    {
-        $zip = new \ZipArchive();
-        $tmpPath = sys_get_temp_dir() . '/scholiq-audit-' . uniqid() . '.zip';
-        $zip->open($tmpPath, \ZipArchive::CREATE);
-
-        $events = $this->queryAuditEvents($regulationSlug, $dateFrom, $dateTo, $tenantId);
-
-        // audit-trail.ndjson
-        $ndjson = implode("\n", array_map('json_encode', $events));
-        $zip->addFromString('audit-trail.ndjson', $ndjson);
-
-        // audit-trail.csv
-        $csv = $this->buildCsv($events);
-        $zip->addFromString('audit-trail.csv', $csv);
-
-        // manifest.json
-        $sigStatus = $this->verifyHmacChain($events, $tenantId);
-        $manifest = [
-            'tenant_id'         => $tenantId,
-            'period_from'       => $dateFrom->format('c'),
-            'period_to'         => $dateTo->format('c'),
-            'regulation_slug'   => $regulationSlug,
-            'event_count'       => count($events),
-            'signature_status'  => $sigStatus,
-            'export_timestamp'  => (new \DateTimeImmutable())->format('c'),
-            'verification_key_fingerprint' => $this->hmacKeyService->getPublicFingerprint($tenantId),
-        ];
-        $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT));
-
-        // signature-verification.txt
-        $zip->addFromString('signature-verification.txt', $this->buildVerificationReport($sigStatus, $events));
-
-        $zip->close();
-        return $tmpPath;
-    }
-
-    private function queryAuditEvents(string $regulation, \DateTimeInterface $from, \DateTimeInterface $to, string $tenantId): array
-    {
-        // Relevant event types for a compliance audit pack:
-        $relevantTypes = [
-            'attestation.signed', 'attestation.revoked',
-            'credential.issued', 'credential.revoked', 'credential.expired',
-            'enrolment.created', 'enrolment.completed', 'enrolment.withdrawn',
-            'compliance.audit_pack.exported', 'compliance.campaign.created',
-            'xapi.statement.received',
-        ];
-        return $this->objectService->getObjects('scholiq-audit-event', [
-            'event_type_in' => $relevantTypes,
-            'tenant_id'     => $tenantId,
-            'created_at_gte'=> $from->format('c'),
-            'created_at_lte'=> $to->format('c'),
-        ]);
-    }
-}
-```
-
-### 2.4 `HmacKeyService`
-
-Manages per-tenant HMAC key rotation:
-
-```php
-class HmacKeyService
-{
-    public function getCurrentKey(string $tenantId): array // {key, rotation_id}
-    public function rotateKey(string $tenantId): void      // annual rotation, dual-sign window
-    public function getPublicFingerprint(string $tenantId): string
-    public function verifySignature(array $attestation, string $tenantId): bool
-}
-```
-
-Keys stored in `OCP\Security\ICrypto` under `scholiq.hmac.compliance.<tenantId>.<rotationId>`. Annual rotation via `ComplianceHmacRotationJob` (TimedJob).
-
----
-
-## 3. PHP Controllers
-
-### 3.1 `ComplianceController`
-
-```
-GET    /api/compliance/regulations                          → list all regulations
-POST   /api/compliance/regulations                          → create regulation
-GET    /api/compliance/regulations/{slug}                   → show regulation
-PATCH  /api/compliance/regulations/{slug}                   → update regulation
-GET    /api/compliance/regulations/{slug}/courses           → list courses linked to regulation
-GET    /api/compliance/coverage                             → list all regulation coverage %
-GET    /api/compliance/coverage?regulation_slug={slug}      → single regulation coverage %
-GET    /api/compliance/regulations/{slug}/board-proof       → board-cohort proof report
-POST   /api/compliance/campaigns                            → create campaign (triggers bulk-enrol)
-GET    /api/compliance/campaigns                            → list campaigns
-GET    /api/compliance/campaigns/{id}                       → campaign status
-POST   /api/compliance/audit/export                         → export audit pack ZIP
-GET    /api/compliance/audit/verify-trail                   → HMAC chain verification status
-```
-
-Role guards: all compliance/* endpoints restricted to `admin`, `hr`, `compliance-officer` roles (new role added to `scholiq-learner-profile` roles enum).
-
-### 3.2 `AttestationController`
-
-```
-POST   /api/attestations                  → capture attestation (learner role)
-GET    /api/attestations                  → list (admin/hr/compliance only; filters: learner_id, regulation_slug, date range)
-GET    /api/attestations/{id}             → show single attestation
-```
-
-Attestation POST is the only learner-accessible write endpoint in compliance-audit.
-
----
-
-## 4. Vue Frontend
-
-### 4.1 Route additions
-
-```js
-{ path: '/compliance',                     component: () => import('../views/ComplianceDashboard.vue')    },
-{ path: '/compliance/regulations',         component: () => import('../views/RegulationListView.vue')     },
-{ path: '/compliance/regulations/:slug',   component: () => import('../views/RegulationDetailView.vue')   },
-{ path: '/compliance/campaigns',           component: () => import('../views/CampaignListView.vue')        },
-{ path: '/compliance/export',              component: () => import('../views/AuditPackExportModal.vue')    },
-```
-
-### 4.2 Key components
-
-- **`ComplianceDashboard.vue`**: Grid of regulation cards. Each card: regulation name, coverage % as a gauge (apexcharts `radialBar`), RAG status badge (red/amber/green), 12-month trend sparkline (apexcharts `line`). "Export audit pack" button per regulation. "Create campaign" CTA. Data from `GET /api/compliance/coverage`.
-- **`RegulationDetailView.vue`**: CnDetailPage. Coverage % gauge, Enrolment stats (enrolled/completed/overdue), Board proof section if audience_scope='board', Recent attestations table, Audit Trail tab.
-- **`CampaignListView.vue`**: CnDataTable of campaigns; status badge (draft/active/completed); links to bulk_job_id status.
-- **`AuditPackExportModal.vue`**: modal form with regulation selector, date_from/date_to pickers, "Export" button that triggers POST /api/compliance/audit/export and triggers download of the returned ZIP.
-- **`AttestationView.vue`** (within `LessonPlayer.vue`): shown after cmi5/SCORM completion for mandatory lessons. Checkbox "Ik verklaar dat ik de training heb voltooid en begrepen" + submit button. On submit: POST /api/attestations. Success: show signed attestation id + link to Credential (once issued).
-
----
-
-## 5. Attestation Flow (end-to-end)
+## 4. Attestation Flow (end-to-end, declarative)
 
 ```
 Learner watches cmi5 AU
   → AU posts cmi5.completed to /api/lrs/statements (LrsController)
-    → xapi.statement.received audit event emitted
-    → EnrolmentCompletionListener fires → Enrolment.status = 'completed'
-    → EnrolmentCompletedCredentialListener fires → Credential issued
+    → OR saves XapiStatement (appendOnly schema, audits as xapi.statement.received)
+    → XapiCompletionHandler (enrolment change) dispatches Enrolment.complete
+    → OR emits enrolment.completed audit
+    → CredentialIssuanceHandler (certification change) writes Credential
 
-Learner clicks attestation checkbox in AttestationView.vue
-  → POST /api/attestations
-    → AttestationService::capture()
-      → Verify xAPI completed statement exists (fail if not)
-      → Build + HMAC-sign attestation payload
-      → Persist to scholiq-attestation (append-only)
-      → Emit attestation.signed audit event
-      → Return Attestation with id + signature
+Learner sees AttestationView inside LessonPlayer
+  → Checkbox + button
+  → POST /api/openregister/scholiq/Attestation (lifecycle=drafted)
+  → PATCH .../transition/sign
+    → AttestationSigningGuard runs server-side:
+       - Verify xAPI completed statement exists for (learnerId, lessonId)
+       - Compute HMAC signature via OR's tenant-key API
+       - Set the schema's signature + keyRotationId fields on the transition payload
+    → OR saves transition, emits attestation.signed audit
+    → Attestation now visible in the Regulation detail page's audit-trail tab
 
-Compliance officer → GET /api/compliance/coverage?regulation_slug=AVG
-  → CoverageComputationService::computeCoverage()
-    → Count Enrolments (denominator)
-    → Count unique xAPI completed learners (numerator)
-    → Return {enrolled, completed, coverage_percent, rag_status}
+Compliance officer → opens Compliance dashboard (manifest page)
+  → CnDashboardPage renders the regulation-coverage widget from Regulation.x-openregister-widgets
+  → OR computes coveragePercent + ragStatus on-the-fly via the calculation engine
+  → Widget renders red/amber/green per regulation
 
-Auditor requests export → POST /api/compliance/audit/export
-  → AuditPackExportService::export()
-    → Query audit events (attestation.*, credential.*, enrolment.*)
-    → HMAC chain verification
-    → ZIP: ndjson + csv + manifest + signature-verification
-    → Return ZIP download
-    → Emit compliance.audit_pack.exported audit event
+Auditor requests export → opens AuditPackExportModal
+  → POST /api/compliance/audit/export
+  → AuditPackExportController calls OR's audit-trail-query API filtered by
+    event_type IN (attestation.*, credential.*, enrolment.*, compliance.*,
+                   xapi.statement.received), regulationSlug, period
+  → Renders ndjson + csv + manifest.json + signature-verification.txt
+    (signature verification report sourced from OR's verification endpoint)
+  → ZIP download
 ```
 
+No `AttestationService`, no `CoverageComputationService`, no `EvidenceLogService`, no `AuditTrail`. The wedge core IS the schema metadata + OR's engine + two short PHP files.
+
 ---
 
-## 6. Audit Events Emitted
+## 5. Audit Events Emitted (declaratively)
 
-| Action | event_type | lawful_basis |
+| Trigger | event_type | Declared in schema |
 |---|---|---|
-| Regulation created/updated | `compliance.regulation.published` | legal-obligation |
-| Campaign created | `compliance.campaign.created` | legal-obligation |
-| Attestation captured | `attestation.signed` | legal-obligation |
-| Audit pack exported | `compliance.audit_pack.exported` | legal-obligation |
-| HMAC chain verified | `compliance.trail.verified` (new) | legal-obligation |
-
-Add `compliance.campaign.created`, `compliance.trail.verified` to `AuditEventTypes::KNOWN`.
+| Attestation transition `drafted → signed` | `attestation.signed` | `Attestation.x-openregister-lifecycle` |
+| Attestation transition `signed → revoked` | `attestation.revoked` | `Attestation.x-openregister-lifecycle` |
+| Regulation transition `draft → published` | `compliance.regulation.published` | `Regulation.x-openregister-lifecycle` |
+| Audit-pack export submitted | `compliance.audit_pack.exported` | OR audit on `AuditPackExportController`'s OR-query call |
+| Coverage % transitions to red | `compliance.coverage.dropped` | `Regulation.x-openregister-notifications.officerAlertOnCoverageDrop` (notification engine writes audit entry on dispatch) |
 
 ---
 
-## 7. Caching Strategy
+## 6. Caching — none in app
 
-Coverage % is computed from xAPI statements (potentially thousands). Strategy:
-- APCu in-process cache with 60-second TTL per (tenant_id, regulation_slug) pair.
-- Cache key: `scholiq:coverage:{tenantId}:{regulationSlug}`.
-- Invalidation trigger: `xapi.statement.received` event listener calls `$cache->clear("scholiq:coverage:{tenantId}:*")`.
-- For dashboards expecting ≤ 2s response (REQ-CA-003-A): pre-warm cache via `ComplianceCoverageWarmJob` running every 5 minutes for tenants with compliance modules.
+The v1 design had APCu coverage % caching + a `ComplianceCoverageWarmJob` TimedJob. Both are removed: OR's aggregation engine handles cache invalidation tied to source-schema audit events. If performance turns out to be inadequate (REQ-CA-003-A: ≤ 2s dashboard), that's an OR-side optimisation — open an issue against `openregister` per ADR-031 §Exceptions; do not add an app-local cache layer.
 
 ---
 
-## 8. Integration Points
+## 7. Integration Points
 
 | System | Interface | Purpose |
 |---|---|---|
-| OpenRegister | `ObjectService` | Persist Regulation, Attestation, Campaign; query xApiStatement, Enrolment, Credential |
-| Course-management | `scholiq-lesson` (mandatory_training, regulation_slug) | Denominator course list |
-| Enrolment | `scholiq-enrolment`, `BulkEnrolmentService` | Coverage denominator + campaign trigger |
-| xAPI LRS | `scholiq-xapi-statement` | Coverage numerator |
-| Certification | `scholiq-credential` | Audit-pack evidence |
-| OCP\Security\ICrypto | — | HMAC key storage + retrieval |
-| OCP\IRequest | — | actor_ip for attestation |
-| AuditTrail | `Scholiq\Service\AuditTrail` | All compliance audit events |
-| APCu / ICache | — | Coverage % caching |
+| OpenRegister | Schemas + lifecycle + aggregations + calculations + notifications + widgets + audit trail + audit-trail tenant-key API | Every wedge operation |
+| OpenRegister archival | OR's archival-destruction-workflow abstraction | Retention class per schema (Attestation, Credential, Enrolment → 10y; security events → 1y) |
+| Enrolment change | `Enrolment` schema | Aggregation source for `mandatoryEnrolledCount` / `mandatoryCompletedCount` |
+| Course-management change | `XapiStatement` schema, `Lesson` schema | Pre-condition for attestation signing |
+| Certification change | `Credential` schema | Aggregation source for `validCredentialCount` |
+| @conduction/nextcloud-vue | `CnAppRoot` + `CnDashboardPage` + `customComponents` | Frontend shell + widgets + audit-pack export modal |
+
+---
+
+## 8. Declarative-vs-imperative decision summary
+
+| Behaviour | Decision | ADR-031 row |
+|---|---|---|
+| Regulation state machine (draft → published → archived) | declarative | lifecycle |
+| Coverage % per regulation | declarative | calculation (on top of aggregations) |
+| RAG status per regulation | declarative | calculation |
+| Mandatory enrolled count | declarative | aggregation |
+| Mandatory completed count | declarative | aggregation |
+| Attestation count | declarative | aggregation |
+| Valid-credential count (board proof) | declarative | aggregation |
+| Officer alert on coverage drop | declarative | notification |
+| Compliance dashboard widgets | declarative | widgets |
+| Attestation state machine (drafted → signed → revoked) | declarative | lifecycle |
+| Attestation immutability | declarative (OR appendOnly) | (consumed via ADR-022) |
+| Audit trail / evidence log | declarative (OR) | (consumed via ADR-022 — first row) |
+| HMAC key management + rotation | declarative (OR tenant-key API) | (consumed via ADR-022) |
+| Attestation signing precondition + HMAC compute | imperative (PHP) | "Lifecycle guards" + "Cryptographic" exception |
+| Audit-pack ZIP export | imperative (PHP) | "Document generation" exception |
+| Coverage cache | none (OR's aggregation engine) | n/a |
 
 ---
 
@@ -418,3 +366,4 @@ Coverage % is computed from xAPI statements (potentially thousands). Strategy:
 | SaaS multi-tenant benchmarking | Enterprise/V2 |
 | AI-driven coverage risk classification | Enterprise + ADR-005 gate |
 | Regulation content authoring | External (RADIO / Kennisnet / vendor library) |
+| Per-campaign metadata schema | V1 — only land it when a feature genuinely needs it |
