@@ -1424,6 +1424,238 @@
           }
         },
         "x-openregister-seed": []
+      },
+      "LearnerProfile": {
+        "slug": "learner-profile",
+        "icon": "AccountOutline",
+        "version": "0.1.0",
+        "title": "LearnerProfile",
+        "description": "Scholiq learner profile. Owns role assignment and is the actor reference for enrolments, credentials, and attestations.",
+        "type": "object",
+        "required": ["ncUserId", "tenant_id"],
+        "properties": {
+          "ncUserId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner."
+          },
+          "givenName": {
+            "type": "string",
+            "description": "First name."
+          },
+          "familyName": {
+            "type": "string",
+            "description": "Last name."
+          },
+          "birthDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Date of birth (AVG-classified)."
+          },
+          "bsnEncrypted": {
+            "type": ["string", "null"],
+            "description": "Encrypted BSN — only populated for K-12 or government tenants."
+          },
+          "schoolId": {
+            "type": ["string", "null"],
+            "description": "School or organisation identifier."
+          },
+          "eckId": {
+            "type": ["string", "null"],
+            "description": "ECK iD for Dutch education identity federation."
+          },
+          "eduPersonAffiliation": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "eduPerson affiliation values (e.g. 'employee', 'student')."
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "learner",
+                "instructor",
+                "hr",
+                "manager",
+                "compliance-officer",
+                "admin",
+                "mentor",
+                "principal",
+                "parent",
+                "inspector"
+              ]
+            },
+            "description": "One or more Scholiq roles. The highest-priority role is materialised as primaryRole."
+          },
+          "parentIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Nextcloud user IDs of linked parent/guardian accounts."
+          },
+          "managerId": {
+            "type": ["string", "null"],
+            "description": "Nextcloud user ID of the learner's line manager."
+          },
+          "department": {
+            "type": ["string", "null"],
+            "description": "Organisational department for grouping and reporting."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant scoping."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "initialState": "active",
+          "states": {
+            "active":  { "description": "Profile is active for the learner." },
+            "merged":  { "description": "Profile merged into another LearnerProfile (e.g. duplicate SchoolID/ECK iD reconciliation); retained for audit + back-reference resolution." },
+            "deleted": { "description": "Soft-deleted on offboarding; retained per AVG retention class until purge window expires." }
+          },
+          "transitions": [
+            {
+              "name": "merge",
+              "from": "active",
+              "to": "merged",
+              "audit_event_type": "learner.profile.merged",
+              "required": ["mergedInto"],
+              "description": "Merges this profile into another LearnerProfile. The surviving profile is referenced via mergedInto."
+            },
+            {
+              "name": "delete",
+              "from": "active",
+              "to": "deleted",
+              "audit_event_type": "learner.profile.deleted",
+              "description": "Soft-deletes the profile on offboarding. Purge after retention class expires."
+            }
+          ]
+        },
+        "x-openregister-calculations": {
+          "primaryRole": {
+            "type": "string",
+            "materialise": true,
+            "description": "Highest-priority Scholiq role for this learner, resolved by RoleSelector (admin group override + static priority map).",
+            "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Enrolment": {
+        "slug": "enrolment",
+        "icon": "SchoolOutline",
+        "version": "0.1.0",
+        "title": "Enrolment",
+        "description": "A learner's assignment to a Course. Owned by the compliance-audit and enrolment wedge specs; this entry carries the dashboard widget declaration only. The full schema (properties, calculations, notifications) is declared in the enrolment change — these keys merge idempotently.",
+        "type": "object",
+        "required": ["learnerId", "courseId", "tenant_id"],
+        "properties": {
+          "learnerId":      { "type": "string",                   "description": "Nextcloud user ID of the enrolled learner." },
+          "courseId":       { "type": "string", "format": "uuid", "description": "UUID of the Course object in the scholiq register." },
+          "mandatory":      { "type": "boolean", "default": false, "description": "When true this enrolment is a compliance-mandatory assignment." },
+          "dueDate":        { "type": ["string", "null"], "format": "date", "description": "ISO date by which the learner must complete the course." },
+          "regulationSlug": { "type": ["string", "null"],          "description": "Machine-readable slug of the linked compliance regulation." },
+          "tenant_id":      { "type": "string", "format": "uuid", "description": "Tenant identifier for multi-tenant scoping." }
+        },
+        "x-openregister-widgets": {
+          "myMandatoryTraining": {
+            "type": "task-list",
+            "title": "scholiq.widget.learner.mandatoryTraining",
+            "description": "Learner's mandatory training list, filtered to their own enrolments, sorted by due date ascending.",
+            "scope": "owned-by-actor",
+            "filter": {
+              "mandatory": true,
+              "lifecycleIn": ["pending", "active"],
+              "learnerId": "@actor.id"
+            },
+            "sort": [
+              { "field": "dueDate", "order": "asc" }
+            ],
+            "columns": [
+              { "field": "course.name",    "label": "scholiq.col.course"     },
+              { "field": "regulationSlug", "label": "scholiq.col.regulation" },
+              { "field": "lifecycle",      "label": "scholiq.col.status"     },
+              { "field": "dueDate",        "label": "scholiq.col.due"        },
+              { "field": "daysRemaining",  "label": "scholiq.col.days"       },
+              { "field": "ragStatus",      "label": "scholiq.col.rag"        }
+            ],
+            "actions": [
+              {
+                "id": "start",
+                "label": "scholiq.action.start",
+                "manifestPage": "LessonPlayer",
+                "presetField": "courseId"
+              }
+            ]
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Regulation": {
+        "slug": "regulation",
+        "icon": "ShieldCheckOutline",
+        "version": "0.1.0",
+        "title": "Regulation",
+        "description": "A compliance regulation (e.g. AVG, NIS2, ISO27001) that groups mandatory training requirements. Full schema declared in the compliance-audit change; this entry carries the dashboard widget stubs and merges idempotently.",
+        "type": "object",
+        "required": ["slug", "name", "tenant_id"],
+        "properties": {
+          "slug":       { "type": "string",                   "description": "Machine-readable identifier, e.g. 'avg-2018'." },
+          "name":       { "type": "string",                   "description": "Human-readable name of the regulation." },
+          "tenant_id":  { "type": "string", "format": "uuid", "description": "Tenant identifier for multi-tenant scoping." }
+        },
+        "x-openregister-widgets": {
+          "coverageGrid": {
+            "type": "coverage-grid",
+            "title": "scholiq.widget.compliance.coverageGrid",
+            "description": "Per-regulation coverage % grid for the compliance officer dashboard. Declared here as a widget stub; calculations (coveragePercent, ragStatus, overdueCount) are declared in the compliance-audit change.",
+            "scope": "tenant",
+            "columns": [
+              { "field": "name",                           "label": "scholiq.col.regulation"   },
+              { "field": "calculations.coveragePercent",   "label": "scholiq.col.coverage"     },
+              { "field": "calculations.ragStatus",         "label": "scholiq.col.rag"          },
+              { "field": "calculations.enrolledCount",     "label": "scholiq.col.enrolled"     },
+              { "field": "calculations.completedCount",    "label": "scholiq.col.completed"    },
+              { "field": "calculations.overdueCount",      "label": "scholiq.col.overdue"      },
+              { "field": "calculations.lastCampaignDate",  "label": "scholiq.col.lastCampaign" }
+            ],
+            "sort": [
+              { "field": "calculations.ragStatus", "order": "asc" }
+            ],
+            "actions": [
+              {
+                "id": "createCampaign",
+                "label": "scholiq.action.createCampaign",
+                "manifestPage": "BulkEnrolmentModal",
+                "presetField": "regulationSlug"
+              },
+              {
+                "id": "exportAuditPack",
+                "label": "scholiq.action.exportAuditPack",
+                "manifestPage": "AuditPackExportModal",
+                "presetField": "regulationSlug"
+              }
+            ]
+          },
+          "attestationCount": {
+            "type": "kpi-tile",
+            "title": "scholiq.widget.compliance.attestationCount",
+            "description": "Count of pending attestations per regulation for the compliance officer.",
+            "scope": "tenant",
+            "aggregation": {
+              "schema": "Credential",
+              "groupBy": "regulationSlug",
+              "measure": "count",
+              "filter": { "lifecycleIn": ["pending-attestation"] }
+            },
+            "presentation": {
+              "format": "integer",
+              "icon": "ClipboardCheckOutline",
+              "ragThresholds": { "red": 10, "amber": 5 }
+            }
+          }
+        },
+        "x-openregister-seed": []
       }
     }
   }
