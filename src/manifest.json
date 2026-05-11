@@ -1,0 +1,73 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+	"version": "0.1.0",
+	"dependencies": ["openregister", "openconnector"],
+	"menu": [
+		{ "id": "Dashboard",    "label": "Dashboard",         "icon": "icon-category-dashboard", "route": "Dashboard",    "order": 10 },
+		{ "id": "Courses",      "label": "Courses",            "icon": "icon-folder",             "route": "Courses",      "order": 20 },
+		{ "id": "Enrolments",   "label": "Enrolments",         "icon": "icon-group",              "route": "Enrolments",   "order": 30 },
+		{ "id": "Credentials",  "label": "Credentials",        "icon": "icon-checkmark",          "route": "Credentials",  "order": 40 },
+		{ "id": "Compliance",   "label": "Compliance",         "icon": "icon-menu-sidebar",       "route": "Compliance",   "order": 50 },
+		{ "id": "Documentation","label": "Documentation",      "icon": "icon-info",               "href":  "https://docs.scholiq.nl", "section": "settings", "order": 90 },
+		{ "id": "Settings",     "label": "Settings",           "icon": "icon-settings",           "route": "Settings",     "section": "settings", "order": 99 }
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "dashboard",
+			"title": "Dashboard",
+			"config": {
+				"widgets": [],
+				"layout": []
+			}
+		},
+		{
+			"id": "Courses",
+			"route": "/courses",
+			"type": "index",
+			"title": "Courses",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "Enrolments",
+			"route": "/enrolments",
+			"type": "index",
+			"title": "Enrolments",
+			"config": {
+				"register": "scholiq",
+				"schema": "Enrolment"
+			}
+		},
+		{
+			"id": "Credentials",
+			"route": "/credentials",
+			"type": "index",
+			"title": "Credentials",
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential"
+			}
+		},
+		{
+			"id": "Compliance",
+			"route": "/compliance",
+			"type": "dashboard",
+			"title": "Compliance",
+			"config": {
+				"widgets": [],
+				"layout": []
+			}
+		},
+		{
+			"id": "Settings",
+			"route": "/settings",
+			"type": "custom",
+			"title": "Settings",
+			"component": "ScholiqSettings"
+		}
+	]
+}

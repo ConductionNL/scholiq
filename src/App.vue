@@ -1,86 +1,69 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- Copyright (C) 2026 Conduction B.V. -->
+
+<!--
+ Scholiq app shell. Mounts CnAppRoot with the bundled manifest and the
+ customComponents registry. CnAppRoot reads manifest.dependencies and
+ renders a dependency-missing empty state for absent apps automatically
+ (per ADR-024) — no app-local OpenRegisterGuard is needed.
+-->
 <template>
-	<NcContent app-name="scholiq">
-		<template v-if="storesReady && !hasOpenRegisters">
-			<NcAppContent class="open-register-missing">
-				<NcEmptyContent
-					:name="t('scholiq', 'OpenRegister is required')"
-					:description="t('scholiq', 'This app needs OpenRegister to store and manage data. Please install OpenRegister from the app store to get started.')">
-					<template #icon>
-						<img :src="appIcon"
-							alt=""
-							width="64"
-							height="64">
-					</template>
-					<template #action>
-						<NcButton
-							v-if="isAdmin"
-							type="primary"
-							:href="appStoreUrl">
-							{{ t('scholiq', 'Install OpenRegister') }}
-						</NcButton>
-					</template>
-				</NcEmptyContent>
-			</NcAppContent>
-		</template>
-		<template v-else-if="storesReady && hasOpenRegisters">
-			<MainMenu />
-			<NcAppContent>
-				<router-view />
-			</NcAppContent>
-		</template>
-		<NcAppContent v-else>
-			<div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-				<NcLoadingIcon :size="64" />
-			</div>
-		</NcAppContent>
-	</NcContent>
+	<CnAppRoot
+		:manifest="manifest"
+		:custom-components="customComponents"
+		:page-types="pageTypes"
+		app-id="scholiq"
+		:translate="translateForApp" />
 </template>
 
 <script>
-import { NcButton, NcContent, NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl, imagePath } from '@nextcloud/router'
-import { initializeStores } from './store/store.js'
-import { useSettingsStore } from './store/modules/settings.js'
-import MainMenu from './navigation/MainMenu.vue'
+import { translate as ncT } from '@nextcloud/l10n'
+import { CnAppRoot } from '@conduction/nextcloud-vue'
 
 export default {
 	name: 'App',
+
 	components: {
-		NcButton,
-		NcContent,
-		NcAppContent,
-		NcEmptyContent,
-		NcLoadingIcon,
-		MainMenu,
+		CnAppRoot,
 	},
 
-	data() {
-		return {
-			storesReady: false,
-		}
+	props: {
+		/**
+		 * Bundled manifest — passed from main.js bootstrap. CnAppRoot reads
+		 * `manifest.dependencies` for the dependency-check phase and
+		 * `manifest.menu` for the default CnAppNav.
+		 */
+		manifest: {
+			type: Object,
+			required: true,
+		},
+		/**
+		 * Registry of consumer-injected components used by `type: "custom"` pages.
+		 */
+		customComponents: {
+			type: Object,
+			default: () => ({}),
+		},
+		/**
+		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
+		 */
+		pageTypes: {
+			type: Object,
+			default: null,
+		},
 	},
 
-	computed: {
-		hasOpenRegisters() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.hasOpenRegisters
+	methods: {
+		/**
+		 * Translate function passed to CnAppRoot. Closes over the Nextcloud
+		 * `translate` import so the lib never has to know our app id.
+		 *
+		 * @param {string} key Translation key.
+		 * @return {string} Translated string (or the key on miss).
+		 */
+		translateForApp(key) {
+			return ncT('scholiq', key)
 		},
-		isAdmin() {
-			const settingsStore = useSettingsStore()
-			return settingsStore.getIsAdmin
-		},
-		appIcon() {
-			return imagePath('scholiq', 'app-dark.svg')
-		},
-		appStoreUrl() {
-			return generateUrl('/settings/apps/integration/openregister')
-		},
-	},
-
-	async created() {
-		await initializeStores()
-		this.storesReady = true
 	},
 }
 </script>

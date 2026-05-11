@@ -32,6 +32,19 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Main application class for the Scholiq Nextcloud app.
+ *
+ * Per ADR-031: DI registrations limited to legitimate PHP seams only:
+ *   - Cryptographic operations (Cmi5LaunchTokenService)
+ *   - Lifecycle guards (AiFeatureDpoAckGuard)
+ *   - NC framework requirements (controllers, event listeners)
+ *
+ * NOT registered: AuditTrail, AuditedController, AiFeatureRegistry,
+ * NotificationService, OpenRegisterGuard, AdminSettings, PersonalSettings.
+ * All state machines and notifications are declared via x-openregister-*
+ * in lib/Settings/scholiq_register.json (per ADR-022 + ADR-031).
+ *
+ * Settings UI is handled by the manifest's Settings custom page (ScholiqSettings
+ * Vue component) — no OCP\Settings\ISettings PHP class needed (per ADR-024).
  */
 class Application extends App implements IBootstrap
 {
