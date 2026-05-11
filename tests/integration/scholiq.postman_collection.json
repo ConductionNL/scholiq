@@ -55,6 +55,7 @@
 			"item": [
 				{
 					"name": "List courses",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -83,6 +84,7 @@
 				},
 				{
 					"name": "Create course",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -117,6 +119,7 @@
 				},
 				{
 					"name": "Clone course for next academic year",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -151,6 +154,7 @@
 				},
 				{
 					"name": "Publish OOAPI catalog",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -185,6 +189,7 @@
 			"item": [
 				{
 					"name": "List enrolments",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -213,6 +218,7 @@
 				},
 				{
 					"name": "Pull Studielink enrolment batch",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -247,6 +253,7 @@
 				},
 				{
 					"name": "Bulk enrol cohort",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -281,6 +288,7 @@
 				},
 				{
 					"name": "DigiD identification for enrolment",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -320,6 +328,7 @@
 			"item": [
 				{
 					"name": "List certificates",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -348,6 +357,7 @@
 				},
 				{
 					"name": "Issue certificate",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -382,6 +392,7 @@
 				},
 				{
 					"name": "Detect upcoming expiries",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -410,6 +421,7 @@
 				},
 				{
 					"name": "Verify credential",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -443,6 +455,7 @@
 			"item": [
 				{
 					"name": "List regulations",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -471,6 +484,7 @@
 				},
 				{
 					"name": "Coverage dashboard",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -500,6 +514,7 @@
 				},
 				{
 					"name": "Bulk-enrol annual refresher",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -534,6 +549,7 @@
 				},
 				{
 					"name": "Capture signed attestation",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -569,6 +585,7 @@
 				},
 				{
 					"name": "Export audit pack per regulation",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -603,6 +620,7 @@
 				},
 				{
 					"name": "Immutable evidence log",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -632,6 +650,7 @@
 				},
 				{
 					"name": "Board training evidence (NIS2)",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -667,6 +686,7 @@
 			"item": [
 				{
 					"name": "Resolve dashboard for current user role",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -696,6 +716,7 @@
 				},
 				{
 					"name": "Manager team progress",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -724,6 +745,7 @@
 				},
 				{
 					"name": "Inspector Cito overview export",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -759,6 +781,7 @@
 			"item": [
 				{
 					"name": "App info",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -788,6 +811,7 @@
 				},
 				{
 					"name": "OpenRegister dependency check",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -816,6 +840,7 @@
 				},
 				{
 					"name": "Admin settings",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -846,6 +871,7 @@
 				},
 				{
 					"name": "User settings",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -881,6 +907,7 @@
 			"item": [
 				{
 					"name": "Import QTI 3.0 item bank",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -915,6 +942,7 @@
 				},
 				{
 					"name": "Schedule exam",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -949,6 +977,7 @@
 				},
 				{
 					"name": "Detect exam conflicts",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -977,6 +1006,7 @@
 				},
 				{
 					"name": "Take online proctored exam (start session)",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1017,6 +1047,7 @@
 			"item": [
 				{
 					"name": "Configure proctoring per exam",
+					"disabled": true,
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -1051,6 +1082,7 @@
 				},
 				{
 					"name": "List flagged integrity events",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1079,6 +1111,7 @@
 				},
 				{
 					"name": "Refer event to examination committee",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1118,6 +1151,7 @@
 			"item": [
 				{
 					"name": "Get PTA for a course",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1146,6 +1180,7 @@
 				},
 				{
 					"name": "Enter grade with weegfactor",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1180,6 +1215,7 @@
 				},
 				{
 					"name": "Batch publish concept grades",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1220,6 +1256,7 @@
 			"item": [
 				{
 					"name": "List OPP templates",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1248,6 +1285,7 @@
 				},
 				{
 					"name": "Create OPP from template",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1282,6 +1320,7 @@
 				},
 				{
 					"name": "Request parent DigiD signature",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1315,6 +1354,7 @@
 				},
 				{
 					"name": "Quarterly evaluation reminders",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1349,6 +1389,7 @@
 			"item": [
 				{
 					"name": "Trigger scheduled ROD batch",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1382,6 +1423,7 @@
 				},
 				{
 					"name": "List DUO afkeurmeldingen",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1410,6 +1452,7 @@
 				},
 				{
 					"name": "Apply inline fix for DUO error",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1444,6 +1487,7 @@
 				},
 				{
 					"name": "Audit log export",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1478,6 +1522,7 @@
 			"item": [
 				{
 					"name": "Compose OSO dossier",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1512,6 +1557,7 @@
 				},
 				{
 					"name": "Parent review window",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1541,6 +1587,7 @@
 				},
 				{
 					"name": "Secure transfer via OSO",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1581,6 +1628,7 @@
 			"item": [
 				{
 					"name": "Parent sick report (DigiD)",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1615,6 +1663,7 @@
 				},
 				{
 					"name": "Leerplicht counter per pupil",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1644,6 +1693,7 @@
 				},
 				{
 					"name": "Submit leerplicht report via Digikoppeling",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1677,6 +1727,7 @@
 				},
 				{
 					"name": "Mentor class absence dashboard",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1711,6 +1762,7 @@
 			"item": [
 				{
 					"name": "List configured IdPs",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1739,6 +1791,7 @@
 				},
 				{
 					"name": "Resolve SchoolID + ECK iD pseudonym",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1774,6 +1827,7 @@
 				},
 				{
 					"name": "eHerkenning EH3 SSO start",
+					"disabled": true,
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1807,6 +1861,7 @@
 				},
 				{
 					"name": "SURFconext attribute mapping",
+					"disabled": true,
 					"request": {
 						"method": "GET",
 						"header": [
