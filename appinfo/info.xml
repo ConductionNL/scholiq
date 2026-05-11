@@ -2,37 +2,60 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>scholiq</id>
-    <name lang="en">Nextcloud Scholiq</name>
-    <name lang="nl">Nextcloud Scholiq</name>
-    <summary lang="en">A template for creating new Nextcloud apps</summary>
-    <summary lang="nl">Een sjabloon voor het maken van nieuwe Nextcloud-apps</summary>
-    <description lang="en"><![CDATA[A starting point for building Nextcloud apps following ConductionNL conventions.
+    <name lang="en">Scholiq</name>
+    <name lang="nl">Scholiq</name>
+    <summary lang="en">Open-source LVS + LMS for Nextcloud — student tracking, course creation, certification, and compliance training.</summary>
+    <summary lang="nl">Open-source LVS + LMS voor Nextcloud — leerlingvolgsysteem, cursusbeheer, certificering en compliance-training.</summary>
+    <description lang="en"><![CDATA[Scholiq combines a leerlingvolgsysteem (LVS) for primary, secondary, and higher education with a leeromgeving / LMS for corporate L&D and government employee training.
 
-**Key Features**
+**v0.1 wedge — Compliance training**
 
-- **Vue 2 + Pinia frontend** — Modern reactive UI with state management
-- **OpenRegister integration** — Built-in support for the OpenRegister data layer
-- **Admin settings** — Pre-wired settings page with version info
-- **NL Design System ready** — CSS variables, WCAG AA, government theming
-- **Full quality pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+- Annual AVG / BIO / NIS2 / Cyberbeveiligingswet refresher courses
+- Bulk-enrol all employees in mandatory training
+- Capture signed attestations per learner
+- Detect upcoming certificate expiries
+- Real-time coverage percentage per regulation
+- Audit-pack export with immutable evidence log
+
+**Later phases**
+
+- K-12 leerlingvolgsysteem (Phase 2): BRON/ROD, UWLR, OSO, Edukoppeling, SchoolID/ECK iD pseudonymisation, OPP cycle, PTA grading, DigiD parent flow
+- Higher education (Phase 2): SURFconext federation, Studielink enrolment, OOAPI 5.0 catalog, eduPersonAffiliation, edubadges
+- Assessment authoring (Phase 3): IMS QTI 3.0 item banks, proctored exams (ProctoringProviderInterface for ProctorU, Honorlock, ExamSoft), EDCI / Open Badges 3.0 verifiable credentials
+- AI-assisted features (Phase 5): adaptive learning paths + AI item generation, gated behind EU AI Act high-risk feature flags
+
+**Technical foundations**
+
+- Built on OpenRegister (data layer), OpenConnector (external system adapters), and @conduction/nextcloud-vue
+- Content runtime: cmi5 + xAPI primary, SCORM 1.2 / 2004 compatibility shim
+- Immutable audit trail backs compliance evidence, AVG record-of-processing, and AI Act decision traces
+- Standards-first: 26 standards mapped (SCORM, xAPI, cmi5, LTI, QTI, EDCI, Open Badges 3.0, UWLR, OSO, ROD, Edukoppeling, SchoolID, ECK iD, SURFconext, AVG, EU AI Act, BIO2, NIS2)
 
 Free and open source under the EUPL-1.2 license.
 
-**Support:** For support, contact support@conduction.nl.
+**Support:** support@conduction.nl
     ]]></description>
-    <description lang="nl"><![CDATA[Een startpunt voor het bouwen van Nextcloud-apps volgens ConductionNL-conventies.
+    <description lang="nl"><![CDATA[Scholiq combineert een leerlingvolgsysteem (LVS) voor primair, voortgezet en hoger onderwijs met een leeromgeving / LMS voor corporate L&D en overheidstrainingen.
 
-**Belangrijkste functies**
+**v0.1 wedge — Compliance-training**
 
-- **Vue 2 + Pinia frontend** — Moderne reactieve UI met state management
-- **OpenRegister-integratie** — Ingebouwde ondersteuning voor de OpenRegister-datalaag
-- **Beheerdersinstell ingen** — Voorgeconfigureerde instellingenpagina met versie-informatie
-- **NL Design System klaar** — CSS-variabelen, WCAG AA, overheidsthema
-- **Volledige kwaliteitspipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
+- Jaarlijkse AVG / BIO / NIS2 / Cyberbeveiligingswet herhalingstraining
+- Bulk-inschrijving van alle medewerkers in verplichte trainingen
+- Ondertekende attestaties per leerling vastleggen
+- Detectie van aankomende verloopdata van certificaten
+- Realtime dekkingspercentage per regelgeving
+- Audit-pack export met onveranderlijk evidence-logboek
+
+**Latere fasen**
+
+- K-12 leerlingvolgsysteem (Fase 2): BRON/ROD, UWLR, OSO, Edukoppeling, SchoolID/ECK iD-pseudonimisatie, OPP-cyclus, PTA-beoordeling, DigiD-ouderflow
+- Hoger onderwijs (Fase 2): SURFconext-federatie, Studielink-inschrijving, OOAPI 5.0-catalogus, eduPersonAffiliation, edubadges
+- Toetsing (Fase 3): IMS QTI 3.0 itembanken, proctored exams, EDCI / Open Badges 3.0 verifieerbare credentials
+- AI-functies (Fase 5): adaptieve leerpaden, gegate achter EU AI Act high-risk feature flags
 
 Vrij en open source onder de EUPL-1.2-licentie.
 
-**Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
+**Ondersteuning:** support@conduction.nl
     ]]></description>
     <version>0.1.0</version>
     <licence>agpl</licence>
