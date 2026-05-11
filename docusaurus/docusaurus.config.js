@@ -50,8 +50,17 @@ const config = {
       copyright: `Copyright © ${new Date().getFullYear()} Conduction. Built with Docusaurus. Licensed under EUPL-1.2.`,
     },
     prism: {
-      theme: require('prism-react-renderer/themes/github'),
-      darkTheme: require('prism-react-renderer/themes/dracula'),
+      // Inline themes — avoids `require('prism-react-renderer/themes/...')`
+      // which breaks the Docusaurus 3.7 + webpack-5 build (ProgressPlugin
+      // schema validation error). Mirrors openconnector/docusaurus.
+      theme: {
+        plain: { color: '#393A34', backgroundColor: '#f6f8fa' },
+        styles: [],
+      },
+      darkTheme: {
+        plain: { color: '#F8F8F2', backgroundColor: '#282A36' },
+        styles: [],
+      },
     },
   }),
 };
