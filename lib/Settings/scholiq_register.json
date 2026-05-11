@@ -9,33 +9,77 @@
     "type": "application",
     "app": "scholiq",
     "openregister": "^v0.2.10",
-    "description": "Scholiq — replace with your app description"
+    "description": "Scholiq — open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
   },
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
+      "AiFeature": {
+        "slug": "AiFeature",
+        "icon": "RobotOutline",
         "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
+        "title": "AI Feature",
+        "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled → enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["slug", "name"],
         "properties": {
-          "title": {
+          "slug": {
             "type": "string",
-            "description": "The title of the example object",
-            "example": "My example"
+            "description": "Machine-readable identifier, e.g. 'adaptive-learning-paths'. Used as the IAppConfig key suffix for DPO acknowledgement.",
+            "example": "adaptive-learning-paths"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable feature name.",
+            "example": "Adaptive Learning Paths"
           },
           "description": {
             "type": "string",
-            "description": "An optional description",
-            "example": "This is an example"
+            "description": "Plain-language description of the AI feature and its EU AI Act risk classification.",
+            "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III §4(a)."
+          },
+          "riskCategory": {
+            "type": "string",
+            "description": "EU AI Act risk category.",
+            "enum": ["minimal", "limited", "high", "unacceptable"],
+            "example": "high"
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Current lifecycle state. Managed by OpenRegister's lifecycle engine; do not set directly.",
+            "enum": ["disabled", "enabled"],
+            "default": "disabled",
+            "example": "disabled"
           }
-        }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "disabled",
+          "transitions": {
+            "enable": {
+              "from": "disabled",
+              "to": "enabled",
+              "requires": ["OCA\\Scholiq\\Lifecycle\\AiFeatureDpoAckGuard"]
+            },
+            "disable": {
+              "from": "enabled",
+              "to": "disabled"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "enable": {
+            "channels": ["activity"],
+            "template": "scholiq.ai_feature.enabled",
+            "recipients": ["admin"]
+          },
+          "disable": {
+            "channels": ["activity"],
+            "template": "scholiq.ai_feature.disabled",
+            "recipients": ["admin"]
+          }
+        },
+        "x-openregister-seed": []
       }
     }
   }
