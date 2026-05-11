@@ -1,212 +1,251 @@
 # Design — Enrolment
 
-## 1. OpenRegister Schema — `scholiq-enrolment`
+> **Declarative-vs-imperative decision (per [hydra ADR-031 §"How to apply this rule"](../../../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md))** — every Enrolment state transition, overdue detection, days-remaining calculation, T-30/T-7/T-1 reminder dispatch, completion notification, manager-alert-on-overdue, and the completion side-effect (xAPI completed statement → Enrolment activates → Credential issues) fits the `x-openregister-lifecycle` / `-calculations` / `-notifications` extensions. Canonical reference: `decidesk/lib/Settings/decidesk_register.json` Meeting + Decision lifecycles + notifications.
+>
+> **OR abstractions consumed (per [hydra ADR-022](../../../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md))** — bulk import (OR's REST batch endpoint), audit trail, notifications, lifecycle events, relations, RBAC. No app-local audit substrate, no app-local notification service, no app-local bulk-enrol service.
+>
+> **Frontend (per [hydra ADR-024](../../../../hydra/openspec/architecture/adr-024-app-manifest.md))** — `Enrolments` index page already declared in `src/manifest.json` (nextcloud-app change). Bulk-enrol modal is a `customComponents` entry; it talks straight to OR's batch endpoint.
 
-Maps to `Enrolment` entity in ARCHITECTURE.md §3.1 (`Schema.org EnrollmentRequest`):
+## 1. Schema patch on `lib/Settings/scholiq_register.json`
 
-```json
-{
-  "title": "scholiq-enrolment",
-  "properties": {
-    "id":                { "type": "string", "format": "uuid" },
-    "learner_id":        { "type": "string" },
-    "course_section_id": { "type": "string", "format": "uuid" },
-    "status":            { "type": "string", "enum": ["pending","active","completed","withdrawn","failed","overdue"] },
-    "enrolled_at":       { "type": "string", "format": "date-time" },
-    "completed_at":      { "type": ["string","null"], "format": "date-time" },
-    "mandatory":         { "type": "boolean", "default": false },
-    "due_date":          { "type": ["string","null"], "format": "date" },
-    "source":            { "type": "string", "enum": ["self","manager","hr","bulk","migrated"] },
-    "manager_id":        { "type": ["string","null"] },
-    "tenant_id":         { "type": "string", "format": "uuid" },
-    "reminder_30_sent":  { "type": "boolean", "default": false },
-    "reminder_7_sent":   { "type": "boolean", "default": false },
-    "reminder_1_sent":   { "type": "boolean", "default": false },
-    "bulk_job_id":       { "type": ["string","null"] },
-    "reason":            { "type": ["string","null"] },
-    "created_at":        { "type": "string", "format": "date-time" },
-    "updated_at":        { "type": "string", "format": "date-time" }
+The change is a single JSON patch adding the `Enrolment` schema. Every behaviour from the v1 design (status transitions, reminders, overdue detection, completion-triggered credential issuance) IS the schema declaration.
+
+```jsonc
+"Enrolment": {
+  "slug": "enrolment",
+  "icon": "AccountSchoolOutline",
+  "version": "0.1.0",
+  "title": "Enrolment",
+  "description": "Learner enrolment in a course (Schema.org EnrollmentRequest)",
+  "type": "object",
+  "x-openregister": {
+    "schemaType": "schema:EnrollmentRequest",
+    "active": true,
+    "hardDelete": false,
+    "searchable": true
   },
-  "required": ["learner_id","course_section_id","status","enrolled_at","source","tenant_id"],
-  "indexes": [
-    ["learner_id","tenant_id","status"],
-    ["course_section_id","tenant_id","status"],
-    ["mandatory","due_date","status","tenant_id"],
-    ["bulk_job_id"]
+  "required": ["learnerId", "courseId", "tenant_id", "source"],
+  "properties": {
+    "learnerId":     { "type": "string" },
+    "courseId":      { "type": "string", "format": "uuid" },
+    "mandatory":     { "type": "boolean", "default": false },
+    "dueDate":       { "type": ["string","null"], "format": "date" },
+    "source":        { "type": "string", "enum": ["self","manager","hr","bulk","migrated","system"] },
+    "managerId":     { "type": ["string","null"] },
+    "bulkJobId":     { "type": ["string","null"] },
+    "reason":        { "type": ["string","null"] },
+    "regulationSlug":{ "type": ["string","null"] },
+    "tenant_id":     { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "pending",
+    "transitions": {
+      "activate":  { "from": "pending",                  "to": "active" },
+      "complete":  { "from": "active",                   "to": "completed" },
+      "withdraw":  { "from": ["pending","active"],       "to": "withdrawn" },
+      "fail":      { "from": "active",                   "to": "failed" }
+    }
+  },
+  "x-openregister-relations": {
+    "learner": { "register": "scholiq", "schema": "LearnerProfile", "cardinality": "many-to-one", "joinOn": "learnerId" },
+    "course":  { "register": "scholiq", "schema": "Course",         "cardinality": "many-to-one", "joinOn": "courseId" }
+  },
+  "x-openregister-calculations": {
+    "isOverdue": {
+      "type": "boolean",
+      "materialise": true,
+      "expression": {
+        "and": [
+          { "eq": [ { "prop": "lifecycle" }, "active" ] },
+          { "neq": [ { "prop": "dueDate" }, null ] },
+          { "lt":  [ { "prop": "dueDate" }, "@now" ] }
+        ]
+      }
+    },
+    "daysRemaining": {
+      "type": "integer",
+      "materialise": true,
+      "expression": {
+        "if": [
+          { "eq": [ { "prop": "dueDate" }, null ] },
+          null,
+          { "dateDiff": [ { "prop": "dueDate" }, "@now", "days" ] }
+        ]
+      }
+    },
+    "ragStatus": {
+      "type": "string",
+      "materialise": true,
+      "expression": {
+        "case": [
+          { "when": { "eq":  [ { "prop": "lifecycle" }, "completed" ] }, "then": "completed" },
+          { "when": { "prop": "isOverdue" },                              "then": "red" },
+          { "when": { "lte": [ { "prop": "daysRemaining" }, 7 ] },        "then": "amber" },
+          { "default": "green" }
+        ]
+      }
+    }
+  },
+  "x-openregister-notifications": {
+    "welcomeOnActivate": {
+      "trigger":   { "lifecycleEnter": "active" },
+      "channel":   "nc-notification",
+      "subject":   "scholiq.enrolment.activated",
+      "recipient": "@self.learnerId",
+      "userPreferenceKey": "notify_assignments"
+    },
+    "completionOnComplete": {
+      "trigger":   { "lifecycleEnter": "completed" },
+      "channel":   "nc-notification",
+      "subject":   "scholiq.enrolment.completed",
+      "recipient": "@self.learnerId",
+      "userPreferenceKey": "notify_assignments"
+    },
+    "reminderT30": {
+      "trigger":   { "calculated": "daysRemaining", "eq": 30, "and": { "eq": [ { "prop": "mandatory" }, true ] } },
+      "channel":   "nc-notification",
+      "subject":   "scholiq.enrolment.due.t30",
+      "recipient": "@self.learnerId",
+      "userPreferenceKey": "notify_due_dates",
+      "idempotencyKey": "reminderT30"
+    },
+    "reminderT7":  { "trigger": { "calculated": "daysRemaining", "eq": 7,  "and": { "eq": [ { "prop": "mandatory" }, true ] } }, "channel": "nc-notification", "subject": "scholiq.enrolment.due.t7",  "recipient": "@self.learnerId", "userPreferenceKey": "notify_due_dates", "idempotencyKey": "reminderT7" },
+    "reminderT1":  { "trigger": { "calculated": "daysRemaining", "eq": 1,  "and": { "eq": [ { "prop": "mandatory" }, true ] } }, "channel": "nc-notification", "subject": "scholiq.enrolment.due.t1",  "recipient": "@self.learnerId", "userPreferenceKey": "notify_due_dates", "idempotencyKey": "reminderT1" },
+    "managerAlertOnOverdue": {
+      "trigger":   { "calculated": "isOverdue", "eq": true },
+      "channel":   "nc-notification",
+      "subject":   "scholiq.enrolment.overdue",
+      "recipient": "@self.managerId",
+      "fallbackRecipientFromTenantRole": "hr"
+    }
+  }
+}
+```
+
+**What each block replaces:**
+
+| v1 element | Replaced by |
+|---|---|
+| `EnrolmentController` CRUD | `CnAppRoot` index/detail pages binding to `register=scholiq schema=Enrolment` (declared in nextcloud-app manifest). |
+| `EnrolmentService::transition*` | `x-openregister-lifecycle.transitions`. OR's lifecycle engine emits the audit entries automatically. |
+| `EnrolmentCompletionListener` (listens for xAPI completion) | A schema-level rule on `XapiStatement` notifies on a `verb=completed` event → fires the Enrolment.lifecycle `complete` transition. Declared as `x-openregister-notifications` on `XapiStatement` referencing the Enrolment relation. (Future migration option per ADR-031.) For v0.1 the simplest correct path is the thin `lib/Lifecycle/XapiCompletionHandler.php` guard — see PHP §2 below. |
+| `BulkEnrolmentService::bulkEnrol` | OR's REST batch-import endpoint. The Vue modal posts to `POST /api/openregister/{registerSlug}/{schemaSlug}/batch` directly. No Scholiq controller. |
+| `BulkEnrolmentService::resolveAudience` | NC's native `IGroupManager` REST endpoints + the modal's CSV-parser code (browser-side). |
+| `EnrolmentNotificationService` | `x-openregister-notifications` on the Enrolment schema. OR resolves recipients via `@self.learnerId`, checks the per-user `userPreferenceKey`, and dispatches via NC's notification engine. |
+| `EnrolmentDueReminderJob` (TimedJob) | `x-openregister-notifications.reminderT30/T7/T1` triggered by the `daysRemaining` calculated field. Per ADR-031 §"Background jobs that walk an object queue and apply a transition", this is the case (1) pattern: "Use a derived field instead of persisting the state". `idempotencyKey` makes OR's notification engine dispatch each reminder once per object per key. |
+| `reminder_*_sent` boolean fields | Removed. OR tracks notification dispatch internally via `idempotencyKey`. |
+
+---
+
+## 2. PHP files that ship in this change (ADR-031 exceptions only)
+
+The wedge ships **one** PHP file:
+
+| File | ADR-031 category | Why kept |
+|---|---|---|
+| `lib/Lifecycle/XapiCompletionHandler.php` | Lifecycle guard / handler | Listens for OR's `xapi.statement.received` audit event (verb=`completed` or `passed`); when the statement maps to a Lesson with `mandatoryTraining=true` and the lesson is the last of the Course, dispatches the `complete` transition on the relevant Enrolment via OR's REST API. Single-method handler called by OR's lifecycle engine. |
+
+This handler is the **only legitimate PHP** for the Enrolment domain. Per ADR-031 §"Lifecycle guards as called from `x-openregister-lifecycle.requires`", a single-method handler that orchestrates a downstream OR transition is a legitimate seam.
+
+**Explicitly NOT in this change** (ADR-031 anti-patterns):
+- `EnrolmentController` — `CnAppRoot` index/detail page covers list/show; transitions (`withdraw`, `complete`) are OR REST calls from the manifest's detail-page action buttons.
+- `EnrolmentService` (state machine) — `x-openregister-lifecycle` declarative.
+- `EnrolmentNotificationService` — `x-openregister-notifications` declarative.
+- `EnrolmentDueReminderJob` (`OCP\BackgroundJob\TimedJob`) — `x-openregister-notifications` with calculated-field triggers replaces it. Per ADR-031 §"Background jobs that walk an object queue and apply a transition" case (1).
+- `EnrolmentCompletionListener` — replaced by `XapiCompletionHandler` lifecycle handler.
+- `BulkEnrolmentService` — OR's REST batch endpoint replaces it; the Vue modal calls OR directly.
+
+---
+
+## 3. Frontend — `CnAppRoot` consumption
+
+### 3.1 Manifest extension
+
+The `Enrolments` index page is already declared in `src/manifest.json` (nextcloud-app change). This change extends the manifest with:
+
+```jsonc
+{
+  "pages": [
+    /* ... existing pages ... */
+    { "id": "EnrolmentDetail", "route": "/enrolments/:id",       "type": "detail", "config": { "register": "scholiq", "schema": "Enrolment" } },
+    { "id": "BulkEnrol",       "route": "/enrolments/bulk",      "type": "custom", "config": { "component": "BulkEnrolModal" } }
   ]
 }
 ```
 
-The `reminder_*_sent` booleans ensure idempotency: the daily job only dispatches each reminder once per Enrolment per threshold (REQ-EN-007).
+### 3.2 `BulkEnrolModal.vue`
+
+Single custom Vue component registered via `customComponents` on `CnAppRoot`. Multi-step modal:
+
+1. **Audience picker** — group selector (calls NC's native `/ocs/v2.php/cloud/groups`) or CSV upload (parsed browser-side).
+2. **Section + config** — Course picker (calls OR REST `GET /api/openregister/scholiq/Course?lifecycle=published`), `mandatory` toggle, `dueDate` picker.
+3. **Confirm + submit** — POSTs **directly** to OR's batch endpoint: `POST /api/openregister/scholiq/Enrolment/batch` with body `{objects: [{learnerId, courseId, mandatory, dueDate, source: "bulk", bulkJobId: <uuid>}, ...]}`.
+
+No Scholiq backend involvement; no `/api/enrolments/bulk` controller. The `bulkJobId` UUID is generated browser-side; the modal polls `GET /api/openregister/scholiq/Enrolment?bulkJobId=<uuid>` to surface progress.
+
+### 3.3 No app-local store, no app-local Vue Router code
+
+Per ADR-031 + ADR-024: no `useEnrolmentStore`, no `src/views/EnrolmentListView.vue` / `EnrolmentDetailView.vue`. `CnAppRoot`'s built-in renderers cover the wedge.
 
 ---
 
-## 2. PHP Controllers
+## 4. Audit Events Emitted (declaratively)
 
-### 2.1 `EnrolmentController`
-
-Routes:
-```
-GET    /api/enrolments                   → list (filters: learner_id, course_section_id, mandatory, status, source)
-POST   /api/enrolments                   → create single enrolment
-GET    /api/enrolments/{id}              → show
-PATCH  /api/enrolments/{id}              → update status/reason (withdraw, complete)
-POST   /api/enrolments/bulk              → initiate bulk enrolment (returns 202 + job_id)
-GET    /api/enrolments/bulk/{jobId}      → poll bulk-enrolment job status
-```
-
-Role guards:
-- `learner`: GET own enrolments only (learner_id === authenticated user).
-- `admin`, `hr`, `manager`: full CRUD.
-- `instructor`: GET for their course sections.
-
-All state changes: `AuditedController` + `AuditTrail::record()`.
-
----
-
-## 3. PHP Services
-
-### 3.1 `BulkEnrolmentService`
-
-```php
-class BulkEnrolmentService
-{
-    public function resolveAudience(array $audienceDefinition): array // returns NC user id list
-    public function bulkEnrol(
-        array $ncUserIds,
-        string $courseSectionId,
-        bool $mandatory,
-        ?string $dueDate,
-        string $managerId,
-        string $bulkJobId
-    ): BulkEnrolmentResult
-}
-```
-
-`resolveAudience()` strategies:
-- `nc_group_id`: calls `IGroupManager::get($groupId)->getUsers()` — returns all group members.
-- `role`: queries OpenRegister for LearnerProfile objects with matching role + tenant_id.
-- `department`: queries LearnerProfile by `department` extension field.
-- `csv_user_ids`: parses the uploaded CSV, filters via `IUserManager::userExists()`.
-
-`bulkEnrol()`:
-1. Deduplicates against existing active Enrolments (one SELECT per batch, not per user).
-2. Inserts new Enrolments in batches of 100 via `ObjectService::saveObjects()` (batch endpoint if OR supports it, else loop).
-3. Each Enrolment: `source='bulk'`, `bulk_job_id` set, `mandatory=true`.
-4. Returns `BulkEnrolmentResult{enrolled, skipped, failed, errors[]}`.
-5. Dispatches `cohort_enrolment_done` notification to initiating user on completion.
-
-### 3.2 `EnrolmentNotificationService`
-
-```php
-class EnrolmentNotificationService
-{
-    public function dispatchEnrolmentNotification(string $notificationSubject, string $learnerId, array $context): void
-    public function dispatchDueReminder(Enrolment $enrolment, int $daysRemaining): void
-}
-```
-
-Wraps `OCP\Notification\IManager`. Uses `SUBJECT_SETTING_MAP` constant binding subjects to user preferences (per FEATURES.md §7.3 pattern):
-
-```php
-const SUBJECT_SETTING_MAP = [
-    'course_enrolled'     => 'notify_assignments',
-    'compliance_due'      => 'notify_compliance_renewal',
-    'assignment_overdue'  => 'notify_due_dates',
-    'cohort_enrolment_done' => 'notify_assignments',
-    'assignment_due_soon' => 'notify_due_dates',
-];
-```
-
-### 3.3 `EnrolmentCompletionListener`
-
-Listens for `xapi.statement.received` events via `OCP\EventDispatcher\IEventDispatcher`. When the statement verb is `completed` or `passed` and the Lesson has `mandatory_training=true`:
-
-1. Looks up the Enrolment for (learner_id, course_section_id).
-2. Checks if this was the final Lesson of the CourseSection.
-3. If yes: sets status='completed', completed_at=now, emits `enrolment.completed` audit event.
-4. Emits `scholiq.enrolment.completed` NC event for downstream listeners (certification spec).
-
----
-
-## 4. Background Job
-
-### `EnrolmentDueReminderJob`
-
-Extends `OCP\BackgroundJob\TimedJob`. Interval: 86400 seconds (daily). Runs at midnight UTC.
-
-Query: SELECT Enrolments WHERE mandatory=true AND status IN ('active','pending') AND due_date IS NOT NULL AND due_date > today ORDER BY due_date ASC.
-
-For each result:
-- If `due_date - today = 30` AND `reminder_30_sent = false`: dispatch + set `reminder_30_sent = true`.
-- If `due_date - today = 7` AND `reminder_7_sent = false`: dispatch + set `reminder_7_sent = true`.
-- If `due_date - today = 1` AND `reminder_1_sent = false`: dispatch + set `reminder_1_sent = true`.
-- If `due_date < today` AND status = 'active': set status='overdue', emit `enrolment.overdue` audit event, dispatch `assignment_overdue` to learner + manager.
-
-Each reminder_*_sent field update is a PATCH to OpenRegister (not a full object replace). Emit `enrolment.reminder.sent` audit event per dispatch.
-
----
-
-## 5. Vue Frontend
-
-### 5.1 Route additions
-
-```js
-{ path: '/enrolments',          component: () => import('../views/EnrolmentListView.vue') },
-{ path: '/enrolments/:id',      component: () => import('../views/EnrolmentDetailView.vue') },
-```
-
-Bulk-enrolment is a modal, not a route: `BulkEnrolmentModal.vue`.
-
-### 5.2 Key components
-
-- **`EnrolmentListView.vue`**: `CnDataTable` over `useEnrolmentStore`. Columns: learner name, course, status badge, mandatory icon, due_date (with red highlight if overdue), source, enrolled_at. Filters: status, mandatory, regulation_slug (via course link).
-- **`BulkEnrolmentModal.vue`**: multi-step modal (Step 1: audience — group picker / CSV upload; Step 2: section + mandatory + due_date; Step 3: review count + submit). Shows async job progress bar via polling `GET /api/enrolments/bulk/{jobId}`.
-- **`EnrolmentDetailView.vue`**: `CnDetailPage` + `CnObjectSidebar`. Tabs: Details, Audit Trail. Withdraw action triggers PATCH with reason capture.
-
-### 5.3 Stores
-
-`useEnrolmentStore = createObjectStore('/api/enrolments')` — standard Options API pattern.
-
----
-
-## 6. Audit Events Emitted
-
-| Endpoint / Action | event_type | lawful_basis |
+| Trigger | event_type | Declared in schema |
 |---|---|---|
-| POST /api/enrolments | `enrolment.created` | contract (employment training obligation) |
-| POST /api/enrolments/bulk (per Enrolment) | `enrolment.created` | contract |
-| PATCH /api/enrolments/{id} → status=withdrawn | `enrolment.withdrawn` | contract |
-| EnrolmentCompletionListener | `enrolment.completed` | contract |
-| EnrolmentDueReminderJob → overdue | `enrolment.overdue` | contract |
-| EnrolmentDueReminderJob → reminder sent | `enrolment.reminder.sent` | contract |
+| Enrolment created (any source) | `enrolment.created` | OR default save audit |
+| Enrolment transition `pending → active` | `enrolment.activated` | `Enrolment.x-openregister-lifecycle` |
+| Enrolment transition `active → completed` | `enrolment.completed` | `Enrolment.x-openregister-lifecycle` |
+| Enrolment transition `* → withdrawn` | `enrolment.withdrawn` | `Enrolment.x-openregister-lifecycle` |
+| Enrolment transition `active → failed` | `enrolment.failed` | `Enrolment.x-openregister-lifecycle` |
+| Calculated `isOverdue` becomes `true` | `enrolment.overdue.detected` | OR's calculation-change events (via the managerAlertOnOverdue notification) |
+| Reminder dispatched | `notification.dispatched` (with `idempotencyKey`) | OR notification engine |
 
-Add new event types to `AuditEventTypes::KNOWN`: `enrolment.overdue`, `enrolment.reminder.sent`.
+No `AuditEventTypes::KNOWN`, no `Scholiq\Service\AuditTrail::record()`.
 
 ---
 
-## 7. Integration Points
+## 5. Integration Points
 
 | System | Interface | Purpose |
 |---|---|---|
-| OpenRegister | `ObjectService` | Persist Enrolment objects |
-| IGroupManager | `OCP\IGroupManager` | Resolve NC group → user list for bulk-enrol |
-| IUserManager | `OCP\IUserManager` | Validate user existence for CSV bulk-enrol |
-| Notification | `OCP\Notification\IManager` | T-30/T-7/T-1 reminders, completion notifications |
-| EventDispatcher | `OCP\EventDispatcher\IEventDispatcher` | Listen for xapi.statement.received (completion) |
-| AuditTrail | `Scholiq\Service\AuditTrail` | All mutation audit events |
-| Compliance-audit spec | reads `scholiq-enrolment` | Coverage % computation (denominator) |
-| Certification spec | listens for `enrolment.completed` | Triggers credential issuance |
+| OpenRegister | Schema lifecycle / calculations / notifications + REST + audit + relations + batch import | Every Enrolment operation |
+| OpenRegister notifications | OR's notification engine + per-user-preference resolver | T-30 / T-7 / T-1 reminders, completion + activation alerts, manager-alert-on-overdue |
+| IGroupManager (native NC) | NC OCS API | Audience resolution for bulk-enrol (browser-side) |
+| @conduction/nextcloud-vue | `CnAppRoot` + `customComponents` | Frontend shell + `BulkEnrolModal` registration |
+| Course-management change | `Course` schema + `XapiStatement` schema | Enrolment relations resolve here |
+| Certification change | Listens to OR's `enrolment.completed` audit event | Auto-issues Credential — implemented as schema notification on Course, not as a Scholiq listener service (see certification design) |
 
 ---
 
-## 8. Wedge Scope Exclusions
+## 6. Declarative-vs-imperative decision summary
+
+| Behaviour | Decision | ADR-031 row |
+|---|---|---|
+| Enrolment state machine | declarative | lifecycle |
+| isOverdue detection | declarative | calculation |
+| daysRemaining computation | declarative | calculation |
+| RAG status display | declarative | calculation |
+| Welcome / completion notification | declarative | notification |
+| T-30 / T-7 / T-1 reminders | declarative | notification (calculated-field-triggered) |
+| Manager alert on overdue | declarative | notification |
+| Bulk-enrolment | declarative (OR REST batch) | (consumed via ADR-022) |
+| Audience resolution (group / CSV) | declarative (browser code + NC OCS API) | (consumed via ADR-022) |
+| Audit entries on every transition | declarative (OR) | (consumed via ADR-022) |
+| Course/Learner relation joins | declarative | relation |
+| Enrolment CRUD UI | declarative (CnAppRoot + OR REST) | (consumed via ADR-024) |
+| xAPI completion → Enrolment.complete | imperative (PHP, single-method handler) | "Lifecycle guards" exception |
+
+---
+
+## 7. Wedge Scope Exclusions
 
 | Excluded | Deferred to |
 |---|---|
 | Studielink HE enrolment | Phase 2 |
 | 30-60-90 onboarding template application | V1 |
-| Prerequisite enforcement at enrolment | Phase 2 (requires prerequisite graph in course-management) |
+| Prerequisite enforcement at enrolment | Phase 2 (requires Course prerequisite graph) |
 | Waitlist auto-promotion | V1 |
 | Cross-institution credit transfer | Phase 2 (oso-transfer spec) |
-| Payment processing for paid enrolments | Enterprise |
+| Payment processing | Enterprise |
