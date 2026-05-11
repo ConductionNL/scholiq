@@ -63,6 +63,43 @@
 			}
 		},
 		{
+			"id": "CourseDetail",
+			"route": "/courses/:id",
+			"type": "detail",
+			"title": "Course Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "LessonIndex",
+			"route": "/courses/:courseId/lessons",
+			"type": "index",
+			"title": "Lessons",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson"
+			}
+		},
+		{
+			"id": "LessonDetail",
+			"route": "/courses/:courseId/lessons/:id",
+			"type": "detail",
+			"title": "Lesson Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson"
+			}
+		},
+		{
+			"id": "LessonPlayer",
+			"route": "/courses/:courseId/lessons/:lessonId/play",
+			"type": "custom",
+			"title": "Lesson Player",
+			"component": "LessonPlayer"
+		},
+		{
 			"id": "Settings",
 			"route": "/settings",
 			"type": "custom",

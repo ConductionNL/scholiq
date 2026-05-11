@@ -80,6 +80,337 @@
           }
         },
         "x-openregister-seed": []
+      },
+      "Course": {
+        "slug": "course",
+        "icon": "FolderOutline",
+        "version": "0.1.0",
+        "title": "Course",
+        "description": "A course or training program (Schema.org Course). Lifecycle: draft → published → archived.",
+        "type": "object",
+        "x-openregister": {
+          "schemaType": "schema:Course",
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": ["code", "name", "level", "language", "tenant_id"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Course code (e.g. BIO-3H-2026)",
+            "example": "NIS2-AWARENESS-2026"
+          },
+          "name": {
+            "type": "string",
+            "description": "Course name",
+            "example": "NIS2 Awareness Training"
+          },
+          "name_nl": {
+            "type": ["string", "null"],
+            "description": "Dutch name",
+            "example": "NIS2 Bewustzijnstraining"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Course description"
+          },
+          "level": {
+            "type": "string",
+            "description": "Education or training level",
+            "enum": ["po", "vo", "mbo", "hbo", "wo", "corporate"],
+            "example": "corporate"
+          },
+          "language": {
+            "type": "string",
+            "description": "ISO 639-1 language code",
+            "pattern": "^[a-z]{2}$",
+            "example": "nl"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Searchable tags",
+            "items": { "type": "string" }
+          },
+          "mandatoryTraining": {
+            "type": "boolean",
+            "description": "Whether this course is mandatory training",
+            "default": false
+          },
+          "regulationSlug": {
+            "type": ["string", "null"],
+            "description": "Regulation identifier (e.g. NIS2, AVG, BIO)",
+            "example": "NIS2"
+          },
+          "renewalCourseSlug": {
+            "type": ["string", "null"],
+            "description": "Slug of the renewal/refresher course for this training"
+          },
+          "certificateTemplate": {
+            "type": ["string", "null"],
+            "description": "nc:files path to PDF certificate template"
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Course lifecycle state. Managed by OR lifecycle engine; do not set directly.",
+            "enum": ["draft", "published", "archived"],
+            "default": "draft",
+            "example": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant UUID (multi-tenant isolation)"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "requires": ["OCA\\Scholiq\\Lifecycle\\CoursePublishGuard"]
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived"
+            },
+            "unarchive": {
+              "from": "archived",
+              "to": "draft"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "lessonCount": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "count": {
+                "schema": "Lesson",
+                "filter": { "courseId": "@self.id" }
+              }
+            }
+          },
+          "isPublished": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "eq": [{ "prop": "lifecycle" }, "published"]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "enrolledLearners": {
+            "metric": "count_distinct",
+            "schema": "Enrolment",
+            "field": "learnerId",
+            "filter": { "courseId": "@self.id" }
+          },
+          "completedLearners": {
+            "metric": "count_distinct",
+            "schema": "Enrolment",
+            "field": "learnerId",
+            "filter": { "courseId": "@self.id", "lifecycle": "completed" }
+          }
+        },
+        "x-openregister-notifications": {
+          "publish": {
+            "channels": ["activity"],
+            "template": "scholiq.course.published",
+            "recipients": ["admin", "hr"]
+          },
+          "archive": {
+            "channels": ["activity"],
+            "template": "scholiq.course.archived",
+            "recipients": ["admin"]
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Lesson": {
+        "slug": "lesson",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Lesson",
+        "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft → published → retired.",
+        "type": "object",
+        "x-openregister": {
+          "schemaType": "schema:LearningResource",
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": ["courseId", "name", "order", "contentType", "contentRef", "tenant_id"],
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the parent Course"
+          },
+          "name": {
+            "type": "string",
+            "description": "Lesson name",
+            "example": "Module 1 — NIS2 Scope & Obligations"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Position within the course (1-based, contiguous)",
+            "minimum": 1,
+            "example": 1
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Type of learning content",
+            "enum": ["text", "video", "scorm12", "scorm2004", "cmi5", "lti", "quiz"],
+            "example": "cmi5"
+          },
+          "contentRef": {
+            "type": "string",
+            "description": "nc:files path, cmi5 launch URL, or LTI link",
+            "example": "/Scholiq/tenant-uuid/course-uuid/cmi5/lesson-uuid/"
+          },
+          "durationMinutes": {
+            "type": ["integer", "null"],
+            "description": "Estimated duration in minutes",
+            "example": 20
+          },
+          "learningObjectives": {
+            "type": "array",
+            "description": "Learning objectives for this lesson",
+            "items": { "type": "string" }
+          },
+          "mandatoryTraining": {
+            "type": "boolean",
+            "description": "Whether this lesson is tagged as mandatory training",
+            "default": false
+          },
+          "regulationSlug": {
+            "type": ["string", "null"],
+            "description": "Regulation identifier for mandatory-training compliance tracking (e.g. NIS2, AVG, BIO)",
+            "example": "NIS2"
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Lesson lifecycle state. Managed by OR lifecycle engine; do not set directly.",
+            "enum": ["draft", "published", "retired"],
+            "default": "draft",
+            "example": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant UUID (multi-tenant isolation)"
+          }
+        },
+        "x-openregister-relations": {
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published"
+            },
+            "retire": {
+              "from": "published",
+              "to": "retired"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "publish": {
+            "channels": ["activity"],
+            "template": "scholiq.lesson.published",
+            "recipients": ["admin"]
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "XapiStatement": {
+        "slug": "xapi-statement",
+        "icon": "TextBoxOutline",
+        "version": "0.1.0",
+        "title": "XapiStatement",
+        "description": "xAPI 1.0.3 statement stored in the LRS substrate (append-only per ADR-002). Every save emits xapi.statement.received audit entry.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "appendOnly": true,
+          "searchable": false
+        },
+        "required": ["actor", "verb", "object", "stored", "tenant_id"],
+        "properties": {
+          "actor": {
+            "type": "object",
+            "description": "xAPI Actor (Agent or Group)"
+          },
+          "verb": {
+            "type": "object",
+            "description": "xAPI Verb with id IRI and display map"
+          },
+          "object": {
+            "type": "object",
+            "description": "xAPI Activity, Agent, SubStatement, or StatementRef"
+          },
+          "result": {
+            "type": ["object", "null"],
+            "description": "xAPI Result (score, success, completion, duration, extensions)"
+          },
+          "context": {
+            "type": ["object", "null"],
+            "description": "xAPI Context (registration, instructor, team, contextActivities, extensions)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event described by the statement occurred"
+          },
+          "stored": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the statement was received and stored by the LRS"
+          },
+          "authority": {
+            "type": ["object", "null"],
+            "description": "xAPI Authority (Agent attesting this statement)"
+          },
+          "version": {
+            "type": "string",
+            "const": "1.0.3",
+            "description": "xAPI specification version"
+          },
+          "courseId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "UUID of the Course this statement relates to (Scholiq denormalisation)"
+          },
+          "lessonId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "UUID of the Lesson this statement relates to (Scholiq denormalisation)"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant UUID (multi-tenant isolation)"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "stored",
+          "transitions": {}
+        },
+        "x-openregister-seed": []
       }
     }
   }
