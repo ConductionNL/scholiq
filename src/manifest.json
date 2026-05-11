@@ -230,6 +230,24 @@
       "config": {
         "component": "AuditPackExportModal"
       }
+    },
+    {
+      "id": "CredentialDetail",
+      "route": "/credentials/:id",
+      "type": "detail",
+      "title": "Credential",
+      "config": {
+        "register": "scholiq",
+        "schema": "Credential"
+      }
+    },
+    {
+      "id": "CredentialVerify",
+      "route": "/credentials/:id/verify",
+      "type": "custom",
+      "title": "Verify Credential",
+      "component": "CredentialVerify",
+      "public": true
     }
   ]
 }

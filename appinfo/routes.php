@@ -21,8 +21,12 @@ return [
         // cmi5 JWT minting — cryptographic operation, legitimate PHP per ADR-031.
         ['name' => 'cmi5_launch#token', 'url' => '/api/lessons/{lessonId}/launch', 'verb' => 'GET'],
 
-        // Public credential verification.
+        // Public credential verification — no auth, per ADR-031 external-system contract.
         ['name' => 'credential#verify', 'url' => '/api/credentials/{id}/verify', 'verb' => 'GET'],
+
+        // Admin key management — admin-only, cryptographic operation (ADR-031).
+        ['name' => 'key_admin#generateKey', 'url' => '/api/credentials/admin/generate-key', 'verb' => 'POST'],
+        ['name' => 'key_admin#keyStatus',   'url' => '/api/credentials/admin/key-status',   'verb' => 'GET'],
 
         // Compliance audit-pack export — ZIP generation.
         ['name' => 'audit_pack#export',  'url' => '/api/compliance/audit/export',           'verb' => 'POST'],

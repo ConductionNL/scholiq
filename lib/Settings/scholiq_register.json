@@ -14,6 +14,259 @@
   "paths": {},
   "components": {
     "schemas": {
+      "Credential": {
+        "slug": "credential",
+        "icon": "CertificateOutline",
+        "version": "0.1.0",
+        "title": "Credential",
+        "description": "Verifiable Credential (W3C VC + Open Badges 3.0). Append-only compliance evidence; issued on enrolment completion; supports expiry detection with tiered reminders.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true,
+          "appendOnly": true
+        },
+        "required": ["learnerId", "kind", "issuedAt", "issuerDid", "signature", "openbadges3Payload", "tenant_id"],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Opaque learner UUID. Never BSN."
+          },
+          "courseId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "UUID of the associated Course. Null for manually issued credentials."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["diploma", "certificate", "badge", "microcredential"],
+            "description": "Credential type."
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of issuance."
+          },
+          "expiresAt": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 expiry timestamp. Null = does not expire."
+          },
+          "issuerDid": {
+            "type": "string",
+            "description": "Decentralised Identifier of the issuing organisation."
+          },
+          "signature": {
+            "type": "string",
+            "description": "RS256 compact JWS produced by CredentialSigningService."
+          },
+          "openbadges3Payload": {
+            "type": "object",
+            "description": "Full Open Badges 3.0 JSON-LD assertion."
+          },
+          "edciPayload": {
+            "type": ["object", "null"],
+            "description": "EDCI/Europass ELM payload. Phase 3."
+          },
+          "revocationReason": {
+            "type": ["string", "null"],
+            "description": "Human-readable revocation reason. Set on revoke transition."
+          },
+          "issuedBy": {
+            "type": "string",
+            "description": "Display name of the issuing organisation."
+          },
+          "source": {
+            "type": "string",
+            "enum": ["auto", "manual", "migrated"],
+            "description": "How this credential was created."
+          },
+          "regulationSlug": {
+            "type": ["string", "null"],
+            "description": "Regulation identifier (e.g. NIS2) inherited from the Course."
+          },
+          "renewalEnrolmentId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "UUID of the renewal Enrolment created on expiry. Written back by OR batch."
+          },
+          "verificationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public URL for unauthenticated credential verification."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": ["issued", "revoked", "expired"],
+            "default": "issued",
+            "description": "Lifecycle state. Managed by OpenRegister; do not set directly."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "issued",
+          "transitions": {
+            "revoke": {
+              "from": "issued",
+              "to": "revoked"
+            },
+            "expire": {
+              "from": "issued",
+              "to": "expired"
+            },
+            "issue": {
+              "from": null,
+              "to": "issued",
+              "requires": ["OCA\\Scholiq\\Service\\CredentialSigningService"]
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "register": "scholiq",
+            "schema": "LearnerProfile",
+            "cardinality": "many-to-one",
+            "joinOn": "learnerId"
+          },
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          }
+        },
+        "x-openregister-calculations": {
+          "daysUntilExpiry": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "if": [
+                { "eq": [{ "prop": "expiresAt" }, null] },
+                null,
+                { "dateDiff": [{ "prop": "expiresAt" }, "@now", "days"] }
+              ]
+            }
+          },
+          "expiryStatus": {
+            "type": "string",
+            "materialise": true,
+            "expression": {
+              "if": [
+                { "eq": [{ "prop": "expiresAt" }, null] },
+                "none",
+                {
+                  "if": [
+                    { "lte": [{ "prop": "daysUntilExpiry" }, 0] },
+                    "expired",
+                    {
+                      "if": [
+                        { "lte": [{ "prop": "daysUntilExpiry" }, 30] },
+                        "expiring-soon",
+                        {
+                          "if": [
+                            { "lte": [{ "prop": "daysUntilExpiry" }, 90] },
+                            "expiring",
+                            "valid"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "isOpenBadgesV3Signed": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "and": [
+                { "neq": [{ "prop": "signature" }, null] },
+                { "neq": [{ "prop": "signature" }, ""] },
+                { "neq": [{ "prop": "openbadges3Payload" }, null] }
+              ]
+            }
+          },
+          "isExpiringIn90Days": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "and": [
+                { "eq": [{ "prop": "lifecycle" }, "issued"] },
+                { "neq": [{ "prop": "expiresAt" }, null] },
+                { "lte": [{ "prop": "daysUntilExpiry" }, 90] },
+                { "gt": [{ "prop": "daysUntilExpiry" }, 30] }
+              ]
+            }
+          },
+          "isExpiringIn30Days": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "and": [
+                { "eq": [{ "prop": "lifecycle" }, "issued"] },
+                { "neq": [{ "prop": "expiresAt" }, null] },
+                { "lte": [{ "prop": "daysUntilExpiry" }, 30] },
+                { "gt": [{ "prop": "daysUntilExpiry" }, 0] }
+              ]
+            }
+          },
+          "isExpired": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "and": [
+                { "eq": [{ "prop": "lifecycle" }, "issued"] },
+                { "neq": [{ "prop": "expiresAt" }, null] },
+                { "lte": [{ "prop": "daysUntilExpiry" }, 0] }
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "issuedToLearner": {
+            "trigger": { "lifecycleEnter": "issued" },
+            "channel": "nc-notification",
+            "subject": "scholiq.credential.issued",
+            "recipient": "@self.learnerId"
+          },
+          "expiringSoonAlert": {
+            "trigger": { "calculated": "isExpiringIn30Days", "eq": true },
+            "channel": "nc-notification",
+            "subject": "scholiq.credential.expiring.t30",
+            "recipient": "@self.learnerId",
+            "idempotencyKey": "expiryT30"
+          },
+          "expiryT90": {
+            "trigger": { "calculated": "isExpiringIn90Days", "eq": true },
+            "channel": "nc-notification",
+            "subject": "scholiq.credential.expiring.t90",
+            "recipient": "@self.learnerId",
+            "idempotencyKey": "expiryT90"
+          },
+          "expiredAlert": {
+            "trigger": { "calculated": "isExpired", "eq": true },
+            "channel": "nc-notification",
+            "subject": "scholiq.credential.expired",
+            "recipient": "@self.learnerId",
+            "idempotencyKey": "expired",
+            "alsoDispatchLifecycle": "expire"
+          },
+          "revoked": {
+            "trigger": { "lifecycleEnter": "revoked" },
+            "channel": "nc-notification",
+            "subject": "scholiq.credential.revoked",
+            "recipient": "@self.learnerId"
+          }
+        },
+        "x-openregister-seed": []
+      },
       "AiFeature": {
         "slug": "AiFeature",
         "icon": "RobotOutline",
