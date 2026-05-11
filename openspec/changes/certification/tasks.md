@@ -1,42 +1,38 @@
 # Tasks — Certification
 
-## Phase 1: OpenRegister schema
+> Scope: one JSON patch on `lib/Settings/scholiq_register.json` adding the `Credential` schema with full lifecycle / calculations / notifications / relations. Three PHP files for cryptography + auto-issuance handler + public verify endpoint (all ADR-031 legitimate exceptions).
 
-- [ ] Create `openregister/schemas/scholiq-credential.json` with all fields including OB3 payload object, reminder_*_sent booleans, source enum, regulation_slug, verification_url, revoked + revocation_reason. Add indexes on (learner_id, tenant_id, revoked), (expires_at, revoked, tenant_id), (regulation_slug, tenant_id, revoked). Write unit test verifying schema accepts a valid OB3 payload object.
+## Phase 1: Schema patch on `lib/Settings/scholiq_register.json`
 
-## Phase 2: Signing key setup
+- [ ] Add `Credential` schema per design §1.1 — lifecycle (`issued → revoked | expired`), relations (`learner` + `course`), calculations (`daysUntilExpiry`, `isExpiringIn90Days`, `isExpiringIn30Days`, `isExpired`), notifications (`issuedToLearner`, `expiryT90`, `expiryT30`, `expired` with `alsoDispatchLifecycle: expire`). Reference: decidesk schemas for lifecycle + calculation declarations.
+- [ ] Write a JSON-validation test that asserts the schema parses against OR's schema-extension contract.
 
-- [ ] Create `Scholiq\Service\KeyManagementService`: `generateTenantKeypair(tenantId)` generating RSA-2048 keypair; private key stored via `OCP\Security\ICrypto::encrypt()` under key `scholiq.credential.signing.<tenantId>`; public key stored in app config for verification. Add admin API endpoint `POST /api/credentials/admin/generate-key` (admin only). Unit test mocks ICrypto, asserts keypair stored.
+## Phase 2: PHP — ADR-031 legitimate exceptions only
 
-## Phase 3: PHP services
+- [ ] Create `lib/Service/KeyManagementService.php`: `generateTenantKeypair(tenantId)` generating RSA-2048 keypair via `openssl_pkey_new`; encrypts the private key via `ICrypto::encrypt` and stores under app-config key `scholiq.credential.signing.<tenantId>`; stores public key + fingerprint plain in app config for verification. Legitimate per ADR-031 — cryptographic operation. Unit test: mock `ICrypto`, assert keypair stored.
+- [ ] Create `lib/Service/CredentialSigningService.php`: `buildOb3Payload(credentialId, learnerId, courseId, issuedAt, expiresAt)` returns the OB3 JSON-LD array per design §4; `signPayload(payload, tenantId)` returns RS256 compact JWS by calling `openssl_sign` on the canonicalised payload. Legitimate per ADR-031 — cryptographic + document-generation exception. Unit tests: assert OB3 `@context` array, `credentialSubject.id` is opaque UUID (not BSN), `proof.jws` is non-empty.
+- [ ] Create `lib/Lifecycle/CredentialIssuanceHandler.php`: registered as an OR audit-event listener for `openregister.audit.enrolment.completed`. Reads the Enrolment's Course via OR relations; if `course.certificateTemplate` is set, calls `CredentialSigningService::buildOb3Payload` + `signPayload`, then `ObjectService::saveObject('Credential', $payload)` with `lifecycle=issued`. Integration test: trigger `enrolment.completed` event on a templated course → assert Credential created within 30s + `issuedToLearner` notification dispatched.
+- [ ] Create `lib/Controller/CredentialVerifyController.php`: public `GET /api/credentials/{id}/verify` action; skip session middleware via `@NoCSRFRequired` + `@PublicPage` attributes; reads the Credential via OR; returns `{valid: lifecycle === 'issued' && !isExpired, issuedAt, expiresAt, issuerName}` — no personal data. Integration test: hit the URL with no session, assert correct payload + audit-trail entry `credential.verified` is written.
+- [ ] Create `lib/Controller/KeyAdminController.php`: `POST /api/credentials/admin/generate-key` admin-only endpoint, delegates to `KeyManagementService::generateTenantKeypair`. Integration test: admin POST → assert keypair stored + non-admin POST → assert 403.
+- [ ] Register `CredentialIssuanceHandler` in `Application.php` via OR's audit-event listener API.
+- [ ] Append the new routes to `appinfo/routes.php`.
 
-- [ ] Create `Scholiq\Service\CredentialIssuanceService`: implement `buildOb3Payload()` building valid OB3 JSON-LD with correct @context, type, issuer, issuanceDate, credentialSubject (learner opaque UUID), achievement; implement `signPayload()` using openssl_sign + ICrypto private-key retrieval (RS256, compact JWS); implement `issueForEnrolment()` orchestrating payload build + sign + ObjectService::saveObject. Unit tests: assert OB3 context array, assert credentialSubject.id is UUID (not BSN), assert proof.jws is non-empty string.
-- [ ] Create `Scholiq\Service\ExpiryDetectionService`: `getCredentialsExpiringSoon()` queries OpenRegister for credentials matching expires_at range + revoked=false; `markExpired()` updates credential status; `autoEnrolForRenewal()` delegates to BulkEnrolmentService for single-user auto-enrol. Unit tests: test threshold computation for T-90/T-60/T-30.
-- [ ] Create `Scholiq\EventListener\EnrolmentCompletedCredentialListener`: subscribe to `scholiq.enrolment.completed` event; check course.certificate_template; call CredentialIssuanceService; emit 'credential.issued' audit event; dispatch 'credential_issued' notification. Integration test: trigger enrolment.completed event with templated course, assert Credential created within 30 seconds and notification dispatched.
+## Phase 3: Frontend — manifest extension
 
-## Phase 4: Background job
+- [ ] Extend `src/manifest.json` with `CredentialDetail` page (type=detail, register=scholiq schema=Credential) and `CredentialVerify` page (type=custom, component=CredentialVerify, `public: true`). Re-run `npm run check:manifest`.
+- [ ] Create `src/views/CredentialVerify.vue`: fetches `GET /api/credentials/:id/verify`, renders verification card with issuer name, achievement name, valid/invalid badge, QR code linking to the same URL. Register via `customComponents` on `CnAppRoot`. Playwright test: navigate to `/credentials/<uuid>/verify` without auth → assert valid result renders.
+- [ ] Add a signing-key status widget to `ScholiqSettings.vue` (declared in the nextcloud-app change): reads `GET /api/credentials/admin/key-status`, shows "Key present" / "Not configured", offers "Generate key" button that calls `POST /api/credentials/admin/generate-key`. Playwright test: generate key, assert status flips.
+- [ ] **Do NOT** create `src/router/index.js` entries, `src/stores/credentialStore.js`, or `src/views/CredentialListView.vue` / `CredentialDetailView.vue` — `CnAppRoot` built-in renderers cover them.
 
-- [ ] Create `Scholiq\BackgroundJob\CredentialExpiryJob` extending TimedJob (interval 86400s): query expiring credentials per tenant; dispatch T-90/T-60/T-30 notifications with idempotency guard (reminder_*_sent booleans); call autoEnrolForRenewal at T-30 if renewal_course_id set; mark expired when expires_at <= today. Register job in Application.php. Integration test: seed Credential with expires_at=T-30, run job, assert reminder_30_sent=true and renewal Enrolment created.
+## Phase 4: Audit-event vocabulary — none
 
-## Phase 5: PHP controller
+- [ ] **Do NOT** add `credential.expiry.reminder.sent` / `credential.expired` to a Scholiq-side `AuditEventTypes::KNOWN`. OR's lifecycle + notification engines emit these event types automatically.
 
-- [ ] Create `Scholiq\Controllers\CredentialController` extending `AuditedController`: list (with filters learner_id, course_id, revoked, expires_before, regulation_slug), show (authenticated), manual issue POST (admin/hr only, emit 'credential.issued'), revoke PATCH (admin/hr only, emit 'credential.revoked'), public verify GET (bypass session auth, return {valid, issued_at, expires_at, issuer_name} only — no personal data). Integration test: full lifecycle (issue → verify → revoke → verify shows invalid).
-
-## Phase 6: Audit event types
-
-- [ ] Add `credential.expiry.reminder.sent`, `credential.expired` to `AuditEventTypes::KNOWN`. PHPStan build must pass.
-
-## Phase 7: Vue frontend
-
-- [ ] Add route entries to `src/router/index.js` for /credentials, /credentials/:id, /credentials/:id/verify.
-- [ ] Create `src/stores/credentialStore.js` using `createObjectStore('/api/credentials')`. Vitest tests.
-- [ ] Create `src/views/CredentialListView.vue` using CnDataTable; columns: learner, course, kind, issued_at, expires_at with colour coding (red < 30d, amber < 90d, green otherwise), status badge. Filters: regulation_slug, revoked. NcEmptyContent for zero results.
-- [ ] Create `src/views/CredentialDetailView.vue` CnDetailPage + CnObjectSidebar; OB3 payload rendered as formatted JSON in Details tab; Audit Trail tab; Revoke action (admin/hr only) with reason capture dialog.
-- [ ] Create `src/views/CredentialVerifyView.vue` (public route, no auth guard): show verification result card with issuer name, achievement, valid/invalid status, QR code linking to the verify URL. Playwright test: navigate to /credentials/:id/verify without auth session, assert valid result renders.
-- [ ] Add signing-key status widget to AdminSettings.vue: show key present/missing state; "Generate Key" button calls POST /api/credentials/admin/generate-key. Playwright test: generate key, assert status changes to "Key present".
-
-## Phase 8: Quality gate
+## Phase 5: Quality gate
 
 - [ ] Run `composer check:strict`; fix all violations.
 - [ ] Run `npm run lint`; fix all ESLint violations.
-- [ ] Playwright integration test: full round-trip — enrol learner → simulate course completion → assert Credential auto-issued → navigate to verify URL → assert {valid:true} response.
+- [ ] Run `npm run check:manifest`; must pass.
+- [ ] Integration test (PHPUnit + OR): seed a Credential with `expiresAt = today + 30`, trigger OR's calculation-refresh tick, assert `isExpiringIn30Days` becomes true AND the `expiryT30` notification dispatches exactly once.
+- [ ] Integration test (PHPUnit + OR): seed a Credential with `expiresAt = today - 1`, trigger OR's calculation-refresh tick, assert `isExpired` becomes true AND the `expired` notification dispatches AND the schema-declared `expire` lifecycle transition fires (Credential.lifecycle becomes `expired`).
+- [ ] Playwright integration test: full round-trip — enrol learner in a templated Course → simulate course completion via xAPI → assert Credential auto-issued within 30s → navigate to verify URL without auth → assert `{valid: true}` response with QR code.
