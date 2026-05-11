@@ -23,8 +23,10 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\AppInfo;
 
+use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\XapiStatementReceivedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -76,6 +78,13 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: DeepLinkRegistrationEvent::class,
             listener: DeepLinkRegistrationListener::class
+        );
+
+        // ADR-031 legitimate exception: xAPI completion → Enrolment lifecycle transition.
+        // Single-method handler; all other Enrolment behaviour is declarative in scholiq_register.json.
+        $context->registerEventListener(
+            event: XapiStatementReceivedEvent::class,
+            listener: XapiCompletionHandler::class
         );
 
     }//end register()

@@ -9,7 +9,7 @@
     "type": "application",
     "app": "scholiq",
     "openregister": "^v0.2.10",
-    "description": "Scholiq — open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
+    "description": "Scholiq \u2014 open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
   },
   "paths": {},
   "components": {
@@ -19,9 +19,12 @@
         "icon": "RobotOutline",
         "version": "0.1.0",
         "title": "AI Feature",
-        "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled → enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
+        "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled \u2192 enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
         "type": "object",
-        "required": ["slug", "name"],
+        "required": [
+          "slug",
+          "name"
+        ],
         "properties": {
           "slug": {
             "type": "string",
@@ -36,18 +39,26 @@
           "description": {
             "type": "string",
             "description": "Plain-language description of the AI feature and its EU AI Act risk classification.",
-            "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III §4(a)."
+            "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III \u00a74(a)."
           },
           "riskCategory": {
             "type": "string",
             "description": "EU AI Act risk category.",
-            "enum": ["minimal", "limited", "high", "unacceptable"],
+            "enum": [
+              "minimal",
+              "limited",
+              "high",
+              "unacceptable"
+            ],
             "example": "high"
           },
           "lifecycle": {
             "type": "string",
             "description": "Current lifecycle state. Managed by OpenRegister's lifecycle engine; do not set directly.",
-            "enum": ["disabled", "enabled"],
+            "enum": [
+              "disabled",
+              "enabled"
+            ],
             "default": "disabled",
             "example": "disabled"
           }
@@ -59,7 +70,9 @@
             "enable": {
               "from": "disabled",
               "to": "enabled",
-              "requires": ["OCA\\Scholiq\\Lifecycle\\AiFeatureDpoAckGuard"]
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AiFeatureDpoAckGuard"
+              ]
             },
             "disable": {
               "from": "enabled",
@@ -69,14 +82,22 @@
         },
         "x-openregister-notifications": {
           "enable": {
-            "channels": ["activity"],
+            "channels": [
+              "activity"
+            ],
             "template": "scholiq.ai_feature.enabled",
-            "recipients": ["admin"]
+            "recipients": [
+              "admin"
+            ]
           },
           "disable": {
-            "channels": ["activity"],
+            "channels": [
+              "activity"
+            ],
             "template": "scholiq.ai_feature.disabled",
-            "recipients": ["admin"]
+            "recipients": [
+              "admin"
+            ]
           }
         },
         "x-openregister-seed": []
@@ -86,7 +107,7 @@
         "icon": "FolderOutline",
         "version": "0.1.0",
         "title": "Course",
-        "description": "A course or training program (Schema.org Course). Lifecycle: draft → published → archived.",
+        "description": "A course or training program (Schema.org Course). Lifecycle: draft \u2192 published \u2192 archived.",
         "type": "object",
         "x-openregister": {
           "schemaType": "schema:Course",
@@ -94,7 +115,13 @@
           "hardDelete": false,
           "searchable": true
         },
-        "required": ["code", "name", "level", "language", "tenant_id"],
+        "required": [
+          "code",
+          "name",
+          "level",
+          "language",
+          "tenant_id"
+        ],
         "properties": {
           "code": {
             "type": "string",
@@ -107,18 +134,31 @@
             "example": "NIS2 Awareness Training"
           },
           "name_nl": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Dutch name",
             "example": "NIS2 Bewustzijnstraining"
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Course description"
           },
           "level": {
             "type": "string",
             "description": "Education or training level",
-            "enum": ["po", "vo", "mbo", "hbo", "wo", "corporate"],
+            "enum": [
+              "po",
+              "vo",
+              "mbo",
+              "hbo",
+              "wo",
+              "corporate"
+            ],
             "example": "corporate"
           },
           "language": {
@@ -130,7 +170,9 @@
           "tags": {
             "type": "array",
             "description": "Searchable tags",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
           "mandatoryTraining": {
             "type": "boolean",
@@ -138,22 +180,35 @@
             "default": false
           },
           "regulationSlug": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Regulation identifier (e.g. NIS2, AVG, BIO)",
             "example": "NIS2"
           },
           "renewalCourseSlug": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Slug of the renewal/refresher course for this training"
           },
           "certificateTemplate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "nc:files path to PDF certificate template"
           },
           "lifecycle": {
             "type": "string",
             "description": "Course lifecycle state. Managed by OR lifecycle engine; do not set directly.",
-            "enum": ["draft", "published", "archived"],
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
             "default": "draft",
             "example": "draft"
           },
@@ -170,7 +225,9 @@
             "publish": {
               "from": "draft",
               "to": "published",
-              "requires": ["OCA\\Scholiq\\Lifecycle\\CoursePublishGuard"]
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\CoursePublishGuard"
+              ]
             },
             "archive": {
               "from": "published",
@@ -189,7 +246,9 @@
             "expression": {
               "count": {
                 "schema": "Lesson",
-                "filter": { "courseId": "@self.id" }
+                "filter": {
+                  "courseId": "@self.id"
+                }
               }
             }
           },
@@ -197,7 +256,12 @@
             "type": "boolean",
             "materialise": true,
             "expression": {
-              "eq": [{ "prop": "lifecycle" }, "published"]
+              "eq": [
+                {
+                  "prop": "lifecycle"
+                },
+                "published"
+              ]
             }
           }
         },
@@ -206,25 +270,39 @@
             "metric": "count_distinct",
             "schema": "Enrolment",
             "field": "learnerId",
-            "filter": { "courseId": "@self.id" }
+            "filter": {
+              "courseId": "@self.id"
+            }
           },
           "completedLearners": {
             "metric": "count_distinct",
             "schema": "Enrolment",
             "field": "learnerId",
-            "filter": { "courseId": "@self.id", "lifecycle": "completed" }
+            "filter": {
+              "courseId": "@self.id",
+              "lifecycle": "completed"
+            }
           }
         },
         "x-openregister-notifications": {
           "publish": {
-            "channels": ["activity"],
+            "channels": [
+              "activity"
+            ],
             "template": "scholiq.course.published",
-            "recipients": ["admin", "hr"]
+            "recipients": [
+              "admin",
+              "hr"
+            ]
           },
           "archive": {
-            "channels": ["activity"],
+            "channels": [
+              "activity"
+            ],
             "template": "scholiq.course.archived",
-            "recipients": ["admin"]
+            "recipients": [
+              "admin"
+            ]
           }
         },
         "x-openregister-seed": []
@@ -234,7 +312,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Lesson",
-        "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft → published → retired.",
+        "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft \u2192 published \u2192 retired.",
         "type": "object",
         "x-openregister": {
           "schemaType": "schema:LearningResource",
@@ -242,7 +320,14 @@
           "hardDelete": false,
           "searchable": true
         },
-        "required": ["courseId", "name", "order", "contentType", "contentRef", "tenant_id"],
+        "required": [
+          "courseId",
+          "name",
+          "order",
+          "contentType",
+          "contentRef",
+          "tenant_id"
+        ],
         "properties": {
           "courseId": {
             "type": "string",
@@ -252,7 +337,7 @@
           "name": {
             "type": "string",
             "description": "Lesson name",
-            "example": "Module 1 — NIS2 Scope & Obligations"
+            "example": "Module 1 \u2014 NIS2 Scope & Obligations"
           },
           "order": {
             "type": "integer",
@@ -263,7 +348,15 @@
           "contentType": {
             "type": "string",
             "description": "Type of learning content",
-            "enum": ["text", "video", "scorm12", "scorm2004", "cmi5", "lti", "quiz"],
+            "enum": [
+              "text",
+              "video",
+              "scorm12",
+              "scorm2004",
+              "cmi5",
+              "lti",
+              "quiz"
+            ],
             "example": "cmi5"
           },
           "contentRef": {
@@ -272,14 +365,19 @@
             "example": "/Scholiq/tenant-uuid/course-uuid/cmi5/lesson-uuid/"
           },
           "durationMinutes": {
-            "type": ["integer", "null"],
+            "type": [
+              "integer",
+              "null"
+            ],
             "description": "Estimated duration in minutes",
             "example": 20
           },
           "learningObjectives": {
             "type": "array",
             "description": "Learning objectives for this lesson",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
           "mandatoryTraining": {
             "type": "boolean",
@@ -287,14 +385,21 @@
             "default": false
           },
           "regulationSlug": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Regulation identifier for mandatory-training compliance tracking (e.g. NIS2, AVG, BIO)",
             "example": "NIS2"
           },
           "lifecycle": {
             "type": "string",
             "description": "Lesson lifecycle state. Managed by OR lifecycle engine; do not set directly.",
-            "enum": ["draft", "published", "retired"],
+            "enum": [
+              "draft",
+              "published",
+              "retired"
+            ],
             "default": "draft",
             "example": "draft"
           },
@@ -328,9 +433,13 @@
         },
         "x-openregister-notifications": {
           "publish": {
-            "channels": ["activity"],
+            "channels": [
+              "activity"
+            ],
             "template": "scholiq.lesson.published",
-            "recipients": ["admin"]
+            "recipients": [
+              "admin"
+            ]
           }
         },
         "x-openregister-seed": []
@@ -348,7 +457,13 @@
           "appendOnly": true,
           "searchable": false
         },
-        "required": ["actor", "verb", "object", "stored", "tenant_id"],
+        "required": [
+          "actor",
+          "verb",
+          "object",
+          "stored",
+          "tenant_id"
+        ],
         "properties": {
           "actor": {
             "type": "object",
@@ -363,11 +478,17 @@
             "description": "xAPI Activity, Agent, SubStatement, or StatementRef"
           },
           "result": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "xAPI Result (score, success, completion, duration, extensions)"
           },
           "context": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "xAPI Context (registration, instructor, team, contextActivities, extensions)"
           },
           "timestamp": {
@@ -381,7 +502,10 @@
             "description": "When the statement was received and stored by the LRS"
           },
           "authority": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "xAPI Authority (Agent attesting this statement)"
           },
           "version": {
@@ -390,12 +514,18 @@
             "description": "xAPI specification version"
           },
           "courseId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "UUID of the Course this statement relates to (Scholiq denormalisation)"
           },
           "lessonId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "UUID of the Lesson this statement relates to (Scholiq denormalisation)"
           },
@@ -409,6 +539,322 @@
           "property": "lifecycle",
           "initial": "stored",
           "transitions": {}
+        },
+        "x-openregister-seed": []
+      },
+      "Enrolment": {
+        "slug": "enrolment",
+        "icon": "AccountSchoolOutline",
+        "version": "0.1.0",
+        "title": "Enrolment",
+        "description": "Learner enrolment in a course (Schema.org EnrollmentRequest)",
+        "type": "object",
+        "x-openregister": {
+          "schemaType": "schema:EnrollmentRequest",
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learnerId",
+          "courseId",
+          "tenant_id",
+          "source"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the enrolled learner."
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the Course object in the scholiq register."
+          },
+          "mandatory": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true this enrolment is a compliance-mandatory assignment."
+          },
+          "dueDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "ISO date by which the learner must complete the course. Null means no deadline."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "self",
+              "manager",
+              "hr",
+              "bulk",
+              "migrated",
+              "system"
+            ],
+            "description": "Origin of the enrolment record."
+          },
+          "managerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nextcloud user ID of the learner's line manager. Used for overdue alerts and fallback notifications."
+          },
+          "bulkJobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Browser-generated UUID grouping all Enrolments created by a single bulk-enrol modal submission. Used for polling progress."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Free-text reason captured on withdrawal or failure transitions."
+          },
+          "regulationSlug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Machine-readable slug of the linked compliance regulation, e.g. 'avg-2018'. Used by compliance-audit to group evidence."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant scoping."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "default": "pending",
+          "transitions": {
+            "activate": {
+              "from": "pending",
+              "to": "active"
+            },
+            "complete": {
+              "from": "active",
+              "to": "completed"
+            },
+            "withdraw": {
+              "from": [
+                "pending",
+                "active"
+              ],
+              "to": "withdrawn"
+            },
+            "fail": {
+              "from": "active",
+              "to": "failed"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "register": "scholiq",
+            "schema": "LearnerProfile",
+            "cardinality": "many-to-one",
+            "joinOn": "learnerId"
+          },
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          }
+        },
+        "x-openregister-calculations": {
+          "isOverdue": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "and": [
+                {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "active"
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "dueDate"
+                    },
+                    null
+                  ]
+                },
+                {
+                  "lt": [
+                    {
+                      "prop": "dueDate"
+                    },
+                    "@now"
+                  ]
+                }
+              ]
+            }
+          },
+          "daysRemaining": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "if": [
+                {
+                  "eq": [
+                    {
+                      "prop": "dueDate"
+                    },
+                    null
+                  ]
+                },
+                null,
+                {
+                  "dateDiff": [
+                    {
+                      "prop": "dueDate"
+                    },
+                    "@now",
+                    "days"
+                  ]
+                }
+              ]
+            }
+          },
+          "ragStatus": {
+            "type": "string",
+            "materialise": true,
+            "expression": {
+              "case": [
+                {
+                  "when": {
+                    "eq": [
+                      {
+                        "prop": "lifecycle"
+                      },
+                      "completed"
+                    ]
+                  },
+                  "then": "completed"
+                },
+                {
+                  "when": {
+                    "prop": "isOverdue"
+                  },
+                  "then": "red"
+                },
+                {
+                  "when": {
+                    "lte": [
+                      {
+                        "prop": "daysRemaining"
+                      },
+                      7
+                    ]
+                  },
+                  "then": "amber"
+                },
+                {
+                  "default": "green"
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "welcomeOnActivate": {
+            "trigger": {
+              "lifecycleEnter": "active"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.activated",
+            "recipient": "@self.learnerId",
+            "userPreferenceKey": "notify_assignments"
+          },
+          "completionOnComplete": {
+            "trigger": {
+              "lifecycleEnter": "completed"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.completed",
+            "recipient": "@self.learnerId",
+            "userPreferenceKey": "notify_assignments"
+          },
+          "reminderT30": {
+            "trigger": {
+              "calculated": "daysRemaining",
+              "eq": 30,
+              "and": {
+                "eq": [
+                  {
+                    "prop": "mandatory"
+                  },
+                  true
+                ]
+              }
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.due.t30",
+            "recipient": "@self.learnerId",
+            "userPreferenceKey": "notify_due_dates",
+            "idempotencyKey": "reminderT30"
+          },
+          "reminderT7": {
+            "trigger": {
+              "calculated": "daysRemaining",
+              "eq": 7,
+              "and": {
+                "eq": [
+                  {
+                    "prop": "mandatory"
+                  },
+                  true
+                ]
+              }
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.due.t7",
+            "recipient": "@self.learnerId",
+            "userPreferenceKey": "notify_due_dates",
+            "idempotencyKey": "reminderT7"
+          },
+          "reminderT1": {
+            "trigger": {
+              "calculated": "daysRemaining",
+              "eq": 1,
+              "and": {
+                "eq": [
+                  {
+                    "prop": "mandatory"
+                  },
+                  true
+                ]
+              }
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.due.t1",
+            "recipient": "@self.learnerId",
+            "userPreferenceKey": "notify_due_dates",
+            "idempotencyKey": "reminderT1"
+          },
+          "managerAlertOnOverdue": {
+            "trigger": {
+              "calculated": "isOverdue",
+              "eq": true
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.enrolment.overdue",
+            "recipient": "@self.managerId",
+            "fallbackRecipientFromTenantRole": "hr"
+          }
         },
         "x-openregister-seed": []
       }
