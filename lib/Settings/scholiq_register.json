@@ -857,6 +857,320 @@
           }
         },
         "x-openregister-seed": []
+      },
+      "Regulation": {
+        "slug": "regulation",
+        "icon": "GavelOutline",
+        "version": "0.1.0",
+        "title": "Regulation",
+        "description": "Compliance regulation (AVG, BIO, NIS2, etc.) tracked for mandatory training coverage.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "searchable": true
+        },
+        "required": ["slug", "name", "audienceScope", "tenant_id"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Machine-readable regulation identifier, e.g. 'NIS2', 'AVG', 'BIO'."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable regulation name."
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Plain-language description of the regulation and its applicability."
+          },
+          "applicabilityCriteria": {
+            "type": ["string", "null"],
+            "description": "Free-text applicability criteria describing which roles or departments must comply."
+          },
+          "audienceScope": {
+            "type": "string",
+            "enum": ["all-employees", "board", "role-specific", "department"],
+            "description": "Audience scope for this regulation."
+          },
+          "requiresAnnualRenewal": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this regulation requires annual recertification."
+          },
+          "renewalCycleMonths": {
+            "type": "integer",
+            "default": 12,
+            "description": "Renewal cycle in months (e.g. 12 for annual)."
+          },
+          "active": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this regulation is currently enforced."
+          },
+          "ragRedThreshold": {
+            "type": "number",
+            "default": 70,
+            "description": "Coverage % below which RAG status is red."
+          },
+          "ragAmberThreshold": {
+            "type": "number",
+            "default": 90,
+            "description": "Coverage % below which RAG status is amber (and at or above ragRedThreshold)."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": ["draft", "published", "archived"],
+            "default": "draft",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "default": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "mandatoryEnrolledCount": {
+            "metric": "count",
+            "schema": "Enrolment",
+            "filter": {
+              "mandatory": true,
+              "regulationSlug": "@self.slug",
+              "lifecycleIn": ["active", "completed", "failed"]
+            }
+          },
+          "mandatoryCompletedCount": {
+            "metric": "count",
+            "schema": "Enrolment",
+            "filter": {
+              "mandatory": true,
+              "regulationSlug": "@self.slug",
+              "lifecycle": "completed"
+            }
+          },
+          "attestationCount": {
+            "metric": "count",
+            "schema": "Attestation",
+            "filter": {
+              "regulationSlug": "@self.slug",
+              "lifecycle": "signed"
+            }
+          },
+          "validCredentialCount": {
+            "metric": "count_distinct",
+            "schema": "Credential",
+            "field": "learnerId",
+            "filter": {
+              "regulationSlug": "@self.slug",
+              "lifecycle": "issued"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "coveragePercent": {
+            "type": "number",
+            "materialise": true,
+            "description": "Live coverage % = (mandatoryCompletedCount / mandatoryEnrolledCount) × 100. Returns 0 when no enrolments exist.",
+            "expression": {
+              "if": [
+                { "gt": [{ "prop": "mandatoryEnrolledCount" }, 0] },
+                { "mul": [{ "div": [{ "prop": "mandatoryCompletedCount" }, { "prop": "mandatoryEnrolledCount" }] }, 100] },
+                0
+              ]
+            }
+          },
+          "ragStatus": {
+            "type": "string",
+            "materialise": true,
+            "description": "RAG status band: green ≥ ragAmberThreshold, amber ≥ ragRedThreshold, red < ragRedThreshold.",
+            "expression": {
+              "case": [
+                { "when": { "lt": [{ "prop": "coveragePercent" }, { "prop": "ragRedThreshold" }] }, "then": "red" },
+                { "when": { "lt": [{ "prop": "coveragePercent" }, { "prop": "ragAmberThreshold" }] }, "then": "amber" },
+                { "default": "green" }
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "officerAlertOnCoverageDrop": {
+            "trigger": {
+              "calculatedChange": "ragStatus",
+              "to": "red"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.compliance.coverage.dropped",
+            "recipientFromTenantRole": "compliance-officer"
+          },
+          "onPublished": {
+            "trigger": {
+              "transition": "publish"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.compliance.regulation.published",
+            "recipientFromTenantRole": "compliance-officer"
+          }
+        },
+        "x-openregister-widgets": {
+          "coverageGrid": {
+            "type": "regulation-coverage-grid",
+            "title": "scholiq.widget.regulation.coverage",
+            "props": {
+              "metrics": [
+                "coveragePercent",
+                "mandatoryEnrolledCount",
+                "mandatoryCompletedCount",
+                "attestationCount"
+              ],
+              "rag": ["ragStatus"],
+              "actions": [
+                {
+                  "id": "campaign",
+                  "manifestPage": "BulkEnrol",
+                  "presetField": "regulationSlug"
+                },
+                {
+                  "id": "exportPack",
+                  "manifestPage": "AuditPackExport",
+                  "presetField": "regulationSlug"
+                }
+              ]
+            }
+          },
+          "boardProof": {
+            "type": "stats-block",
+            "title": "scholiq.widget.regulation.board",
+            "filter": {
+              "audienceScope": "board"
+            },
+            "props": {
+              "primary": "coveragePercent",
+              "secondary": "validCredentialCount"
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Attestation": {
+        "slug": "attestation",
+        "icon": "FileCertificateOutline",
+        "version": "0.1.0",
+        "title": "Attestation",
+        "description": "Signed learner attestation that mandatory training was completed and understood. Append-only per ADR-008; HMAC-signed at lifecycle transition via AttestationSigningGuard.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "appendOnly": true
+        },
+        "required": ["learnerId", "lessonId", "courseId", "regulationSlug", "tenant_id"],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID or external learner identifier."
+          },
+          "lessonId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the Lesson that was attested."
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the Course containing the attested lesson."
+          },
+          "regulationSlug": {
+            "type": "string",
+            "description": "Slug of the Regulation this attestation is captured for."
+          },
+          "actorIp": {
+            "type": ["string", "null"],
+            "description": "IP address of the learner at time of attestation, for audit purposes."
+          },
+          "employeeId": {
+            "type": ["string", "null"],
+            "description": "HR system employee identifier, if available."
+          },
+          "score": {
+            "type": ["number", "null"],
+            "description": "Assessment score at time of attestation, if applicable."
+          },
+          "xapiStatementId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "ID of the cmi5.completed XapiStatement that triggered this attestation."
+          },
+          "signature": {
+            "type": "string",
+            "description": "HMAC-SHA256 signature computed by AttestationSigningGuard at the drafted→signed transition."
+          },
+          "signingKeyId": {
+            "type": "string",
+            "description": "OR tenant-key rotation ID used to compute the signature. Required for offline verification."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": ["drafted", "signed", "revoked"],
+            "default": "drafted",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "default": "drafted",
+          "transitions": {
+            "sign": {
+              "from": "drafted",
+              "to": "signed",
+              "requires": "OCA\\Scholiq\\Lifecycle\\AttestationSigningGuard"
+            },
+            "revoke": {
+              "from": "signed",
+              "to": "revoked"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "register": "scholiq",
+            "schema": "LearnerProfile",
+            "cardinality": "many-to-one",
+            "joinOn": "learnerId"
+          },
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          },
+          "lesson": {
+            "register": "scholiq",
+            "schema": "Lesson",
+            "cardinality": "many-to-one",
+            "joinOn": "lessonId"
+          }
+        },
+        "x-openregister-seed": []
       }
     }
   }

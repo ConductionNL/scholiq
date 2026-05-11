@@ -171,6 +171,65 @@
       "config": {
         "component": "BulkEnrolModal"
       }
+    },
+    {
+      "id": "Regulations",
+      "route": "/compliance/regulations",
+      "type": "index",
+      "title": "scholiq.page.regulations.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Regulation"
+      }
+    },
+    {
+      "id": "RegulationDetail",
+      "route": "/compliance/regulations/:slug",
+      "type": "detail",
+      "title": "scholiq.page.regulation.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Regulation",
+        "tabs": [
+          "details",
+          "auditTrail"
+        ]
+      }
+    },
+    {
+      "id": "Attestations",
+      "route": "/compliance/attestations",
+      "type": "index",
+      "title": "scholiq.page.attestations.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Attestation",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "AttestationDetail",
+      "route": "/compliance/attestations/:id",
+      "type": "detail",
+      "title": "scholiq.page.attestation.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Attestation",
+        "readOnly": true,
+        "tabs": [
+          "details",
+          "auditTrail"
+        ]
+      }
+    },
+    {
+      "id": "AuditPackExport",
+      "route": "/compliance/export",
+      "type": "custom",
+      "title": "scholiq.page.audit_pack_export.title",
+      "config": {
+        "component": "AuditPackExportModal"
+      }
     }
   ]
 }
