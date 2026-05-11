@@ -24,8 +24,10 @@ declare(strict_types=1);
 namespace OCA\Scholiq\AppInfo;
 
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
+use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\XapiStatementReceivedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -85,6 +87,14 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: XapiStatementReceivedEvent::class,
             listener: XapiCompletionHandler::class
+        );
+
+        // ADR-031 legitimate exception: Enrolment.completed → Credential.issue bridge.
+        // Listens for OR's ObjectTransitionedEvent; issues a Credential when an
+        // Enrolment transitions to `completed` and the Course has certificateTemplate set.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CredentialIssuanceHandler::class
         );
 
     }//end register()
