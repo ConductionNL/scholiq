@@ -1,37 +1,37 @@
 # Tasks — Course Management
 
-## Phase 1: OpenRegister schemas
+> Scope: schema patches for `Course`, `Lesson`, `XapiStatement` declaring all lifecycle / aggregation / calculation / relation behaviour via `x-openregister-*`. Plus the four ADR-031-exception PHP files (cmi5 importer, SCORM translator, LRS + SCORM + Lesson-import controllers, CoursePublishGuard).
 
-- [ ] Create `openregister/schemas/scholiq-course.json` with all Phase-1 fields (code, name, name_nl, description, level enum, language, tenant_id, published, tags, timestamps, deleted_at). Add index on (tenant_id, published, deleted_at).
-- [ ] Create `openregister/schemas/scholiq-lesson.json` with all fields including mandatory_training bool and regulation_slug. Add index on (course_id, order).
-- [ ] Create `openregister/schemas/scholiq-course-section.json` with (id, course_id, name, start_date, end_date, mode enum, tenant_id, nc_group_id). Add index on (course_id, tenant_id).
-- [ ] Create `openregister/schemas/scholiq-xapi-statement.json` with `append_only: true`; all xAPI 1.0.3 fields; indexes on (actor.id, verb.id, stored), (course_id, tenant_id, stored), (verb.id, tenant_id, stored). Write unit test verifying OR rejects UPDATE on this schema.
+## Phase 1: Schema patches on `lib/Settings/scholiq_register.json`
 
-## Phase 2: PHP services
+- [ ] Add `Course` schema per design §1.1 — including `x-openregister-lifecycle` (`draft → published → archived` with `CoursePublishGuard` precondition on publish), `x-openregister-calculations` (`lessonCount`, `isPublished`), `x-openregister-aggregations` (`enrolledLearners`, `completedLearners`). Validate via OR's schema-validation endpoint. Reference: `decidesk/lib/Settings/decidesk_register.json` Meeting schema for lifecycle + aggregations + calculations.
+- [ ] Add `Lesson` schema per design §1.2 — including `x-openregister-relations` (`course` many-to-one) and `x-openregister-lifecycle` (`draft → published → retired`).
+- [ ] Add `XapiStatement` schema per design §1.3 — `appendOnly: true` (consumes OR's append-only abstraction per ADR-022); empty `transitions` map signals "every save audits as xapi.statement.received".
+- [ ] Write a JSON-validation test that asserts the three new schema entries parse against OR's schema-extension contract.
 
-- [ ] Create `Scholiq\Service\Cmi5LaunchService`: `mintLaunchToken(learnerId, lessonId, registrationId)` returning RS256 JWT; key stored in `OCP\Security\ICrypto` under `scholiq.cmi5.launch.private`; unit test mocks ICrypto, asserts token claims (actor, activity_id, registration, fetch_url, exp ≤ 8h).
-- [ ] Create `Scholiq\Service\ScormToXapiTranslator`: maps the 7 SCORM API calls (LMSInitialize, LMSSetValue lesson_status, LMSSetValue score.raw, LMSSetValue suspend_data, LMSFinish) to xAPI verbs per ADR-002 §Decision (3) table; unit tests cover all 7 mappings.
-- [ ] Create `Scholiq\Service\CourseContentService`: `ensureCourseFolder(tenantId, courseId)` using `IRootFolder`; `importPackage(courseId, lessonId, uploadedFile)` detecting cmi5.xml vs imsmanifest.xml manifest and unpacking; unit tests mock IRootFolder.
+## Phase 2: PHP — ADR-031 legitimate exceptions only
 
-## Phase 3: PHP controllers
+- [ ] Create `lib/Lifecycle/CoursePublishGuard.php`: single `check($transitionContext)` method asserting `$course->getLessonCount() > 0`. Receives the Course object via the transition context. Unit test: mock context with 0 lessons → returns false; with 3 lessons → returns true.
+- [ ] Create `lib/Service/Cmi5ImporterService.php`: `import($uploadedFile, $courseId)` detects manifest type (`cmi5.xml` vs `imsmanifest.xml`); unpacks via OR's archival/file abstraction; creates Lesson objects via `ObjectService::saveObject` with correct `contentType` (`cmi5` / `scorm12` / `scorm2004`); returns array of created lesson UUIDs. Legitimate per ADR-031 — domain-specific text processing. Unit test: mock a 2-AU cmi5 ZIP → assert 2 Lesson objects created.
+- [ ] Create `lib/Service/ScormToXapiTranslator.php`: maps the 7 SCORM API calls (LMSInitialize, LMSSetValue lesson_status, LMSSetValue score.raw, LMSSetValue suspend_data, LMSFinish, etc.) to xAPI verbs per ADR-002 §Decision (3). Output is a partial xAPI statement; the caller writes it via `ObjectService::saveObject('XapiStatement', ...)`. Legitimate per ADR-031 — external-system contract. Unit tests cover all 7 mappings.
+- [ ] Create `lib/Controller/LrsController.php`: POST `/api/lrs/statements` validates xAPI 1.0.3 envelope, writes the statement via `ObjectService::saveObject('XapiStatement', ...)`, returns 200 + statement id per xAPI spec. GET `/api/lrs/statements` queries OR via `ObjectService` with actor-scoped filtering. Auth: NC session OR cmi5 JWT from `Cmi5LaunchTokenService`. Integration test: post a `cmi5.completed` statement → assert it's queryable AND the OR audit-trail entry `xapi.statement.received` exists (verifying the schema's append-only lifecycle fired).
+- [ ] Create `lib/Controller/ScormController.php`: GET `/api/scorm/{lessonId}/launch` serves the SCORM player page from `templates/scorm-player.php`; POST `/api/scorm/{lessonId}/api` accepts SCORM JSON-RPC calls, delegates to `ScormToXapiTranslator`, persists the translated statement to `XapiStatement`. Integration test: simulate SCORM session → assert xAPI statement materialised.
+- [ ] Create `lib/Controller/LessonImportController.php`: POST `/api/courses/{courseId}/lessons/import` accepts the uploaded ZIP, calls `Cmi5ImporterService::import`. Integration test: upload a cmi5 ZIP → assert 2 Lesson objects exist + Course's calculated `lessonCount` is now 2.
+- [ ] Append the new routes to `appinfo/routes.php`.
 
-- [ ] Create `Scholiq\Controllers\CourseController` extending `AuditedController`: implement list (GET /api/courses with ?mandatory_training and ?regulation_slug filters), show, create (emits `course.published`), update (emits `course.published`), archive (sets deleted_at, emits `course.archived`). Role guard: create/update/delete restricted to admin/hr/instructor roles. Integration test: full CRUD cycle with audit event assertions.
-- [ ] Create `Scholiq\Controllers\LessonController` extending `AuditedController`: list (sorted by order), show, create, update, delete, import endpoint (calls CourseContentService::importPackage), launch endpoint (calls Cmi5LaunchService::mintLaunchToken). Integration test: import cmi5 zip, verify folder created in nc:files, verify Lesson record created with correct content_type.
-- [ ] Create `Scholiq\Controllers\LrsController`: POST /api/lrs/statements validates xAPI 1.0.3 structure, persists xapi_statement via ObjectService (append-only), emits `xapi.statement.received` audit event; GET /api/lrs/statements with actor-scoped filtering; returns 204/200 per xAPI spec. Integration test: post a cmi5.completed statement, verify it's queryable and audit event exists.
-- [ ] Create `Scholiq\Controllers\ScormController`: GET /api/scorm/{lessonId}/launch serves SCORM player page from template; POST /api/scorm/{lessonId}/api accepts SCORM JSON-RPC calls and delegates to ScormToXapiTranslator; suspend_data stored in xapi result.extensions and returned on LMSGetValue. Integration test: simulate SCORM session with LMSInitialize → LMSSetValue(lesson_status, completed) → LMSFinish; verify xAPI statement in LRS.
+## Phase 3: Frontend — manifest extension
 
-## Phase 4: Vue frontend
+- [ ] Extend `src/manifest.json` with `CourseDetail` page (`type: detail`, bound to register=scholiq schema=Course) and `LessonPlayer` page (`type: custom`, `component: LessonPlayer`). Re-run `npm run check:manifest`.
+- [ ] Create `src/views/LessonPlayer.vue` per design §3.2 — branches on `lesson.contentType`. Register via `customComponents` on `CnAppRoot` in `src/main.js`. Playwright test: navigate to a `text` lesson → assert HTML renders; navigate to a `cmi5` lesson → assert the launch-token endpoint is called.
+- [ ] **Do NOT** create `src/router/index.js` route entries. **Do NOT** create `src/stores/courseStore.js` or `src/views/CourseListView.vue` / `CourseFormView.vue` / `CourseDetailView.vue` — `CnAppRoot`'s built-in index + detail renderers cover the wedge. (If a future feature genuinely needs a custom view, register it via `customComponents`.)
 
-- [ ] Add route entries to `src/router/index.js` for /courses, /courses/new, /courses/:id, /courses/:id/edit, /courses/:id/lessons/:lid.
-- [ ] Create `src/stores/courseStore.js` using `createObjectStore('/api/courses')`. Write Vitest unit test confirming list, create, update, delete actions.
-- [ ] Create `src/views/CourseListView.vue` using CnDataTable; columns: code, name, level, published status badge, lesson count; empty state uses NcEmptyContent with "Create your first course" action for admin/instructor role.
-- [ ] Create `src/views/CourseDetailView.vue` using CnDetailPage + CnObjectSidebar with tabs: Details, Lessons, Enrolments count, Audit Trail. Playwright test: create course, navigate to detail, assert all tabs load.
-- [ ] Create `src/views/CourseFormView.vue` with form fields per schema (code, name, name_nl, level dropdown, language dropdown, published toggle). Playwright test: fill form, submit, assert course appears in list.
-- [ ] Create `src/views/LessonPlayer.vue` branching on content_type: cmi5 → iframe launch flow; scorm12/scorm2004 → SCORM shim iframe; video → `<video>` tag. Playwright test: create text lesson, navigate to player, assert content renders.
+## Phase 4: Audit-event vocabulary — none
+
+- [ ] **Do NOT** add `lesson.created` / `lesson.updated` / `lesson.deleted` to a Scholiq-side `AuditEventTypes::KNOWN`. OR's lifecycle engine emits the event types automatically per schema metadata. ADR-022 + ADR-008 prohibit a parallel app-side vocabulary.
 
 ## Phase 5: Quality gate
 
-- [ ] Add `lesson.created`, `lesson.updated`, `lesson.deleted` to `AuditEventTypes::KNOWN` in nextcloud-app spec's `AuditEventTypes.php`.
-- [ ] Run `composer check:strict`; fix all PHPCS/PHPMD/Psalm/PHPStan violations before PR.
-- [ ] Run `npm run lint`; fix all ESLint violations in Vue files.
-- [ ] Playwright smoke tests: course CRUD round-trip, cmi5 launch token fetch, SCORM shim LMS API roundtrip.
+- [ ] Run `composer check:strict` (PHPCS, PHPMD, Psalm, PHPStan); fix all violations.
+- [ ] Run `npm run lint`; fix all ESLint violations.
+- [ ] Run `npm run check:manifest`; must pass.
+- [ ] Playwright smoke tests: Course CRUD round-trip via `CnAppRoot`'s built-in index page; cmi5 launch-token fetch returns a valid JWT; SCORM shim LMS API roundtrip persists an xAPI statement.

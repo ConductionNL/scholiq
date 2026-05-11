@@ -1,45 +1,39 @@
-# Tasks — Compliance Audit
+# Tasks — Compliance Audit (the wedge core)
 
-## Phase 1: OpenRegister schemas
+> Scope: two schema patches (`Regulation`, `Attestation`) on `lib/Settings/scholiq_register.json`, two PHP files (signing guard + audit-pack export controller), and a manifest extension that wires the Compliance dashboard to declarative widgets.
 
-- [ ] Create `openregister/schemas/scholiq-regulation.json` with all fields (slug, name, audience_scope enum, requires_annual_renewal, renewal_cycle_months, active, tenant_id). Add indexes on (slug, tenant_id), (active, tenant_id). Write unit test: POST regulation, GET regulation by slug.
-- [ ] Create `openregister/schemas/scholiq-attestation.json` with `append_only: true` and all fields including signature, key_rotation_id, xapi_statement_id. Add indexes on (learner_id, regulation_slug, tenant_id, timestamp), (course_id, regulation_slug, timestamp). Write unit test confirming OpenRegister rejects UPDATE on append_only schema.
-- [ ] Create `openregister/schemas/scholiq-compliance-campaign.json` with all fields (audience object, bulk_job_id, notification_days array, status enum). Add indexes on (regulation_slug, tenant_id, status), (due_date, status).
+## Phase 1: Schema patches on `lib/Settings/scholiq_register.json`
 
-## Phase 2: HMAC key service
+- [ ] Add `Regulation` schema per design §1.1 — lifecycle (`draft → published → archived`), aggregations (`mandatoryEnrolledCount`, `mandatoryCompletedCount`, `attestationCount`, `validCredentialCount`), calculations (`coveragePercent`, `ragStatus` using per-regulation `ragRedThreshold` / `ragAmberThreshold` fields), notifications (`officerAlertOnCoverageDrop` with `calculatedChange` trigger), widgets (`coverageGrid`, `boardProof`). Reference: decidesk's Meeting + ActionItem schemas for aggregations + calculations.
+- [ ] Add `Attestation` schema per design §1.2 — `appendOnly: true`, lifecycle (`drafted → signed → revoked` with `AttestationSigningGuard` precondition on sign), relations (learner + course + lesson). **Do NOT** add a `scholiq-audit-event` schema; OR's audit trail is the evidence log (ADR-022 + ADR-008-rewrite).
+- [ ] Write a JSON-validation test that asserts both schemas parse against OR's schema-extension contract and the widgets resolve.
+- [ ] **Do NOT** add a `scholiq-compliance-campaign` schema — design §1.3 explains why.
 
-- [ ] Create `Scholiq\Service\HmacKeyService`: `getCurrentKey(tenantId)` returning {key, rotation_id} from ICrypto; `rotateKey(tenantId)` generating new key, storing both old + new during 30-day dual-sign window; `verifySignature(attestation, tenantId)` re-canonicalizing and comparing HMAC. Unit tests: generate key, sign payload, verify signature passes; tamper with payload, verify returns false.
-- [ ] Create `Scholiq\BackgroundJob\ComplianceHmacRotationJob` extending TimedJob (annual, 365*86400s): rotates HMAC key for each tenant, emits 'security.config.changed' audit event. Register in Application.php.
+## Phase 2: PHP — ADR-031 legitimate exceptions only
 
-## Phase 3: PHP services
+- [ ] Create `lib/Lifecycle/AttestationSigningGuard.php`: single `check($transitionContext)` method that (a) queries OR for an `XapiStatement` with `verb.id ∈ {completed, passed}` AND `object.id` referencing the Attestation's `lessonId` AND `actor.id` referencing `learnerId`; if none, returns `Reject('Content must be completed before attestation')`; (b) computes HMAC-SHA256 of the canonicalised Attestation payload using **OR's audit-trail tenant-key API** (`$this->openRegisterAuditTrail->getCurrentTenantKey($tenantId)`); (c) sets the transition payload's `signature` + `keyRotationId` fields. Legitimate per ADR-031 §"Lifecycle guards" + cryptographic exception. Unit test: mock missing xAPI completion → returns reject; mock present completion → returns success with non-empty signature.
+- [ ] Create `lib/Controller/AuditPackExportController.php`: `POST /api/compliance/audit/export` accepts `{regulationSlug, dateFrom, dateTo}`; calls OR's audit-trail-query API (`$this->auditTrailQuery->query(['event_type' => ['attestation.signed','attestation.revoked','credential.issued','credential.revoked','credential.expired','enrolment.completed','compliance.regulation.published','compliance.audit_pack.exported','xapi.statement.received'], 'regulationSlug' => $regulationSlug, 'period' => [$dateFrom, $dateTo]])`); calls OR's audit-trail verification endpoint for the signature-status; builds 4-file ZIP (`audit-trail.ndjson`, `audit-trail.csv`, `manifest.json` with verification key fingerprint + event count + period, `signature-verification.txt`); streams as `Content-Disposition: attachment`. Legitimate per ADR-031 §"Document generation". Integration test: seed 20 OR audit-trail entries → call export → unzip → assert all 4 files present + `manifest.event_count = 20` + signature-status reported.
+- [ ] Register routes in `appinfo/routes.php`.
 
-- [ ] Create `Scholiq\Service\AttestationService`: implement `capture()` per design §2.1 — verify xAPI completed statement exists via LrsClient, build + canonicalize payload, call HmacKeyService::sign(), call ObjectService::saveObject(append-only), emit 'attestation.signed' audit event. Integration test: simulate cmi5.completed LRS entry → call capture() → verify Attestation persisted with non-empty signature → attempt ObjectService::updateObject() → assert rejected.
-- [ ] Create `Scholiq\Service\CoverageComputationService`: implement `computeCoverage(regulationSlug, tenantId)` — query mandatory lessons, query Enrolments (denominator), query xAPI completed statements (numerator), compute %, assign RAG status, cache 60s in APCu. Add cache-invalidation listener on `xapi.statement.received` event. Unit test: mock ObjectService with known counts, assert correct coverage % and RAG status. Performance test: assert query completes < 500ms for 5000 Enrolments with mock OR.
-- [ ] Create `Scholiq\Service\AuditPackExportService`: implement `export(regulation, dateFrom, dateTo, tenantId)` per design §2.3 — query audit events from audit_event schema, build ndjson + csv + manifest.json + signature-verification.txt, ZIP using ZipArchive, emit 'compliance.audit_pack.exported' audit event, return tmp file path. Integration test: seed 20 audit events, call export, unzip result, assert all 4 files present and manifest event_count=20.
+## Phase 3: Frontend — manifest extension
 
-## Phase 4: PHP controllers
+- [ ] Extend `src/manifest.json` with `RegulationDetail`, `AuditPackExport`, and `Compliance` dashboard pages per design §3.1. The Compliance page's widgets are `widget-ref` entries pointing at `Regulation.x-openregister-widgets` (the canonical declarative-widget pattern). Re-run `npm run check:manifest`.
+- [ ] Create `src/views/AuditPackExportModal.vue`: regulation dropdown (sources OR REST `GET /api/openregister/scholiq/Regulation?lifecycle=published`), date-from + date-to pickers, "Export" button POSTs `/api/compliance/audit/export` → triggers file download. Register via `customComponents` on `CnAppRoot`. Playwright test: select regulation + date range → submit → assert file download initiated.
+- [ ] Extend `src/views/LessonPlayer.vue` (declared in course-management change): after `cmi5.completed` event arrives from the AU AND the lesson has `mandatoryTraining=true` AND `regulationSlug` is set, render the inline AttestationView card per design §3.3. On submit: (1) POST `/api/openregister/scholiq/Attestation` with `lifecycle=drafted`; (2) PATCH `.../transition/sign`; show inline 422 error if guard rejects; show success state with attestation id + link to Credential when issued. Playwright test: simulate cmi5 lesson completion → tick attestation → submit → assert Attestation with `lifecycle=signed` exists in OR + corresponding `attestation.signed` audit entry.
+- [ ] **Do NOT** create `src/views/ComplianceDashboard.vue`, `RegulationListView.vue`, `RegulationDetailView.vue`, `CampaignListView.vue`, `RegulationKpiCard.vue`. `CnAppRoot`'s built-in dashboard + index + detail renderers consume the schema-declared widgets + pages.
+- [ ] **Do NOT** create `src/router/index.js` entries or `src/stores/complianceStore.js`.
 
-- [ ] Create `Scholiq\Controllers\ComplianceController` extending `AuditedController`: all 11 endpoints per design §3.1. Role guard: all restricted to admin/hr/compliance-officer. For POST /api/compliance/audit/export: call AuditPackExportService, stream ZIP as response with Content-Disposition: attachment. For GET /api/compliance/coverage: call CoverageComputationService for each active regulation; return array. Integration tests: coverage % computation with seeded xAPI statements; audit pack export ZIP structure; board-proof report with NC group mock.
-- [ ] Create `Scholiq\Controllers\AttestationController` extending `AuditedController`: POST /api/attestations (learner-accessible), GET /api/attestations (compliance-officer only, with filters), GET /api/attestations/{id}. Integration test: learner attests after xAPI completion → verify Attestation in OR; learner attests without xAPI completion → verify 422 returned.
+## Phase 4: Audit-event vocabulary — none
 
-## Phase 5: Audit event types
+- [ ] **Do NOT** add `compliance.campaign.created` / `compliance.trail.verified` / `attestation.signed` etc. to a Scholiq-side `AuditEventTypes::KNOWN`. OR's lifecycle + notification engines emit these event types automatically. **Do NOT** add the `scholiq-audit-event` schema or any HMAC key service / rotation job (OR owns hash-chain integrity per ADR-022).
 
-- [ ] Add `compliance.campaign.created`, `compliance.trail.verified`, `attestation.signed` (if not already), `attestation.revoked` to `AuditEventTypes::KNOWN`. PHPStan build must pass.
-
-## Phase 6: Vue frontend
-
-- [ ] Add route entries to `src/router/index.js` for /compliance, /compliance/regulations, /compliance/regulations/:slug, /compliance/campaigns, /compliance/export.
-- [ ] Create `src/stores/complianceStore.js` using `createObjectStore('/api/compliance/regulations')`. Vitest tests.
-- [ ] Create `src/views/ComplianceDashboard.vue`: regulation card grid with apexcharts `radialBar` gauge per regulation; RAG status badge; 12-month trend sparkline (apexcharts `line`, mock data in v0.1); "Create campaign" button; "Export audit pack" button per regulation. Playwright test: navigate to /compliance, assert regulation cards render with coverage % values.
-- [ ] Create `src/views/RegulationDetailView.vue` CnDetailPage + CnObjectSidebar: coverage gauge, enrolment stats (enrolled/completed/overdue), board-proof table (if audience_scope='board'), recent attestations table, Audit Trail tab.
-- [ ] Create `src/views/CampaignListView.vue` CnDataTable: columns regulation, name, status badge, due_date, enrolled/completed counts. "New campaign" CTA opens BulkEnrolmentModal pre-filled with regulation slug.
-- [ ] Create `src/components/AuditPackExportModal.vue`: regulation selector dropdown (seeded from GET /api/compliance/regulations), date_from/date_to pickers, "Export" button calling POST /api/compliance/audit/export with response streamed as file download. Show spinner while processing. Playwright test: select regulation, set date range, submit, assert file download initiated.
-- [ ] Extend `src/views/LessonPlayer.vue` (course-management spec): after cmi5.completed event arrives from AU → show AttestationView component. AttestationView: "Ik verklaar dat ik de training heb voltooid en begrepen" checkbox + "Onderteken attestatie" button. On submit: POST /api/attestations. Success: show attestation id + green confirmation. Failure (no xAPI completion): show inline error. Playwright test: simulate cmi5 lesson completion → tick attestation → submit → assert Attestation created in OR.
-
-## Phase 7: Quality gate
+## Phase 5: Quality gate
 
 - [ ] Run `composer check:strict`; fix all violations.
 - [ ] Run `npm run lint`; fix all ESLint violations.
-- [ ] Integration tests (PHPUnit): attestation capture with HMAC sign + verify cycle; audit pack ZIP structure; coverage % computation with known data fixtures; campaign creation triggering bulk-enrol.
-- [ ] Playwright end-to-end: full compliance officer workflow — create regulation → create campaign → learner completes course + attests → verify coverage % updates → export audit pack → assert ZIP downloaded.
-- [ ] Performance test: CoverageComputationService with 5000 Enrolment fixtures returns in ≤ 2000ms.
+- [ ] Run `npm run check:manifest`; must pass.
+- [ ] Integration test (PHPUnit + OR): seed a Regulation + 10 Enrolments (5 completed, 5 active), trigger OR's aggregation refresh, assert `coveragePercent` = 50 + `ragStatus` = "red" (since 50 < default red threshold 70) + the `officerAlertOnCoverageDrop` notification dispatched once to the compliance-officer role.
+- [ ] Integration test: attestation signing — attempt to sign with no xAPI completion → assert 422 from OR's lifecycle engine (guard rejection); attempt with completion → assert `signature` field non-empty + `attestation.signed` audit entry exists.
+- [ ] Integration test: audit pack export — seed 20 OR audit-trail entries across event types, call export with regulationSlug+period filter → unzip → assert ndjson contains all entries + manifest.event_count = 20 + signature-status reported.
+- [ ] Performance test: Regulation aggregation over 5000 Enrolment fixtures returns in ≤ 2000ms. If OR's aggregation engine fails this SLA, open an OR-side issue per ADR-031 §Exceptions — do not add an app-local cache.
+- [ ] Playwright end-to-end: compliance officer workflow — create Regulation → publish → BulkEnrol 10 learners → simulate completions + attestations → verify Compliance dashboard shows 100% coverage + green RAG → export audit pack → assert ZIP downloaded.

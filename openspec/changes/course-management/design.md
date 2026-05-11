@@ -1,261 +1,273 @@
 # Design — Course Management
 
-## 1. OpenRegister Schemas
+> **Declarative-vs-imperative decision (per [hydra ADR-031 §"How to apply this rule"](../../../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md))** — every Course / Lesson state transition + count + status calculation + relation fits the `x-openregister-*` extensions. They land as JSON patches on `lib/Settings/scholiq_register.json` (canonical reference: `decidesk/lib/Settings/decidesk_register.json`), not as PHP service classes. The two services this change ships — `Cmi5ImporterService` and `ScormToXapiTranslator` — are ADR-031 exceptions (NLP / external-system contract).
+>
+> **OR abstractions consumed (per [hydra ADR-022](../../../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md))** — audit trail (immutable), RBAC, archival, relations, and the schema-extension engine. No app-local audit substrate, no app-local relation tables, no app-local archival code.
+>
+> **Frontend (per [hydra ADR-024](../../../../hydra/openspec/architecture/adr-024-app-manifest.md))** — `Courses` index page is declared in `src/manifest.json` (added by the `nextcloud-app` change). `LessonPlayer` is registered via `customComponents` on `CnAppRoot`; there is no app-local Vue Router code.
 
-### 1.1 `scholiq-course`
+## 1. Schema patches in `lib/Settings/scholiq_register.json`
 
-Maps to `Course` entity in ARCHITECTURE.md §3.1. Wedge fields only:
+The change is a JSON patch on the register file adding three schemas: `Course`, `Lesson`, `XapiStatement`. (The course-section / cohort concept is deferred to Phase 2 per Wedge Scope §5.)
 
-```json
-{
-  "title": "scholiq-course",
-  "properties": {
-    "id":           { "type": "string", "format": "uuid" },
-    "code":         { "type": "string" },
-    "name":         { "type": "string" },
-    "name_nl":      { "type": ["string","null"] },
-    "description":  { "type": ["string","null"] },
-    "level":        { "type": "string", "enum": ["po","vo","mbo","hbo","wo","corporate"] },
-    "language":     { "type": "string", "pattern": "^[a-z]{2}$" },
-    "tenant_id":    { "type": "string", "format": "uuid" },
-    "published":    { "type": "boolean" },
-    "tags":         { "type": "array", "items": {"type":"string"} },
-    "created_at":   { "type": "string", "format": "date-time" },
-    "updated_at":   { "type": "string", "format": "date-time" },
-    "deleted_at":   { "type": ["string","null"], "format": "date-time" }
+### 1.1 `Course`
+
+```jsonc
+"Course": {
+  "slug": "course",
+  "icon": "FolderOutline",
+  "version": "0.1.0",
+  "title": "Course",
+  "description": "A course or training program (Schema.org Course)",
+  "type": "object",
+  "x-openregister": {
+    "schemaType": "schema:Course",
+    "active": true,
+    "hardDelete": false,
+    "searchable": true
   },
-  "required": ["code","name","level","language","tenant_id","published"]
+  "required": ["code", "name", "level", "language", "tenant_id"],
+  "properties": {
+    "code":               { "type": "string", "description": "Course code (e.g. BIO-3H-2026)" },
+    "name":               { "type": "string" },
+    "name_nl":            { "type": ["string","null"] },
+    "description":        { "type": ["string","null"] },
+    "level":              { "type": "string", "enum": ["po","vo","mbo","hbo","wo","corporate"] },
+    "language":           { "type": "string", "pattern": "^[a-z]{2}$" },
+    "tags":               { "type": "array", "items": { "type": "string" } },
+    "mandatoryTraining":  { "type": "boolean", "default": false },
+    "regulationSlug":     { "type": ["string","null"] },
+    "renewalCourseSlug":  { "type": ["string","null"] },
+    "certificateTemplate":{ "type": ["string","null"], "description": "nc:files path to PDF template" },
+    "tenant_id":          { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "draft",
+    "transitions": {
+      "publish":   { "from": "draft",     "to": "published", "requires": "OCA\\Scholiq\\Lifecycle\\CoursePublishGuard" },
+      "archive":   { "from": "published", "to": "archived" },
+      "unarchive": { "from": "archived",  "to": "draft" }
+    }
+  },
+  "x-openregister-calculations": {
+    "lessonCount": {
+      "type": "integer",
+      "materialise": true,
+      "expression": { "count": { "schema": "Lesson", "filter": { "courseId": "@self.id" } } }
+    },
+    "isPublished": {
+      "type": "boolean",
+      "materialise": true,
+      "expression": { "eq": [ { "prop": "lifecycle" }, "published" ] }
+    }
+  },
+  "x-openregister-aggregations": {
+    "enrolledLearners":  { "metric": "count_distinct", "schema": "Enrolment", "field": "learnerId", "filter": { "courseId": "@self.id" } },
+    "completedLearners": { "metric": "count_distinct", "schema": "Enrolment", "field": "learnerId", "filter": { "courseId": "@self.id", "lifecycle": "completed" } }
+  }
 }
 ```
 
-Deferred (Phase 2+): `credits`, `prerequisites`, `learning_outcomes`, `provider` (OOAPI).
+The `CoursePublishGuard` is a thin PHP class under `lib/Lifecycle/` that asserts `lessonCount > 0` before the `draft → published` transition fires. Lifecycle guards are an ADR-031 legitimate seam.
 
-### 1.2 `scholiq-lesson`
+The lifecycle declaration replaces what would have been `CourseService::publish()` / `CourseService::archive()`. The aggregations replace what would have been `CourseService::getEnrolmentCount()`. The calculations replace what would have been `CourseService::getLessonCount()`. OR's lifecycle engine emits `course.published` / `course.archived` audit-trail entries on every transition automatically (ADR-008 + ADR-022).
 
-Maps to `Lesson` / Module entity in ARCHITECTURE.md §3.1.
+### 1.2 `Lesson`
 
-```json
-{
-  "title": "scholiq-lesson",
-  "properties": {
-    "id":                   { "type": "string", "format": "uuid" },
-    "course_id":            { "type": "string", "format": "uuid" },
-    "name":                 { "type": "string" },
-    "order":                { "type": "integer", "minimum": 1 },
-    "content_type":         { "type": "string", "enum": ["text","video","scorm12","scorm2004","cmi5"] },
-    "content_ref":          { "type": "string" },
-    "duration_minutes":     { "type": ["integer","null"] },
-    "mandatory_training":   { "type": "boolean", "default": false },
-    "regulation_slug":      { "type": ["string","null"] },
-    "created_at":           { "type": "string", "format": "date-time" },
-    "updated_at":           { "type": "string", "format": "date-time" }
+```jsonc
+"Lesson": {
+  "slug": "lesson",
+  "icon": "FileDocumentOutline",
+  "version": "0.1.0",
+  "title": "Lesson",
+  "type": "object",
+  "x-openregister": {
+    "schemaType": "schema:LearningResource",
+    "active": true,
+    "searchable": true
   },
-  "required": ["course_id","name","order","content_type","content_ref"]
+  "required": ["courseId", "name", "order", "contentType", "contentRef"],
+  "properties": {
+    "courseId":          { "type": "string", "format": "uuid" },
+    "name":              { "type": "string" },
+    "order":             { "type": "integer", "minimum": 1 },
+    "contentType":       { "type": "string", "enum": ["text","video","scorm12","scorm2004","cmi5","lti","quiz"] },
+    "contentRef":        { "type": "string", "description": "nc:files path, cmi5 launch URL, or LTI link" },
+    "durationMinutes":   { "type": ["integer","null"] },
+    "learningObjectives":{ "type": "array", "items": { "type": "string" } },
+    "mandatoryTraining": { "type": "boolean", "default": false },
+    "regulationSlug":    { "type": ["string","null"] },
+    "tenant_id":         { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-relations": {
+    "course": { "register": "scholiq", "schema": "Course", "cardinality": "many-to-one", "joinOn": "courseId" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "draft",
+    "transitions": {
+      "publish": { "from": "draft",     "to": "published" },
+      "retire":  { "from": "published", "to": "retired" }
+    }
+  }
 }
 ```
 
-### 1.3 `scholiq-course-section`
+`x-openregister-relations` replaces what would have been a manual `LessonMapper::findByCourse()` join. OR's relation engine resolves both directions and respects RBAC.
 
-Maps to `CourseSection` / Cohort in ARCHITECTURE.md §3.1.
+### 1.3 `XapiStatement` (LRS substrate per ADR-002)
 
-Wedge fields: `id`, `course_id`, `name`, `start_date`, `end_date`, `mode` (online/blended/async), `tenant_id`, `nc_group_id` (optional).
-
-Deferred: `nc_talk_room_id`, `nc_calendar_id`, `instructor_ids`, `max_seats`.
-
-### 1.4 `scholiq-xapi-statement`
-
-Append-only LRS statement store per ADR-002 §Implementation notes.
-
-```json
-{
-  "title": "scholiq-xapi-statement",
-  "append_only": true,
-  "properties": {
-    "id":           { "type": "string", "format": "uuid" },
-    "actor":        { "type": "object" },
-    "verb":         { "type": "object" },
-    "object":       { "type": "object" },
-    "result":       { "type": ["object","null"] },
-    "context":      { "type": ["object","null"] },
-    "timestamp":    { "type": "string", "format": "date-time" },
-    "stored":       { "type": "string", "format": "date-time" },
-    "authority":    { "type": ["object","null"] },
-    "version":      { "type": "string", "const": "1.0.3" },
-    "course_id":    { "type": ["string","null"], "format": "uuid" },
-    "lesson_id":    { "type": ["string","null"], "format": "uuid" },
-    "tenant_id":    { "type": "string", "format": "uuid" }
+```jsonc
+"XapiStatement": {
+  "slug": "xapi-statement",
+  "icon": "TextBoxOutline",
+  "version": "0.1.0",
+  "title": "XapiStatement",
+  "description": "xAPI 1.0.3 statement (LRS)",
+  "type": "object",
+  "x-openregister": {
+    "active": true,
+    "hardDelete": false,
+    "appendOnly": true
   },
-  "required": ["actor","verb","object","stored","tenant_id"],
-  "indexes": [
-    ["actor.id","verb.id","stored"],
-    ["course_id","tenant_id","stored"],
-    ["verb.id","tenant_id","stored"]
+  "required": ["actor", "verb", "object", "stored", "tenant_id"],
+  "properties": {
+    "actor":      { "type": "object" },
+    "verb":       { "type": "object" },
+    "object":     { "type": "object" },
+    "result":     { "type": ["object","null"] },
+    "context":    { "type": ["object","null"] },
+    "timestamp":  { "type": "string", "format": "date-time" },
+    "stored":     { "type": "string", "format": "date-time" },
+    "authority":  { "type": ["object","null"] },
+    "version":    { "type": "string", "const": "1.0.3" },
+    "courseId":   { "type": ["string","null"], "format": "uuid" },
+    "lessonId":   { "type": ["string","null"], "format": "uuid" },
+    "tenant_id":  { "type": "string", "format": "uuid" }
+  },
+  "x-openregister-lifecycle": {
+    "field": "lifecycle",
+    "default": "stored",
+    "transitions": {}
+  }
+}
+```
+
+`appendOnly: true` consumes OR's append-only abstraction (ADR-022). The empty `transitions` map signals that every save emits a `xapi.statement.received` audit entry via OR's lifecycle engine — no Scholiq-side `record()` call.
+
+---
+
+## 2. PHP files that ship in this change (ADR-031 exceptions only)
+
+| File | ADR-031 category | Why kept |
+|---|---|---|
+| `lib/Lifecycle/CoursePublishGuard.php` | Lifecycle guard | Asserts `Course.lessonCount > 0` before publish. Single-method. Called by OR's lifecycle engine. |
+| `lib/Service/Cmi5ImporterService.php` | NLP / domain-specific text processing | Parses `cmi5.xml` / `imsmanifest.xml` from uploaded ZIPs; creates Lesson objects with correct `contentType`. ADR-031 §"What apps SHOULD still write in PHP" explicitly includes "domain-specific text processing". |
+| `lib/Service/ScormToXapiTranslator.php` | External-system contract | Translates SCORM 1.2 / 2004 LMS API calls to xAPI verbs. Adapter for an external runtime protocol. |
+| `lib/Controller/LrsController.php` | External-system contract | xAPI 1.0.3 over-the-wire endpoint. Writes statements as `XapiStatement` objects; OR emits the audit entry. |
+| `lib/Controller/ScormController.php` | External-system contract | SCORM iframe + JSON-RPC bridge. Delegates to `ScormToXapiTranslator`. |
+| `lib/Controller/LessonImportController.php` | Wraps Cmi5ImporterService | Single `import($courseId)` action; accepts the upload and dispatches to the importer. |
+
+**Explicitly NOT in this change** (ADR-031 anti-patterns):
+- `CourseController` — not needed. `CnAppRoot`'s `Courses` index page (declared in the manifest) reads/writes Course objects via OR's REST API directly. CRUD is OR's responsibility.
+- `LessonController` — same reason for plain CRUD. The import + launch actions go through their own thin controllers above.
+- `CourseService` / `LessonService` / `Cmi5LaunchService` (the v1 ones — the `Cmi5LaunchTokenService` was moved into the `nextcloud-app` change since it's the launch-flow seam used across multiple specs).
+- `CourseContentService::ensureCourseFolder` — folder management is an OR archival-abstraction concern; the upload controller hands the file to OR which stores it in the right location.
+
+---
+
+## 3. Frontend — `CnAppRoot` consumption
+
+### 3.1 Manifest extension
+
+The `nextcloud-app` change already declared the `Courses` index page bound to `register=scholiq schema=Course`. This change extends `src/manifest.json` with:
+
+```jsonc
+{
+  "pages": [
+    /* ... existing pages ... */
+    { "id": "CourseDetail",  "route": "/courses/:id",                       "type": "detail", "config": { "register": "scholiq", "schema": "Course" } },
+    { "id": "LessonPlayer",  "route": "/courses/:courseId/lessons/:lessonId","type": "custom", "config": { "component": "LessonPlayer" } }
   ]
 }
 ```
 
----
+The `index` and `detail` page types come straight from `CnAppRoot`'s built-in renderers (ADR-024 §10 closed enum). They give us the list + detail view + sidebar tabs + audit-trail tab for free; no app-local Vue views needed.
 
-## 2. PHP Controllers and Services
+### 3.2 `LessonPlayer.vue`
 
-### 2.1 `CourseController`
+Single custom Vue component registered via `customComponents` on `CnAppRoot`. Branches on `lesson.contentType`:
+- `cmi5`: fetch JWT from `GET /api/lessons/{id}/launch` → AU iframe with postMessage bridge.
+- `scorm12` / `scorm2004`: SCORM shim iframe pointing to `/api/scorm/{lessonId}/launch`.
+- `video`: `<video>` element with nc:files URL resolved via OR.
+- `text`: HTML render.
 
-Routes:
-```
-GET    /api/courses            → list (filterable: published, level, mandatory_training)
-POST   /api/courses            → create
-GET    /api/courses/{id}       → show
-PATCH  /api/courses/{id}       → update
-DELETE /api/courses/{id}       → archive (soft delete via deleted_at)
-```
+No app-local store, no app-local fetch glue beyond the launch-token call.
 
-All state changes extend `AuditedController` and call `AuditTrail::record()` with the appropriate event_type from `AuditEventTypes`.
+### 3.3 No app-local store, no app-local Vue Router code
 
-Role guards: create/update/delete restricted to roles `admin`, `hr`, `instructor`. Learners: GET only (published courses for their tenant).
-
-### 2.2 `LessonController`
-
-Routes:
-```
-GET    /api/courses/{courseId}/lessons             → list (sorted by order)
-POST   /api/courses/{courseId}/lessons             → create (metadata only)
-GET    /api/courses/{courseId}/lessons/{id}        → show
-PATCH  /api/courses/{courseId}/lessons/{id}        → update
-DELETE /api/courses/{courseId}/lessons/{id}        → delete
-POST   /api/courses/{courseId}/lessons/import      → import cmi5/SCORM package
-GET    /api/lessons/{id}/launch                    → get cmi5 launch token
-```
-
-### 2.3 `LrsController`
-
-Implements xAPI 1.0.3 endpoints per ADR-002 §Implementation notes:
-```
-POST   /api/lrs/statements                          → post statement(s)
-GET    /api/lrs/statements                          → query statements
-GET    /api/lrs/activities/state                    → activity state
-GET    /api/lrs/activities/profile                  → activity profile
-GET    /api/lrs/agents/profile                      → agent profile
-```
-
-Authentication: NC session token OR cmi5 JWT from `Cmi5LaunchService`. Every POST writes an `xapi.statement.received` audit event.
-
-### 2.4 `ScormController`
-
-Serves SCORM 1.2/2004 runtime API bridge via a dedicated iframe-accessible endpoint:
-```
-GET    /api/scorm/{lessonId}/launch                 → serve SCORM player page
-POST   /api/scorm/{lessonId}/api                    → SCORM LMS API calls (JSON RPC)
-```
-
-`ScormToXapiTranslator` maps each SCORM call to xAPI per ADR-002 §Decision (3) table. SCORM packages served from nc:files.
-
-### 2.5 `Cmi5LaunchService`
-
-```php
-class Cmi5LaunchService
-{
-    public function mintLaunchToken(
-        string $learnerId,
-        string $lessonId,
-        string $registrationId
-    ): string // RS256 JWT, exp = now+8h
-}
-```
-
-Private key: stored in `OCP\Security\ICrypto` keyring under key `scholiq.cmi5.launch.private`.
-
-### 2.6 `CourseContentService`
-
-Handles package import logic:
-1. Detect manifest type from .zip content (cmi5.xml vs imsmanifest.xml).
-2. Unpack to `nc:files` at `/Scholiq/<tenant>/<course_id>/<type>/<lesson_id>/`.
-3. Create Lesson record with correct content_type and content_ref.
-4. Return the created Lesson.
+Course / Lesson list + detail interactions go through `CnAppRoot`'s built-in OR REST integration. Per ADR-031 + ADR-024 we do not create a `useCourseStore = createObjectStore('/api/courses')` — there is no `/api/courses` controller; the data path is `manifest.pages[Courses].config → register=scholiq schema=Course → OR REST`.
 
 ---
 
-## 3. Vue Frontend
+## 4. Audit Events Emitted (declaratively)
 
-### 3.1 Route additions (`src/router/index.js`)
+OR emits every audit entry automatically based on schema metadata. The wedge produces:
 
-```js
-{ path: '/courses',                    component: () => import('../views/CourseListView.vue')    },
-{ path: '/courses/new',                component: () => import('../views/CourseFormView.vue')    },
-{ path: '/courses/:id',                component: () => import('../views/CourseDetailView.vue')  },
-{ path: '/courses/:id/edit',           component: () => import('../views/CourseFormView.vue')    },
-{ path: '/courses/:id/lessons/:lid',   component: () => import('../views/LessonPlayer.vue')      },
-```
+| Trigger | event_type | Declared in schema |
+|---|---|---|
+| Course transition `draft → published` | `course.published` | `Course.x-openregister-lifecycle` |
+| Course transition `published → archived` | `course.archived` | `Course.x-openregister-lifecycle` |
+| Lesson save | `lesson.created` / `lesson.updated` | OR default save audit |
+| Lesson transition `draft → published` | `lesson.published` | `Lesson.x-openregister-lifecycle` |
+| `XapiStatement` save | `xapi.statement.received` | `XapiStatement` is append-only — every save audits |
 
-### 3.2 Key components
-
-- **`CourseListView.vue`**: `CnDataTable` or `CnIndexPage` over a Pinia `createObjectStore` store querying `GET /api/courses`. Columns: code, name, level, published badge, lesson count.
-- **`CourseDetailView.vue`**: `CnDetailPage` with a `CnObjectSidebar`. Tabs: Details, Lessons, Enrolments (count), Audit Trail (`CnAuditTrailTab`).
-- **`CourseFormView.vue`**: form bound to `POST` / `PATCH /api/courses`. Fields per schema.
-- **`LessonPlayer.vue`**: renders the appropriate player based on lesson content_type:
-  - `cmi5`: launch token → AU iframe with postMessage bridge
-  - `scorm12` / `scorm2004`: SCORM shim iframe pointing to ScormController
-  - `video`: `<video>` element with nc:files direct URL
-  - `text`: HTML content render
-
-### 3.3 Stores
-
-`useCourseStore = createObjectStore('/api/courses')` — follows the Options API + `createObjectStore` pattern from `feedback_store-pattern.md`.
-
----
-
-## 4. nc:files Integration
-
-At course creation, `CourseContentService::ensureCourseFolder()` calls:
-
-```php
-$userFolder = $this->rootFolder->getUserFolder($systemUser);
-$path = "/Scholiq/{$tenantId}/{$courseId}";
-if (!$userFolder->nodeExists($path)) {
-    $userFolder->newFolder($path);
-}
-```
-
-System user: the `scholiq` service account or the creating user. Folder is created idempotently (nodeExists check).
+No `AuditEventTypes::KNOWN` to maintain; the event type vocabulary lives with OR's audit-trail abstraction (ADR-022 + ADR-008-rewrite).
 
 ---
 
 ## 5. Wedge Scope Exclusions
 
-The following ARCHITECTURE.md entities and standards are explicitly NOT implemented in Phase 1:
-
 | Excluded | Deferred to |
 |---|---|
-| `prerequisites` array on Course | Phase 2 (complex prerequisite graph) |
-| `credits` (ECTS) on Course | Phase 2 (HE context) |
-| OOAPI 5.0 catalog endpoints | Phase 2 |
+| `CourseSection` / Cohort schema | Phase 2 |
+| `prerequisites` array | Phase 2 (requires prerequisite graph) |
+| `credits` (ECTS) | Phase 2 (HE context) |
+| OOAPI 5.0 catalog publication | Phase 2 |
 | LTI 1.3 launch | Phase 3 (assessment-engine) |
-| `Assessment` and `Question` entities | Phase 3 (assessment-engine spec) |
+| `Assessment` + `Question` schemas | Phase 3 |
 | Common Cartridge import | Phase 3 |
-| Programme committee approval workflow | Phase 2 (HE-specific) |
+| Programme committee approval workflow | Phase 2 (HE) |
 
 ---
 
-## 6. Audit Events Emitted
-
-| Endpoint | event_type | before/after |
-|---|---|---|
-| POST /api/courses | `course.published` | null / Course |
-| PATCH /api/courses/{id} | `course.published` | Course / Course |
-| DELETE /api/courses/{id} | `course.archived` | Course / null |
-| POST /api/courses/{id}/lessons | `lesson.created` (add to AuditEventTypes) | null / Lesson |
-| PATCH /api/courses/{id}/lessons/{id} | `lesson.updated` | Lesson / Lesson |
-| DELETE /api/courses/{id}/lessons/{id} | `lesson.deleted` | Lesson / null |
-| POST /api/lrs/statements | `xapi.statement.received` | null / Statement |
-
----
-
-## 7. Integration Points
+## 6. Integration Points
 
 | System | Interface | Purpose |
 |---|---|---|
-| OpenRegister | `ObjectService::saveObject()` | Persist Course, Lesson, xApiStatement |
-| nc:files | `OCP\Files\IRootFolder` | Course content folder + package storage |
-| nc:crypto | `OCP\Security\ICrypto` | cmi5 JWT signing key |
-| AuditTrail (nextcloud-app) | `Scholiq\Service\AuditTrail` | All mutation audit events |
-| Enrolment spec | `scholiq-enrolment` schema | Downstream; reads course_id |
-| Compliance-audit spec | `GET /api/lrs/statements` | Reads xAPI completions for coverage % |
+| OpenRegister | Schemas + lifecycle/relations/calculations/aggregations + audit trail | Course / Lesson / XapiStatement persistence + behaviour |
+| OpenRegister archival | OR's archival-destruction-workflow abstraction | nc:files content folder lifecycle |
+| OCP\Security\ICrypto | `OCP\Security\ICrypto` | cmi5 JWT signing key (via `Cmi5LaunchTokenService` in nextcloud-app change) |
+| OpenConnector | Adapter framework | LTI 1.3 (Phase 3) |
+| @conduction/nextcloud-vue | `CnAppRoot` + `customComponents` | Frontend shell + `LessonPlayer` registration |
+
+---
+
+## 7. Declarative-vs-imperative decision summary
+
+| Behaviour | Decision | ADR-031 row |
+|---|---|---|
+| Course state machine (draft → published → archived) | declarative | lifecycle |
+| Course lesson count | declarative | calculation |
+| Course enrolment count | declarative | aggregation |
+| Lesson → Course join | declarative | relation |
+| xAPI statement persistence | declarative | lifecycle + append-only |
+| Audit entries on every transition | declarative (OR) | (consumed via ADR-022) |
+| Course CRUD | declarative (CnAppRoot + OR REST) | (consumed via ADR-024 + ADR-022) |
+| cmi5 JWT signing | imperative (PHP) | "Cryptographic operations" exception |
+| SCORM ↔ xAPI translation | imperative (PHP) | "External-system contract" exception |
+| cmi5/SCORM ZIP parsing | imperative (PHP) | "NLP / domain-specific text processing" exception |
+| xAPI 1.0.3 wire-protocol controller | imperative (PHP) | "External-system integrations" exception |
+
+Every imperative entry has a single-cell justification rooted in ADR-031 §"What apps SHOULD still write in PHP". Anything not on this table is declarative.
