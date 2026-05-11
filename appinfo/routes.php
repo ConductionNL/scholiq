@@ -32,6 +32,9 @@ return [
         ['name' => 'audit_pack#export',  'url' => '/api/compliance/audit/export',           'verb' => 'POST'],
         ['name' => 'audit_pack#dossier', 'url' => '/api/ai-features/{slug}/dossier',        'verb' => 'GET'],
 
+        // App health observability — AdminHealth dashboard page (admin-only, ADR-031 exception).
+        ['name' => 'health#index', 'url' => '/api/admin/health', 'verb' => 'GET'],
+
         // Settings (kept for existing settings store compatibility).
         ['name' => 'settings#index',  'url' => '/api/settings',      'verb' => 'GET'],
         ['name' => 'settings#create', 'url' => '/api/settings',      'verb' => 'POST'],
