@@ -35,6 +35,18 @@ This change is mostly a manifest extension + widget declarations on existing sch
     "department":            { "type": ["string","null"] },
     "tenant_id":             { "type": "string", "format": "uuid" }
   },
+  "x-openregister-lifecycle": {
+    "initialState": "active",
+    "states": {
+      "active":  { "description": "Profile is active for the learner." },
+      "merged":  { "description": "Profile merged into another LearnerProfile (e.g. duplicate SchoolID/ECK iD reconciliation); retained for audit + back-reference resolution." },
+      "deleted": { "description": "Soft-deleted on offboarding; retained per AVG retention class until purge window expires." }
+    },
+    "transitions": [
+      { "name": "merge",  "from": "active", "to": "merged",  "audit_event_type": "learner.profile.merged",  "required": ["mergedInto"], "description": "Merges this profile into another LearnerProfile. The surviving profile is referenced via `mergedInto`." },
+      { "name": "delete", "from": "active", "to": "deleted", "audit_event_type": "learner.profile.deleted", "description": "Soft-deletes the profile on offboarding. Purge after retention class expires." }
+    ]
+  },
   "x-openregister-calculations": {
     "primaryRole": {
       "type": "string",
@@ -44,6 +56,8 @@ This change is mostly a manifest extension + widget declarations on existing sch
   }
 }
 ```
+
+> The `active` initial state emits a `learner.profile.created` audit event on first save via OR's standard lifecycle-initial-emission contract — together with the two transitions above this satisfies the full event vocabulary ADR-008 §3 declares (`learner.profile.created`, `learner.profile.merged`, `learner.profile.deleted`). No app-local LearnerProfile mutation code is needed; OR's audit-trail abstraction handles persistence.
 
 `RoleSelector` is a single-method PHP class that takes the full LearnerProfile (and an optional NC group check via `IGroupManager::isAdmin`) and returns the highest-priority role per the order `compliance-officer > hr > admin > manager > instructor > learner`. **This is the entire role-detection seam** — the rest of the dashboard logic reads `learnerProfile.primaryRole` straight from OR.
 
