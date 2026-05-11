@@ -32,10 +32,11 @@ vendor/
 composer.phar
 .phpunit.result.cache
 
-# Build artifacts
-dist/
-js/
-css/
+# Build artifacts (root-level only — leading slash prevents matching
+# nested directories like docusaurus/src/css/)
+/dist/
+/js/
+/css/
 *.tsbuildinfo
 
 # Coverage
