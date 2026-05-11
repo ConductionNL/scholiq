@@ -1,0 +1,144 @@
+schema: conduction
+
+app:
+  slug: scholiq
+  name: Scholiq
+  description: Open-source education platform for Nextcloud — student tracking (leerlingvolgsysteem), course creation, eLearning, training management, and certification.
+  repository: https://github.com/ConductionNL/scholiq
+  license: EUPL-1.2
+  version: 0.1.0
+  status: idea
+  family: concept
+  predecessors:
+    - learniq
+    - edudesk
+  categories:
+    - education
+    - learning-management
+    - lvs
+
+spec_dir: openspec/specs
+changes_dir: openspec/changes
+
+context: |
+  Project: Scholiq
+  Repo: ConductionNL/scholiq
+  Type: Nextcloud App (PHP backend + Vue 2 frontend)
+  Description: Open-source education platform — LVS (leerlingvolgsysteem), LMS course creation, eLearning, training management, certification, and exam delivery for PO/VO/MBO/HO and corporate/government training.
+  Key components: Course, Module, Lesson, Enrolment, Cohort, Exam, ItemBank, Certificate, OPP, Grade, AbsenceRecord, BronExchange, OsoDossier, ProctoringSession
+  Database: PostgreSQL (via OpenRegister's ObjectService)
+  Mount path: /var/www/html/custom_apps/scholiq
+
+  Standards:
+    Primary content/runtime: cmi5 + xAPI (with SCORM 1.2/2004 compatibility shim)
+    Assessment: IMS QTI 3.0 (1EdTech), Caliper Analytics
+    Interoperability: LTI 1.3, Common Cartridge, OAI-PMH, NL LOM, VDEX
+    Credentials: EDCI / Europass, Open Badges 3.0, E-Portfolio NL
+    NL onderwijs gatekeepers: Edukoppeling, Edu-K, UWLR, OSO, ROD/BRON (DUO), ROSA, SchoolID, ECK iD
+    Identity: SURFconext (eduPersonAffiliation, eduGAIN), DigiD, eHerkenning, Studielink
+    Privacy / compliance: AVG (GDPR), AVG-Onderwijs, EU AI Act (Reg. 2024/1689), BIO/BIO2, Digikoppeling, NIS2 / Cyberbeveiligingswet
+    Higher Ed: Open Onderwijs API (OOAPI 5.0), Bologna Diploma Supplement, ECTS
+
+  Architecture:
+    Pattern: Thin client — Scholiq owns no database tables
+    Data layer: OpenRegister (JSON object storage with schema validation)
+    Frontend: Vue 2.7 + Pinia stores querying OpenRegister API directly
+    Shared library: @conduction/nextcloud-vue (components, stores, composables, NL Design CSS)
+    Backend: Minimal — SettingsController + ConfigurationService for register setup; thin orchestrators for SCORM/cmi5/QTI runtime, BRON/OSO/UWLR adapters live in OpenConnector
+    Nextcloud reuse: Files (IRootFolder for course content), Talk (IBroker for virtual classroom), Calendar (IManager for lesson/exam scheduling), Groups (IGroupManager for cohorts), Notifications (IManager for assignment reminders), user-saml (SURFconext SSO), Activity (IManager)
+
+  Sister apps:
+    - openregister (REQUIRED — data layer, multi-tenancy, audit trail, REST API)
+    - openconnector (REQUIRED — BRON/ROD, UWLR, OSO, Edukoppeling, Studielink, Digikoppeling adapters)
+    - mydash (RECOMMENDED — student/credential analytics surfaces)
+    - docudesk (OPTIONAL — diploma/certificate document templating)
+  Shared specs: See ../openspec/specs/ for cross-project conventions
+  Project guidelines: See ../project.md for workspace-wide standards
+  Architecture: See docs/ARCHITECTURE.md for standards research and data model decisions
+  Features: See docs/FEATURES.md for competitive analysis and feature roadmap (354 canonical features, 71 must, 229 should)
+
+depends_on:
+  required:
+    - openregister
+    - openconnector
+  recommended:
+    - mydash
+  optional:
+    - docudesk
+
+standards:
+  learning:
+    - SCORM
+    - xAPI
+    - cmi5
+    - LTI
+    - QTI
+    - Common Cartridge
+    - Caliper Analytics
+    - Open Badges
+    - EDCI
+    - VDEX
+    - NL LOM
+    - OAI-PMH
+    - E-Portfolio NL
+  nl_onderwijs:
+    - UWLR
+    - OSO
+    - ROD
+    - ROSA
+    - Edukoppeling
+    - Edu-K
+    - SchoolID
+    - ECK iD
+  identity:
+    - SURFconext
+    - DigiD
+    - eHerkenning
+    - Studielink
+  privacy_compliance:
+    - GDPR
+    - AVG-Onderwijs
+    - EU AI Act
+    - Digikoppeling
+    - BIO
+    - BIO2
+    - NIS2
+
+rules:
+  proposal:
+    - Reference shared nextcloud-app spec for app structure requirements
+    - Reference docs/ARCHITECTURE.md for data model and standards decisions
+    - Consider impact on OpenConnector adapters (BRON/UWLR/OSO/Edukoppeling/Studielink) before proposing new integrations
+    - Reference docs/FEATURES.md for feature tier (must/should/could → MVP/V1/Enterprise)
+    - "ADR-011: Check OpenRegister core for existing functionality before proposing new features"
+    - "ADR-005 (planned): Any AI feature in scope for EU AI Act high-risk classification (adaptive learning, proctoring) MUST be feature-flag-gated and audit-logged"
+  specs:
+    - Use Schema.org type annotations for all entities (schema:Course, schema:CourseInstance, schema:EducationalOccupationalCredential, schema:EducationEvent, schema:Person)
+    - Include Edu-K/UWLR/OSO/ROD mapping column where applicable
+    - Pseudonymise pupil identifiers via SchoolID + ECK iD; never expose BSN
+    - Specify which Nextcloud OCP interfaces are used for integration features
+    - Reference FEATURES.md tier (must/should/could) for each requirement
+    - "ADR-009: Include test scenarios for all MUST/SHALL requirements"
+    - "ADR-005 (planned): Identity federation via SURFconext (HE), Nextcloud user-saml (K-12), Studielink (HO enrolment), DigiD (parent/pupil consent)"
+  design:
+    - Uses OpenRegister API directly from frontend (no own backend CRUD)
+    - Register config in lib/Settings/scholiq_register.json (OpenAPI 3.0.0 format)
+    - Imported via ConfigurationService::importFromApp() in repair step
+    - Reference Nextcloud OCP interfaces for all platform integrations
+    - "ADR-001: All data MUST be stored via OpenRegister — no custom database tables"
+    - "ADR-006 (planned): BRON/ROD + UWLR + OSO + Edukoppeling adapters MUST live in OpenConnector — never inline HTTP from Scholiq"
+    - "ADR-012: MUST use @conduction/nextcloud-vue components (CnIndexPage, CnDashboardPage, CnFormDialog, CnDataTable, CnDetailPage, CnObjectSidebar) — do NOT create custom equivalents"
+    - "ADR-008: Follow Controller → Service → Mapper layering pattern"
+    - "ADR-003: MUST use NL Design System tokens via Nextcloud CSS variables — no hardcoded colors"
+    - "ADR-002 (planned): Content runtime — cmi5 + xAPI primary, SCORM compatibility shim only"
+    - MUST use Vue Router (hash mode) for all navigation
+    - Router file at src/router/index.js, registered in main.js, <router-view /> in App.vue
+  tasks:
+    - Tag tasks with feature tier (must/should/could → MVP/V1/Enterprise)
+    - Test with OpenRegister to verify schema validation works
+    - Verify Nextcloud integration features with actual OCP interfaces
+    - Test BRON/OSO/UWLR exchange flows against DUO sandbox
+    - "ADR-010: MUST include documentation task with browser screenshots using Playwright MCP"
+    - "ADR-009: MUST include unit test tasks — minimum 75% coverage for new code"
+    - "ADR-005: MUST include i18n tasks — Dutch and English translations required"
+    - "ADR-010: Every user-facing feature MUST have docs in docs/features/ with screenshots"
