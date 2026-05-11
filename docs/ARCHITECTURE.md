@@ -10,7 +10,7 @@
 | **Family** | concept |
 | **Predecessors merged in** | `learniq` (deprecated), `edudesk` (deprecated) |
 | **Repository** | https://github.com/ConductionNL/scholiq |
-| **Brief** | [`concurrentie-analyse/briefs/scholiq-context.md`](../../concurrentie-analyse/briefs/scholiq-context.md) |
+| **Brief** | [`concurrentie-analyse/briefs/scholiq-context.md`](https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md) |
 
 Document version: 1.0 · 2026-05-11 · Source intelligence: 159 tenders / 52 competitors / 354 canonical features / 26 standards / 22 strategic insights.
 
@@ -216,9 +216,9 @@ All entities defined as OpenRegister schemas. Conduction patterns observed: opaq
 | `language` | ISO 639-1 | yes | `Course.inLanguage` | nl / en / ... |
 | `tenant_id` | UUID | yes | — | multi-school separation |
 | `provider` | UUID | yes | — | EducationalOrganization ref |
-| `tags` | array<string> | no | — | curriculum-mapping tags |
-| `prerequisites` | array<UUID> | no | `Course.coursePrerequisites` | other Course refs |
-| `learning_outcomes` | array<string> | no | `Course.educationalUse` | competency list |
+| `tags` | `array<string>` | no | — | curriculum-mapping tags |
+| `prerequisites` | `array<UUID>` | no | `Course.coursePrerequisites` | other Course refs |
+| `learning_outcomes` | `array<string>` | no | `Course.educationalUse` | competency list |
 | `published` | bool | yes | — | catalog visibility |
 | `created_at` | timestamp | yes | — | audit |
 | `updated_at` | timestamp | yes | — | audit |
@@ -239,7 +239,7 @@ Dutch field synonyms used in UI: `vak` → `subject`, `niveau` → `level`, `stu
 | `schedule` | string | no | `CourseInstance.eventSchedule` | iCal or RRULE |
 | `mode` | enum | yes | `CourseInstance.courseMode` | onsite / online / blended / async |
 | `location` | string | no | `CourseInstance.location` | room / URL |
-| `instructor_ids` | array<UUID> | no | `CourseInstance.instructor` | LearnerProfile refs (faculty role) |
+| `instructor_ids` | `array<UUID>` | no | `CourseInstance.instructor` | LearnerProfile refs (faculty role) |
 | `max_seats` | int | no | `CourseInstance.maximumAttendeeCapacity` | |
 | `nc_group_id` | string | no | — | Nextcloud group binding |
 | `nc_talk_room_id` | string | no | — | virtual-classroom room |
@@ -273,7 +273,7 @@ Cohort wires Scholiq into stock Nextcloud: every cohort SHOULD have a correspond
 | `content_type` | enum | yes | `LearningResource.encodingFormat` | text / video / scorm / cmi5 / lti / quiz |
 | `content_ref` | string | yes | `LearningResource.contentUrl` | nc:file id, cmi5 launch URL, LTI link |
 | `duration_minutes` | int | no | `LearningResource.timeRequired` | iso-8601 duration |
-| `learning_objectives` | array<string> | no | `LearningResource.teaches` | competency refs |
+| `learning_objectives` | `array<string>` | no | `LearningResource.teaches` | competency refs |
 
 #### `Assessment` (IMS QTI 3.0 `assessmentTest`)
 
@@ -332,9 +332,9 @@ Computed from `Submission` rows; serialized as both NL VO PTA cell (when `pta_ko
 | `bsn_encrypted` | string | no | — | encrypted at rest; never exposed |
 | `school_id` | string | no | — | Edu-K pseudonymous pupil id |
 | `eck_id` | string | no | — | content-chain pseudonymous id |
-| `edu_person_affiliation` | array<string> | no | `eduPersonAffiliation` | from SURFconext |
-| `roles` | array<string> | yes | — | learner / instructor / parent / hr / admin / inspector |
-| `parent_ids` | array<UUID> | no | — | for K-12 (multi-parent allowed) |
+| `edu_person_affiliation` | `array<string>` | no | `eduPersonAffiliation` | from SURFconext |
+| `roles` | `array<string>` | yes | — | learner / instructor / parent / hr / admin / inspector |
+| `parent_ids` | `array<UUID>` | no | — | for K-12 (multi-parent allowed) |
 | `tenant_id` | UUID | yes | — | |
 
 #### `Attendance` (NL leerplicht — auto-track 16-uur threshold)
@@ -576,8 +576,8 @@ Until ADRs land, specs reference them by slug in their `depends_on_adrs` frontma
 
 ## 9. References
 
-- Intelligence brief: [`concurrentie-analyse/briefs/scholiq-context.md`](../../concurrentie-analyse/briefs/scholiq-context.md)
-- Roadmap entry: [`concurrentie-analyse/application-roadmap.md#11-scholiq--student-tracking--learning-management`](../../concurrentie-analyse/application-roadmap.md#11-scholiq--student-tracking--learning-management)
+- Intelligence brief: [`concurrentie-analyse/briefs/scholiq-context.md`](https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md)
+- Roadmap entry: [`concurrentie-analyse/application-roadmap.md#11-scholiq--student-tracking--learning-management`](https://github.com/ConductionNL/market-intelligence/blob/development/application-roadmap.md#11-scholiq--student-tracking--learning-management)
 - Features matrix: [`docs/FEATURES.md`](./FEATURES.md)
 - Design references + wireframes: [`docs/DESIGN-REFERENCES.md`](./DESIGN-REFERENCES.md)
 - OpenSpec config: [`openspec/config.yaml`](../openspec/config.yaml)
