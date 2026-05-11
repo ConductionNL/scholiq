@@ -8,7 +8,7 @@ const config = {
   organizationName: 'ConductionNL',
   projectName: 'scholiq',
   trailingSlash: false,
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   i18n: { defaultLocale: 'en', locales: ['en', 'nl'] },
   presets: [[

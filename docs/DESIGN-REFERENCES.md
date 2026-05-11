@@ -627,7 +627,7 @@ All icons from Material Symbols (rounded variant) — same source as the blue he
 
 - ARCHITECTURE.md: [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
 - FEATURES.md: [`docs/FEATURES.md`](./FEATURES.md)
-- Intelligence brief: [`../../concurrentie-analyse/briefs/scholiq-context.md`](../../concurrentie-analyse/briefs/scholiq-context.md)
+- Intelligence brief: [`https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md`](https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md)
 - Pipelinq design references (format inspiration): https://github.com/ConductionNL/pipelinq/blob/main/docs/DESIGN-REFERENCES.md
 - Procest design references: https://github.com/ConductionNL/procest/blob/main/docs/DESIGN-REFERENCES.md
 - nextcloud-vue component library: https://github.com/ConductionNL/nextcloud-vue
