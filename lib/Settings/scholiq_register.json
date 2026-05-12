@@ -24,23 +24,38 @@
         "x-openregister": {
           "active": true,
           "hardDelete": false,
-          "searchable": true,
-          "appendOnly": true
+          "searchable": true
         },
-        "required": ["learnerId", "kind", "issuedAt", "issuerDid", "signature", "openbadges3Payload", "tenant_id"],
+        "required": [
+          "learnerId",
+          "kind",
+          "issuedAt",
+          "issuerDid",
+          "signature",
+          "openbadges3Payload",
+          "tenant_id"
+        ],
         "properties": {
           "learnerId": {
             "type": "string",
             "description": "Opaque learner UUID. Never BSN."
           },
           "courseId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "UUID of the associated Course. Null for manually issued credentials."
           },
           "kind": {
             "type": "string",
-            "enum": ["diploma", "certificate", "badge", "microcredential"],
+            "enum": [
+              "diploma",
+              "certificate",
+              "badge",
+              "microcredential"
+            ],
             "description": "Credential type."
           },
           "issuedAt": {
@@ -49,7 +64,10 @@
             "description": "ISO 8601 timestamp of issuance."
           },
           "expiresAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time",
             "description": "ISO 8601 expiry timestamp. Null = does not expire."
           },
@@ -66,11 +84,17 @@
             "description": "Full Open Badges 3.0 JSON-LD assertion."
           },
           "edciPayload": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "EDCI/Europass ELM payload. Phase 3."
           },
           "revocationReason": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Human-readable revocation reason. Set on revoke transition."
           },
           "issuedBy": {
@@ -79,15 +103,25 @@
           },
           "source": {
             "type": "string",
-            "enum": ["auto", "manual", "migrated"],
+            "enum": [
+              "auto",
+              "manual",
+              "migrated"
+            ],
             "description": "How this credential was created."
           },
           "regulationSlug": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Regulation identifier (e.g. NIS2) inherited from the Course."
           },
           "renewalEnrolmentId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "UUID of the renewal Enrolment created on expiry. Written back by OR batch."
           },
@@ -98,7 +132,11 @@
           },
           "lifecycle": {
             "type": "string",
-            "enum": ["issued", "revoked", "expired"],
+            "enum": [
+              "issued",
+              "revoked",
+              "expired"
+            ],
             "default": "issued",
             "description": "Lifecycle state. Managed by OpenRegister; do not set directly."
           },
@@ -123,7 +161,9 @@
             "issue": {
               "from": null,
               "to": "issued",
-              "requires": ["OCA\\Scholiq\\Service\\CredentialSigningService"]
+              "requires": [
+                "OCA\\Scholiq\\Service\\CredentialSigningService"
+              ]
             }
           }
         },
@@ -147,9 +187,24 @@
             "materialise": true,
             "expression": {
               "if": [
-                { "eq": [{ "prop": "expiresAt" }, null] },
+                {
+                  "eq": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    null
+                  ]
+                },
                 null,
-                { "dateDiff": [{ "prop": "expiresAt" }, "@now", "days"] }
+                {
+                  "dateDiff": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    "@now",
+                    "days"
+                  ]
+                }
               ]
             }
           },
@@ -158,19 +213,47 @@
             "materialise": true,
             "expression": {
               "if": [
-                { "eq": [{ "prop": "expiresAt" }, null] },
+                {
+                  "eq": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    null
+                  ]
+                },
                 "none",
                 {
                   "if": [
-                    { "lte": [{ "prop": "daysUntilExpiry" }, 0] },
+                    {
+                      "lte": [
+                        {
+                          "prop": "daysUntilExpiry"
+                        },
+                        0
+                      ]
+                    },
                     "expired",
                     {
                       "if": [
-                        { "lte": [{ "prop": "daysUntilExpiry" }, 30] },
+                        {
+                          "lte": [
+                            {
+                              "prop": "daysUntilExpiry"
+                            },
+                            30
+                          ]
+                        },
                         "expiring-soon",
                         {
                           "if": [
-                            { "lte": [{ "prop": "daysUntilExpiry" }, 90] },
+                            {
+                              "lte": [
+                                {
+                                  "prop": "daysUntilExpiry"
+                                },
+                                90
+                              ]
+                            },
                             "expiring",
                             "valid"
                           ]
@@ -187,9 +270,30 @@
             "materialise": true,
             "expression": {
               "and": [
-                { "neq": [{ "prop": "signature" }, null] },
-                { "neq": [{ "prop": "signature" }, ""] },
-                { "neq": [{ "prop": "openbadges3Payload" }, null] }
+                {
+                  "neq": [
+                    {
+                      "prop": "signature"
+                    },
+                    null
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "signature"
+                    },
+                    ""
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "openbadges3Payload"
+                    },
+                    null
+                  ]
+                }
               ]
             }
           },
@@ -198,10 +302,38 @@
             "materialise": true,
             "expression": {
               "and": [
-                { "eq": [{ "prop": "lifecycle" }, "issued"] },
-                { "neq": [{ "prop": "expiresAt" }, null] },
-                { "lte": [{ "prop": "daysUntilExpiry" }, 90] },
-                { "gt": [{ "prop": "daysUntilExpiry" }, 30] }
+                {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "issued"
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    null
+                  ]
+                },
+                {
+                  "lte": [
+                    {
+                      "prop": "daysUntilExpiry"
+                    },
+                    90
+                  ]
+                },
+                {
+                  "gt": [
+                    {
+                      "prop": "daysUntilExpiry"
+                    },
+                    30
+                  ]
+                }
               ]
             }
           },
@@ -210,10 +342,38 @@
             "materialise": true,
             "expression": {
               "and": [
-                { "eq": [{ "prop": "lifecycle" }, "issued"] },
-                { "neq": [{ "prop": "expiresAt" }, null] },
-                { "lte": [{ "prop": "daysUntilExpiry" }, 30] },
-                { "gt": [{ "prop": "daysUntilExpiry" }, 0] }
+                {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "issued"
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    null
+                  ]
+                },
+                {
+                  "lte": [
+                    {
+                      "prop": "daysUntilExpiry"
+                    },
+                    30
+                  ]
+                },
+                {
+                  "gt": [
+                    {
+                      "prop": "daysUntilExpiry"
+                    },
+                    0
+                  ]
+                }
               ]
             }
           },
@@ -222,36 +382,68 @@
             "materialise": true,
             "expression": {
               "and": [
-                { "eq": [{ "prop": "lifecycle" }, "issued"] },
-                { "neq": [{ "prop": "expiresAt" }, null] },
-                { "lte": [{ "prop": "daysUntilExpiry" }, 0] }
+                {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "issued"
+                  ]
+                },
+                {
+                  "neq": [
+                    {
+                      "prop": "expiresAt"
+                    },
+                    null
+                  ]
+                },
+                {
+                  "lte": [
+                    {
+                      "prop": "daysUntilExpiry"
+                    },
+                    0
+                  ]
+                }
               ]
             }
           }
         },
         "x-openregister-notifications": {
           "issuedToLearner": {
-            "trigger": { "lifecycleEnter": "issued" },
+            "trigger": {
+              "lifecycleEnter": "issued"
+            },
             "channel": "nc-notification",
             "subject": "scholiq.credential.issued",
             "recipient": "@self.learnerId"
           },
           "expiringSoonAlert": {
-            "trigger": { "calculated": "isExpiringIn30Days", "eq": true },
+            "trigger": {
+              "calculated": "isExpiringIn30Days",
+              "eq": true
+            },
             "channel": "nc-notification",
             "subject": "scholiq.credential.expiring.t30",
             "recipient": "@self.learnerId",
             "idempotencyKey": "expiryT30"
           },
           "expiryT90": {
-            "trigger": { "calculated": "isExpiringIn90Days", "eq": true },
+            "trigger": {
+              "calculated": "isExpiringIn90Days",
+              "eq": true
+            },
             "channel": "nc-notification",
             "subject": "scholiq.credential.expiring.t90",
             "recipient": "@self.learnerId",
             "idempotencyKey": "expiryT90"
           },
           "expiredAlert": {
-            "trigger": { "calculated": "isExpired", "eq": true },
+            "trigger": {
+              "calculated": "isExpired",
+              "eq": true
+            },
             "channel": "nc-notification",
             "subject": "scholiq.credential.expired",
             "recipient": "@self.learnerId",
@@ -259,13 +451,16 @@
             "alsoDispatchLifecycle": "expire"
           },
           "revoked": {
-            "trigger": { "lifecycleEnter": "revoked" },
+            "trigger": {
+              "lifecycleEnter": "revoked"
+            },
             "channel": "nc-notification",
             "subject": "scholiq.credential.revoked",
             "recipient": "@self.learnerId"
           }
         },
-        "x-openregister-seed": []
+        "x-openregister-seed": [],
+        "appendOnly": true
       },
       "AiFeature": {
         "slug": "AiFeature",
@@ -707,7 +902,6 @@
         "x-openregister": {
           "active": true,
           "hardDelete": false,
-          "appendOnly": true,
           "searchable": false
         },
         "required": [
@@ -793,7 +987,8 @@
           "initial": "stored",
           "transitions": {}
         },
-        "x-openregister-seed": []
+        "x-openregister-seed": [],
+        "appendOnly": true
       },
       "Enrolment": {
         "slug": "enrolment",
@@ -1109,7 +1304,63 @@
             "fallbackRecipientFromTenantRole": "hr"
           }
         },
-        "x-openregister-seed": []
+        "x-openregister-seed": [],
+        "x-openregister-widgets": {
+          "myMandatoryTraining": {
+            "type": "task-list",
+            "title": "scholiq.widget.learner.mandatoryTraining",
+            "description": "Learner's mandatory training list, filtered to their own enrolments, sorted by due date ascending.",
+            "scope": "owned-by-actor",
+            "filter": {
+              "mandatory": true,
+              "lifecycleIn": [
+                "pending",
+                "active"
+              ],
+              "learnerId": "@actor.id"
+            },
+            "sort": [
+              {
+                "field": "dueDate",
+                "order": "asc"
+              }
+            ],
+            "columns": [
+              {
+                "field": "course.name",
+                "label": "scholiq.col.course"
+              },
+              {
+                "field": "regulationSlug",
+                "label": "scholiq.col.regulation"
+              },
+              {
+                "field": "lifecycle",
+                "label": "scholiq.col.status"
+              },
+              {
+                "field": "dueDate",
+                "label": "scholiq.col.due"
+              },
+              {
+                "field": "daysRemaining",
+                "label": "scholiq.col.days"
+              },
+              {
+                "field": "ragStatus",
+                "label": "scholiq.col.rag"
+              }
+            ],
+            "actions": [
+              {
+                "id": "start",
+                "label": "scholiq.action.start",
+                "manifestPage": "LessonPlayer",
+                "presetField": "courseId"
+              }
+            ]
+          }
+        }
       },
       "Regulation": {
         "slug": "regulation",
@@ -1122,7 +1373,12 @@
           "active": true,
           "searchable": true
         },
-        "required": ["slug", "name", "audienceScope", "tenant_id"],
+        "required": [
+          "slug",
+          "name",
+          "audienceScope",
+          "tenant_id"
+        ],
         "properties": {
           "slug": {
             "type": "string",
@@ -1134,16 +1390,27 @@
             "description": "Human-readable regulation name."
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Plain-language description of the regulation and its applicability."
           },
           "applicabilityCriteria": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Free-text applicability criteria describing which roles or departments must comply."
           },
           "audienceScope": {
             "type": "string",
-            "enum": ["all-employees", "board", "role-specific", "department"],
+            "enum": [
+              "all-employees",
+              "board",
+              "role-specific",
+              "department"
+            ],
             "description": "Audience scope for this regulation."
           },
           "requiresAnnualRenewal": {
@@ -1178,7 +1445,11 @@
           },
           "lifecycle": {
             "type": "string",
-            "enum": ["draft", "published", "archived"],
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
             "default": "draft",
             "description": "Lifecycle state. Managed by OR's lifecycle engine."
           }
@@ -1204,7 +1475,11 @@
             "filter": {
               "mandatory": true,
               "regulationSlug": "@self.slug",
-              "lifecycleIn": ["active", "completed", "failed"]
+              "lifecycleIn": [
+                "active",
+                "completed",
+                "failed"
+              ]
             }
           },
           "mandatoryCompletedCount": {
@@ -1238,11 +1513,32 @@
           "coveragePercent": {
             "type": "number",
             "materialise": true,
-            "description": "Live coverage % = (mandatoryCompletedCount / mandatoryEnrolledCount) × 100. Returns 0 when no enrolments exist.",
+            "description": "Live coverage % = (mandatoryCompletedCount / mandatoryEnrolledCount) \u00d7 100. Returns 0 when no enrolments exist.",
             "expression": {
               "if": [
-                { "gt": [{ "prop": "mandatoryEnrolledCount" }, 0] },
-                { "mul": [{ "div": [{ "prop": "mandatoryCompletedCount" }, { "prop": "mandatoryEnrolledCount" }] }, 100] },
+                {
+                  "gt": [
+                    {
+                      "prop": "mandatoryEnrolledCount"
+                    },
+                    0
+                  ]
+                },
+                {
+                  "mul": [
+                    {
+                      "div": [
+                        {
+                          "prop": "mandatoryCompletedCount"
+                        },
+                        {
+                          "prop": "mandatoryEnrolledCount"
+                        }
+                      ]
+                    },
+                    100
+                  ]
+                },
                 0
               ]
             }
@@ -1250,12 +1546,38 @@
           "ragStatus": {
             "type": "string",
             "materialise": true,
-            "description": "RAG status band: green ≥ ragAmberThreshold, amber ≥ ragRedThreshold, red < ragRedThreshold.",
+            "description": "RAG status band: green \u2265 ragAmberThreshold, amber \u2265 ragRedThreshold, red < ragRedThreshold.",
             "expression": {
               "case": [
-                { "when": { "lt": [{ "prop": "coveragePercent" }, { "prop": "ragRedThreshold" }] }, "then": "red" },
-                { "when": { "lt": [{ "prop": "coveragePercent" }, { "prop": "ragAmberThreshold" }] }, "then": "amber" },
-                { "default": "green" }
+                {
+                  "when": {
+                    "lt": [
+                      {
+                        "prop": "coveragePercent"
+                      },
+                      {
+                        "prop": "ragRedThreshold"
+                      }
+                    ]
+                  },
+                  "then": "red"
+                },
+                {
+                  "when": {
+                    "lt": [
+                      {
+                        "prop": "coveragePercent"
+                      },
+                      {
+                        "prop": "ragAmberThreshold"
+                      }
+                    ]
+                  },
+                  "then": "amber"
+                },
+                {
+                  "default": "green"
+                }
               ]
             }
           }
@@ -1290,7 +1612,9 @@
                 "mandatoryCompletedCount",
                 "attestationCount"
               ],
-              "rag": ["ragStatus"],
+              "rag": [
+                "ragStatus"
+              ],
               "actions": [
                 {
                   "id": "campaign",
@@ -1315,6 +1639,30 @@
               "primary": "coveragePercent",
               "secondary": "validCredentialCount"
             }
+          },
+          "attestationCount": {
+            "type": "kpi-tile",
+            "title": "scholiq.widget.compliance.attestationCount",
+            "description": "Count of pending attestations per regulation for the compliance officer.",
+            "scope": "tenant",
+            "aggregation": {
+              "schema": "Credential",
+              "groupBy": "regulationSlug",
+              "measure": "count",
+              "filter": {
+                "lifecycleIn": [
+                  "pending-attestation"
+                ]
+              }
+            },
+            "presentation": {
+              "format": "integer",
+              "icon": "ClipboardCheckOutline",
+              "ragThresholds": {
+                "red": 10,
+                "amber": 5
+              }
+            }
           }
         },
         "x-openregister-seed": []
@@ -1328,10 +1676,15 @@
         "type": "object",
         "x-openregister": {
           "active": true,
-          "hardDelete": false,
-          "appendOnly": true
+          "hardDelete": false
         },
-        "required": ["learnerId", "lessonId", "courseId", "regulationSlug", "tenant_id"],
+        "required": [
+          "learnerId",
+          "lessonId",
+          "courseId",
+          "regulationSlug",
+          "tenant_id"
+        ],
         "properties": {
           "learnerId": {
             "type": "string",
@@ -1352,25 +1705,37 @@
             "description": "Slug of the Regulation this attestation is captured for."
           },
           "actorIp": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "IP address of the learner at time of attestation, for audit purposes."
           },
           "employeeId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "HR system employee identifier, if available."
           },
           "score": {
-            "type": ["number", "null"],
+            "type": [
+              "number",
+              "null"
+            ],
             "description": "Assessment score at time of attestation, if applicable."
           },
           "xapiStatementId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "ID of the cmi5.completed XapiStatement that triggered this attestation."
           },
           "signature": {
             "type": "string",
-            "description": "HMAC-SHA256 signature computed by AttestationSigningGuard at the drafted→signed transition."
+            "description": "HMAC-SHA256 signature computed by AttestationSigningGuard at the drafted\u2192signed transition."
           },
           "signingKeyId": {
             "type": "string",
@@ -1383,7 +1748,11 @@
           },
           "lifecycle": {
             "type": "string",
-            "enum": ["drafted", "signed", "revoked"],
+            "enum": [
+              "drafted",
+              "signed",
+              "revoked"
+            ],
             "default": "drafted",
             "description": "Lifecycle state. Managed by OR's lifecycle engine."
           }
@@ -1423,7 +1792,8 @@
             "joinOn": "lessonId"
           }
         },
-        "x-openregister-seed": []
+        "x-openregister-seed": [],
+        "appendOnly": true
       },
       "LearnerProfile": {
         "slug": "learner-profile",
@@ -1432,7 +1802,10 @@
         "title": "LearnerProfile",
         "description": "Scholiq learner profile. Owns role assignment and is the actor reference for enrolments, credentials, and attestations.",
         "type": "object",
-        "required": ["ncUserId", "tenant_id"],
+        "required": [
+          "ncUserId",
+          "tenant_id"
+        ],
         "properties": {
           "ncUserId": {
             "type": "string",
@@ -1447,25 +1820,39 @@
             "description": "Last name."
           },
           "birthDate": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date",
             "description": "Date of birth (AVG-classified)."
           },
           "bsnEncrypted": {
-            "type": ["string", "null"],
-            "description": "Encrypted BSN — only populated for K-12 or government tenants."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Encrypted BSN \u2014 only populated for K-12 or government tenants."
           },
           "schoolId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "School or organisation identifier."
           },
           "eckId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "ECK iD for Dutch education identity federation."
           },
           "eduPersonAffiliation": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "eduPerson affiliation values (e.g. 'employee', 'student')."
           },
           "roles": {
@@ -1489,15 +1876,23 @@
           },
           "parentIds": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Nextcloud user IDs of linked parent/guardian accounts."
           },
           "managerId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Nextcloud user ID of the learner's line manager."
           },
           "department": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "Organisational department for grouping and reporting."
           },
           "tenant_id": {
@@ -1509,9 +1904,15 @@
         "x-openregister-lifecycle": {
           "initialState": "active",
           "states": {
-            "active":  { "description": "Profile is active for the learner." },
-            "merged":  { "description": "Profile merged into another LearnerProfile (e.g. duplicate SchoolID/ECK iD reconciliation); retained for audit + back-reference resolution." },
-            "deleted": { "description": "Soft-deleted on offboarding; retained per AVG retention class until purge window expires." }
+            "active": {
+              "description": "Profile is active for the learner."
+            },
+            "merged": {
+              "description": "Profile merged into another LearnerProfile (e.g. duplicate SchoolID/ECK iD reconciliation); retained for audit + back-reference resolution."
+            },
+            "deleted": {
+              "description": "Soft-deleted on offboarding; retained per AVG retention class until purge window expires."
+            }
           },
           "transitions": [
             {
@@ -1519,7 +1920,9 @@
               "from": "active",
               "to": "merged",
               "audit_event_type": "learner.profile.merged",
-              "required": ["mergedInto"],
+              "required": [
+                "mergedInto"
+              ],
               "description": "Merges this profile into another LearnerProfile. The surviving profile is referenced via mergedInto."
             },
             {
@@ -1537,122 +1940,6 @@
             "materialise": true,
             "description": "Highest-priority Scholiq role for this learner, resolved by RoleSelector (admin group override + static priority map).",
             "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
-          }
-        },
-        "x-openregister-seed": []
-      },
-      "Enrolment": {
-        "slug": "enrolment",
-        "icon": "SchoolOutline",
-        "version": "0.1.0",
-        "title": "Enrolment",
-        "description": "A learner's assignment to a Course. Owned by the compliance-audit and enrolment wedge specs; this entry carries the dashboard widget declaration only. The full schema (properties, calculations, notifications) is declared in the enrolment change — these keys merge idempotently.",
-        "type": "object",
-        "required": ["learnerId", "courseId", "tenant_id"],
-        "properties": {
-          "learnerId":      { "type": "string",                   "description": "Nextcloud user ID of the enrolled learner." },
-          "courseId":       { "type": "string", "format": "uuid", "description": "UUID of the Course object in the scholiq register." },
-          "mandatory":      { "type": "boolean", "default": false, "description": "When true this enrolment is a compliance-mandatory assignment." },
-          "dueDate":        { "type": ["string", "null"], "format": "date", "description": "ISO date by which the learner must complete the course." },
-          "regulationSlug": { "type": ["string", "null"],          "description": "Machine-readable slug of the linked compliance regulation." },
-          "tenant_id":      { "type": "string", "format": "uuid", "description": "Tenant identifier for multi-tenant scoping." }
-        },
-        "x-openregister-widgets": {
-          "myMandatoryTraining": {
-            "type": "task-list",
-            "title": "scholiq.widget.learner.mandatoryTraining",
-            "description": "Learner's mandatory training list, filtered to their own enrolments, sorted by due date ascending.",
-            "scope": "owned-by-actor",
-            "filter": {
-              "mandatory": true,
-              "lifecycleIn": ["pending", "active"],
-              "learnerId": "@actor.id"
-            },
-            "sort": [
-              { "field": "dueDate", "order": "asc" }
-            ],
-            "columns": [
-              { "field": "course.name",    "label": "scholiq.col.course"     },
-              { "field": "regulationSlug", "label": "scholiq.col.regulation" },
-              { "field": "lifecycle",      "label": "scholiq.col.status"     },
-              { "field": "dueDate",        "label": "scholiq.col.due"        },
-              { "field": "daysRemaining",  "label": "scholiq.col.days"       },
-              { "field": "ragStatus",      "label": "scholiq.col.rag"        }
-            ],
-            "actions": [
-              {
-                "id": "start",
-                "label": "scholiq.action.start",
-                "manifestPage": "LessonPlayer",
-                "presetField": "courseId"
-              }
-            ]
-          }
-        },
-        "x-openregister-seed": []
-      },
-      "Regulation": {
-        "slug": "regulation",
-        "icon": "ShieldCheckOutline",
-        "version": "0.1.0",
-        "title": "Regulation",
-        "description": "A compliance regulation (e.g. AVG, NIS2, ISO27001) that groups mandatory training requirements. Full schema declared in the compliance-audit change; this entry carries the dashboard widget stubs and merges idempotently.",
-        "type": "object",
-        "required": ["slug", "name", "tenant_id"],
-        "properties": {
-          "slug":       { "type": "string",                   "description": "Machine-readable identifier, e.g. 'avg-2018'." },
-          "name":       { "type": "string",                   "description": "Human-readable name of the regulation." },
-          "tenant_id":  { "type": "string", "format": "uuid", "description": "Tenant identifier for multi-tenant scoping." }
-        },
-        "x-openregister-widgets": {
-          "coverageGrid": {
-            "type": "coverage-grid",
-            "title": "scholiq.widget.compliance.coverageGrid",
-            "description": "Per-regulation coverage % grid for the compliance officer dashboard. Declared here as a widget stub; calculations (coveragePercent, ragStatus, overdueCount) are declared in the compliance-audit change.",
-            "scope": "tenant",
-            "columns": [
-              { "field": "name",                           "label": "scholiq.col.regulation"   },
-              { "field": "calculations.coveragePercent",   "label": "scholiq.col.coverage"     },
-              { "field": "calculations.ragStatus",         "label": "scholiq.col.rag"          },
-              { "field": "calculations.enrolledCount",     "label": "scholiq.col.enrolled"     },
-              { "field": "calculations.completedCount",    "label": "scholiq.col.completed"    },
-              { "field": "calculations.overdueCount",      "label": "scholiq.col.overdue"      },
-              { "field": "calculations.lastCampaignDate",  "label": "scholiq.col.lastCampaign" }
-            ],
-            "sort": [
-              { "field": "calculations.ragStatus", "order": "asc" }
-            ],
-            "actions": [
-              {
-                "id": "createCampaign",
-                "label": "scholiq.action.createCampaign",
-                "manifestPage": "BulkEnrolmentModal",
-                "presetField": "regulationSlug"
-              },
-              {
-                "id": "exportAuditPack",
-                "label": "scholiq.action.exportAuditPack",
-                "manifestPage": "AuditPackExportModal",
-                "presetField": "regulationSlug"
-              }
-            ]
-          },
-          "attestationCount": {
-            "type": "kpi-tile",
-            "title": "scholiq.widget.compliance.attestationCount",
-            "description": "Count of pending attestations per regulation for the compliance officer.",
-            "scope": "tenant",
-            "aggregation": {
-              "schema": "Credential",
-              "groupBy": "regulationSlug",
-              "measure": "count",
-              "filter": { "lifecycleIn": ["pending-attestation"] }
-            },
-            "presentation": {
-              "format": "integer",
-              "icon": "ClipboardCheckOutline",
-              "ragThresholds": { "red": 10, "amber": 5 }
-            }
           }
         },
         "x-openregister-seed": []
