@@ -213,11 +213,7 @@
       "title": "scholiq.page.regulation.detail.title",
       "config": {
         "register": "scholiq",
-        "schema": "Regulation",
-        "tabs": [
-          "details",
-          "auditTrail"
-        ]
+        "schema": "Regulation"
       }
     },
     {
@@ -239,11 +235,7 @@
       "config": {
         "register": "scholiq",
         "schema": "Attestation",
-        "readOnly": true,
-        "tabs": [
-          "details",
-          "auditTrail"
-        ]
+        "readOnly": true
       }
     },
     {
