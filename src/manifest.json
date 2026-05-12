@@ -67,7 +67,31 @@
       "label": "Compliance",
       "icon": "icon-menu-sidebar",
       "route": "Compliance",
-      "order": 50
+      "order": 50,
+      "visibleIf": {
+        "user.primaryRole": { "in": ["compliance-officer", "hr"] }
+      }
+    },
+    {
+      "id": "LearnerHomeMenu",
+      "label": "My learning",
+      "icon": "icon-category-social",
+      "route": "LearnerHome",
+      "order": 15,
+      "visibleIf": {
+        "user.primaryRole": { "in": ["learner", "manager", "instructor"] }
+      }
+    },
+    {
+      "id": "AdminHealthMenu",
+      "label": "App health",
+      "icon": "icon-category-monitoring",
+      "route": "AdminHealth",
+      "section": "settings",
+      "order": 95,
+      "visibleIf": {
+        "user.primaryRole": { "eq": "admin" }
+      }
     },
     {
       "id": "Documentation",
@@ -80,9 +104,8 @@
     {
       "id": "Settings",
       "label": "Settings",
-      "icon": "icon-settings",
-      "route": "Settings",
-      "section": "settings",
+      "icon": "Cog",
+      "action": "user-settings",
       "order": 99
     },
     {
@@ -122,8 +145,10 @@
       "type": "dashboard",
       "title": "Dashboard",
       "config": {
-        "widgets": [],
-        "layout": []
+        "content": [
+          { "type": "widget-ref", "ref": "openregister://widget/regulation/coverageGrid" },
+          { "type": "widget-ref", "ref": "openregister://widget/enrolment/myMandatoryTraining" }
+        ]
       }
     },
     {
@@ -162,24 +187,13 @@
       "type": "dashboard",
       "title": "Compliance",
       "config": {
-        "widgets": [
-          {
-            "id": "coverage-grid",
-            "title": "Coverage grid",
-            "type": "custom"
-          },
-          {
-            "id": "attestation-count",
-            "title": "Attestation count",
-            "type": "custom"
-          }
+        "content": [
+          { "type": "widget-ref", "ref": "openregister://widget/regulation/coverageGrid" },
+          { "type": "widget-ref", "ref": "openregister://widget/regulation/attestationCount" },
+          { "type": "widget-ref", "ref": "openregister://widget/regulation/boardProof" }
         ],
-        "layout": [],
         "actions": [
-          {
-            "id": "viewInMydash",
-            "label": "View in MyDash"
-          }
+          { "id": "viewInMydash", "label": "View in MyDash", "icon": "ChartBox" }
         ]
       }
     },
@@ -320,14 +334,9 @@
       "type": "dashboard",
       "title": "My learning",
       "config": {
-        "widgets": [
-          {
-            "id": "my-mandatory-training",
-            "title": "My mandatory training",
-            "type": "custom"
-          }
-        ],
-        "layout": []
+        "content": [
+          { "type": "widget-ref", "ref": "openregister://widget/enrolment/myMandatoryTraining" }
+        ]
       }
     },
     {
@@ -339,11 +348,10 @@
         "widgets": [
           {
             "id": "health-stats",
-            "title": "Health stats",
+            "title": "App health",
             "type": "custom"
           }
-        ],
-        "layout": []
+        ]
       }
     },
     {
