@@ -1,251 +1,140 @@
-<p align="center">
-  <img src="img/app-store.svg" alt="Nextcloud Scholiq logo" width="80" height="80">
-</p>
+![Scholiq logo](img/app-store.svg)
 
-<h1 align="center">Nextcloud Scholiq</h1>
+# Scholiq
 
-<p align="center">
-  <strong>A template for creating new Nextcloud apps</strong>
-</p>
+**Open-source leerlingvolgsysteem (LVS) + leeromgeving (LMS) for Nextcloud**
 
-<p align="center">
-  <a href="https://github.com/ConductionNL/nextcloud-scholiq/releases"><img src="https://img.shields.io/github/v/release/ConductionNL/nextcloud-scholiq" alt="Latest release"></a>
-  <a href="https://github.com/ConductionNL/nextcloud-scholiq/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-EUPL--1.2-blue" alt="License"></a>
-  <a href="https://github.com/ConductionNL/nextcloud-scholiq/actions"><img src="https://img.shields.io/github/actions/workflow/status/ConductionNL/nextcloud-scholiq/code-quality.yml?label=quality" alt="Code quality"></a>
-</p>
+Scholiq is a compliance-training and learning management app for organisations and schools. It ships as a Nextcloud app built manifest-first on OpenRegister — every entity, lifecycle, notification, and dashboard widget is declared in a JSON schema register, not hand-coded in PHP services.
+
+[![Latest release](https://img.shields.io/github/v/release/ConductionNL/scholiq)](https://github.com/ConductionNL/scholiq/releases)
+[![License](https://img.shields.io/badge/license-EUPL--1.2-blue)](LICENSE)
+[![Code quality](https://img.shields.io/github/actions/workflow/status/ConductionNL/scholiq/code-quality.yml?label=quality)](https://github.com/ConductionNL/scholiq/actions)
 
 ---
 
-A starting point for building Nextcloud apps following ConductionNL conventions.
+## What scholiq is
 
-> **Pre-wired for [OpenRegister](https://github.com/ConductionNL/openregister)** — all data is stored as OpenRegister objects. If your app needs OpenRegister, install it first. If not, remove the dependency from `appinfo/info.xml` and `openspec/app-config.json`.
+Scholiq replaces the deprecated `learniq` and `edudesk` concept apps. Its **Path A — compliance-audit MVP** (Wave 2) delivers:
 
-## Screenshots
+- **Course + Lesson management** — lifecycle-gated publishing (draft → published → archived); cmi5/xAPI/SCORM content runtime; lesson player in-app.
+- **Enrolment engine** — mandatory training assignment; bulk-enrol by group or role; T-30/T-7/T-1 due-date reminders; RAG status per enrolment.
+- **Certification** — Open Badges 3.0 credentials auto-issued on completion; RS256-signed; public verify URL; tiered expiry alerts; renewal auto-enrolment.
+- **Compliance-audit wedge** — Regulation objects (NIS2, AVG, BIO, …); coverage-% aggregation over live Enrolment/Attestation/Credential data; officer alerts on coverage drop; attestation signing (HMAC-SHA256); audit-pack ZIP export.
+- **EU AI Act gate** — every AI feature is a disabled-by-default schema object; enabling requires explicit DPO acknowledgement.
 
-_Add screenshots here once the app has a UI._
+## Path A — Compliance-audit MVP
 
-## Features
+The wedge targets compliance officers at organisations subject to NIS2 / Cyberbeveiligingswet, AVG, or BIO2. The critical workflow:
 
-Features are defined in [`openspec/specs/`](openspec/specs/). See the [roadmap](openspec/ROADMAP.md) for planned work.
+1. Compliance officer creates a Regulation (e.g. `NIS2`) and links mandatory Courses.
+2. HR bulk-enrols a cohort; due dates are assigned.
+3. Learners complete lessons, sign attestations; credentials auto-issue.
+4. Compliance officer views real-time coverage %, exports an audit pack for an external auditor.
 
-### Core
-- **Dashboard** — Personal overview page with key information at a glance
-- **Admin Settings** — Configurable settings panel for administrators
+## Quick start
 
-### Supporting
-- **OpenRegister Integration** — Pre-wired data layer using OpenRegister objects
-- **Quality Pipeline** — PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint
-
-## Architecture
-
-```mermaid
-graph TD
-    A[Vue 2 Frontend] -->|REST API| B[OpenRegister API]
-    B --> C[(PostgreSQL JSON store)]
-    A --> D[Nextcloud Activity]
-    A --> E[Nextcloud Search]
-```
-
-_Update this diagram during `/app-explore` sessions as the architecture evolves._
-
-### Data Model
-
-| Object | Description |
-|--------|-------------|
-| _(define your data objects here)_ | — |
-
-_Data model is defined using OpenRegister schemas. See [`openspec/specs/`](openspec/specs/) for feature-level design decisions and [`openspec/architecture/`](openspec/architecture/) for architectural decisions._
-
-### Directory Structure
-
-```
-scholiq/
-├── appinfo/                    # Nextcloud app manifest, routes, navigation
-├── lib/                        # PHP backend
-│   ├── AppInfo/Application.php
-│   ├── Controller/             # DashboardController, SettingsController
-│   ├── Service/SettingsService.php
-│   ├── Listener/DeepLinkRegistrationListener.php
-│   ├── Repair/InitializeSettings.php
-│   └── Settings/               # AdminSettings, scholiq_register.json
-├── templates/                  # PHP templates (SPA shells)
-├── src/                        # Vue 2 frontend
-│   ├── main.js                 # App entry point
-│   ├── App.vue                 # Root component
-│   ├── navigation/MainMenu.vue # App navigation sidebar
-│   ├── router/                 # Vue Router
-│   ├── store/                  # Pinia stores
-│   └── views/                  # Route-level views + UserSettings.vue
-├── openspec/                   # Specifications, decisions, and roadmap
-│   ├── app-config.json         # Canonical app config (id, goal, dependencies, CI)
-│   ├── config.yaml             # OpenSpec CLI configuration
-│   ├── specs/                  # Feature specs (input for OpenSpec changes)
-│   ├── architecture/           # App-specific Architectural Decision Records
-│   ├── ROADMAP.md              # Product roadmap
-│   └── changes/                # OpenSpec change directories (created on first change)
-├── tests/                      # Unit and integration tests
-├── l10n/                       # Translations (en, nl)
-├── .github/workflows/          # CI/CD pipelines
-├── Makefile                    # Dev helpers (make dev-link)
-└── img/                        # App icons and screenshots
-```
-
-## Requirements
+### Requirements
 
 | Dependency | Version |
-|-----------|---------|
+|---|---|
 | Nextcloud | 28 – 33 |
 | PHP | 8.1+ |
 | Node.js | 20+ |
 | [OpenRegister](https://github.com/ConductionNL/openregister) | latest |
+| [OpenConnector](https://github.com/ConductionNL/openconnector) | latest |
 
-## Installation
+### Install
 
-### From the Nextcloud App Store
+```bash
+# 1. Enable the app
+docker exec nextcloud php occ app:enable scholiq
 
-1. Go to **Apps** in your Nextcloud instance
-2. Search for **Nextcloud Scholiq**
-3. Click **Download and enable**
+# 2. Register the scholiq register (manual step — auto-bootstrap pending openregister#1487)
+#    Import lib/Settings/scholiq_register.json via the OpenRegister admin UI, or:
+docker exec nextcloud php occ openregister:register:import /var/www/html/custom_apps/scholiq/lib/Settings/scholiq_register.json
+```
 
-> OpenRegister must be installed first. [Install OpenRegister →](https://apps.nextcloud.com/apps/openregister)
+> The automatic register-bootstrap on `app:enable` is blocked by openregister#1487 (tracked in scholiq#35). Until that is resolved, the manual import step above is required after every fresh install.
 
-### From Source
+### From source (development)
 
 ```bash
 cd /var/www/html/custom_apps
-git clone https://github.com/ConductionNL/nextcloud-scholiq.git scholiq
+git clone https://github.com/ConductionNL/scholiq.git scholiq
 cd scholiq
 npm install && npm run build
-php occ app:enable scholiq
+make dev-link          # creates the scholiq -> nextcloud-scholiq symlink if needed
+docker exec nextcloud php occ app:enable scholiq
 ```
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Schema model, ADR chain, PHP exception inventory |
+| [User guide](docs/USER-GUIDE.md) | Learner / Manager / Compliance-Officer walkthroughs |
+| [Admin guide](docs/ADMIN-GUIDE.md) | Install, register bootstrap, signing keys, troubleshooting |
+| [API reference](docs/API.md) | OR endpoints, scholiq-specific endpoints, examples |
+| [Specs](docs/SPECS.md) | Links to the 6 applied OpenSpec changes |
 
 ## Development
-
-### Start the environment
-
-```bash
-docker compose -f ../openregister/docker-compose.yml up -d
-```
-
-### Frontend development
-
-```bash
-npm install
-npm run dev        # Watch mode
-npm run build      # Production build
-```
 
 ### Code quality
 
 ```bash
 # PHP
-composer check:strict   # All quality checks (PHPCS, PHPMD, Psalm, PHPStan, tests)
-composer cs:fix         # Auto-fix PHPCS issues
-composer phpmd          # Mess detection
-composer phpmetrics     # HTML metrics report
+composer check:strict   # PHPCS, PHPMD, Psalm, PHPStan, PHPUnit
 
 # Frontend
 npm run lint            # ESLint
 npm run stylelint       # CSS linting
+npm run check:manifest  # validates src/manifest.json against nc-vue schema
 ```
 
-### Enable locally
-
-Nextcloud requires the app directory name to match the `<id>` in `appinfo/info.xml` (`scholiq`).
-When this repo is cloned as `nextcloud-scholiq`, create a relative symlink first.
-
-> **Note:** The `js/` build output is not committed. You must build the frontend before enabling the app, or the UI will be blank.
+### Frontend development
 
 ```bash
-make dev-link
-npm install && npm run build
-docker exec nextcloud php occ app:enable scholiq
+npm run dev             # watch mode
+npm run build           # production build
 ```
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | Vue 2.7, Pinia, @nextcloud/vue |
-| Build | Webpack 5, @nextcloud/webpack-vue-config |
+|---|---|
+| Frontend | Vue 2.7, `@conduction/nextcloud-vue` CnAppRoot (Tier 4) |
+| Data model | `src/manifest.json` + `lib/Settings/scholiq_register.json` |
+| Build | Webpack 5, `@nextcloud/webpack-vue-config` |
 | Backend | PHP 8.1+, Nextcloud App Framework |
 | Data | OpenRegister (PostgreSQL JSON objects) |
-| UX | @conduction/nextcloud-vue |
 | Quality | PHPCS, PHPMD, Psalm, PHPStan, ESLint, Stylelint |
 
 ## Branches
 
 | Branch | Purpose |
-|--------|---------|
-| `main` | Stable releases — triggers release workflow |
-| `beta` | Beta / pre-release builds |
+|---|---|
+| `main` | Stable releases |
+| `beta` | Pre-release builds |
 | `development` | Active development — merge target for feature branches |
 
-## Documentation
+## Standards and compliance
 
-| Resource | Description |
-|----------|-------------|
-| [`openspec/app-config.json`](openspec/app-config.json) | App identity, goals, dependencies, and CI configuration |
-| [`openspec/specs/`](openspec/specs/) | Feature specs — what the app should do |
-| [`openspec/architecture/`](openspec/architecture/) | App-specific Architectural Decision Records |
-| [`openspec/ROADMAP.md`](openspec/ROADMAP.md) | Product roadmap |
-| [`openspec/`](openspec/) | Implementation specifications and changes |
+- WCAG 2.2 AA (Dutch government requirement)
+- EU AI Act Regulation 2024/1689 — high-risk feature gate via `AiFeature` schema
+- Open Badges 3.0 (W3C VC-aligned) — issued credentials
+- xAPI 1.0.3 / cmi5 — content runtime and LRS
+- EUPL-1.2 license
 
-## Standards & Compliance
+## Related apps
 
-- **Accessibility:** WCAG AA (Dutch government requirement)
-- **Authorization:** RBAC via OpenRegister
-- **Audit trail:** Full change history on all objects
-- **Localization:** English and Dutch
-
-## Related Apps
-
-- **[OpenRegister](https://github.com/ConductionNL/openregister)** — Object storage layer (required dependency)
-
-_Add related apps here as integrations are built._
-
-## Troubleshooting
-
-### App UI is blank after enabling
-
-The `js/` build output is not committed to the repo. Run the frontend build before enabling the app:
-
-```bash
-npm install && npm run build
-```
-
-### "Could not download app scholiq" when running `occ app:enable`
-
-Nextcloud requires the app directory name to exactly match the `<id>` in `appinfo/info.xml`. When this repo is cloned as `nextcloud-scholiq`, create a symlink first:
-
-```bash
-make dev-link   # creates apps-extra/scholiq -> nextcloud-scholiq
-```
-
-Then enable the app again:
-
-```bash
-docker exec nextcloud php occ app:enable scholiq
-```
+- [OpenRegister](https://github.com/ConductionNL/openregister) — required object-store foundation
+- [OpenConnector](https://github.com/ConductionNL/openconnector) — required for external adapters
 
 ## Support
 
-For support, contact us at [support@conduction.nl](mailto:support@conduction.nl).
-
-For a Service Level Agreement (SLA), contact [sales@conduction.nl](mailto:sales@conduction.nl).
+Contact [support@conduction.nl](mailto:support@conduction.nl) for support.
+For an SLA, contact [sales@conduction.nl](mailto:sales@conduction.nl).
 
 ## License
 
-This project is licensed under the [EUPL-1.2](LICENSE).
-
-### Dependency license policy
-
-All dependencies (PHP and JavaScript) are automatically checked against an approved license allowlist during CI. The following SPDX license families are approved:
-
-- **Permissive:** MIT, ISC, BSD-2-Clause, BSD-3-Clause, 0BSD, Apache-2.0, Unlicense, CC0-1.0, CC-BY-3.0, CC-BY-4.0, Zlib, BlueOak-1.0.0, Artistic-2.0, BSL-1.0
-- **Copyleft (EUPL-compatible):** LGPL-2.0/2.1/3.0, GPL-2.0/3.0, AGPL-3.0, EUPL-1.1/1.2, MPL-2.0
-- **Font licenses:** OFL-1.0, OFL-1.1
-
-## Authors
-
-Built by [Conduction](https://conduction.nl) — open-source software for Dutch government and public sector organizations.
+[EUPL-1.2](LICENSE) — Built by [Conduction](https://conduction.nl).
