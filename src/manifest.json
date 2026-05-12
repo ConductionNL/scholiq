@@ -173,18 +173,23 @@
       "route": "AiFeatures",
       "section": "settings",
       "order": 94
+    },
+    {
+      "id": "AssistantMenu",
+      "label": "Assistant",
+      "icon": "icon-comment",
+      "route": "Assistant",
+      "order": 92,
+      "section": "settings"
     }
   ],
   "pages": [
     {
       "id": "Dashboard",
       "route": "/",
-      "type": "dashboard",
+      "type": "custom",
       "title": "Dashboard",
-      "config": {
-        "widgets": [],
-        "layout": []
-      }
+      "component": "ScholiqDashboard"
     },
     {
       "id": "Courses",
@@ -219,30 +224,9 @@
     {
       "id": "Compliance",
       "route": "/compliance",
-      "type": "dashboard",
+      "type": "custom",
       "title": "Compliance",
-      "config": {
-        "widgets": [
-          {
-            "id": "coverage-grid",
-            "title": "Coverage grid",
-            "type": "custom"
-          },
-          {
-            "id": "attestation-count",
-            "title": "Attestation count",
-            "type": "custom"
-          }
-        ],
-        "layout": [],
-        "actions": [
-          {
-            "id": "viewInMydash",
-            "label": "View in MyDash",
-            "icon": "ChartBox"
-          }
-        ]
-      }
+      "component": "ScholiqCompliance"
     },
     {
       "id": "CourseDetail",
@@ -378,33 +362,16 @@
     {
       "id": "LearnerHome",
       "route": "/learner",
-      "type": "dashboard",
+      "type": "custom",
       "title": "My learning",
-      "config": {
-        "widgets": [
-          {
-            "id": "my-mandatory-training",
-            "title": "My mandatory training",
-            "type": "custom"
-          }
-        ],
-        "layout": []
-      }
+      "component": "ScholiqLearnerHome"
     },
     {
       "id": "AdminHealth",
       "route": "/admin/health",
-      "type": "dashboard",
+      "type": "custom",
       "title": "App health",
-      "config": {
-        "widgets": [
-          {
-            "id": "health-stats",
-            "title": "App health",
-            "type": "custom"
-          }
-        ]
-      }
+      "component": "ScholiqAdminHealth"
     },
     {
       "id": "Programmes",
@@ -1112,6 +1079,12 @@
         "register": "scholiq",
         "schema": "AiFeature"
       }
+    },
+    {
+      "id": "Assistant",
+      "route": "/assistant",
+      "type": "chat",
+      "title": "Assistant"
     }
   ]
 }
