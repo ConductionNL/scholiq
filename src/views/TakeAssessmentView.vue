@@ -88,7 +88,7 @@
 									:name="'item-' + currentItem.uuid"
 									:value="option.id"
 									:checked="currentResponse === option.id"
-									@change="setResponse(option.id)" />
+									@change="setResponse(option.id)">
 								{{ option.label }}
 							</label>
 						</li>

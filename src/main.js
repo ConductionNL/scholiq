@@ -27,6 +27,8 @@ import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import SignPlanModal from './views/SignPlanModal.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
+import OsoDossierReviewView from './views/OsoDossierReviewView.vue'
+import RequestExportModal from './views/RequestExportModal.vue'
 import SubmitExcuseModal from './views/SubmitExcuseModal.vue'
 import SubmitWorkModal from './views/SubmitWorkModal.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
@@ -109,7 +111,7 @@ const pageTypesProp = { ...defaultPageTypes }
 
 // customComponents registry: maps names declared in manifest pages/tabs
 // to concrete Vue components.
-const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, ProctoringReviewQueue, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView }
+const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView }
 const customComponentsProp = { ...customComponents }
 
 // Boot order: initializeStores() must resolve before mount so that any

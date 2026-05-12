@@ -61,7 +61,7 @@
 					v-model="form.title"
 					class="item-author__input"
 					type="text"
-					:placeholder="t('scholiq', 'Enter item title...')" />
+					:placeholder="t('scholiq', 'Enter item title...')">
 			</div>
 
 			<!-- Interaction type -->
@@ -108,7 +108,7 @@
 					class="item-author__input item-author__input--narrow"
 					type="number"
 					min="0"
-					step="0.5" />
+					step="0.5">
 			</div>
 
 			<!-- Prompt / stem -->
@@ -139,12 +139,12 @@
 							:name="'correct-choice'"
 							:checked="form.correctChoiceIdx === idx"
 							:aria-label="t('scholiq', 'Mark as correct answer')"
-							@change="form.correctChoiceIdx = idx" />
+							@change="form.correctChoiceIdx = idx">
 						<input
 							v-model="choice.label"
 							class="item-author__input"
 							type="text"
-							:placeholder="t('scholiq', 'Option {n}', { n: idx + 1 })" />
+							:placeholder="t('scholiq', 'Option {n}', { n: idx + 1 })">
 						<button
 							class="item-author__remove-btn"
 							:disabled="form.choices.length <= 2"

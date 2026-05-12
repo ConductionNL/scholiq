@@ -44,7 +44,9 @@
 				</span>
 				<p v-if="cohort.academicYear" class="cohort-timetable__meta">
 					{{ cohort.academicYear }}
-					<template v-if="cohort.period"> — {{ cohort.period }}</template>
+					<template v-if="cohort.period">
+						— {{ cohort.period }}
+					</template>
 				</p>
 			</div>
 
@@ -84,7 +86,9 @@
 					</div>
 
 					<!-- Session title + location -->
-					<h4 class="cohort-timetable__session-title">{{ session.title }}</h4>
+					<h4 class="cohort-timetable__session-title">
+						{{ session.title }}
+					</h4>
 					<p v-if="session.location" class="cohort-timetable__session-location">
 						<span class="icon-location" aria-hidden="true" />
 						{{ session.location }}
@@ -263,7 +267,7 @@ export default {
 		async loadSessions(cohortId) {
 			const url = generateUrl(
 				'/apps/openregister/api/objects/scholiq/Session'
-				+ `?filters[cohortId]=${encodeURIComponent(cohortId)}&sort=startsAt:asc&limit=500`
+				+ `?filters[cohortId]=${encodeURIComponent(cohortId)}&sort=startsAt:asc&limit=500`,
 			)
 			const resp = await fetch(url, {
 				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
@@ -297,7 +301,7 @@ export default {
 		 */
 		async loadMaterialsForSession(sessionId) {
 			const url = generateUrl(
-				`/apps/openregister/api/objects/scholiq/Material?filters[sessionId]=${encodeURIComponent(sessionId)}&sort=order:asc&limit=100`
+				`/apps/openregister/api/objects/scholiq/Material?filters[sessionId]=${encodeURIComponent(sessionId)}&sort=order:asc&limit=100`,
 			)
 			try {
 				const resp = await fetch(url, {

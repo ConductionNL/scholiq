@@ -74,7 +74,7 @@
 					type="file"
 					accept=".zip"
 					:disabled="importing"
-					@change="handleFileChange" />
+					@change="handleFileChange">
 				<p v-if="selectedFileName" class="import-qti-modal__filename">
 					{{ selectedFileName }}
 				</p>

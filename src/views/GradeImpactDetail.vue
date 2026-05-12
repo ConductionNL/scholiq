@@ -50,7 +50,9 @@
 				<dl class="grade-impact__dl">
 					<div class="grade-impact__dl-row">
 						<dt>{{ t('scholiq', 'Value') }}</dt>
-						<dd class="grade-impact__value">{{ formatValue(entry.value) }}</dd>
+						<dd class="grade-impact__value">
+							{{ formatValue(entry.value) }}
+						</dd>
 					</div>
 					<div class="grade-impact__dl-row">
 						<dt>{{ t('scholiq', 'Effective weight') }}</dt>
@@ -85,7 +87,9 @@
 					</div>
 					<div class="grade-impact__dl-row">
 						<dt>{{ t('scholiq', 'Period average') }}</dt>
-						<dd class="grade-impact__value">{{ formatValue(periodAverage) }}</dd>
+						<dd class="grade-impact__value">
+							{{ formatValue(periodAverage) }}
+						</dd>
 					</div>
 				</dl>
 			</section>
@@ -96,7 +100,9 @@
 				<dl class="grade-impact__dl">
 					<div class="grade-impact__dl-row">
 						<dt>{{ t('scholiq', 'Current final grade') }}</dt>
-						<dd class="grade-impact__value">{{ formatValue(finalGrade.value) }}</dd>
+						<dd class="grade-impact__value">
+							{{ formatValue(finalGrade.value) }}
+						</dd>
 					</div>
 					<div class="grade-impact__dl-row">
 						<dt>{{ t('scholiq', 'Pass status') }}</dt>

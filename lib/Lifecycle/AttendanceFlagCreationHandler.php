@@ -59,6 +59,7 @@ class AttendanceFlagCreationHandler implements IEventListener
     private const ATTENDANCE_THRESHOLD_SCHEMA = 'attendance-threshold';
     private const ATTENDANCE_FLAG_SCHEMA      = 'attendance-flag';
     private const LEARNER_PROFILE_SCHEMA      = 'learner-profile';
+    private const DATA_EXCHANGE_JOB_SCHEMA    = 'data-exchange-job';
 
     /**
      * The transition name used by OR when a calculatedChange crossing fires.
@@ -184,11 +185,21 @@ class AttendanceFlagCreationHandler implements IEventListener
         // Resolve mentor from LearnerProfile.managerId.
         $mentorId = $this->resolveMentorId(learnerId: $learnerId);
 
-        // Build the flag. dataExchangeJobId is null for now — the data-exchange
-        // spec will wire up the actual DataExchangeJob creation and set this field.
-        // TODO(data-exchange spec): queue a DataExchangeJob to onCross.dataExchangeTarget
-        // and set dataExchangeJobId on the flag once that spec lands.
         $dataExchangeTarget = $onCross['dataExchangeTarget'] ?? null;
+
+        // Queue a DataExchangeJob for the configured target (e.g. 'leerplicht')
+        // when the threshold's onCross.dataExchangeTarget is set. The job is created
+        // first so its UUID can be set on the flag's dataExchangeJobId field.
+        $dataExchangeJobId = null;
+        if ($dataExchangeTarget !== null && $dataExchangeTarget !== '') {
+            $dataExchangeJobId = $this->queueDataExchangeJob(
+                target: $dataExchangeTarget,
+                learnerId: $learnerId,
+                windowStart: $windowStart,
+                windowEnd: $windowEnd,
+                tenantId: $tenantId
+            );
+        }
 
         $flag = [
             'learnerId'             => $learnerId,
@@ -198,17 +209,11 @@ class AttendanceFlagCreationHandler implements IEventListener
             'windowEnd'             => $windowEnd,
             'metricValue'           => (float) $metricValue,
             'breachingRecordIds'    => $breachingIds,
-            'dataExchangeJobId'     => null,
+            'dataExchangeJobId'     => $dataExchangeJobId,
             'mentorId'              => $mentorId,
             'lifecycle'             => 'open',
             'tenant_id'             => $tenantId,
         ];
-
-        // Record the dataExchangeTarget intent on the flag for visibility even
-        // before the data-exchange spec wires up the actual job.
-        if ($dataExchangeTarget !== null) {
-            $flag['_dataExchangeTargetIntent'] = $dataExchangeTarget;
-        }
 
         $this->objectService->saveObject(
             register: self::SCHOLIQ_REGISTER,
@@ -228,6 +233,74 @@ class AttendanceFlagCreationHandler implements IEventListener
         );
 
     }//end createFlag()
+
+    /**
+     * Create and queue a DataExchangeJob for the given target.
+     *
+     * Called when an AttendanceThreshold's onCross.dataExchangeTarget is set.
+     * The job is created in `queued` state; the DataExchangeRunHandler will
+     * execute it when the lifecycle engine transitions it to `running`.
+     *
+     * @param string $target      Named OpenConnector connection (e.g. 'leerplicht').
+     * @param string $learnerId   NC user ID of the learner who crossed the threshold.
+     * @param string $windowStart Start date of the measurement window (Y-m-d).
+     * @param string $windowEnd   End date of the measurement window (Y-m-d).
+     * @param string $tenantId    Tenant UUID.
+     *
+     * @return string|null UUID of the created DataExchangeJob, or null on failure.
+     */
+    private function queueDataExchangeJob(
+        string $target,
+        string $learnerId,
+        string $windowStart,
+        string $windowEnd,
+        string $tenantId,
+    ): ?string {
+        $job = [
+            'direction'   => 'export',
+            'target'      => $target,
+            'scope'       => [
+                'schema'   => 'attendance-flag',
+                'filters'  => ['learnerId' => $learnerId],
+                'cohortId' => null,
+                'period'   => $windowStart.'/'.$windowEnd,
+            ],
+            'requestedBy' => 'system',
+            'requestedAt' => date('c'),
+            'lifecycle'   => 'queued',
+            'tenant_id'   => $tenantId,
+        ];
+
+        $saved = $this->objectService->saveObject(
+            register: self::SCHOLIQ_REGISTER,
+            schema: self::DATA_EXCHANGE_JOB_SCHEMA,
+            object: $job
+        );
+
+        if ($saved === null) {
+            $this->logger->warning(
+                '[AttendanceFlagCreationHandler] Failed to queue DataExchangeJob for target {t}, learner {l}.',
+                ['t' => $target, 'l' => $learnerId]
+            );
+            return null;
+        }
+
+        if (is_array($saved) === true) {
+            $savedData = $saved;
+        } else {
+            $savedData = $saved->jsonSerialize();
+        }
+
+        $jobId = $savedData['id'] ?? ($savedData['uuid'] ?? null);
+
+        $this->logger->info(
+            '[AttendanceFlagCreationHandler] Queued DataExchangeJob {id} to target {t} for learner {l}.',
+            ['id' => $jobId, 't' => $target, 'l' => $learnerId]
+        );
+
+        return $jobId;
+
+    }//end queueDataExchangeJob()
 
     /**
      * Resolve the learner's mentor from their LearnerProfile.managerId.
