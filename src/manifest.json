@@ -69,7 +69,12 @@
       "route": "Compliance",
       "order": 50,
       "visibleIf": {
-        "user.primaryRole": { "in": ["compliance-officer", "hr"] }
+        "user.primaryRole": {
+          "in": [
+            "compliance-officer",
+            "hr"
+          ]
+        }
       }
     },
     {
@@ -79,7 +84,13 @@
       "route": "LearnerHome",
       "order": 15,
       "visibleIf": {
-        "user.primaryRole": { "in": ["learner", "manager", "instructor"] }
+        "user.primaryRole": {
+          "in": [
+            "learner",
+            "manager",
+            "instructor"
+          ]
+        }
       }
     },
     {
@@ -90,7 +101,9 @@
       "section": "settings",
       "order": 95,
       "visibleIf": {
-        "user.primaryRole": { "eq": "admin" }
+        "user.primaryRole": {
+          "eq": "admin"
+        }
       }
     },
     {
@@ -106,7 +119,8 @@
       "label": "Settings",
       "icon": "Cog",
       "action": "user-settings",
-      "order": 99
+      "order": 99,
+      "section": "settings"
     },
     {
       "id": "FeaturesRoadmapMenu",
@@ -146,8 +160,14 @@
       "title": "Dashboard",
       "config": {
         "content": [
-          { "type": "widget-ref", "ref": "openregister://widget/regulation/coverageGrid" },
-          { "type": "widget-ref", "ref": "openregister://widget/enrolment/myMandatoryTraining" }
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/regulation/coverageGrid"
+          },
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/enrolment/myMandatoryTraining"
+          }
         ]
       }
     },
@@ -188,12 +208,25 @@
       "title": "Compliance",
       "config": {
         "content": [
-          { "type": "widget-ref", "ref": "openregister://widget/regulation/coverageGrid" },
-          { "type": "widget-ref", "ref": "openregister://widget/regulation/attestationCount" },
-          { "type": "widget-ref", "ref": "openregister://widget/regulation/boardProof" }
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/regulation/coverageGrid"
+          },
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/regulation/attestationCount"
+          },
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/regulation/boardProof"
+          }
         ],
         "actions": [
-          { "id": "viewInMydash", "label": "View in MyDash", "icon": "ChartBox" }
+          {
+            "id": "viewInMydash",
+            "label": "View in MyDash",
+            "icon": "ChartBox"
+          }
         ]
       }
     },
@@ -335,7 +368,10 @@
       "title": "My learning",
       "config": {
         "content": [
-          { "type": "widget-ref", "ref": "openregister://widget/enrolment/myMandatoryTraining" }
+          {
+            "type": "widget-ref",
+            "ref": "openregister://widget/enrolment/myMandatoryTraining"
+          }
         ]
       }
     },
