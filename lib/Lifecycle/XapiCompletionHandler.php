@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Lifecycle;
 
+use OCA\OpenRegister\Service\Lifecycle\TransitionEngine;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -56,13 +57,15 @@ class XapiCompletionHandler implements IEventListener
     /**
      * Constructor.
      *
-     * @param ObjectService   $objectService OR object service used to query and transition Enrolments.
-     * @param LoggerInterface $logger        PSR logger.
+     * @param ObjectService    $objectService    OR object service used to query Lessons and Enrolments.
+     * @param TransitionEngine $transitionEngine OR lifecycle engine used to dispatch the `complete` transition.
+     * @param LoggerInterface  $logger           PSR logger.
      *
      * @return void
      */
     public function __construct(
         private readonly ObjectService $objectService,
+        private readonly TransitionEngine $transitionEngine,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -102,11 +105,13 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        $lessons = $this->objectService->getObjects(
-            register: 'scholiq',
-            schema: 'Lesson',
-            filters: ['xapiObjectId' => $lessonId],
-            limit: 1,
+        $lessons = $this->objectService->findAll(
+            [
+                'register' => 'scholiq',
+                'schema'   => 'Lesson',
+                'filters'  => ['xapiObjectId' => $lessonId],
+                'limit'    => 1,
+            ]
         );
 
         if (empty($lessons) === true) {
@@ -126,10 +131,12 @@ class XapiCompletionHandler implements IEventListener
         }
 
         // Guard 4: lesson must be the final published lesson of the course.
-        $publishedLessons = $this->objectService->getObjects(
-            register: 'scholiq',
-            schema: 'Lesson',
-            filters: ['courseId' => $courseId, 'lifecycle' => 'published'],
+        $publishedLessons = $this->objectService->findAll(
+            [
+                'register' => 'scholiq',
+                'schema'   => 'Lesson',
+                'filters'  => ['courseId' => $courseId, 'lifecycle' => 'published'],
+            ]
         );
 
         $lessonIds    = array_column($publishedLessons, 'uuid');
@@ -148,15 +155,17 @@ class XapiCompletionHandler implements IEventListener
         }
 
         // Find the active Enrolment for this learner + course.
-        $enrolments = $this->objectService->getObjects(
-            register: 'scholiq',
-            schema: 'Enrolment',
-            filters: [
-                'learnerId' => $learnerId,
-                'courseId'  => $courseId,
-                'lifecycle' => 'active',
-            ],
-            limit: 1,
+        $enrolments = $this->objectService->findAll(
+            [
+                'register' => 'scholiq',
+                'schema'   => 'Enrolment',
+                'filters'  => [
+                    'learnerId' => $learnerId,
+                    'courseId'  => $courseId,
+                    'lifecycle' => 'active',
+                ],
+                'limit'    => 1,
+            ]
         );
 
         if (empty($enrolments) === true) {
@@ -172,7 +181,7 @@ class XapiCompletionHandler implements IEventListener
         // Dispatch the `complete` transition. OR's lifecycle engine emits the
         // enrolment.completed audit entry and the completionOnComplete notification
         // automatically — no additional PHP code needed here.
-        $this->objectService->transition('Enrolment', $enrolmentId, 'complete');
+        $this->transitionEngine->transition($enrolmentId, 'complete');
 
         $this->logger->info(
             '[XapiCompletionHandler] Enrolment {id} transitioned to completed via xAPI statement.',

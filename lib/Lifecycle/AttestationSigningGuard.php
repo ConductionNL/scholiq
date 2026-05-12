@@ -11,9 +11,9 @@
  * It is the ONLY PHP behaviour file for the compliance-audit feature beyond the
  * AuditPackExportController (document generation).
  *
- * Per ADR-022: HMAC key management and rotation live in OR's audit-trail tenant-key
- * abstraction. This guard retrieves the current key via
- * $auditTrail->getCurrentTenantKey() and MUST NOT maintain a local key store.
+ * Per ADR-022: HMAC key management and rotation live in OR's TenantKeyService.
+ * This guard retrieves the current key via TenantKeyService::getCurrentTenantKey()
+ * and MUST NOT maintain a local key store.
  *
  * Per ADR-008: OR emits the `attestation.signed` audit-trail entry automatically
  * when the lifecycle engine completes the transition — no AuditTrail::record()
@@ -37,8 +37,8 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Lifecycle;
 
-use OCA\OpenRegister\Service\AuditTrailService;
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Service\TenantKeyService;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -69,16 +69,16 @@ class AttestationSigningGuard
     /**
      * Constructor.
      *
-     * @param ObjectService     $objectService     OR object query service for
-     *                                             XapiStatement lookup.
-     * @param AuditTrailService $auditTrailService OR audit-trail abstraction
-     *                                             that exposes the tenant
-     *                                             signing key.
-     * @param LoggerInterface   $logger            PSR logger for guard rejections.
+     * @param ObjectService    $objectService    OR object query service for
+     *                                           XapiStatement lookup.
+     * @param TenantKeyService $tenantKeyService OR tenant-key abstraction that
+     *                                           exposes the current HMAC
+     *                                           signing key.
+     * @param LoggerInterface  $logger           PSR logger for guard rejections.
      */
     public function __construct(
         private readonly ObjectService $objectService,
-        private readonly AuditTrailService $auditTrailService,
+        private readonly TenantKeyService $tenantKeyService,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -137,9 +137,9 @@ class AttestationSigningGuard
         }
 
         // Step 2 — Compute HMAC-SHA256 using OR's current tenant key.
-        $tenantKey = $this->auditTrailService->getCurrentTenantKey($tenantId);
+        $tenantKey = $this->tenantKeyService->getCurrentTenantKey($tenantId);
 
-        if ($tenantKey === null || $tenantKey['key'] === '') {
+        if ($tenantKey === '') {
             $this->logger->error(
                 'AttestationSigningGuard: OR tenant key unavailable; refusing to sign without HMAC key',
                 ['tenantId' => $tenantId]
@@ -149,11 +149,12 @@ class AttestationSigningGuard
         }
 
         $canonicalPayload = $this->buildCanonicalPayload(object: $object);
-        $signature        = hash_hmac('sha256', $canonicalPayload, $tenantKey['key']);
+        $signature        = hash_hmac('sha256', $canonicalPayload, $tenantKey);
 
         // Inject into the mutable payload so OR persists these on the signed object.
+        // signingKeyId is a verifiable fingerprint of the key in use at signing time.
         $transitionContext['payload']['signature']    = $signature;
-        $transitionContext['payload']['signingKeyId'] = $tenantKey['rotationId'];
+        $transitionContext['payload']['signingKeyId'] = substr(hash('sha256', $tenantKey), 0, 16);
 
         return true;
     }//end check()
@@ -169,15 +170,17 @@ class AttestationSigningGuard
     private function xapiCompletionExists(string $learnerId, string $lessonId): bool
     {
         foreach (self::COMPLETION_VERBS as $verbId) {
-            $results = $this->objectService->findObjects(
-                register: 'scholiq',
-                schema: 'XapiStatement',
-                filters: [
-                    'actor.id'  => $learnerId,
-                    'object.id' => $lessonId,
-                    'verb.id'   => $verbId,
-                ],
-                limit: 1,
+            $results = $this->objectService->findAll(
+                [
+                    'register' => 'scholiq',
+                    'schema'   => 'XapiStatement',
+                    'filters'  => [
+                        'actor.id'  => $learnerId,
+                        'object.id' => $lessonId,
+                        'verb.id'   => $verbId,
+                    ],
+                    'limit'    => 1,
+                ]
             );
 
             if (count($results) > 0) {
