@@ -29,6 +29,7 @@ use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
+use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
@@ -102,6 +103,16 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CredentialIssuanceHandler::class
+        );
+
+        // Register ScholiqToolProvider as the MCP tool provider for the AI Chat Companion.
+        // The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::scholiq' is the format
+        // that OR's McpToolsService enumerates to discover per-app providers.
+        // The interface ships in openregister PR #1466 (ai-chat-companion-orchestrator);
+        // until merged, Scholiq implements the stub at tests/Stubs/Mcp/IMcpToolProvider.php.
+        $context->registerServiceAlias(
+            'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::scholiq',
+            ScholiqToolProvider::class
         );
 
         // ADR-031 legitimate exception: GradeEntry.published → FinalGrade recompute bridge,

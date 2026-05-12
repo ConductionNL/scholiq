@@ -8,6 +8,9 @@ parameters:
         - vendor
     scanDirectories:
         - vendor/nextcloud/ocp
+        # IMcpToolProvider stub — lets PHPStan resolve the cross-app interface until
+        # openregister PR #1466 (ai-chat-companion-orchestrator) ships the real one.
+        - tests/Stubs
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         # Nextcloud internal classes that PHPStan might not recognize
@@ -16,6 +19,7 @@ parameters:
         - '#Access to static property \$server on an unknown class OC#'
         # OCA classes from other apps (OpenRegister) not available during static analysis
         - '#unknown class OCA\\OpenRegister\\#'
+        - '#unknown interface OCA\\OpenRegister\\#'
         - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
         - '#on an unknown class OCA\\OpenRegister\\#'
         - '#has invalid return type OCA\\OpenRegister\\#'

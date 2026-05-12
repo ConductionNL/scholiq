@@ -63,6 +63,9 @@
                 <referencedClass name="OCA\OpenRegister\Event\DeepLinkRegistrationEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
+                <!-- IMcpToolProvider ships in openregister PR #1466 (ai-chat-companion-orchestrator);
+                     until merged, Scholiq implements the stub at tests/Stubs/Mcp/IMcpToolProvider.php. -->
+                <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
                 <!-- Nextcloud server internals -->
                 <referencedClass name="OC"/>
                 <!-- GuzzleHttp (loaded via composer at runtime) -->
