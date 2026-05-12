@@ -16,6 +16,7 @@ import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
 import BulkEnrolModal from './views/BulkEnrolModal.vue'
+import CohortTimetable from './views/CohortTimetable.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -95,7 +96,7 @@ const pageTypesProp = { ...defaultPageTypes }
 
 // customComponents registry: maps names declared in manifest pages/tabs
 // to concrete Vue components.
-const customComponents = { BulkEnrolModal, ScholiqSettings }
+const customComponents = { BulkEnrolModal, CohortTimetable, ScholiqSettings }
 const customComponentsProp = { ...customComponents }
 
 // Boot order: initializeStores() must resolve before mount so that any
