@@ -61,8 +61,14 @@
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
                 <referencedClass name="OCA\OpenRegister\Event\DeepLinkRegistrationEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectCreatedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectTransitionedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
+                <referencedClass name="OCA\OpenRegister\Service\AuditHashService"/>
+                <referencedClass name="OCA\OpenRegister\Service\TenantKeyService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Lifecycle\TransitionEngine"/>
+                <referencedClass name="OCA\OpenRegister\Db\AuditTrailMapper"/>
                 <!-- IMcpToolProvider ships in openregister PR #1466 (ai-chat-companion-orchestrator);
                      until merged, Scholiq implements the stub at tests/Stubs/Mcp/IMcpToolProvider.php. -->
                 <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
