@@ -2,52 +2,15 @@ name: Documentation
 
 on:
   push:
-    branches:
-      - development
+    branches: [development, documentation]
   pull_request:
-    branches:
-      - development
+    branches: [development, documentation]
 
 jobs:
   deploy:
-    name: Deploy Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: List directory structure
-        run: |
-          ls -la
-          ls -la docusaurus/
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: docusaurus/package-lock.json
-
-      - name: Install dependencies and build
-        timeout-minutes: 5
-        run: |
-          cd docusaurus
-          npm run ci
-
-      - name: Deploy to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docusaurus/build
-          user_name: ${{ github.actor }}
-          user_email: ${{ github.event.pusher.email || github.actor }}
-
-      - name: Create issue on failure
-        if: failure()
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/DOCUMENTATION_ISSUE_TEMPLATE.md
+    # Reusable workflow defaults source-folder to `docs/` — the
+    # Docusaurus site now lives there (journeydoc / ADR-030), replacing
+    # the pre-ADR stand-alone `docusaurus/` folder.
+    uses: ConductionNL/.github/.github/workflows/documentation.yml@main
+    with:
+      cname: scholiq.conduction.nl
