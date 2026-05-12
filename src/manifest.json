@@ -42,6 +42,13 @@
       "order": 45
     },
     {
+      "id": "Assignments",
+      "label": "scholiq.nav.assignments",
+      "icon": "icon-clipboardText",
+      "route": "Assignments",
+      "order": 47
+    },
+    {
       "id": "Compliance",
       "label": "Compliance",
       "icon": "icon-menu-sidebar",
@@ -402,6 +409,81 @@
         "register": "scholiq",
         "schema": "Material"
       }
+    },
+    {
+      "id": "Rubrics",
+      "route": "/assignments/rubrics",
+      "type": "index",
+      "title": "scholiq.page.rubrics.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Rubric"
+      }
+    },
+    {
+      "id": "RubricDetail",
+      "route": "/assignments/rubrics/:id",
+      "type": "detail",
+      "title": "scholiq.page.rubric.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Rubric"
+      }
+    },
+    {
+      "id": "Assignments",
+      "route": "/assignments",
+      "type": "index",
+      "title": "scholiq.page.assignments.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Assignment"
+      }
+    },
+    {
+      "id": "AssignmentDetail",
+      "route": "/assignments/:id",
+      "type": "detail",
+      "title": "scholiq.page.assignment.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Assignment"
+      }
+    },
+    {
+      "id": "Submissions",
+      "route": "/assignments/:assignmentId/submissions",
+      "type": "index",
+      "title": "scholiq.page.submissions.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Submission"
+      }
+    },
+    {
+      "id": "SubmissionDetail",
+      "route": "/assignments/:assignmentId/submissions/:id",
+      "type": "detail",
+      "title": "scholiq.page.submission.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Submission",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "SubmitWorkModal",
+      "route": "/assignments/:assignmentId/submit",
+      "type": "custom",
+      "title": "scholiq.page.submit_work.title",
+      "component": "SubmitWorkModal"
+    },
+    {
+      "id": "MarkSubmissionView",
+      "route": "/assignments/:assignmentId/submissions/:id/mark",
+      "type": "custom",
+      "title": "scholiq.page.mark_submission.title",
+      "component": "MarkSubmissionView"
     }
   ]
 }
