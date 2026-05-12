@@ -51,7 +51,9 @@
 				<table class="gradebook-view__grid" aria-label="gradebook">
 					<thead>
 						<tr>
-							<th class="gradebook-view__learner-col">{{ t('scholiq', 'Learner') }}</th>
+							<th class="gradebook-view__learner-col">
+								{{ t('scholiq', 'Learner') }}
+							</th>
 							<th
 								v-for="component in components"
 								:key="component.componentId"
@@ -68,7 +70,9 @@
 							v-for="learner in learners"
 							:key="learner.id"
 							class="gradebook-view__learner-row">
-							<td class="gradebook-view__learner-cell">{{ learner.displayName || learner.id }}</td>
+							<td class="gradebook-view__learner-cell">
+								{{ learner.displayName || learner.id }}
+							</td>
 							<td
 								v-for="component in components"
 								:key="component.componentId"
@@ -130,8 +134,12 @@
 					{{ t('scholiq', 'Publish all') }}
 				</button>
 			</div>
-			<p v-if="saveError" role="alert" class="gradebook-view__save-error">{{ saveError }}</p>
-			<p v-if="publishedMessage" role="status" class="gradebook-view__published-message">{{ publishedMessage }}</p>
+			<p v-if="saveError" role="alert" class="gradebook-view__save-error">
+				{{ saveError }}
+			</p>
+			<p v-if="publishedMessage" role="status" class="gradebook-view__published-message">
+				{{ publishedMessage }}
+			</p>
 		</template>
 	</div>
 </template>

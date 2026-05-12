@@ -27,6 +27,7 @@ use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
+use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -135,12 +136,23 @@ class Application extends App implements IBootstrap
 
         // ADR-031 legitimate exception: AttendanceThreshold calculatedChange crossing → AttendanceFlag creation.
         // When OR fires a threshold-crossed event for an AttendanceThreshold, the handler
-        // creates an AttendanceFlag (open) with mentor/window/metric details. It does NOT
-        // auto-act against the learner. DataExchangeJob queueing is deferred to the
-        // data-exchange spec (TODO marker in the handler).
+        // creates an AttendanceFlag (open) with mentor/window/metric details and, when
+        // onCross.dataExchangeTarget is set, queues a DataExchangeJob to that target.
+        // It does NOT auto-act against the learner.
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: AttendanceFlagCreationHandler::class
+        );
+
+        // ADR-031 legitimate exception: DataExchangeJob lifecycle → running bridge.
+        // When a DataExchangeJob transitions to `running`, the handler loads the
+        // DataMappingProfile, queries source objects, applies field transforms
+        // (bsn-to-pseudonym using eckId, date-iso8601, cohort-to-brin), and delegates
+        // to OpenConnector via REST API. No wire protocols are implemented in Scholiq;
+        // all Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML logic lives in OpenConnector.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: DataExchangeRunHandler::class
         );
 
     }//end register()
