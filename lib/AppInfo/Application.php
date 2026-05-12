@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\AppInfo;
 
+use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
+use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
@@ -120,6 +122,25 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: LearningPlanEvaluationHandler::class
+        );
+
+        // ADR-031 legitimate exception: ExcuseRequest.approved → AttendanceRecord flip bridge.
+        // When an ExcuseRequest transitions to `approved`, the handler queries matching
+        // AttendanceRecords (same learner, absent-unexcused, markedAt within dateFrom/dateTo)
+        // and flips each to absent-excused + sets excuseRequestId via ObjectService::saveObject.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ExcuseApprovalHandler::class
+        );
+
+        // ADR-031 legitimate exception: AttendanceThreshold calculatedChange crossing → AttendanceFlag creation.
+        // When OR fires a threshold-crossed event for an AttendanceThreshold, the handler
+        // creates an AttendanceFlag (open) with mentor/window/metric details. It does NOT
+        // auto-act against the learner. DataExchangeJob queueing is deferred to the
+        // data-exchange spec (TODO marker in the handler).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: AttendanceFlagCreationHandler::class
         );
 
     }//end register()
