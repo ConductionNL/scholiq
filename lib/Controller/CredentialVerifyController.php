@@ -77,23 +77,17 @@ class CredentialVerifyController extends Controller
     #[PublicPage]
     public function verify(string $id): JSONResponse
     {
-        $credential = $this->objectService->getObject(
+        $credentialObj = $this->objectService->find(
+            id: $id,
             register: 'scholiq',
-            schema: 'Credential',
-            uuid: $id
+            schema: 'Credential'
         );
 
-        if ($credential === null) {
+        if ($credentialObj === null) {
             return new JSONResponse(['valid' => false, 'error' => 'not_found'], 404);
         }
 
-        if (is_array($credential) === true) {
-            $data = $credential;
-        } else if (method_exists($credential, 'jsonSerialize') === true) {
-            $data = $credential->jsonSerialize();
-        } else {
-            $data = [];
-        }
+        $data = $credentialObj->jsonSerialize();
 
         $lifecycle = $data['lifecycle'] ?? 'issued';
         $isExpired = $data['isExpired'] ?? false;

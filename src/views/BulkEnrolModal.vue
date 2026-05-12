@@ -46,7 +46,9 @@
 					v-model="selectedGroupId"
 					:disabled="csvUsers.length > 0"
 					@change="clearCsv">
-					<option value="">{{ t('scholiq', '— choose a group —') }}</option>
+					<option value="">
+						{{ t('scholiq', '— choose a group —') }}
+					</option>
 					<option v-for="group in groups" :key="group.id" :value="group.id">
 						{{ group.displayName || group.id }}
 					</option>
@@ -65,7 +67,7 @@
 					type="file"
 					accept=".csv,text/csv"
 					:disabled="selectedGroupId !== ''"
-					@change="parseCsv" />
+					@change="parseCsv">
 				<span v-if="csvUsers.length > 0" class="bulk-enrol-modal__hint">
 					{{ n('scholiq', '{count} user found', '{count} users found', csvUsers.length, { count: csvUsers.length }) }}
 				</span>
@@ -88,7 +90,9 @@
 			<div class="bulk-enrol-modal__field">
 				<label for="course-select">{{ t('scholiq', 'Course') }}</label>
 				<select id="course-select" v-model="selectedCourseId">
-					<option value="">{{ t('scholiq', '— choose a course —') }}</option>
+					<option value="">
+						{{ t('scholiq', '— choose a course —') }}
+					</option>
 					<option v-for="course in courses" :key="course.uuid" :value="course.uuid">
 						{{ course.title || course.uuid }}
 					</option>
@@ -98,7 +102,7 @@
 
 			<div class="bulk-enrol-modal__field bulk-enrol-modal__field--toggle">
 				<label>
-					<input v-model="mandatory" type="checkbox" />
+					<input v-model="mandatory" type="checkbox">
 					{{ t('scholiq', 'Mandatory training') }}
 				</label>
 			</div>
@@ -109,7 +113,7 @@
 					id="due-date"
 					v-model="dueDate"
 					type="date"
-					:min="todayIso" />
+					:min="todayIso">
 				<span class="bulk-enrol-modal__hint">{{ t('scholiq', 'Leave empty for no deadline') }}</span>
 			</div>
 
@@ -503,8 +507,8 @@ export default {
 }
 
 .bulk-enrol-modal__field select,
-.bulk-enrol-modal__field input[type="date"],
-.bulk-enrol-modal__field input[type="file"] {
+.bulk-enrol-modal__field input[type='date'],
+.bulk-enrol-modal__field input[type='file'] {
 	width: 100%;
 }
 

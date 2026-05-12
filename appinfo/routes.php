@@ -32,6 +32,9 @@ return [
         ['name' => 'audit_pack#export',  'url' => '/api/compliance/audit/export',           'verb' => 'POST'],
         ['name' => 'audit_pack#dossier', 'url' => '/api/ai-features/{slug}/dossier',        'verb' => 'GET'],
 
+        // QTI package import — external-format import, legitimate PHP per ADR-031.
+        ['name' => 'qti_import#import', 'url' => '/api/assessment/qti-import', 'verb' => 'POST'],
+
         // App health observability — AdminHealth dashboard page (admin-only, ADR-031 exception).
         ['name' => 'health#index', 'url' => '/api/admin/health', 'verb' => 'GET'],
 

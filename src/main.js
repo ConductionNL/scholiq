@@ -16,7 +16,23 @@ import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
 import BulkEnrolModal from './views/BulkEnrolModal.vue'
+import CohortTimetable from './views/CohortTimetable.vue'
+import ImportQtiModal from './views/ImportQtiModal.vue'
+import ItemAuthorView from './views/ItemAuthorView.vue'
+import GradebookView from './views/GradebookView.vue'
+import GradeImpactDetail from './views/GradeImpactDetail.vue'
+import LearningPlanEditor from './views/LearningPlanEditor.vue'
+import MarkAttendanceView from './views/MarkAttendanceView.vue'
+import MarkSubmissionView from './views/MarkSubmissionView.vue'
+import SignPlanModal from './views/SignPlanModal.vue'
+import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
+import OsoDossierReviewView from './views/OsoDossierReviewView.vue'
+import RequestExportModal from './views/RequestExportModal.vue'
+import SubmitExcuseModal from './views/SubmitExcuseModal.vue'
+import SubmitWorkModal from './views/SubmitWorkModal.vue'
+import TakeAssessmentView from './views/TakeAssessmentView.vue'
+import FeaturesRoadmapView from './views/FeaturesRoadmap.vue'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -95,7 +111,7 @@ const pageTypesProp = { ...defaultPageTypes }
 
 // customComponents registry: maps names declared in manifest pages/tabs
 // to concrete Vue components.
-const customComponents = { BulkEnrolModal, ScholiqSettings }
+const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView }
 const customComponentsProp = { ...customComponents }
 
 // Boot order: initializeStores() must resolve before mount so that any

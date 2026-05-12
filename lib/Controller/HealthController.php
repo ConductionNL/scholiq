@@ -32,9 +32,9 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppManager;
 use OCP\IRequest;
 
 /**

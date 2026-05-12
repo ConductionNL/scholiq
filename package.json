@@ -14,13 +14,18 @@
     "lint-fix": "npm run lint -- --fix",
     "stylelint": "stylelint src/**/*.vue src/**/*.scss src/**/*.css",
     "stylelint-fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix",
-    "check:manifest": "node tests/validate-manifest.js"
+    "check:manifest": "node tests/validate-manifest.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "check:register": "node tests/validate-register.js",
+    "check:json-strict": "node tests/validate-json-strict.js",
+    "check:specs": "npm run check:json-strict && npm run check:manifest && npm run check:register"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
   ],
   "dependencies": {
-    "@conduction/nextcloud-vue": "^1.0.0-beta.30",
+    "@conduction/nextcloud-vue": "^1.0.0-beta.35",
     "@nextcloud/auth": "^2.5.0",
     "@nextcloud/axios": "~2.5.2",
     "@nextcloud/dialogs": "^3.2.0",
@@ -45,6 +50,7 @@
     "@nextcloud/eslint-config": "^8.4.1",
     "@nextcloud/stylelint-config": "^2.4.0",
     "@nextcloud/webpack-vue-config": "^6.0.1",
+    "@playwright/test": "^1.60.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "css-loader": "~7.1.1",

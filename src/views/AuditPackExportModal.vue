@@ -57,7 +57,7 @@
 					type="date"
 					class="audit-pack-export__date-input"
 					:max="dateTo || undefined"
-					:disabled="exporting" />
+					:disabled="exporting">
 			</div>
 
 			<!-- Date to -->
@@ -71,7 +71,7 @@
 					type="date"
 					class="audit-pack-export__date-input"
 					:min="dateFrom || undefined"
-					:disabled="exporting" />
+					:disabled="exporting">
 			</div>
 
 			<NcButton
@@ -160,7 +160,7 @@ export default {
 			try {
 				const url = generateUrl('/apps/openregister/api/objects/scholiq/Regulation') + '?lifecycle=published'
 				const response = await fetch(url, {
-					headers: { 'Accept': 'application/json' },
+					headers: { Accept: 'application/json' },
 				})
 
 				if (!response.ok) {
@@ -202,7 +202,7 @@ export default {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Accept': 'application/zip',
+						Accept: 'application/zip',
 					},
 					body: JSON.stringify({
 						regulationSlug,

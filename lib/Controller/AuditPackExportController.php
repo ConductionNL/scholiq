@@ -8,16 +8,14 @@
  * This is a legitimate PHP file per ADR-031 §"Document/ZIP generation":
  * streaming a ZIP containing ndjson/csv/manifest/signature-verification cannot
  * be expressed declaratively. All heavy lifting (audit-trail query, HMAC chain
- * verification) is delegated to OR's AuditTrailService — this controller is
- * intentionally thin.
+ * verification) is delegated to OR's AuditTrailMapper and AuditHashService —
+ * this controller is intentionally thin.
  *
  * Per ADR-022: uses OR's audit-trail-query abstraction; does NOT maintain a
- * local event store or write any audit entries itself (OR does that on the
- * AuditPackExportController's OR-query call automatically).
+ * local event store or write any audit entries itself.
  *
- * Per ADR-008: the `compliance.audit_pack.exported` audit-trail entry is emitted
- * automatically by OR when we call $auditTrailService->query() (OR records every
- * audit-trail access as an audit event for non-repudiation).
+ * Per ADR-008: the audit-pack export is recorded automatically by OR's audit
+ * trail when the query is made.
  *
  * @category Controller
  * @package  OCA\Scholiq\Controller
@@ -37,56 +35,43 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Controller;
 
-use OCA\OpenRegister\Service\AuditTrailService;
+use OCA\OpenRegister\Db\AuditTrailMapper;
+use OCA\OpenRegister\Service\AuditHashService;
 use OCA\Scholiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IConfig;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
 
 /**
  * Streams the ADR-008 §6 audit-pack ZIP for compliance officers and auditors.
  *
  * Single method: export(). Accepts POST with {regulationSlug, dateFrom, dateTo},
- * queries OR's audit trail, and returns a ZIP containing:
+ * queries OR's audit trail via AuditTrailMapper, verifies the HMAC chain via
+ * AuditHashService, and returns a ZIP containing:
  *   - audit-trail.ndjson  (one JSON object per line, all matching events)
  *   - audit-trail.csv     (flat CSV of the same events)
  *   - manifest.json       (tenant_id, period, regulation_slug, event_count,
  *                          signature_status, export_timestamp, key_fingerprint)
- *   - signature-verification.txt  (OR's HMAC chain verification report)
+ *   - signature-verification.txt  (HMAC chain verification report)
  */
 class AuditPackExportController extends Controller
 {
     /**
-     * Event types included in the audit pack per ADR-008 §6.
-     *
-     * @var string[]
-     */
-    private const AUDIT_EVENT_TYPES = [
-        'attestation.signed',
-        'attestation.revoked',
-        'credential.issued',
-        'credential.revoked',
-        'credential.expired',
-        'enrolment.completed',
-        'compliance.regulation.published',
-        'compliance.audit_pack.exported',
-        'xapi.statement.received',
-    ];
-
-    /**
      * Constructor.
      *
-     * @param IRequest          $request           HTTP request.
-     * @param AuditTrailService $auditTrailService OR audit-trail abstraction.
-     * @param LoggerInterface   $logger            PSR logger.
+     * @param IRequest         $request          HTTP request.
+     * @param AuditTrailMapper $auditTrailMapper OR audit-trail database mapper.
+     * @param AuditHashService $auditHashService OR HMAC chain verification service.
+     * @param IConfig          $config           Nextcloud system config for tenant ID lookup.
      */
     public function __construct(
         IRequest $request,
-        private readonly AuditTrailService $auditTrailService,
-        private readonly LoggerInterface $logger,
+        private readonly AuditTrailMapper $auditTrailMapper,
+        private readonly AuditHashService $auditHashService,
+        private readonly IConfig $config,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -115,33 +100,56 @@ class AuditPackExportController extends Controller
             );
         }
 
-        // Query OR's audit trail — OR auto-records the access as compliance.audit_pack.exported.
-        $events = $this->auditTrailService->query(
-                [
-                    'event_type'     => self::AUDIT_EVENT_TYPES,
-                    'regulationSlug' => $regulationSlug,
-                    'period'         => [$dateFrom, $dateTo],
-                ]
-                );
+        // Query OR's audit trail via the real mapper — filters available columns.
+        // `action` maps to event type; `created` holds the timestamp.
+        $entries = $this->auditTrailMapper->findAll(
+            filters: [
+                'created' => $dateFrom.','.$dateTo,
+            ],
+            sort: ['created' => 'ASC']
+        );
 
-        // Retrieve HMAC chain verification report from OR.
-        $verification = $this->auditTrailService->verifyChain(
-                [
-                    'regulationSlug' => $regulationSlug,
-                    'period'         => [$dateFrom, $dateTo],
-                ]
-                );
+        // Serialise AuditTrail entities to plain arrays.
+        $events = [];
+        foreach ($entries as $entry) {
+            $row = $entry->jsonSerialize();
+            // Apply regulation filter on the serialised data (changed JSON field).
+            if (is_string($row['changed'] ?? null) === true) {
+                $changed = (array) json_decode($row['changed'], associative: true);
+            } else {
+                $changed = [];
+            }
 
-        $keyFingerprint  = $verification['keyFingerprint'] ?? 'unavailable';
-        $signatureStatus = $verification['status'] ?? 'unknown';
+            if ($regulationSlug !== '' && ($changed['regulationSlug'] ?? '') !== $regulationSlug) {
+                continue;
+            }
+
+            $events[] = $row;
+        }
+
+        // Verify HMAC chain for the full log (inline — AuditHashService::verifyChain
+        // is the only real OR method for chain verification, accepting int IDs as bounds).
+        $verification = $this->auditHashService->verifyChain();
+        if (($verification['valid'] ?? false) === true) {
+            $signatureStatus = 'valid';
+        } else {
+            $signatureStatus = 'broken';
+        }
+
+        $keyFingerprint = $verification['keyFingerprint'] ?? 'unavailable';
+        if (array_key_exists('brokenAt', $verification) === true) {
+            $keyFingerprint = 'unavailable';
+        }
+
         $eventCount      = count($events);
         $exportTimestamp = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $tenantId        = $this->config->getSystemValue('instanceid', 'unknown');
 
         // Build the four required files.
         $ndjson       = $this->buildNdjson(events: $events);
         $csv          = $this->buildCsv(events: $events);
         $manifestJson = $this->buildManifestJson(
-            tenantId: $this->auditTrailService->getCurrentTenantId(),
+            tenantId: $tenantId,
             regulationSlug: $regulationSlug,
             dateFrom: $dateFrom,
             dateTo: $dateTo,
@@ -203,7 +211,7 @@ class AuditPackExportController extends Controller
     private function buildCsv(array $events): string
     {
         if (empty($events) === true) {
-            return "event_id,event_type,regulation_slug,subject_id,actor_id,occurred_at,signature\n";
+            return "event_id,action,object,register,schema,user,created\n";
         }
 
         $handle = fopen('php://memory', 'r+');
@@ -211,19 +219,19 @@ class AuditPackExportController extends Controller
             return '';
         }
 
-        fputcsv($handle, ['event_id', 'event_type', 'regulation_slug', 'subject_id', 'actor_id', 'occurred_at', 'signature']);
+        fputcsv($handle, ['event_id', 'action', 'object', 'register', 'schema', 'user', 'created']);
 
         foreach ($events as $event) {
             fputcsv(
                     $handle,
                     [
-                        $event['id'] ?? '',
-                        $event['event_type'] ?? '',
-                        $event['regulationSlug'] ?? '',
-                        $event['subject_id'] ?? '',
-                        $event['actor_id'] ?? '',
-                        $event['occurred_at'] ?? '',
-                        $event['signature'] ?? '',
+                        $event['uuid'] ?? '',
+                        $event['action'] ?? '',
+                        $event['object'] ?? '',
+                        $event['register'] ?? '',
+                        $event['schema'] ?? '',
+                        $event['user'] ?? '',
+                        $event['created'] ?? '',
                     ]
                     );
         }
@@ -238,7 +246,7 @@ class AuditPackExportController extends Controller
     /**
      * Build the manifest.json content per ADR-008 §6.
      *
-     * @param string $tenantId        Tenant UUID.
+     * @param string $tenantId        Tenant UUID or instanceid.
      * @param string $regulationSlug  Regulation slug.
      * @param string $dateFrom        Period start.
      * @param string $dateTo          Period end.
@@ -275,31 +283,33 @@ class AuditPackExportController extends Controller
     }//end buildManifestJson()
 
     /**
-     * Build the signature-verification.txt content from OR's chain report.
+     * Build the signature-verification.txt content from OR's chain verification result.
      *
-     * @param array<string,mixed> $verification OR verification response.
+     * @param array<string,mixed> $verification OR AuditHashService::verifyChain() response.
      *
      * @return string Plain-text verification report.
      */
     private function buildVerificationTxt(array $verification): string
     {
-        $status      = $verification['status'] ?? 'unknown';
-        $fingerprint = $verification['keyFingerprint'] ?? 'unavailable';
-        $checkedAt   = $verification['checkedAt'] ?? 'unknown';
-        $totalEvents = $verification['totalEvents'] ?? 0;
-        $brokenAt    = $verification['firstBrokenAt'] ?? null;
+        $valid = ($verification['valid'] ?? false) === true;
+        if ($valid === true) {
+            $status = 'valid';
+        } else {
+            $status = 'broken';
+        }
+
+        $entriesVerified = $verification['entriesVerified'] ?? 0;
+        $brokenAt        = $verification['brokenAt'] ?? null;
 
         $lines   = [];
         $lines[] = '=== Scholiq Compliance Audit Pack — Signature Verification Report ===';
         $lines[] = '';
         $lines[] = 'Status          : '.$status;
-        $lines[] = 'Key fingerprint : '.$fingerprint;
-        $lines[] = 'Checked at      : '.$checkedAt;
-        $lines[] = 'Total events    : '.$totalEvents;
+        $lines[] = 'Entries verified: '.$entriesVerified;
 
         if ($brokenAt !== null) {
             $lines[] = '';
-            $lines[] = 'WARNING: Chain integrity broken at event: '.$brokenAt;
+            $lines[] = 'WARNING: Chain integrity broken at entry id: '.$brokenAt;
             $lines[] = 'This indicates a record was modified or deleted after recording.';
         } else {
             $lines[] = '';
@@ -307,8 +317,8 @@ class AuditPackExportController extends Controller
         }
 
         $lines[] = '';
-        $lines[] = 'This report is generated by OpenRegister\'s audit-trail verification endpoint.';
-        $lines[] = 'For offline verification use the key fingerprint above with the NDJSON file.';
+        $lines[] = 'This report is generated by OpenRegister\'s AuditHashService::verifyChain().';
+        $lines[] = 'For offline verification cross-reference the NDJSON file with the chain hashes.';
 
         return implode("\n", $lines)."\n";
     }//end buildVerificationTxt()

@@ -99,21 +99,17 @@ class CredentialIssuanceHandler implements IEventListener
         }
 
         // Read the Course to check for certificateTemplate.
-        $courseObj = $this->objectService->getObject(
+        $courseObj = $this->objectService->find(
+            id: $courseId,
             register: self::SCHOLIQ_REGISTER,
-            schema: 'course',
-            uuid: $courseId
+            schema: 'course'
         );
 
         if ($courseObj === null) {
             return;
         }
 
-        if (method_exists($courseObj, 'jsonSerialize') === true) {
-            $course = $courseObj->jsonSerialize();
-        } else {
-            $course = (array) $courseObj;
-        }
+        $course = $courseObj->jsonSerialize();
 
         if (empty($course['certificateTemplate']) === true) {
             // No certificate template — do not issue (REQ-CE-001-B).
