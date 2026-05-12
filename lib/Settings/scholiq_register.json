@@ -4395,6 +4395,487 @@
             }
           }
         }
+      },
+      "GradeScale": {
+        "slug": "grade-scale",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "GradeScale",
+        "description": "A named grading scale defining the value range, bands, rounding rule, and pass threshold for marks. Supports numeric (NL 1.0–10.0), letter (A–F), ECTS (A–F), pass/fail, percentage, and custom band sets.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "kind",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable scale name, e.g. 'NL numeric 1–10'.",
+            "example": "NL numeric 1–10"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Discriminator for how values and bands are interpreted.",
+            "enum": [
+              "numeric",
+              "letter",
+              "ects",
+              "pass-fail",
+              "percentage",
+              "band"
+            ]
+          },
+          "bands": {
+            "type": "array",
+            "description": "Ordered grade bands (for letter/ects/band kinds). Each band covers a value range and carries a pass flag.",
+            "items": {
+              "type": "object",
+              "required": [
+                "bandId",
+                "label",
+                "minValue",
+                "maxValue",
+                "pass"
+              ],
+              "properties": {
+                "bandId": {
+                  "type": "string",
+                  "description": "Stable identifier for this band, e.g. 'A', 'B', 'voldoende'."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Display label, e.g. 'A (Excellent)'."
+                },
+                "minValue": {
+                  "type": "number",
+                  "description": "Inclusive lower bound of the raw value range for this band."
+                },
+                "maxValue": {
+                  "type": "number",
+                  "description": "Inclusive upper bound of the raw value range for this band."
+                },
+                "pass": {
+                  "type": "boolean",
+                  "description": "Whether this band is considered passing."
+                }
+              }
+            }
+          },
+          "min": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Minimum possible value (for numeric/percentage kinds). Null for band-based scales.",
+            "example": 1.0
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Maximum possible value (for numeric/percentage kinds). Null for band-based scales.",
+            "example": 10.0
+          },
+          "passThreshold": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Minimum value required to pass (for numeric/percentage kinds). Values below this threshold yield passed=false.",
+            "example": 5.5
+          },
+          "roundingRule": {
+            "type": "string",
+            "description": "Rounding rule applied before comparing to passThreshold or displaying the grade.",
+            "enum": [
+              "none",
+              "half-up-1dp",
+              "half-up-int",
+              "nearest-half"
+            ],
+            "default": "half-up-1dp"
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Scale lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active"
+            },
+            "archive": {
+              "from": [
+                "draft",
+                "active"
+              ],
+              "to": "archived"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "bandCount": {
+            "description": "Number of bands defined on this scale.",
+            "expression": "count(@.bands)"
+          }
+        }
+      },
+      "GradeEntry": {
+        "slug": "grade-entry",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "GradeEntry",
+        "description": "One mark on one CurriculumPlan component for one learner. Starts as concept (editable); a teacher publishes it to notify the learner (and parents) and feed the FinalGrade roll-up. Once published, it can only move to revised (new value with audit trail). Not appendOnly — concept entries are editable; lifecycle enforces immutability once published.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learnerId",
+          "curriculumPlanId",
+          "componentId",
+          "value",
+          "gradeScaleId",
+          "tenant_id"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner this mark belongs to."
+          },
+          "curriculumPlanId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the CurriculumPlan this entry contributes to."
+          },
+          "componentId": {
+            "type": "string",
+            "description": "The CurriculumPlan.components[].componentId this mark scores."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated Course. Null when scope is set via cohort only."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated Cohort."
+          },
+          "sourceKind": {
+            "type": "string",
+            "description": "Origin of this mark.",
+            "enum": [
+              "assignment-submission",
+              "assessment-result",
+              "participation",
+              "manual"
+            ]
+          },
+          "submissionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Submission that originated this mark (set when sourceKind=assignment-submission)."
+          },
+          "assessmentResultId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the AssessmentResult that originated this mark (set when sourceKind=assessment-result)."
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Session that originated this mark (set when sourceKind=participation)."
+          },
+          "value": {
+            "type": "number",
+            "description": "Raw mark value on the component's GradeScale (e.g. 7.5 for NL numeric)."
+          },
+          "gradeScaleId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the GradeScale used to interpret and display this value."
+          },
+          "weight": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Per-entry weight override. Null means fall back to the matching CurriculumPlan.components[].weight."
+          },
+          "period": {
+            "type": "string",
+            "description": "Period identifier matching CurriculumPlan.components[].period.",
+            "example": "1"
+          },
+          "grader": {
+            "type": "string",
+            "description": "Nextcloud user ID of the teacher who entered this mark."
+          },
+          "gradedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when the grade was entered."
+          },
+          "comment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional free-text feedback or annotation from the grader."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Entry lifecycle state. Concept = editable, published = immutable + notified, revised = superseded by a new published entry.",
+            "enum": [
+              "concept",
+              "published",
+              "revised"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "concept",
+          "transitions": {
+            "publish": {
+              "from": "concept",
+              "to": "published",
+              "notifications": [
+                "gradePublished"
+              ]
+            },
+            "revise": {
+              "from": "published",
+              "to": "revised"
+            },
+            "republish": {
+              "from": "revised",
+              "to": "published",
+              "notifications": [
+                "gradePublished"
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "gradePublished": {
+            "event": "lifecycle.published",
+            "recipient": "@self.learnerId",
+            "idempotencyKey": "${@self.id}-${@self.lifecycle}",
+            "description": "Notifies the learner (and parents via GradeRollupHandler fan-out) when a GradeEntry is published. IdempotencyKey prevents double-fire on re-publish or backfill."
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "field": "learnerId",
+            "schema": "learner-profile"
+          },
+          "curriculumPlan": {
+            "field": "curriculumPlanId",
+            "schema": "curriculum-plan"
+          },
+          "course": {
+            "field": "courseId",
+            "schema": "course"
+          },
+          "cohort": {
+            "field": "cohortId",
+            "schema": "cohort"
+          },
+          "submission": {
+            "field": "submissionId",
+            "schema": "submission"
+          },
+          "assessmentResult": {
+            "field": "assessmentResultId",
+            "schema": "assessment-result"
+          },
+          "session": {
+            "field": "sessionId",
+            "schema": "session"
+          }
+        },
+        "x-openregister-calculations": {
+          "effectiveWeight": {
+            "description": "The per-entry weight if set, else the matching CurriculumPlan.components[].weight. Used by FinalGrade roll-up.",
+            "expression": "coalesce(@.weight, lookup('curriculum-plan', @.curriculumPlanId, 'components', @.componentId, 'weight'))"
+          },
+          "pointsContributed": {
+            "description": "Value multiplied by effectiveWeight — the raw contribution of this entry to the weighted sum.",
+            "expression": "@.value * @.effectiveWeight"
+          }
+        }
+      },
+      "FinalGrade": {
+        "slug": "final-grade",
+        "icon": "TrophyOutline",
+        "version": "0.1.0",
+        "title": "FinalGrade",
+        "description": "Calculated roll-up per learner per Course or Programme. Recomputed whenever a GradeEntry for this (learnerId, curriculumPlanId) publishes — applying the CurriculumPlan.formula over the learner's published GradeEntries. No lifecycle — it is fully derived. Read-only from the frontend.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true,
+          "readOnly": true
+        },
+        "required": [
+          "learnerId",
+          "curriculumPlanId",
+          "gradeScaleId",
+          "tenant_id"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner this grade belongs to."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Course this final grade applies to. Null for programme-level grades."
+          },
+          "programmeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Programme this final grade applies to. Null for course-level grades."
+          },
+          "curriculumPlanId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the CurriculumPlan whose formula is applied."
+          },
+          "gradeScaleId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the GradeScale used to interpret the computed value."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Computed final grade value. Null before any GradeEntry has published. Derived — do not set manually."
+          },
+          "passed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the learner has passed, per the formula + passRules + GradeScale.passThreshold. Null before enough entries have published."
+          },
+          "breakdown": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Per-period averages and per-component contributions as a JSON object. Derived — do not set manually.",
+            "example": {
+              "periods": {
+                "1": 6.5,
+                "2": 7.2
+              },
+              "components": {
+                "comp-a": {
+                  "value": 7.0,
+                  "weight": 2,
+                  "contribution": 14.0
+                }
+              }
+            }
+          },
+          "lastRecomputedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last recompute triggered by a GradeEntry publish."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          }
+        },
+        "x-openregister-aggregations": {
+          "publishedEntries": {
+            "description": "Cross-schema aggregation: pull all published GradeEntries for this learner + curriculumPlan. Used as input to the formula evaluation.",
+            "schema": "grade-entry",
+            "filters": {
+              "learnerId": "@self.learnerId",
+              "curriculumPlanId": "@self.curriculumPlanId",
+              "lifecycle": "published"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "value": {
+            "description": "Computed by GradeFormulaEvaluator using CurriculumPlan.formula over publishedEntries.",
+            "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
+          },
+          "passed": {
+            "description": "Boolean verdict from GradeFormulaEvaluator, accounting for passRules and GradeScale.passThreshold.",
+            "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
+          },
+          "breakdown": {
+            "description": "Per-period and per-component contribution breakdown from GradeFormulaEvaluator.",
+            "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
+          }
+        },
+        "x-openregister-triggers": {
+          "calculatedChange": {
+            "description": "Recompute this FinalGrade whenever a GradeEntry for (learnerId, curriculumPlanId) publishes. Implemented via GradeRollupHandler listening on ObjectTransitionedEvent — NOT a TimedJob.",
+            "handler": "OCA\\Scholiq\\Listener\\GradeRollupHandler"
+          }
+        }
       }
     }
   }
