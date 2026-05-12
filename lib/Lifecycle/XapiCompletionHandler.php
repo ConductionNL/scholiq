@@ -4,8 +4,8 @@
  * XapiCompletionHandler
  *
  * ADR-031 legitimate PHP exception: single-method lifecycle guard that bridges
- * an OR audit event (xapi.statement.received) to an Enrolment lifecycle transition.
- * All other Enrolment behaviour is declared in lib/Settings/scholiq_register.json
+ * an OR ObjectCreatedEvent (for XapiStatement objects) to an Enrolment lifecycle
+ * transition. All other Enrolment behaviour is declared in lib/Settings/scholiq_register.json
  * via x-openregister-lifecycle / x-openregister-notifications / x-openregister-calculations.
  *
  * @category Lifecycle
@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Lifecycle;
 
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Service\Lifecycle\TransitionEngine;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
@@ -33,18 +34,30 @@ use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
 
 /**
- * Listens for OR's xapi.statement.received audit event and, when the statement
- * represents the final mandatory lesson completion of a course, dispatches the
- * `complete` transition on the matching active Enrolment.
+ * Listens for OR's ObjectCreatedEvent on XapiStatement objects and, when the
+ * statement represents the final mandatory lesson completion of a course,
+ * dispatches the `complete` transition on the matching active Enrolment.
  *
  * ADR-031 §"Lifecycle guards": single-method handler, no state machine logic,
  * no notification dispatch, no audit writing — all delegated to OR via transition.
  *
  * @category Lifecycle
  * @package  OCA\Scholiq\Lifecycle
+ *
+ * @implements IEventListener<Event>
  */
 class XapiCompletionHandler implements IEventListener
 {
+
+    /**
+     * OR register slug for Scholiq objects.
+     */
+    private const SCHOLIQ_REGISTER = 'scholiq';
+
+    /**
+     * OR schema slug for xAPI statement objects.
+     */
+    private const XAPI_SCHEMA = 'XapiStatement';
 
     /**
      * XAPI verb IRIs that indicate successful completion.
@@ -71,14 +84,15 @@ class XapiCompletionHandler implements IEventListener
     }//end __construct()
 
     /**
-     * Handle an incoming xapi.statement.received event.
+     * Handle an incoming ObjectCreatedEvent.
      *
+     * Only acts on XapiStatement objects in the scholiq register.
      * Fires the `complete` transition on the learner's active Enrolment when:
      *   1. verb.id is `completed` or `passed`
      *   2. The related Lesson has mandatoryTraining=true
      *   3. The Lesson is the final published Lesson of its Course
      *
-     * @param Event $event The dispatched event; payload is the xAPI statement JSON-decoded as array.
+     * @param Event $event The dispatched event from OR.
      *
      * @return void
      *
@@ -86,12 +100,20 @@ class XapiCompletionHandler implements IEventListener
      */
     public function handle(Event $event): void
     {
-        // OR dispatches audit events carrying the raw payload via getData().
-        if (method_exists($event, 'getData') === false) {
+        if ($event instanceof ObjectCreatedEvent === false) {
             return;
         }
 
-        $payload = $event->getData();
+        $objectEntity = $event->getObject();
+
+        // Filter to XapiStatement objects in the scholiq register only.
+        if ($objectEntity->getRegister() !== self::SCHOLIQ_REGISTER
+            || $objectEntity->getSchema() !== self::XAPI_SCHEMA
+        ) {
+            return;
+        }
+
+        $payload = $objectEntity->jsonSerialize();
 
         // Guard 1: verb must be completed/passed.
         $verbId = $payload['verb']['id'] ?? '';
@@ -107,7 +129,7 @@ class XapiCompletionHandler implements IEventListener
 
         $lessons = $this->objectService->findAll(
             [
-                'register' => 'scholiq',
+                'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
                 'filters'  => ['xapiObjectId' => $lessonId],
                 'limit'    => 1,
@@ -133,7 +155,7 @@ class XapiCompletionHandler implements IEventListener
         // Guard 4: lesson must be the final published lesson of the course.
         $publishedLessons = $this->objectService->findAll(
             [
-                'register' => 'scholiq',
+                'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
                 'filters'  => ['courseId' => $courseId, 'lifecycle' => 'published'],
             ]
@@ -157,7 +179,7 @@ class XapiCompletionHandler implements IEventListener
         // Find the active Enrolment for this learner + course.
         $enrolments = $this->objectService->findAll(
             [
-                'register' => 'scholiq',
+                'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Enrolment',
                 'filters'  => [
                     'learnerId' => $learnerId,
