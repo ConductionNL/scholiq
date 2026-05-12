@@ -394,9 +394,8 @@ export default {
 
 		/**
 		 * Save rubricScores + proposedGrade + feedbackText to the Submission,
-		 * then dispatch the `return` lifecycle transition.
-		 *
-		 * TODO(grading spec): emit GradeEntry once the grading spec is implemented.
+		 * create a concept GradeEntry (grading spec bridge), and dispatch
+		 * the `return` lifecycle transition.
 		 *
 		 * @return {Promise<void>}
 		 */
@@ -432,7 +431,59 @@ export default {
 					throw new Error(`Submission update failed: ${updateResp.status}`)
 				}
 
-				// 2. Dispatch `return` lifecycle transition
+				// 2. Create a concept GradeEntry (grading spec — sourceKind: assignment-submission).
+				// The teacher reviews and publishes it via the GradebookView; only then does
+				// the notification fire and the FinalGrade recompute trigger.
+				const componentId = this.assignment.curriculumPlanComponentId ?? null
+				const planId = this.assignment.curriculumPlanId ?? null
+				if (proposedGrade !== null && componentId && planId) {
+					const gradeEntryUrl = generateUrl(
+						'/apps/openregister/api/objects/scholiq/GradeEntry',
+					)
+					const gradeEntryResp = await fetch(gradeEntryUrl, {
+						method: 'POST',
+						headers: {
+							'OCS-APIREQUEST': 'true',
+							Accept: 'application/json',
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							learnerId: (this.submission.learnerIds ?? [])[0] ?? '',
+							curriculumPlanId: planId,
+							componentId,
+							sourceKind: 'assignment-submission',
+							submissionId: this.id,
+							value: proposedGrade,
+							gradeScaleId: this.assignment.gradeScaleId ?? '',
+							grader: '',
+							gradedAt: new Date().toISOString(),
+							lifecycle: 'concept',
+							tenant_id: this.submission.tenant_id ?? '',
+						}),
+					})
+					if (gradeEntryResp.ok) {
+						const gradeEntryJson = await gradeEntryResp.json()
+						const gradeEntryId = (gradeEntryJson.object ?? gradeEntryJson)?.id ?? null
+						if (gradeEntryId) {
+							// Back-link the GradeEntry to the Submission.
+							const linkUrl = generateUrl(
+								`/apps/openregister/api/objects/scholiq/Submission/${this.id}`,
+							)
+							await fetch(linkUrl, {
+								method: 'PUT',
+								headers: {
+									'OCS-APIREQUEST': 'true',
+									Accept: 'application/json',
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({ gradeEntryId }),
+							})
+						}
+					}
+					// Non-fatal: GradeEntry creation failure does not block the return transition.
+				}
+
+				// 3. Dispatch `return` lifecycle transition
 				const transitionUrl = generateUrl(
 					`/apps/openregister/api/objects/scholiq/Submission/${this.id}/transition/return`,
 				)

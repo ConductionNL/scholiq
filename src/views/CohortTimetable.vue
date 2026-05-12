@@ -419,10 +419,25 @@ export default {
 	color: var(--color-primary-element);
 }
 
-.cohort-timetable__badge--active { background-color: #d4edda; color: #155724; }
-.cohort-timetable__badge--planned { background-color: #fff3cd; color: #856404; }
-.cohort-timetable__badge--completed { background-color: #cce5ff; color: #004085; }
-.cohort-timetable__badge--archived { background-color: var(--color-background-dark); color: var(--color-text-maxcontrast); }
+.cohort-timetable__badge--active {
+	background-color: #d4edda;
+	color: #155724;
+}
+
+.cohort-timetable__badge--planned {
+	background-color: #fff3cd;
+	color: #856404;
+}
+
+.cohort-timetable__badge--completed {
+	background-color: #cce5ff;
+	color: #004085;
+}
+
+.cohort-timetable__badge--archived {
+	background-color: var(--color-background-dark);
+	color: var(--color-text-maxcontrast);
+}
 
 .cohort-timetable__meta {
 	width: 100%;
@@ -490,9 +505,20 @@ export default {
 	background-color: var(--color-background-dark);
 }
 
-.cohort-timetable__session-status--in-progress { background-color: #fff3cd; color: #856404; }
-.cohort-timetable__session-status--completed { background-color: #d4edda; color: #155724; }
-.cohort-timetable__session-status--cancelled { background-color: #f8d7da; color: #721c24; }
+.cohort-timetable__session-status--in-progress {
+	background-color: #fff3cd;
+	color: #856404;
+}
+
+.cohort-timetable__session-status--completed {
+	background-color: #d4edda;
+	color: #155724;
+}
+
+.cohort-timetable__session-status--cancelled {
+	background-color: #f8d7da;
+	color: #721c24;
+}
 
 .cohort-timetable__session-title {
 	margin: 0 0 calc(var(--default-grid-baseline, 8px) / 2);

@@ -19,6 +19,8 @@ import BulkEnrolModal from './views/BulkEnrolModal.vue'
 import CohortTimetable from './views/CohortTimetable.vue'
 import ImportQtiModal from './views/ImportQtiModal.vue'
 import ItemAuthorView from './views/ItemAuthorView.vue'
+import GradebookView from './views/GradebookView.vue'
+import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
@@ -102,7 +104,7 @@ const pageTypesProp = { ...defaultPageTypes }
 
 // customComponents registry: maps names declared in manifest pages/tabs
 // to concrete Vue components.
-const customComponents = { BulkEnrolModal, CohortTimetable, ImportQtiModal, ItemAuthorView, MarkSubmissionView, ProctoringReviewQueue, ScholiqSettings, SubmitWorkModal, TakeAssessmentView }
+const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, MarkSubmissionView, ProctoringReviewQueue, ScholiqSettings, SubmitWorkModal, TakeAssessmentView }
 const customComponentsProp = { ...customComponents }
 
 // Boot order: initializeStores() must resolve before mount so that any

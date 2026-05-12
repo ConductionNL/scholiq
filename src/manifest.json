@@ -42,6 +42,13 @@
       "order": 45
     },
     {
+      "id": "Grades",
+      "label": "scholiq.nav.grades",
+      "icon": "icon-category-education",
+      "route": "GradeEntries",
+      "order": 46
+    },
+    {
       "id": "Assignments",
       "label": "scholiq.nav.assignments",
       "icon": "icon-clipboardText",
@@ -623,6 +630,82 @@
       "type": "custom",
       "title": "scholiq.page.import_qti.title",
       "component": "ImportQtiModal"
+    },
+    {
+      "id": "GradeScales",
+      "route": "/grades/scales",
+      "type": "index",
+      "title": "scholiq.page.grade_scales.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "GradeScale"
+      }
+    },
+    {
+      "id": "GradeScaleDetail",
+      "route": "/grades/scales/:id",
+      "type": "detail",
+      "title": "scholiq.page.grade_scale.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "GradeScale"
+      }
+    },
+    {
+      "id": "GradeEntries",
+      "route": "/grades/entries",
+      "type": "index",
+      "title": "scholiq.page.grade_entries.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "GradeEntry"
+      }
+    },
+    {
+      "id": "GradeEntryDetail",
+      "route": "/grades/entries/:id",
+      "type": "detail",
+      "title": "scholiq.page.grade_entry.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "GradeEntry"
+      }
+    },
+    {
+      "id": "FinalGrades",
+      "route": "/grades/final",
+      "type": "index",
+      "title": "scholiq.page.final_grades.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "FinalGrade",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "FinalGradeDetail",
+      "route": "/grades/final/:id",
+      "type": "detail",
+      "title": "scholiq.page.final_grade.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "FinalGrade",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "GradebookView",
+      "route": "/grades/cohort/:cohortId/plan/:planId",
+      "type": "custom",
+      "title": "scholiq.page.gradebook.title",
+      "component": "GradebookView"
+    },
+    {
+      "id": "GradeImpactDetail",
+      "route": "/grades/entries/:id/impact",
+      "type": "custom",
+      "title": "scholiq.page.grade_impact.title",
+      "component": "GradeImpactDetail"
     }
   ]
 }
