@@ -16,7 +16,10 @@
     "stylelint-fix": "stylelint src/**/*.vue src/**/*.scss src/**/*.css --fix",
     "check:manifest": "node tests/validate-manifest.js",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "check:register": "node tests/validate-register.js",
+    "check:json-strict": "node tests/validate-json-strict.js",
+    "check:specs": "npm run check:json-strict && npm run check:manifest && npm run check:register"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
