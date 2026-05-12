@@ -1,7 +1,7 @@
 ---
 slug: data-exchange
 title: Data Exchange — Export/Import Jobs to External Registries
-status: planned
+status: implemented
 feature_tier: should
 depends_on_adrs: [ADR-008, ADR-022, ADR-024, ADR-031]
 created: 2026-05-12

@@ -1,7 +1,7 @@
 ---
 slug: certification
 title: Certification & Digital Credentials
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-003]   # TODO until ADRs land
 created: 2026-05-11

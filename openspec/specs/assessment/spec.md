@@ -1,7 +1,7 @@
 ---
 slug: assessment
 title: Assessment — Tests, Exams, Item Banks, Proctoring
-status: planned
+status: implemented
 feature_tier: must
 depends_on_adrs: [ADR-002, ADR-005, ADR-022, ADR-024, ADR-031]
 created: 2026-05-12
