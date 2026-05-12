@@ -9,7 +9,7 @@
     "type": "application",
     "app": "scholiq",
     "openregister": "^v0.2.10",
-    "description": "Scholiq \u2014 open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
+    "description": "Scholiq — open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
   },
   "paths": {},
   "components": {
@@ -467,7 +467,7 @@
         "icon": "RobotOutline",
         "version": "0.1.0",
         "title": "AI Feature",
-        "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled \u2192 enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
+        "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled → enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
         "type": "object",
         "required": [
           "slug",
@@ -487,7 +487,7 @@
           "description": {
             "type": "string",
             "description": "Plain-language description of the AI feature and its EU AI Act risk classification.",
-            "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III \u00a74(a)."
+            "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III §4(a)."
           },
           "riskCategory": {
             "type": "string",
@@ -555,7 +555,7 @@
         "icon": "FolderOutline",
         "version": "0.1.0",
         "title": "Course",
-        "description": "A course or training program (Schema.org Course). Lifecycle: draft \u2192 published \u2192 archived.",
+        "description": "A course or training program (Schema.org Course). Lifecycle: draft → published → archived.",
         "type": "object",
         "x-openregister": {
           "schemaType": "schema:Course",
@@ -804,7 +804,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Lesson",
-        "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft \u2192 published \u2192 retired.",
+        "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft → published → retired.",
         "type": "object",
         "x-openregister": {
           "schemaType": "schema:LearningResource",
@@ -829,7 +829,7 @@
           "name": {
             "type": "string",
             "description": "Lesson name",
-            "example": "Module 1 \u2014 NIS2 Scope & Obligations"
+            "example": "Module 1 — NIS2 Scope & Obligations"
           },
           "order": {
             "type": "integer",
@@ -1571,7 +1571,7 @@
           "coveragePercent": {
             "type": "number",
             "materialise": true,
-            "description": "Live coverage % = (mandatoryCompletedCount / mandatoryEnrolledCount) \u00d7 100. Returns 0 when no enrolments exist.",
+            "description": "Live coverage % = (mandatoryCompletedCount / mandatoryEnrolledCount) × 100. Returns 0 when no enrolments exist.",
             "expression": {
               "if": [
                 {
@@ -1604,7 +1604,7 @@
           "ragStatus": {
             "type": "string",
             "materialise": true,
-            "description": "RAG status band: green \u2265 ragAmberThreshold, amber \u2265 ragRedThreshold, red < ragRedThreshold.",
+            "description": "RAG status band: green ≥ ragAmberThreshold, amber ≥ ragRedThreshold, red < ragRedThreshold.",
             "expression": {
               "case": [
                 {
@@ -1793,7 +1793,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "HMAC-SHA256 signature computed by AttestationSigningGuard at the drafted\u2192signed transition."
+            "description": "HMAC-SHA256 signature computed by AttestationSigningGuard at the drafted→signed transition."
           },
           "signingKeyId": {
             "type": "string",
@@ -1890,7 +1890,7 @@
               "string",
               "null"
             ],
-            "description": "Encrypted BSN \u2014 only populated for K-12 or government tenants."
+            "description": "Encrypted BSN — only populated for K-12 or government tenants."
           },
           "schoolId": {
             "type": [
@@ -2798,6 +2798,611 @@
           }
         },
         "x-openregister-seed": []
+      },
+      "Rubric": {
+        "slug": "rubric",
+        "icon": "ClipboardListOutline",
+        "version": "0.1.0",
+        "title": "Rubric",
+        "description": "Reusable marking scheme with weighted criteria and level descriptors. A teacher attaches a Rubric to an Assignment; when marking a Submission the teacher picks a level per criterion and the points sum becomes the proposed grade.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "criteria",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for this rubric.",
+            "example": "HBO Werkstuk — beoordelingsrubric"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional explanation of the rubric's purpose and use."
+          },
+          "criteria": {
+            "type": "array",
+            "description": "Ordered list of assessment criteria, each with weight and achievement levels.",
+            "items": {
+              "type": "object",
+              "required": [
+                "criterionId",
+                "label",
+                "weight",
+                "levels"
+              ],
+              "properties": {
+                "criterionId": {
+                  "type": "string",
+                  "description": "Stable identifier for this criterion (e.g. 'structure', 'analysis')."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Display label for the criterion."
+                },
+                "weight": {
+                  "type": "number",
+                  "description": "Relative weight of this criterion. Used to compute the criterion's contribution to maxPoints.",
+                  "example": 2
+                },
+                "levels": {
+                  "type": "array",
+                  "description": "Achievement levels from lowest to highest (e.g. insufficient, sufficient, good, excellent).",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "levelId",
+                      "label",
+                      "points"
+                    ],
+                    "properties": {
+                      "levelId": {
+                        "type": "string",
+                        "description": "Stable identifier for this level (e.g. 'insufficient', 'sufficient')."
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "Human-readable level descriptor."
+                      },
+                      "points": {
+                        "type": "number",
+                        "description": "Points awarded when a learner achieves this level."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "maxPoints": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Declared maximum possible score (sum of the top level across all criteria). Derived field; prefer x-openregister-calculations.computedMaxPoints.",
+            "example": 100
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Rubric lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active"
+            },
+            "archive": {
+              "from": [
+                "draft",
+                "active"
+              ],
+              "to": "archived"
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "active"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "criterionCount": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "count": {
+                "prop": "criteria"
+              }
+            }
+          },
+          "computedMaxPoints": {
+            "type": "number",
+            "materialise": true,
+            "description": "Sum of the highest points level across all criteria.",
+            "expression": {
+              "sumMaxLevels": {
+                "prop": "criteria"
+              }
+            }
+          }
+        }
+      },
+      "Assignment": {
+        "slug": "assignment",
+        "icon": "ClipboardEditOutline",
+        "version": "0.1.0",
+        "title": "Assignment",
+        "description": "A deliverable that learners hand in: title, instructions, due date, rubric, and submission window. Belongs to a Course, Session, or both. Linked to a CurriculumPlan component to enable grade roll-up.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "title",
+          "maxPoints",
+          "tenant_id"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Assignment title shown to learners.",
+            "example": "Werkstuk: NIS2 risicoanalyse"
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Rich-text instructions for the learner. Stored as HTML or Markdown."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Course this assignment belongs to. Null when only attached to a Session."
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Session this assignment belongs to. Null when only attached at Course level."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Cohort this assignment targets. Null for course-wide assignments."
+          },
+          "curriculumPlanComponentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stable componentId from the parent CurriculumPlan.components array that this assignment scores. Used by the grading spec to map submissions to grade columns."
+          },
+          "briefingMaterialIds": {
+            "type": "array",
+            "description": "UUIDs of Material objects provided as briefing resources for this assignment.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "dueAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Submission deadline. Null for open-ended assignments."
+          },
+          "maxPoints": {
+            "type": "number",
+            "description": "Maximum points a learner can earn on this assignment.",
+            "example": 100
+          },
+          "allowLateSubmission": {
+            "type": "boolean",
+            "description": "Whether late submissions are accepted after dueAt. When false, SubmissionWindowGuard blocks submission after dueAt.",
+            "default": false
+          },
+          "latePenaltyPercent": {
+            "type": "number",
+            "description": "Percentage deducted from the proposed grade for late submissions (0–100).",
+            "default": 0,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "rubricId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Rubric used to grade submissions. Null for unstructured/holistic grading."
+          },
+          "groupSubmission": {
+            "type": "boolean",
+            "description": "When true, a Submission may list multiple learnerIds (group hand-in).",
+            "default": false
+          },
+          "visibleFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Earliest datetime at which the assignment is visible to learners. Null = immediately visible."
+          },
+          "visibleUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Latest datetime at which the assignment is visible to learners. Null = always visible after publication."
+          },
+          "plagiarismProvider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pluggable plagiarism-check provider identifier (e.g. 'turnitin', 'ouriginal'). Resolved to OCA\\Scholiq\\Plagiarism\\ProvidesPlagiarismCheck at runtime. No built-in provider — hook only.",
+            "example": "turnitin"
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Assignment lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "published",
+              "closed",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AssignmentPublishGuard"
+              ]
+            },
+            "close": {
+              "from": "published",
+              "to": "closed"
+            },
+            "archive": {
+              "from": [
+                "draft",
+                "published",
+                "closed"
+              ],
+              "to": "archived"
+            },
+            "reopen": {
+              "from": "closed",
+              "to": "published"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          },
+          "session": {
+            "register": "scholiq",
+            "schema": "Session",
+            "cardinality": "many-to-one",
+            "joinOn": "sessionId"
+          },
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          },
+          "rubric": {
+            "register": "scholiq",
+            "schema": "Rubric",
+            "cardinality": "many-to-one",
+            "joinOn": "rubricId"
+          },
+          "briefingMaterials": {
+            "register": "scholiq",
+            "schema": "Material",
+            "cardinality": "many-to-many",
+            "joinOn": "briefingMaterialIds"
+          }
+        },
+        "x-openregister-calculations": {
+          "isOverdue": {
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when dueAt is set and is in the past.",
+            "expression": {
+              "lt": [
+                {
+                  "prop": "dueAt"
+                },
+                {
+                  "now": true
+                }
+              ]
+            }
+          },
+          "submissionCount": {
+            "type": "integer",
+            "materialise": true,
+            "description": "Total number of Submission objects linked to this Assignment.",
+            "expression": {
+              "countRelated": {
+                "schema": "Submission",
+                "joinOn": "assignmentId"
+              }
+            }
+          },
+          "gradedCount": {
+            "type": "integer",
+            "materialise": true,
+            "description": "Number of Submissions with a non-null proposedGrade.",
+            "expression": {
+              "countRelated": {
+                "schema": "Submission",
+                "joinOn": "assignmentId",
+                "where": {
+                  "notNull": "proposedGrade"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Submission": {
+        "slug": "submission",
+        "icon": "FileUploadOutline",
+        "version": "0.1.0",
+        "title": "Submission",
+        "description": "A learner's (or group's) hand-in for an Assignment. Carries file attachment references (bytes live in OpenRegister file attachments), rubric scores from the teacher's marking, and the proposed grade before it becomes a GradeEntry via the grading spec.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "assignmentId",
+          "learnerIds",
+          "tenant_id"
+        ],
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the Assignment this submission is for."
+          },
+          "learnerIds": {
+            "type": "array",
+            "description": "Nextcloud user IDs of the learner(s) who submitted. One entry for solo submissions; multiple for group submissions.",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "description": "OpenRegister file attachment references (nc:files paths or OR attachment IDs). The app does NOT store file bytes.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Timestamp when the learner dispatched the `submit` transition. Null while in draft."
+          },
+          "feedbackText": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Free-text teacher feedback returned to the learner when the Submission is returned."
+          },
+          "gradeEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the GradeEntry created/updated by the grading spec when the teacher marks this submission. Set by the grading spec; read-only from this spec's perspective."
+          },
+          "rubricScores": {
+            "type": "array",
+            "description": "Teacher's per-criterion marking against the Rubric. Each entry records which level was achieved and the points awarded.",
+            "items": {
+              "type": "object",
+              "required": [
+                "criterionId",
+                "levelId",
+                "points"
+              ],
+              "properties": {
+                "criterionId": {
+                  "type": "string",
+                  "description": "Matches Rubric.criteria[].criterionId."
+                },
+                "levelId": {
+                  "type": "string",
+                  "description": "Matches Rubric.criteria[].levels[].levelId."
+                },
+                "points": {
+                  "type": "number",
+                  "description": "Points awarded for this criterion (from the selected level)."
+                }
+              }
+            }
+          },
+          "proposedGrade": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Sum of rubricScores[].points as entered by the teacher. Null before marking. Reduced by Assignment.latePenaltyPercent when isLate is true to yield effectiveGrade."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Submission lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "submitted",
+              "late",
+              "returned"
+            ],
+            "default": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\SubmissionWindowGuard"
+              ]
+            },
+            "return": {
+              "from": [
+                "submitted",
+                "late"
+              ],
+              "to": "returned"
+            },
+            "reopen": {
+              "from": "returned",
+              "to": "draft"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "assignment": {
+            "register": "scholiq",
+            "schema": "Assignment",
+            "cardinality": "many-to-one",
+            "joinOn": "assignmentId"
+          }
+        },
+        "x-openregister-calculations": {
+          "isLate": {
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when the submission lifecycle is `late`.",
+            "expression": {
+              "eq": [
+                {
+                  "prop": "lifecycle"
+                },
+                "late"
+              ]
+            }
+          },
+          "effectiveGrade": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "materialise": true,
+            "description": "proposedGrade reduced by Assignment.latePenaltyPercent when isLate is true. Null before marking.",
+            "expression": {
+              "if": {
+                "condition": {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "late"
+                  ]
+                },
+                "then": {
+                  "multiply": [
+                    {
+                      "prop": "proposedGrade"
+                    },
+                    {
+                      "subtract": [
+                        1,
+                        {
+                          "divide": [
+                            {
+                              "relatedProp": "assignment.latePenaltyPercent"
+                            },
+                            100
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "else": {
+                  "prop": "proposedGrade"
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
