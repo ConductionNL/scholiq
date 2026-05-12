@@ -16,13 +16,13 @@ See `WEDGE-PLAN.md` for the full rationale. Capability specs live in `openspec/s
 | certification | done | 1 | `changes/certification` (archived) |
 | compliance-audit | done | 1 | `changes/compliance-audit` (archived) |
 | dashboard | done | 1 | `changes/dashboard` (archived) |
-| school-structure | planned | 2 | — (run `/opsx:ff school-structure`) |
-| assignments | planned | 2 | — |
-| assessment | planned | 2 | — (replaces assessment-engine + proctoring) |
-| grading | planned | 2 | — (replaces grading-pta) |
-| learning-plan | planned | 2 | — (replaces opp-cycle) |
-| attendance | planned | 2 | — (replaces absence-leerplicht) |
-| data-exchange | planned | 2 | — (thin slice of bron-rod-exchange + oso-transfer) |
+| school-structure | done | 2 | `changes/archive/school-structure` (PR #45) |
+| assignments | done | 2 | `changes/archive/assignments` (PR #47) |
+| assessment | done | 2 | `changes/archive/assessment` (PR #48) — replaces assessment-engine + proctoring |
+| grading | done | 2 | `changes/archive/grading` (PR #50) — replaces grading-pta |
+| learning-plan | done | 2 | `changes/archive/learning-plan` (PR #51) — replaces opp-cycle |
+| attendance | done | 2 | `changes/archive/attendance` (PR #52) — replaces absence-leerplicht |
+| data-exchange | done | 2 | `changes/archive/data-exchange` (PR #53) — thin slice of bron-rod-exchange + oso-transfer; delegates wire protocols to OpenConnector (openconnector#753) |
 
 ## Phases
 
@@ -30,9 +30,9 @@ See `WEDGE-PLAN.md` for the full rationale. Capability specs live in `openspec/s
 
 The smallest credible Scholiq a buyer would pay for: a Dutch compliance officer installs Scholiq + OpenRegister, enrols employees in a mandatory-training course, captures attestations, sees coverage % per regulation, and exports an audit-grade evidence pack — no code. 6 capability specs, all built (PRs #28, #30–#34, #37, #40, #41, #42).
 
-### Phase 2 — The generic educational-institution core — **planned**
+### Phase 2 — The generic educational-institution core — **built (2026-05-12)**
 
-Model how a school / university / training firm actually operates — programmes governed by curriculum plans, cohorts meeting in sessions with materials and assignments, hand-ins and structured tests that get graded and roll up to a final grade, individual learning plans, attendance with threshold reporting, and a thin data-exchange layer that delegates the NL-gov wire protocols to OpenConnector. 7 jurisdiction-neutral specs (Dutch requirements as profiles). Build order: `school-structure` → `assignments` → `assessment` → `grading` → `learning-plan` → `attendance` → `data-exchange`.
+Model how a school / university / training firm actually operates — programmes governed by curriculum plans, cohorts meeting in sessions with materials and assignments, hand-ins and structured tests that get graded and roll up to a final grade, individual learning plans, attendance with threshold reporting, and a thin data-exchange layer that delegates the NL-gov wire protocols to OpenConnector. 7 jurisdiction-neutral specs (Dutch requirements — PTA, OPP, leerplicht-16-uur, BRON/OSO — as profiles), all merged: `school-structure` (#45) → `assignments` (#47) → `assessment` (#48) → `grading` (#50) → `learning-plan` (#51) → `attendance` (#52) → `data-exchange` (#53). Schema count 9 → 35; 89 manifest pages. Built on the `integration/scholiq-deps-all` OR branch (openregister#1470) — pending that landing in OR `development`, scholiq's CI PHPUnit/Newman jobs run against the released OR and are red there. NL-gov wire protocols + federated auth are OpenConnector adapters (openconnector#753), not scholiq code.
 
 ### Phase 3 — Polish & advanced
 

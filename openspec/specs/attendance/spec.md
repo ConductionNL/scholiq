@@ -1,7 +1,7 @@
 ---
 slug: attendance
 title: Attendance & Threshold Reporting
-status: planned
+status: implemented
 feature_tier: must
 depends_on_adrs: [ADR-008, ADR-022, ADR-024, ADR-031]
 created: 2026-05-12

@@ -1,7 +1,7 @@
 ---
 slug: course-management
 title: Course Management
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-002, adr-011]   # TODO until ADRs land
 created: 2026-05-11

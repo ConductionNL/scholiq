@@ -1,7 +1,7 @@
 ---
 slug: compliance-audit
 title: Compliance Training & Audit
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-005]   # TODO until ADRs land
 created: 2026-05-11
