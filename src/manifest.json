@@ -37,35 +37,35 @@
     {
       "id": "Curriculum",
       "label": "Curriculum",
-      "icon": "icon-category-education",
+      "icon": "icon-category-organization",
       "route": "Programmes",
       "order": 45
     },
     {
       "id": "Grades",
       "label": "Grades",
-      "icon": "icon-category-education",
+      "icon": "icon-quota",
       "route": "GradeEntries",
       "order": 46
     },
     {
       "id": "Assignments",
       "label": "Assignments",
-      "icon": "icon-clipboardText",
+      "icon": "icon-file-text",
       "route": "Assignments",
       "order": 47
     },
     {
       "id": "Assessments",
       "label": "Assessments",
-      "icon": "icon-clipboardCheck",
+      "icon": "icon-clippy",
       "route": "Assessments",
       "order": 48
     },
     {
       "id": "Compliance",
       "label": "Compliance",
-      "icon": "icon-menu-sidebar",
+      "icon": "icon-category-security",
       "route": "Compliance",
       "order": 50,
       "visibleIf": {
@@ -80,7 +80,7 @@
     {
       "id": "LearnerHomeMenu",
       "label": "My learning",
-      "icon": "icon-category-social",
+      "icon": "icon-home",
       "route": "LearnerHome",
       "order": 15,
       "visibleIf": {
@@ -140,7 +140,7 @@
     {
       "id": "Attendance",
       "label": "Attendance",
-      "icon": "icon-category-monitoring",
+      "icon": "icon-calendar",
       "route": "AttendanceRecords",
       "order": 55
     },
