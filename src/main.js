@@ -33,6 +33,10 @@ import SubmitExcuseModal from './views/SubmitExcuseModal.vue'
 import SubmitWorkModal from './views/SubmitWorkModal.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import FeaturesRoadmapView from './views/FeaturesRoadmap.vue'
+import ScholiqDashboard from './views/ScholiqDashboard.vue'
+import ScholiqCompliance from './views/ScholiqCompliance.vue'
+import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
+import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -111,7 +115,7 @@ const pageTypesProp = { ...defaultPageTypes }
 
 // customComponents registry: maps names declared in manifest pages/tabs
 // to concrete Vue components.
-const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView }
+const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView, ScholiqDashboard, ScholiqCompliance, ScholiqLearnerHome, ScholiqAdminHealth }
 const customComponentsProp = { ...customComponents }
 
 // Boot order: initializeStores() must resolve before mount so that any
