@@ -150,6 +150,29 @@
       "icon": "icon-category-integration",
       "route": "DataExchangeJobs",
       "order": 60
+    },
+    {
+      "id": "LearnerProfilesMenu",
+      "label": "Learners",
+      "icon": "icon-contacts",
+      "route": "LearnerProfiles",
+      "order": 35
+    },
+    {
+      "id": "XapiStatementsMenu",
+      "label": "xAPI statements",
+      "icon": "icon-history",
+      "route": "XapiStatements",
+      "section": "settings",
+      "order": 93
+    },
+    {
+      "id": "AiFeaturesMenu",
+      "label": "AI features",
+      "icon": "icon-category-tools",
+      "route": "AiFeatures",
+      "section": "settings",
+      "order": 94
     }
   ],
   "pages": [
@@ -1027,6 +1050,68 @@
       "type": "custom",
       "title": "OSO dossier review",
       "component": "OsoDossierReviewView"
+    },
+    {
+      "id": "LearnerProfiles",
+      "route": "/learner-profiles",
+      "type": "index",
+      "title": "Learners",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearnerProfile"
+      }
+    },
+    {
+      "id": "LearnerProfileDetail",
+      "route": "/learner-profiles/:id",
+      "type": "detail",
+      "title": "Learner",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearnerProfile"
+      }
+    },
+    {
+      "id": "XapiStatements",
+      "route": "/xapi-statements",
+      "type": "index",
+      "title": "xAPI statements",
+      "config": {
+        "register": "scholiq",
+        "schema": "XapiStatement",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "XapiStatementDetail",
+      "route": "/xapi-statements/:id",
+      "type": "detail",
+      "title": "xAPI statement",
+      "config": {
+        "register": "scholiq",
+        "schema": "XapiStatement",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "AiFeatures",
+      "route": "/ai-features",
+      "type": "index",
+      "title": "AI features",
+      "config": {
+        "register": "scholiq",
+        "schema": "AiFeature"
+      }
+    },
+    {
+      "id": "AiFeatureDetail",
+      "route": "/ai-features/:id",
+      "type": "detail",
+      "title": "AI feature",
+      "config": {
+        "register": "scholiq",
+        "schema": "AiFeature"
+      }
     }
   ]
 }
