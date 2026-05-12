@@ -92,6 +92,13 @@
       "route": "FeaturesRoadmap",
       "section": "settings",
       "order": 100
+    },
+    {
+      "id": "LearningPlans",
+      "label": "scholiq.nav.learning_plans",
+      "icon": "icon-category-social",
+      "route": "LearningPlans",
+      "order": 49
     }
   ],
   "pages": [
@@ -721,6 +728,104 @@
       "type": "custom",
       "title": "Features & roadmap",
       "component": "FeaturesRoadmap"
+    },
+    {
+      "id": "LearningPlanTemplates",
+      "route": "/learning-plans/templates",
+      "type": "index",
+      "title": "scholiq.page.learning_plan_templates.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlanTemplate"
+      }
+    },
+    {
+      "id": "LearningPlanTemplateDetail",
+      "route": "/learning-plans/templates/:id",
+      "type": "detail",
+      "title": "scholiq.page.learning_plan_template.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlanTemplate"
+      }
+    },
+    {
+      "id": "LearningPlans",
+      "route": "/learning-plans",
+      "type": "index",
+      "title": "scholiq.page.learning_plans.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlan"
+      }
+    },
+    {
+      "id": "LearningPlanDetail",
+      "route": "/learning-plans/:id",
+      "type": "detail",
+      "title": "scholiq.page.learning_plan.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlan"
+      }
+    },
+    {
+      "id": "LearningPlanEvaluations",
+      "route": "/learning-plans/:planId/evaluations",
+      "type": "index",
+      "title": "scholiq.page.learning_plan_evaluations.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlanEvaluation",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "LearningPlanEvaluationDetail",
+      "route": "/learning-plans/:planId/evaluations/:id",
+      "type": "detail",
+      "title": "scholiq.page.learning_plan_evaluation.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "LearningPlanEvaluation",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "Signatures",
+      "route": "/learning-plans/:planId/signatures",
+      "type": "index",
+      "title": "scholiq.page.signatures.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Signature",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "SignatureDetail",
+      "route": "/learning-plans/:planId/signatures/:id",
+      "type": "detail",
+      "title": "scholiq.page.signature.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Signature",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "SignPlanModal",
+      "route": "/learning-plans/:planId/sign",
+      "type": "custom",
+      "title": "scholiq.page.sign_plan.title",
+      "component": "SignPlanModal"
+    },
+    {
+      "id": "LearningPlanEditor",
+      "route": "/learning-plans/:planId/edit",
+      "type": "custom",
+      "title": "scholiq.page.learning_plan_editor.title",
+      "component": "LearningPlanEditor"
     }
   ]
 }

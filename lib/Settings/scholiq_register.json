@@ -4876,6 +4876,663 @@
             "handler": "OCA\\Scholiq\\Listener\\GradeRollupHandler"
           }
         }
+      },
+      "LearningPlanTemplate": {
+        "slug": "learning-plan-template",
+        "icon": "ClipboardListOutline",
+        "version": "0.1.0",
+        "title": "Learning Plan Template",
+        "description": "Pre-structures a LearningPlan for a given kind (opp, handelingsplan, iep, pdp, idp, generic). Defines sections, goal domains, required signer roles, and default review cadence.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "kind",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable template name, e.g. 'OPP VO sector 2026'."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "opp",
+              "handelingsplan",
+              "iep",
+              "pdp",
+              "idp",
+              "generic"
+            ],
+            "description": "Plan profile this template applies to."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional longer description of the template."
+          },
+          "sections": {
+            "type": "array",
+            "description": "Ordered sections that pre-structure the LearningPlan.",
+            "items": {
+              "type": "object",
+              "required": [
+                "sectionId",
+                "label",
+                "order"
+              ],
+              "properties": {
+                "sectionId": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "order": {
+                  "type": "integer"
+                },
+                "helpText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "goalDomains": {
+            "type": "array",
+            "description": "Allowed goal domains, e.g. ['leren-en-ontwikkeling','werkhouding','sociaal-emotioneel','fysiek-medisch'] for OPP.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requiredSignerRoles": {
+            "type": "array",
+            "description": "Roles that must sign a plan version before it can activate, e.g. ['learner','parent','coordinator'].",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultReviewCadenceMonths": {
+            "type": "integer",
+            "default": 3,
+            "description": "How often (in months) a plan based on this template should be reviewed."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Template lifecycle state.",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "activate": {
+              "from": [
+                "draft"
+              ],
+              "to": "active"
+            },
+            "archive": {
+              "from": [
+                "active"
+              ],
+              "to": "archived"
+            },
+            "reactivate": {
+              "from": [
+                "archived"
+              ],
+              "to": "active"
+            }
+          }
+        }
+      },
+      "LearningPlan": {
+        "slug": "learning-plan",
+        "icon": "AccountHeartOutline",
+        "version": "0.1.0",
+        "title": "Learning Plan",
+        "description": "Individual learning plan per learner (OPP, handelingsplan, IEP, PDP, IDP or generic). Versioned — a material revision creates a new version that must be re-signed before it can activate.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learnerId",
+          "kind",
+          "coordinatorId",
+          "tenant_id"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "NC user ID of the learner this plan belongs to."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "opp",
+              "handelingsplan",
+              "iep",
+              "pdp",
+              "idp",
+              "generic"
+            ],
+            "description": "Plan profile / kind."
+          },
+          "templateId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the LearningPlanTemplate that pre-structures this plan. Null for free-form plans."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Cohort the learner belongs to (optional context)."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Course this plan is associated with (optional)."
+          },
+          "coordinatorId": {
+            "type": "string",
+            "description": "NC user ID of the responsible learning-support coordinator."
+          },
+          "goals": {
+            "type": "array",
+            "description": "Goals tracked in this plan.",
+            "items": {
+              "type": "object",
+              "required": [
+                "goalId",
+                "description"
+              ],
+              "properties": {
+                "goalId": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "domain": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "baseline": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "target": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "targetDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "met",
+                    "adjusted",
+                    "dropped"
+                  ],
+                  "default": "open"
+                },
+                "evidenceRefs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          },
+          "supportMeasures": {
+            "type": "array",
+            "description": "Support measures in place to achieve the goals.",
+            "items": {
+              "type": "object",
+              "required": [
+                "measureId",
+                "description"
+              ],
+              "properties": {
+                "measureId": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "responsibleId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "period": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Plan period identifier, e.g. '2025-2026'."
+          },
+          "reviewCadenceMonths": {
+            "type": "integer",
+            "default": 3,
+            "description": "How often (in months) this plan should be reviewed."
+          },
+          "nextReviewAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Date of next scheduled review. Null until set after initial activation."
+          },
+          "version": {
+            "type": "integer",
+            "default": 1,
+            "description": "Version counter. Each material revision that requires re-signing increments this."
+          },
+          "supersedesId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the prior LearningPlan version this version supersedes."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Plan lifecycle state.",
+            "enum": [
+              "draft",
+              "active",
+              "under-evaluation",
+              "closed",
+              "superseded"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "activate": {
+              "from": [
+                "draft"
+              ],
+              "to": "active",
+              "requires": "OCA\\Scholiq\\Lifecycle\\LearningPlanSignatureGuard"
+            },
+            "startEvaluation": {
+              "from": [
+                "active"
+              ],
+              "to": "under-evaluation"
+            },
+            "completeEvaluation": {
+              "from": [
+                "under-evaluation"
+              ],
+              "to": "active"
+            },
+            "close": {
+              "from": [
+                "active",
+                "under-evaluation"
+              ],
+              "to": "closed"
+            },
+            "supersede": {
+              "from": [
+                "active",
+                "under-evaluation"
+              ],
+              "to": "superseded"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "schema": "learner-profile",
+            "localField": "learnerId",
+            "foreignField": "learnerId"
+          },
+          "template": {
+            "schema": "learning-plan-template",
+            "localField": "templateId",
+            "foreignField": "uuid"
+          },
+          "cohort": {
+            "schema": "cohort",
+            "localField": "cohortId",
+            "foreignField": "uuid"
+          },
+          "course": {
+            "schema": "course",
+            "localField": "courseId",
+            "foreignField": "uuid"
+          },
+          "supersedes": {
+            "schema": "learning-plan",
+            "localField": "supersedesId",
+            "foreignField": "uuid"
+          }
+        },
+        "x-openregister-calculations": {
+          "goalsMetCount": {
+            "description": "Count of goals with status=met.",
+            "expression": "goals[?status=='met'] | length(@)"
+          },
+          "goalsTotalCount": {
+            "description": "Total number of goals.",
+            "expression": "length(goals)"
+          },
+          "nextReviewDue": {
+            "description": "True when nextReviewAt is not null and <= today.",
+            "expression": "nextReviewAt != null && nextReviewAt <= today()"
+          },
+          "isFullySigned": {
+            "description": "True when every required signer role (from template) has a Signature on this version with sufficient assurance. Evaluated by LearningPlanSignatureGuard on activate.",
+            "expression": "computed"
+          }
+        },
+        "x-openregister-notifications": {
+          "quarterlyReviewReminder": {
+            "trigger": "calculatedChange",
+            "condition": "nextReviewDue == true",
+            "recipient": "coordinatorId",
+            "idempotencyKey": "${@self.id}-${@self.nextReviewAt}",
+            "description": "Fires when nextReviewDue becomes true (nextReviewAt <= today). Driven by calculatedChange — NOT a TimedJob."
+          },
+          "signatureRequested": {
+            "trigger": "lifecycle.enter.draft",
+            "condition": "version > 0",
+            "recipient": "each-required-signer-from-template",
+            "idempotencyKey": "${@self.id}-v${@self.version}-${role}",
+            "description": "Fires when a new plan version enters draft with required signer roles. One notification per required role per version."
+          }
+        }
+      },
+      "LearningPlanEvaluation": {
+        "slug": "learning-plan-evaluation",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Learning Plan Evaluation",
+        "description": "A dated evaluation record for a LearningPlan review point. Append-only — evaluations are immutable audit evidence once recorded.",
+        "type": "object",
+        "appendOnly": true,
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learningPlanId",
+          "evaluatedAt",
+          "evaluatedBy",
+          "tenant_id"
+        ],
+        "properties": {
+          "learningPlanId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the LearningPlan being evaluated."
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the evaluation / review meeting."
+          },
+          "evaluatedBy": {
+            "type": "string",
+            "description": "NC user ID of the coordinator or teacher who led the evaluation."
+          },
+          "goalOutcomes": {
+            "type": "array",
+            "description": "Outcome for each goal evaluated in this review.",
+            "items": {
+              "type": "object",
+              "required": [
+                "goalId",
+                "outcome"
+              ],
+              "properties": {
+                "goalId": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "met",
+                    "adjusted",
+                    "dropped",
+                    "continued"
+                  ]
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "narrative": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Free-text evaluation narrative / meeting notes."
+          },
+          "attendeeIds": {
+            "type": "array",
+            "description": "NC user IDs of meeting attendees (learner, parents, teachers, etc.).",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextReviewAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Next review date as agreed in this evaluation. Written back to LearningPlan.nextReviewAt by LearningPlanEvaluationHandler."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Evaluation lifecycle state.",
+            "enum": [
+              "draft",
+              "recorded"
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "record": {
+              "from": [
+                "draft"
+              ],
+              "to": "recorded"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learningPlan": {
+            "schema": "learning-plan",
+            "localField": "learningPlanId",
+            "foreignField": "uuid"
+          }
+        }
+      },
+      "Signature": {
+        "slug": "signature",
+        "icon": "PenOutline",
+        "version": "0.1.0",
+        "title": "Signature",
+        "description": "Co-sign record for a specific LearningPlan version. Append-only — signatures are immutable audit evidence. DigiD/eIDAS handshake is out of scope; this schema only records who signed which version when and with what assurance.",
+        "type": "object",
+        "appendOnly": true,
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "subjectKind",
+          "subjectId",
+          "subjectVersion",
+          "signerId",
+          "signerRole",
+          "signedAt",
+          "assuranceLevel",
+          "method",
+          "tenant_id"
+        ],
+        "properties": {
+          "subjectKind": {
+            "type": "string",
+            "enum": [
+              "learning-plan"
+            ],
+            "default": "learning-plan",
+            "description": "Kind of the subject being signed. Currently always learning-plan."
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the LearningPlan being signed."
+          },
+          "subjectVersion": {
+            "type": "integer",
+            "description": "Version of the LearningPlan being signed."
+          },
+          "signerId": {
+            "type": "string",
+            "description": "NC user ID (or external identifier) of the person signing."
+          },
+          "signerRole": {
+            "type": "string",
+            "enum": [
+              "learner",
+              "parent",
+              "coordinator",
+              "teacher",
+              "other"
+            ],
+            "description": "Role of the signer in relation to the plan."
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the signing action."
+          },
+          "assuranceLevel": {
+            "type": "string",
+            "enum": [
+              "none",
+              "basic",
+              "substantial",
+              "high"
+            ],
+            "description": "eIDAS assurance level of the signing method used."
+          },
+          "method": {
+            "type": "string",
+            "description": "Signing method identifier, e.g. 'digid', 'click-to-confirm', 'wet-handtekening-scan'."
+          },
+          "evidenceRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional reference to signing evidence (e.g. redirect log, scan URL)."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant identifier."
+          }
+        },
+        "x-openregister-relations": {
+          "subject": {
+            "schema": "learning-plan",
+            "localField": "subjectId",
+            "foreignField": "uuid"
+          }
+        }
       }
     }
   }
