@@ -77,6 +77,14 @@
       "route": "Settings",
       "section": "settings",
       "order": 99
+    },
+    {
+      "id": "FeaturesRoadmapMenu",
+      "label": "Features & roadmap",
+      "icon": "icon-toggle",
+      "route": "FeaturesRoadmap",
+      "section": "settings",
+      "order": 100
     }
   ],
   "pages": [
@@ -623,6 +631,13 @@
       "type": "custom",
       "title": "scholiq.page.import_qti.title",
       "component": "ImportQtiModal"
+    },
+    {
+      "id": "FeaturesRoadmap",
+      "route": "/features-roadmap",
+      "type": "custom",
+      "title": "Features & roadmap",
+      "component": "FeaturesRoadmap"
     }
   ]
 }
