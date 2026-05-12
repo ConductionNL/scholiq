@@ -43,21 +43,21 @@
     },
     {
       "id": "Grades",
-      "label": "scholiq.nav.grades",
+      "label": "Grades",
       "icon": "icon-category-education",
       "route": "GradeEntries",
       "order": 46
     },
     {
       "id": "Assignments",
-      "label": "scholiq.nav.assignments",
+      "label": "Assignments",
       "icon": "icon-clipboardText",
       "route": "Assignments",
       "order": 47
     },
     {
       "id": "Assessments",
-      "label": "scholiq.nav.assessments",
+      "label": "Assessments",
       "icon": "icon-clipboardCheck",
       "route": "Assessments",
       "order": 48
@@ -95,21 +95,21 @@
     },
     {
       "id": "LearningPlans",
-      "label": "scholiq.nav.learning_plans",
+      "label": "Learning plans",
       "icon": "icon-category-social",
       "route": "LearningPlans",
       "order": 49
     },
     {
       "id": "Attendance",
-      "label": "scholiq.nav.attendance",
+      "label": "Attendance",
       "icon": "icon-category-monitoring",
       "route": "AttendanceRecords",
       "order": 55
     },
     {
       "id": "DataExchange",
-      "label": "scholiq.nav.data_exchange",
+      "label": "Data exchange",
       "icon": "icon-category-integration",
       "route": "DataExchangeJobs",
       "order": 60
@@ -120,7 +120,7 @@
       "id": "Dashboard",
       "route": "/",
       "type": "dashboard",
-      "title": "scholiq.page.dashboard.title",
+      "title": "Dashboard",
       "config": {
         "widgets": [],
         "layout": []
@@ -165,12 +165,12 @@
         "widgets": [
           {
             "id": "coverage-grid",
-            "title": "scholiq.widget.coverage_grid",
+            "title": "Coverage grid",
             "type": "custom"
           },
           {
             "id": "attestation-count",
-            "title": "scholiq.widget.attestation_count",
+            "title": "Attestation count",
             "type": "custom"
           }
         ],
@@ -178,7 +178,7 @@
         "actions": [
           {
             "id": "viewInMydash",
-            "label": "scholiq.action.viewInMydash"
+            "label": "View in MyDash"
           }
         ]
       }
@@ -250,7 +250,7 @@
       "id": "Regulations",
       "route": "/compliance/regulations",
       "type": "index",
-      "title": "scholiq.page.regulations.title",
+      "title": "Regulations",
       "config": {
         "register": "scholiq",
         "schema": "Regulation"
@@ -260,7 +260,7 @@
       "id": "RegulationDetail",
       "route": "/compliance/regulations/:slug",
       "type": "detail",
-      "title": "scholiq.page.regulation.detail.title",
+      "title": "Regulation",
       "config": {
         "register": "scholiq",
         "schema": "Regulation"
@@ -270,7 +270,7 @@
       "id": "Attestations",
       "route": "/compliance/attestations",
       "type": "index",
-      "title": "scholiq.page.attestations.title",
+      "title": "Attestations",
       "config": {
         "register": "scholiq",
         "schema": "Attestation",
@@ -281,7 +281,7 @@
       "id": "AttestationDetail",
       "route": "/compliance/attestations/:id",
       "type": "detail",
-      "title": "scholiq.page.attestation.detail.title",
+      "title": "Attestation",
       "config": {
         "register": "scholiq",
         "schema": "Attestation",
@@ -292,7 +292,7 @@
       "id": "AuditPackExport",
       "route": "/compliance/export",
       "type": "custom",
-      "title": "scholiq.page.audit_pack_export.title",
+      "title": "Export audit pack",
       "config": {
         "component": "AuditPackExportModal"
       }
@@ -318,12 +318,12 @@
       "id": "LearnerHome",
       "route": "/learner",
       "type": "dashboard",
-      "title": "scholiq.page.learner.title",
+      "title": "My learning",
       "config": {
         "widgets": [
           {
             "id": "my-mandatory-training",
-            "title": "scholiq.widget.my_mandatory_training",
+            "title": "My mandatory training",
             "type": "custom"
           }
         ],
@@ -334,12 +334,12 @@
       "id": "AdminHealth",
       "route": "/admin/health",
       "type": "dashboard",
-      "title": "scholiq.page.admin.health.title",
+      "title": "App health",
       "config": {
         "widgets": [
           {
             "id": "health-stats",
-            "title": "scholiq.widget.health_stats",
+            "title": "Health stats",
             "type": "custom"
           }
         ],
@@ -350,7 +350,7 @@
       "id": "Programmes",
       "route": "/curriculum/programmes",
       "type": "index",
-      "title": "scholiq.page.programmes.title",
+      "title": "Programmes",
       "config": {
         "register": "scholiq",
         "schema": "Programme"
@@ -360,7 +360,7 @@
       "id": "ProgrammeDetail",
       "route": "/curriculum/programmes/:id",
       "type": "detail",
-      "title": "scholiq.page.programme.detail.title",
+      "title": "Programme",
       "config": {
         "register": "scholiq",
         "schema": "Programme"
@@ -370,7 +370,7 @@
       "id": "CurriculumPlans",
       "route": "/curriculum/plans",
       "type": "index",
-      "title": "scholiq.page.curriculum_plans.title",
+      "title": "Curriculum plans",
       "config": {
         "register": "scholiq",
         "schema": "CurriculumPlan"
@@ -380,7 +380,7 @@
       "id": "CurriculumPlanDetail",
       "route": "/curriculum/plans/:id",
       "type": "detail",
-      "title": "scholiq.page.curriculum_plan.detail.title",
+      "title": "Curriculum plan",
       "config": {
         "register": "scholiq",
         "schema": "CurriculumPlan"
@@ -390,7 +390,7 @@
       "id": "Cohorts",
       "route": "/cohorts",
       "type": "index",
-      "title": "scholiq.page.cohorts.title",
+      "title": "Cohorts",
       "config": {
         "register": "scholiq",
         "schema": "Cohort"
@@ -400,7 +400,7 @@
       "id": "CohortDetail",
       "route": "/cohorts/:id",
       "type": "detail",
-      "title": "scholiq.page.cohort.detail.title",
+      "title": "Cohort",
       "config": {
         "register": "scholiq",
         "schema": "Cohort"
@@ -410,14 +410,14 @@
       "id": "CohortTimetable",
       "route": "/cohorts/:id/timetable",
       "type": "custom",
-      "title": "scholiq.page.cohort.timetable.title",
+      "title": "Cohort timetable",
       "component": "CohortTimetable"
     },
     {
       "id": "Sessions",
       "route": "/sessions",
       "type": "index",
-      "title": "scholiq.page.sessions.title",
+      "title": "Sessions",
       "config": {
         "register": "scholiq",
         "schema": "Session"
@@ -427,7 +427,7 @@
       "id": "SessionDetail",
       "route": "/sessions/:id",
       "type": "detail",
-      "title": "scholiq.page.session.detail.title",
+      "title": "Session",
       "config": {
         "register": "scholiq",
         "schema": "Session"
@@ -437,7 +437,7 @@
       "id": "Materials",
       "route": "/materials",
       "type": "index",
-      "title": "scholiq.page.materials.title",
+      "title": "Materials",
       "config": {
         "register": "scholiq",
         "schema": "Material"
@@ -447,7 +447,7 @@
       "id": "MaterialDetail",
       "route": "/materials/:id",
       "type": "detail",
-      "title": "scholiq.page.material.detail.title",
+      "title": "Material",
       "config": {
         "register": "scholiq",
         "schema": "Material"
@@ -457,7 +457,7 @@
       "id": "Rubrics",
       "route": "/assignments/rubrics",
       "type": "index",
-      "title": "scholiq.page.rubrics.title",
+      "title": "Rubrics",
       "config": {
         "register": "scholiq",
         "schema": "Rubric"
@@ -467,7 +467,7 @@
       "id": "RubricDetail",
       "route": "/assignments/rubrics/:id",
       "type": "detail",
-      "title": "scholiq.page.rubric.detail.title",
+      "title": "Rubric",
       "config": {
         "register": "scholiq",
         "schema": "Rubric"
@@ -477,7 +477,7 @@
       "id": "Assignments",
       "route": "/assignments",
       "type": "index",
-      "title": "scholiq.page.assignments.title",
+      "title": "Assignments",
       "config": {
         "register": "scholiq",
         "schema": "Assignment"
@@ -487,7 +487,7 @@
       "id": "AssignmentDetail",
       "route": "/assignments/:id",
       "type": "detail",
-      "title": "scholiq.page.assignment.detail.title",
+      "title": "Assignment",
       "config": {
         "register": "scholiq",
         "schema": "Assignment"
@@ -497,7 +497,7 @@
       "id": "Submissions",
       "route": "/assignments/:assignmentId/submissions",
       "type": "index",
-      "title": "scholiq.page.submissions.title",
+      "title": "Submissions",
       "config": {
         "register": "scholiq",
         "schema": "Submission"
@@ -507,7 +507,7 @@
       "id": "SubmissionDetail",
       "route": "/assignments/:assignmentId/submissions/:id",
       "type": "detail",
-      "title": "scholiq.page.submission.detail.title",
+      "title": "Submission",
       "config": {
         "register": "scholiq",
         "schema": "Submission",
@@ -518,21 +518,21 @@
       "id": "SubmitWorkModal",
       "route": "/assignments/:assignmentId/submit",
       "type": "custom",
-      "title": "scholiq.page.submit_work.title",
+      "title": "Submit work",
       "component": "SubmitWorkModal"
     },
     {
       "id": "MarkSubmissionView",
       "route": "/assignments/:assignmentId/submissions/:id/mark",
       "type": "custom",
-      "title": "scholiq.page.mark_submission.title",
+      "title": "Mark submission",
       "component": "MarkSubmissionView"
     },
     {
       "id": "ItemBanks",
       "route": "/assessments/item-banks",
       "type": "index",
-      "title": "scholiq.page.item_banks.title",
+      "title": "Item banks",
       "config": {
         "register": "scholiq",
         "schema": "ItemBank"
@@ -542,7 +542,7 @@
       "id": "ItemBankDetail",
       "route": "/assessments/item-banks/:id",
       "type": "detail",
-      "title": "scholiq.page.item_bank.detail.title",
+      "title": "Item bank",
       "config": {
         "register": "scholiq",
         "schema": "ItemBank"
@@ -552,7 +552,7 @@
       "id": "Items",
       "route": "/assessments/items",
       "type": "index",
-      "title": "scholiq.page.items.title",
+      "title": "Items",
       "config": {
         "register": "scholiq",
         "schema": "Item"
@@ -562,7 +562,7 @@
       "id": "ItemDetail",
       "route": "/assessments/items/:id",
       "type": "detail",
-      "title": "scholiq.page.item.detail.title",
+      "title": "Item",
       "config": {
         "register": "scholiq",
         "schema": "Item"
@@ -572,7 +572,7 @@
       "id": "Assessments",
       "route": "/assessments",
       "type": "index",
-      "title": "scholiq.page.assessments.title",
+      "title": "Assessments",
       "config": {
         "register": "scholiq",
         "schema": "Assessment"
@@ -582,7 +582,7 @@
       "id": "AssessmentDetail",
       "route": "/assessments/:id",
       "type": "detail",
-      "title": "scholiq.page.assessment.detail.title",
+      "title": "Assessment",
       "config": {
         "register": "scholiq",
         "schema": "Assessment"
@@ -592,7 +592,7 @@
       "id": "AssessmentResults",
       "route": "/assessments/:assessmentId/results",
       "type": "index",
-      "title": "scholiq.page.assessment_results.title",
+      "title": "Assessment results",
       "config": {
         "register": "scholiq",
         "schema": "AssessmentResult",
@@ -603,7 +603,7 @@
       "id": "AssessmentResultDetail",
       "route": "/assessments/:assessmentId/results/:id",
       "type": "detail",
-      "title": "scholiq.page.assessment_result.detail.title",
+      "title": "Assessment result",
       "config": {
         "register": "scholiq",
         "schema": "AssessmentResult",
@@ -614,7 +614,7 @@
       "id": "ProctoringSessions",
       "route": "/assessments/proctoring-sessions",
       "type": "index",
-      "title": "scholiq.page.proctoring_sessions.title",
+      "title": "Proctoring sessions",
       "config": {
         "register": "scholiq",
         "schema": "ProctoringSession",
@@ -625,7 +625,7 @@
       "id": "ProctoringSessionDetail",
       "route": "/assessments/proctoring-sessions/:id",
       "type": "detail",
-      "title": "scholiq.page.proctoring_session.detail.title",
+      "title": "Proctoring session",
       "config": {
         "register": "scholiq",
         "schema": "ProctoringSession",
@@ -636,35 +636,35 @@
       "id": "TakeAssessmentView",
       "route": "/assessments/:assessmentId/take",
       "type": "custom",
-      "title": "scholiq.page.take_assessment.title",
+      "title": "Take assessment",
       "component": "TakeAssessmentView"
     },
     {
       "id": "ItemAuthorView",
       "route": "/assessments/items/:id/author",
       "type": "custom",
-      "title": "scholiq.page.item_author.title",
+      "title": "Item author",
       "component": "ItemAuthorView"
     },
     {
       "id": "ProctoringReviewQueue",
       "route": "/assessments/proctoring/review",
       "type": "custom",
-      "title": "scholiq.page.proctoring_review_queue.title",
+      "title": "Proctoring review queue",
       "component": "ProctoringReviewQueue"
     },
     {
       "id": "ImportQtiModal",
       "route": "/assessments/item-banks/:itemBankId/import",
       "type": "custom",
-      "title": "scholiq.page.import_qti.title",
+      "title": "Import QTI package",
       "component": "ImportQtiModal"
     },
     {
       "id": "GradeScales",
       "route": "/grades/scales",
       "type": "index",
-      "title": "scholiq.page.grade_scales.title",
+      "title": "Grade scales",
       "config": {
         "register": "scholiq",
         "schema": "GradeScale"
@@ -674,7 +674,7 @@
       "id": "GradeScaleDetail",
       "route": "/grades/scales/:id",
       "type": "detail",
-      "title": "scholiq.page.grade_scale.detail.title",
+      "title": "Grade scale",
       "config": {
         "register": "scholiq",
         "schema": "GradeScale"
@@ -684,7 +684,7 @@
       "id": "GradeEntries",
       "route": "/grades/entries",
       "type": "index",
-      "title": "scholiq.page.grade_entries.title",
+      "title": "Grade entries",
       "config": {
         "register": "scholiq",
         "schema": "GradeEntry"
@@ -694,7 +694,7 @@
       "id": "GradeEntryDetail",
       "route": "/grades/entries/:id",
       "type": "detail",
-      "title": "scholiq.page.grade_entry.detail.title",
+      "title": "Grade entry",
       "config": {
         "register": "scholiq",
         "schema": "GradeEntry"
@@ -704,7 +704,7 @@
       "id": "FinalGrades",
       "route": "/grades/final",
       "type": "index",
-      "title": "scholiq.page.final_grades.title",
+      "title": "Final grades",
       "config": {
         "register": "scholiq",
         "schema": "FinalGrade",
@@ -715,7 +715,7 @@
       "id": "FinalGradeDetail",
       "route": "/grades/final/:id",
       "type": "detail",
-      "title": "scholiq.page.final_grade.detail.title",
+      "title": "Final grade",
       "config": {
         "register": "scholiq",
         "schema": "FinalGrade",
@@ -726,14 +726,14 @@
       "id": "GradebookView",
       "route": "/grades/cohort/:cohortId/plan/:planId",
       "type": "custom",
-      "title": "scholiq.page.gradebook.title",
+      "title": "Gradebook",
       "component": "GradebookView"
     },
     {
       "id": "GradeImpactDetail",
       "route": "/grades/entries/:id/impact",
       "type": "custom",
-      "title": "scholiq.page.grade_impact.title",
+      "title": "Grade impact",
       "component": "GradeImpactDetail"
     },
     {
@@ -747,7 +747,7 @@
       "id": "LearningPlanTemplates",
       "route": "/learning-plans/templates",
       "type": "index",
-      "title": "scholiq.page.learning_plan_templates.title",
+      "title": "Learning plan templates",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlanTemplate"
@@ -757,7 +757,7 @@
       "id": "LearningPlanTemplateDetail",
       "route": "/learning-plans/templates/:id",
       "type": "detail",
-      "title": "scholiq.page.learning_plan_template.detail.title",
+      "title": "Learning plan template",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlanTemplate"
@@ -767,7 +767,7 @@
       "id": "LearningPlans",
       "route": "/learning-plans",
       "type": "index",
-      "title": "scholiq.page.learning_plans.title",
+      "title": "Learning plans",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlan"
@@ -777,7 +777,7 @@
       "id": "LearningPlanDetail",
       "route": "/learning-plans/:id",
       "type": "detail",
-      "title": "scholiq.page.learning_plan.detail.title",
+      "title": "Learning plan",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlan"
@@ -787,7 +787,7 @@
       "id": "LearningPlanEvaluations",
       "route": "/learning-plans/:planId/evaluations",
       "type": "index",
-      "title": "scholiq.page.learning_plan_evaluations.title",
+      "title": "Learning plan evaluations",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlanEvaluation",
@@ -798,7 +798,7 @@
       "id": "LearningPlanEvaluationDetail",
       "route": "/learning-plans/:planId/evaluations/:id",
       "type": "detail",
-      "title": "scholiq.page.learning_plan_evaluation.detail.title",
+      "title": "Learning plan evaluation",
       "config": {
         "register": "scholiq",
         "schema": "LearningPlanEvaluation",
@@ -809,7 +809,7 @@
       "id": "Signatures",
       "route": "/learning-plans/:planId/signatures",
       "type": "index",
-      "title": "scholiq.page.signatures.title",
+      "title": "Signatures",
       "config": {
         "register": "scholiq",
         "schema": "Signature",
@@ -820,7 +820,7 @@
       "id": "SignatureDetail",
       "route": "/learning-plans/:planId/signatures/:id",
       "type": "detail",
-      "title": "scholiq.page.signature.detail.title",
+      "title": "Signature",
       "config": {
         "register": "scholiq",
         "schema": "Signature",
@@ -831,21 +831,21 @@
       "id": "SignPlanModal",
       "route": "/learning-plans/:planId/sign",
       "type": "custom",
-      "title": "scholiq.page.sign_plan.title",
+      "title": "Sign learning plan",
       "component": "SignPlanModal"
     },
     {
       "id": "LearningPlanEditor",
       "route": "/learning-plans/:planId/edit",
       "type": "custom",
-      "title": "scholiq.page.learning_plan_editor.title",
+      "title": "Learning plan editor",
       "component": "LearningPlanEditor"
     },
     {
       "id": "AttendanceRecords",
       "route": "/attendance/records",
       "type": "index",
-      "title": "scholiq.page.attendance_records.title",
+      "title": "Attendance records",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceRecord"
@@ -855,7 +855,7 @@
       "id": "AttendanceRecordDetail",
       "route": "/attendance/records/:id",
       "type": "detail",
-      "title": "scholiq.page.attendance_record.detail.title",
+      "title": "Attendance record",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceRecord"
@@ -865,7 +865,7 @@
       "id": "ExcuseRequests",
       "route": "/attendance/excuses",
       "type": "index",
-      "title": "scholiq.page.excuse_requests.title",
+      "title": "Excuse requests",
       "config": {
         "register": "scholiq",
         "schema": "ExcuseRequest"
@@ -875,7 +875,7 @@
       "id": "ExcuseRequestDetail",
       "route": "/attendance/excuses/:id",
       "type": "detail",
-      "title": "scholiq.page.excuse_request.detail.title",
+      "title": "Excuse request",
       "config": {
         "register": "scholiq",
         "schema": "ExcuseRequest"
@@ -885,7 +885,7 @@
       "id": "AttendanceThresholds",
       "route": "/attendance/thresholds",
       "type": "index",
-      "title": "scholiq.page.attendance_thresholds.title",
+      "title": "Attendance thresholds",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceThreshold"
@@ -895,7 +895,7 @@
       "id": "AttendanceThresholdDetail",
       "route": "/attendance/thresholds/:id",
       "type": "detail",
-      "title": "scholiq.page.attendance_threshold.detail.title",
+      "title": "Attendance threshold",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceThreshold"
@@ -905,7 +905,7 @@
       "id": "AttendanceFlags",
       "route": "/attendance/flags",
       "type": "index",
-      "title": "scholiq.page.attendance_flags.title",
+      "title": "Attendance flags",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceFlag",
@@ -916,7 +916,7 @@
       "id": "AttendanceFlagDetail",
       "route": "/attendance/flags/:id",
       "type": "detail",
-      "title": "scholiq.page.attendance_flag.detail.title",
+      "title": "Attendance flag",
       "config": {
         "register": "scholiq",
         "schema": "AttendanceFlag",
@@ -927,21 +927,21 @@
       "id": "MarkAttendanceView",
       "route": "/sessions/:sessionId/attendance",
       "type": "custom",
-      "title": "scholiq.page.mark_attendance.title",
+      "title": "Mark attendance",
       "component": "MarkAttendanceView"
     },
     {
       "id": "SubmitExcuseModal",
       "route": "/attendance/excuses/submit",
       "type": "custom",
-      "title": "scholiq.page.submit_excuse.title",
+      "title": "Submit excuse",
       "component": "SubmitExcuseModal"
     },
     {
       "id": "DataMappingProfiles",
       "route": "/data-exchange/mapping-profiles",
       "type": "index",
-      "title": "scholiq.page.data_mapping_profiles.title",
+      "title": "Data mapping profiles",
       "config": {
         "register": "scholiq",
         "schema": "DataMappingProfile"
@@ -951,7 +951,7 @@
       "id": "DataMappingProfileDetail",
       "route": "/data-exchange/mapping-profiles/:id",
       "type": "detail",
-      "title": "scholiq.page.data_mapping_profile.detail.title",
+      "title": "Data mapping profile",
       "config": {
         "register": "scholiq",
         "schema": "DataMappingProfile"
@@ -961,7 +961,7 @@
       "id": "DataExchangeJobs",
       "route": "/data-exchange/jobs",
       "type": "index",
-      "title": "scholiq.page.data_exchange_jobs.title",
+      "title": "Data exchange jobs",
       "config": {
         "register": "scholiq",
         "schema": "DataExchangeJob"
@@ -971,7 +971,7 @@
       "id": "DataExchangeJobDetail",
       "route": "/data-exchange/jobs/:id",
       "type": "detail",
-      "title": "scholiq.page.data_exchange_job.detail.title",
+      "title": "Data exchange job",
       "config": {
         "register": "scholiq",
         "schema": "DataExchangeJob"
@@ -981,14 +981,14 @@
       "id": "RequestExportModal",
       "route": "/data-exchange/request",
       "type": "custom",
-      "title": "scholiq.page.request_export.title",
+      "title": "Request export",
       "component": "RequestExportModal"
     },
     {
       "id": "OsoDossierReviewView",
       "route": "/data-exchange/jobs/:id/oso-review",
       "type": "custom",
-      "title": "scholiq.page.oso_dossier_review.title",
+      "title": "OSO dossier review",
       "component": "OsoDossierReviewView"
     }
   ]
