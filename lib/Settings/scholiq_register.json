@@ -3403,6 +3403,998 @@
             }
           }
         }
+      },
+      "ItemBank": {
+        "slug": "item-bank",
+        "icon": "DatabaseOutline",
+        "version": "0.1.0",
+        "title": "ItemBank",
+        "description": "A reusable collection of QTI 3.0 assessment items grouped by subject. Item banks are shared across multiple Assessments and cohorts.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of this item bank."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional description of the item bank."
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Subject or topic area (e.g. 'Mathematics'). Null = cross-subject."
+          },
+          "itemIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "default": [],
+            "description": "UUIDs of Items belonging to this bank."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published"
+            },
+            "archive": {
+              "from": [
+                "draft",
+                "published"
+              ],
+              "to": "archived"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "itemCount": {
+            "type": "integer",
+            "description": "Number of items in this bank (length of itemIds array).",
+            "expression": {
+              "count": {
+                "prop": "itemIds"
+              }
+            }
+          }
+        }
+      },
+      "Item": {
+        "slug": "item",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Item",
+        "description": "A QTI 3.0 assessment item. Canonical stored form is QTI 3.0; QTI 2.x and Common Cartridge items are converted on import by QtiImportService.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "title",
+          "interactionType",
+          "qtiBody",
+          "maxScore",
+          "tenant_id"
+        ],
+        "properties": {
+          "itemBankId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the owning ItemBank. Null for standalone items."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title of the item."
+          },
+          "interactionType": {
+            "type": "string",
+            "enum": [
+              "choice",
+              "textEntry",
+              "extendedText",
+              "hotspot",
+              "order",
+              "match",
+              "gapMatch",
+              "inlineChoice"
+            ],
+            "description": "QTI 3.0 interaction type."
+          },
+          "qtiBody": {
+            "type": "string",
+            "description": "QTI 3.0 item body XML/JSON. Canonical stored form."
+          },
+          "correctResponse": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Correct response declaration. Null for extendedText/essay items which require manual scoring."
+          },
+          "maxScore": {
+            "type": "number",
+            "description": "Maximum score achievable for this item."
+          },
+          "subjectTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Subject or topic tags for cross-bank searching."
+          },
+          "difficulty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1,
+            "description": "IRT difficulty parameter in range 0..1. Null = not calibrated."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "retired"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published"
+            },
+            "retire": {
+              "from": [
+                "draft",
+                "published"
+              ],
+              "to": "retired"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "itemBank": {
+            "register": "scholiq",
+            "schema": "ItemBank",
+            "cardinality": "many-to-one",
+            "joinOn": "itemBankId"
+          }
+        },
+        "x-openregister-calculations": {
+          "needsManualScoring": {
+            "type": "boolean",
+            "description": "True when the item cannot be auto-scored (extendedText or null correctResponse).",
+            "expression": {
+              "or": [
+                {
+                  "eq": [
+                    {
+                      "prop": "interactionType"
+                    },
+                    "extendedText"
+                  ]
+                },
+                {
+                  "eq": [
+                    {
+                      "prop": "correctResponse"
+                    },
+                    null
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Assessment": {
+        "slug": "assessment",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Assessment",
+        "description": "A structured test (toets, tentamen, examen, quiz) composed of items from an ItemBank with a scoring scheme, time limit, attempt policy, availability window, and optional proctoring. AI-assisted proctoring requires an AiFeature registration (ADR-005 DPO gate).",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "title",
+          "tenant_id"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Display title of this assessment."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional description or instructions for the assessment."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated Course. Null if scoped to session or cohort only."
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated Session. Null if scoped to course or cohort only."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated Cohort. Null if scoped to course or session only."
+          },
+          "curriculumPlanComponentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CurriculumPlan.components[].componentId this assessment scores."
+          },
+          "itemRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "itemId",
+                "points"
+              ],
+              "properties": {
+                "itemId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "points": {
+                  "type": "number",
+                  "description": "Per-assessment point override for this item."
+                }
+              }
+            },
+            "default": [],
+            "description": "Items referenced from the ItemBank with per-assessment point overrides."
+          },
+          "scoringScheme": {
+            "type": "string",
+            "enum": [
+              "points",
+              "passMark",
+              "irt"
+            ],
+            "default": "points",
+            "description": "Scoring scheme: points (raw total), passMark (threshold), or IRT."
+          },
+          "passMark": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Minimum score to pass. Required when scoringScheme is passMark."
+          },
+          "timeLimitMinutes": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Time limit in minutes. Null = untimed."
+          },
+          "maxAttempts": {
+            "type": "number",
+            "default": 1,
+            "description": "Maximum number of attempts a learner may make."
+          },
+          "keepScore": {
+            "type": "string",
+            "enum": [
+              "best",
+              "last",
+              "average"
+            ],
+            "default": "best",
+            "description": "Which attempt score to use when maxAttempts > 1."
+          },
+          "availableFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO-8601 datetime from which the assessment is available to learners."
+          },
+          "availableUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO-8601 datetime after which the assessment is no longer available."
+          },
+          "proctoring": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional proctoring configuration. Null = unproctored.",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "description": "Proctoring adapter identifier; resolves to ProvidesProctoring."
+              },
+              "lockdownBrowser": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable lockdown browser integration."
+              },
+              "recordWebcam": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable webcam recording."
+              },
+              "flagReviewMode": {
+                "type": "string",
+                "enum": [
+                  "manual",
+                  "ai-assisted"
+                ],
+                "default": "manual",
+                "description": "Flag review mode. ai-assisted requires an AiFeature with slug assessment-ai-proctor-review in enabled state (ADR-005)."
+              }
+            }
+          },
+          "gradeEntryComponentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "CurriculumPlan componentId for the GradeEntry feed (grading spec, forward-ref)."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "closed",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AssessmentPublishGuard"
+              ]
+            },
+            "close": {
+              "from": "published",
+              "to": "closed"
+            },
+            "archive": {
+              "from": [
+                "published",
+                "closed"
+              ],
+              "to": "archived"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          },
+          "session": {
+            "register": "scholiq",
+            "schema": "Session",
+            "cardinality": "many-to-one",
+            "joinOn": "sessionId"
+          },
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          }
+        },
+        "x-openregister-calculations": {
+          "itemCount": {
+            "type": "integer",
+            "description": "Number of item references in this assessment.",
+            "expression": {
+              "count": {
+                "prop": "itemRefs"
+              }
+            }
+          },
+          "totalPoints": {
+            "type": "number",
+            "description": "Sum of all itemRefs[].points.",
+            "expression": {
+              "sum": {
+                "map": [
+                  {
+                    "prop": "itemRefs"
+                  },
+                  "points"
+                ]
+              }
+            }
+          },
+          "isProctored": {
+            "type": "boolean",
+            "description": "True when proctoring configuration is non-null.",
+            "expression": {
+              "neq": [
+                {
+                  "prop": "proctoring"
+                },
+                null
+              ]
+            }
+          },
+          "isAvailable": {
+            "type": "boolean",
+            "description": "True when now is within the availableFrom/availableUntil window.",
+            "expression": {
+              "and": [
+                {
+                  "or": [
+                    {
+                      "eq": [
+                        {
+                          "prop": "availableFrom"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "lte": [
+                        {
+                          "prop": "availableFrom"
+                        },
+                        "@now"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "or": [
+                    {
+                      "eq": [
+                        {
+                          "prop": "availableUntil"
+                        },
+                        null
+                      ]
+                    },
+                    {
+                      "gte": [
+                        {
+                          "prop": "availableUntil"
+                        },
+                        "@now"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "AssessmentResult": {
+        "slug": "assessment-result",
+        "icon": "CheckboxMarkedOutline",
+        "version": "0.1.0",
+        "title": "AssessmentResult",
+        "description": "A learner's attempt at an Assessment. Append-only — a finished attempt is immutable evidence. Auto-scored items receive autoScore on the submit transition; essay items remain null until a teacher provides manualScore.",
+        "type": "object",
+        "appendOnly": true,
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "assessmentId",
+          "learnerId",
+          "tenant_id"
+        ],
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the Assessment being attempted."
+          },
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner taking the assessment."
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "default": 1,
+            "description": "Attempt sequence number for this learner on this assessment."
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "itemId",
+                "response"
+              ],
+              "properties": {
+                "itemId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "response": {
+                  "type": "object",
+                  "description": "Learner's response data (type depends on interactionType)."
+                },
+                "autoScore": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Score assigned by auto-scoring. Null if not yet scored or needsManualScoring."
+                },
+                "manualScore": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Score assigned by a teacher. Required for extendedText items before grading."
+                }
+              }
+            },
+            "default": [],
+            "description": "Per-item responses with auto and manual scores."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when the attempt was started."
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when the attempt was submitted. Null while in-progress."
+          },
+          "proctoringSessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the associated ProctoringSession. Null for unproctored attempts."
+          },
+          "gradeEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the GradeEntry created for this result (grading spec, forward-ref)."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "in-progress",
+              "submitted",
+              "graded"
+            ],
+            "default": "in-progress",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "in-progress",
+          "transitions": {
+            "submit": {
+              "from": "in-progress",
+              "to": "submitted",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AssessmentScoringHandler"
+              ]
+            },
+            "grade": {
+              "from": "submitted",
+              "to": "graded",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AssessmentGradeGuard"
+              ]
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "assessment": {
+            "register": "scholiq",
+            "schema": "Assessment",
+            "cardinality": "many-to-one",
+            "joinOn": "assessmentId"
+          }
+        },
+        "x-openregister-calculations": {
+          "autoScore": {
+            "type": "number",
+            "description": "Sum of all responses[].autoScore (null scores treated as 0).",
+            "expression": {
+              "sum": {
+                "map": [
+                  {
+                    "prop": "responses"
+                  },
+                  "autoScore"
+                ]
+              }
+            }
+          },
+          "totalScore": {
+            "type": "number",
+            "description": "Sum of autoScore and all manualScores.",
+            "expression": {
+              "add": [
+                {
+                  "sum": {
+                    "map": [
+                      {
+                        "prop": "responses"
+                      },
+                      "autoScore"
+                    ]
+                  }
+                },
+                {
+                  "sum": {
+                    "map": [
+                      {
+                        "prop": "responses"
+                      },
+                      "manualScore"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "passed": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "True when totalScore >= Assessment.passMark and scoringScheme is passMark. Null when not applicable.",
+            "expression": {
+              "if": [
+                {
+                  "eq": [
+                    {
+                      "prop": "lifecycle"
+                    },
+                    "graded"
+                  ]
+                },
+                {
+                  "gte": [
+                    {
+                      "prop": "totalScore"
+                    },
+                    {
+                      "ref": "assessment.passMark"
+                    }
+                  ]
+                },
+                null
+              ]
+            }
+          }
+        }
+      },
+      "ProctoringSession": {
+        "slug": "proctoring-session",
+        "icon": "VideoOutline",
+        "version": "0.1.0",
+        "title": "ProctoringSession",
+        "description": "Created when a proctored Assessment is started. Append-only — a completed session is immutable evidence. Flags raised by the provider are reviewed by an invigilator; a flag NEVER auto-alters the associated AssessmentResult (EU AI Act Art. 14 human oversight).",
+        "type": "object",
+        "appendOnly": true,
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "assessmentResultId",
+          "learnerId",
+          "provider",
+          "tenant_id"
+        ],
+        "properties": {
+          "assessmentResultId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the AssessmentResult this session covers."
+          },
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner being proctored."
+          },
+          "provider": {
+            "type": "string",
+            "description": "Proctoring adapter identifier; resolves to ProvidesProctoring implementation."
+          },
+          "providerSessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Provider-side session identifier. Null until the provider confirms creation."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "active",
+              "ended",
+              "error"
+            ],
+            "default": "created",
+            "description": "Provider-side session status."
+          },
+          "recordedArtefactRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "URLs or OR attachment refs for recorded artefacts. Actual bytes stay with the provider."
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "flagId",
+                "kind",
+                "occurredAt",
+                "severity"
+              ],
+              "properties": {
+                "flagId": {
+                  "type": "string",
+                  "description": "Unique identifier for this flag."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "Flag category (e.g. gaze-away, audio-event, object-detected)."
+                },
+                "occurredAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO-8601 timestamp when the event occurred."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "description": "Flag severity level."
+                },
+                "reviewDecision": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "allowed",
+                    "annulled"
+                  ],
+                  "default": "pending",
+                  "description": "Invigilator decision. Changed ONLY by a human invigilator — never by automated logic (EU AI Act Art. 14)."
+                },
+                "reviewedBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Nextcloud user ID of the invigilator who reviewed this flag."
+                },
+                "reviewedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "ISO-8601 timestamp of the review decision."
+                }
+              }
+            },
+            "default": [],
+            "description": "Flagged proctoring events. Each flag requires invigilator review before any consequence is applied to the learner."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenancy isolation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "created",
+              "active",
+              "ended",
+              "error"
+            ],
+            "default": "created",
+            "description": "Lifecycle state. Managed by OR's lifecycle engine."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "created",
+          "transitions": {
+            "activate": {
+              "from": "created",
+              "to": "active"
+            },
+            "end": {
+              "from": "active",
+              "to": "ended"
+            },
+            "fail": {
+              "from": [
+                "created",
+                "active"
+              ],
+              "to": "error"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "assessmentResult": {
+            "register": "scholiq",
+            "schema": "AssessmentResult",
+            "cardinality": "many-to-one",
+            "joinOn": "assessmentResultId"
+          }
+        },
+        "x-openregister-calculations": {
+          "pendingFlagCount": {
+            "type": "integer",
+            "description": "Number of flags awaiting invigilator review.",
+            "expression": {
+              "count": {
+                "filter": [
+                  {
+                    "prop": "flags"
+                  },
+                  {
+                    "eq": [
+                      {
+                        "item": "reviewDecision"
+                      },
+                      "pending"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "hasAnnulledFlag": {
+            "type": "boolean",
+            "description": "True when at least one flag has been annulled by an invigilator.",
+            "expression": {
+              "gt": [
+                {
+                  "count": {
+                    "filter": [
+                      {
+                        "prop": "flags"
+                      },
+                      {
+                        "eq": [
+                          {
+                            "item": "reviewDecision"
+                          },
+                          "annulled"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                0
+              ]
+            }
+          }
+        }
       }
     }
   }
