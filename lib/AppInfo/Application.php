@@ -27,8 +27,8 @@ use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\OpenRegister\Event\XapiStatementReceivedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -83,9 +83,11 @@ class Application extends App implements IBootstrap
         );
 
         // ADR-031 legitimate exception: xAPI completion → Enrolment lifecycle transition.
-        // Single-method handler; all other Enrolment behaviour is declarative in scholiq_register.json.
+        // Listens for OR's ObjectCreatedEvent (fires when any OR object is saved); the
+        // handler filters to XapiStatement schema objects in the scholiq register.
+        // All other Enrolment behaviour is declarative in scholiq_register.json.
         $context->registerEventListener(
-            event: XapiStatementReceivedEvent::class,
+            event: ObjectCreatedEvent::class,
             listener: XapiCompletionHandler::class
         );
 
