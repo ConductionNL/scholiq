@@ -117,7 +117,7 @@
     {
       "id": "Settings",
       "label": "Settings",
-      "icon": "Cog",
+      "icon": "icon-settings",
       "action": "user-settings",
       "order": 99,
       "section": "settings"
@@ -159,16 +159,8 @@
       "type": "dashboard",
       "title": "Dashboard",
       "config": {
-        "content": [
-          {
-            "type": "widget-ref",
-            "ref": "openregister://widget/regulation/coverageGrid"
-          },
-          {
-            "type": "widget-ref",
-            "ref": "openregister://widget/enrolment/myMandatoryTraining"
-          }
-        ]
+        "widgets": [],
+        "layout": []
       }
     },
     {
@@ -207,20 +199,19 @@
       "type": "dashboard",
       "title": "Compliance",
       "config": {
-        "content": [
+        "widgets": [
           {
-            "type": "widget-ref",
-            "ref": "openregister://widget/regulation/coverageGrid"
+            "id": "coverage-grid",
+            "title": "Coverage grid",
+            "type": "custom"
           },
           {
-            "type": "widget-ref",
-            "ref": "openregister://widget/regulation/attestationCount"
-          },
-          {
-            "type": "widget-ref",
-            "ref": "openregister://widget/regulation/boardProof"
+            "id": "attestation-count",
+            "title": "Attestation count",
+            "type": "custom"
           }
         ],
+        "layout": [],
         "actions": [
           {
             "id": "viewInMydash",
@@ -367,12 +358,14 @@
       "type": "dashboard",
       "title": "My learning",
       "config": {
-        "content": [
+        "widgets": [
           {
-            "type": "widget-ref",
-            "ref": "openregister://widget/enrolment/myMandatoryTraining"
+            "id": "my-mandatory-training",
+            "title": "My mandatory training",
+            "type": "custom"
           }
-        ]
+        ],
+        "layout": []
       }
     },
     {
