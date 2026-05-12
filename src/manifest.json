@@ -49,6 +49,13 @@
       "order": 47
     },
     {
+      "id": "Assessments",
+      "label": "scholiq.nav.assessments",
+      "icon": "icon-clipboardCheck",
+      "route": "Assessments",
+      "order": 48
+    },
+    {
       "id": "Compliance",
       "label": "Compliance",
       "icon": "icon-menu-sidebar",
@@ -484,6 +491,138 @@
       "type": "custom",
       "title": "scholiq.page.mark_submission.title",
       "component": "MarkSubmissionView"
+    },
+    {
+      "id": "ItemBanks",
+      "route": "/assessments/item-banks",
+      "type": "index",
+      "title": "scholiq.page.item_banks.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "ItemBank"
+      }
+    },
+    {
+      "id": "ItemBankDetail",
+      "route": "/assessments/item-banks/:id",
+      "type": "detail",
+      "title": "scholiq.page.item_bank.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "ItemBank"
+      }
+    },
+    {
+      "id": "Items",
+      "route": "/assessments/items",
+      "type": "index",
+      "title": "scholiq.page.items.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Item"
+      }
+    },
+    {
+      "id": "ItemDetail",
+      "route": "/assessments/items/:id",
+      "type": "detail",
+      "title": "scholiq.page.item.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Item"
+      }
+    },
+    {
+      "id": "Assessments",
+      "route": "/assessments",
+      "type": "index",
+      "title": "scholiq.page.assessments.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Assessment"
+      }
+    },
+    {
+      "id": "AssessmentDetail",
+      "route": "/assessments/:id",
+      "type": "detail",
+      "title": "scholiq.page.assessment.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Assessment"
+      }
+    },
+    {
+      "id": "AssessmentResults",
+      "route": "/assessments/:assessmentId/results",
+      "type": "index",
+      "title": "scholiq.page.assessment_results.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "AssessmentResult",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "AssessmentResultDetail",
+      "route": "/assessments/:assessmentId/results/:id",
+      "type": "detail",
+      "title": "scholiq.page.assessment_result.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "AssessmentResult",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "ProctoringSessions",
+      "route": "/assessments/proctoring-sessions",
+      "type": "index",
+      "title": "scholiq.page.proctoring_sessions.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "ProctoringSession",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "ProctoringSessionDetail",
+      "route": "/assessments/proctoring-sessions/:id",
+      "type": "detail",
+      "title": "scholiq.page.proctoring_session.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "ProctoringSession",
+        "readOnly": true
+      }
+    },
+    {
+      "id": "TakeAssessmentView",
+      "route": "/assessments/:assessmentId/take",
+      "type": "custom",
+      "title": "scholiq.page.take_assessment.title",
+      "component": "TakeAssessmentView"
+    },
+    {
+      "id": "ItemAuthorView",
+      "route": "/assessments/items/:id/author",
+      "type": "custom",
+      "title": "scholiq.page.item_author.title",
+      "component": "ItemAuthorView"
+    },
+    {
+      "id": "ProctoringReviewQueue",
+      "route": "/assessments/proctoring/review",
+      "type": "custom",
+      "title": "scholiq.page.proctoring_review_queue.title",
+      "component": "ProctoringReviewQueue"
+    },
+    {
+      "id": "ImportQtiModal",
+      "route": "/assessments/item-banks/:itemBankId/import",
+      "type": "custom",
+      "title": "scholiq.page.import_qti.title",
+      "component": "ImportQtiModal"
     }
   ]
 }
