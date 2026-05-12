@@ -13,7 +13,7 @@
 -->
 <template>
 	<div class="scholiq-settings">
-		<h2 class="scholiq-settings__title">
+		<h2 v-if="!inDialog" class="scholiq-settings__title">
 			{{ t('scholiq', 'Scholiq Settings') }}
 		</h2>
 
@@ -104,6 +104,17 @@ export default {
 		NcLoadingIcon,
 		NcSelect,
 		NcSettingsSection,
+	},
+
+	props: {
+		/**
+		 * When true, suppresses the standalone page `<h2>` title because the
+		 * NcAppSettingsDialog already displays the app name in its own header.
+		 */
+		inDialog: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	data() {

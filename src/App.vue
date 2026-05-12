@@ -6,6 +6,10 @@
  customComponents registry. CnAppRoot reads manifest.dependencies and
  renders a dependency-missing empty state for absent apps automatically
  (per ADR-024) — no app-local OpenRegisterGuard is needed.
+
+ The #user-settings slot feeds ScholiqSettings into CnAppRoot's hosted
+ NcAppSettingsDialog, which CnAppNav opens when the user clicks the
+ manifest menu entry with action: "user-settings".
 -->
 <template>
 	<CnAppRoot
@@ -13,18 +17,24 @@
 		:custom-components="customComponents"
 		:page-types="pageTypes"
 		app-id="scholiq"
-		:translate="translateForApp" />
+		:translate="translateForApp">
+		<template #user-settings>
+			<ScholiqSettings :in-dialog="true" />
+		</template>
+	</CnAppRoot>
 </template>
 
 <script>
 import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
+import ScholiqSettings from './views/ScholiqSettings.vue'
 
 export default {
 	name: 'App',
 
 	components: {
 		CnAppRoot,
+		ScholiqSettings,
 	},
 
 	props: {
