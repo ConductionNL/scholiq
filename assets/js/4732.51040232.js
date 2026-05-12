@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscholiq_docs=globalThis.webpackChunkscholiq_docs||[]).push([[4732],{4732(s,c,e){e.d(c,{createTreemapServices:()=>a.d});var a=e(8562);e(808)}}]);

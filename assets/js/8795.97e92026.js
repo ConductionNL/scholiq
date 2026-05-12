@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscholiq_docs=globalThis.webpackChunkscholiq_docs||[]).push([[8795],{8795(s,c,e){e.d(c,{createPieServices:()=>h.f});var h=e(888);e(808)}}]);
