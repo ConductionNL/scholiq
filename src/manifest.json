@@ -1,831 +1,934 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
-  "version": "0.1.0",
-  "dependencies": [
-    "openregister",
-    "openconnector"
-  ],
-  "menu": [
-    {
-      "id": "Dashboard",
-      "label": "Dashboard",
-      "icon": "icon-category-dashboard",
-      "route": "Dashboard",
-      "order": 10
-    },
-    {
-      "id": "Courses",
-      "label": "Courses",
-      "icon": "icon-folder",
-      "route": "Courses",
-      "order": 20
-    },
-    {
-      "id": "Enrolments",
-      "label": "Enrolments",
-      "icon": "icon-group",
-      "route": "Enrolments",
-      "order": 30
-    },
-    {
-      "id": "Credentials",
-      "label": "Credentials",
-      "icon": "icon-checkmark",
-      "route": "Credentials",
-      "order": 40
-    },
-    {
-      "id": "Curriculum",
-      "label": "Curriculum",
-      "icon": "icon-category-education",
-      "route": "Programmes",
-      "order": 45
-    },
-    {
-      "id": "Grades",
-      "label": "scholiq.nav.grades",
-      "icon": "icon-category-education",
-      "route": "GradeEntries",
-      "order": 46
-    },
-    {
-      "id": "Assignments",
-      "label": "scholiq.nav.assignments",
-      "icon": "icon-clipboardText",
-      "route": "Assignments",
-      "order": 47
-    },
-    {
-      "id": "Assessments",
-      "label": "scholiq.nav.assessments",
-      "icon": "icon-clipboardCheck",
-      "route": "Assessments",
-      "order": 48
-    },
-    {
-      "id": "Compliance",
-      "label": "Compliance",
-      "icon": "icon-menu-sidebar",
-      "route": "Compliance",
-      "order": 50
-    },
-    {
-      "id": "Documentation",
-      "label": "Documentation",
-      "icon": "icon-info",
-      "href": "https://docs.scholiq.nl",
-      "section": "settings",
-      "order": 90
-    },
-    {
-      "id": "Settings",
-      "label": "Settings",
-      "icon": "icon-settings",
-      "route": "Settings",
-      "section": "settings",
-      "order": 99
-    },
-    {
-      "id": "FeaturesRoadmapMenu",
-      "label": "Features & roadmap",
-      "icon": "icon-toggle",
-      "route": "FeaturesRoadmap",
-      "section": "settings",
-      "order": 100
-    },
-    {
-      "id": "LearningPlans",
-      "label": "scholiq.nav.learning_plans",
-      "icon": "icon-category-social",
-      "route": "LearningPlans",
-      "order": 49
-    }
-  ],
-  "pages": [
-    {
-      "id": "Dashboard",
-      "route": "/",
-      "type": "dashboard",
-      "title": "scholiq.page.dashboard.title",
-      "config": {
-        "widgets": [],
-        "layout": []
-      }
-    },
-    {
-      "id": "Courses",
-      "route": "/courses",
-      "type": "index",
-      "title": "Courses",
-      "config": {
-        "register": "scholiq",
-        "schema": "Course"
-      }
-    },
-    {
-      "id": "Enrolments",
-      "route": "/enrolments",
-      "type": "index",
-      "title": "Enrolments",
-      "config": {
-        "register": "scholiq",
-        "schema": "Enrolment"
-      }
-    },
-    {
-      "id": "Credentials",
-      "route": "/credentials",
-      "type": "index",
-      "title": "Credentials",
-      "config": {
-        "register": "scholiq",
-        "schema": "Credential"
-      }
-    },
-    {
-      "id": "Compliance",
-      "route": "/compliance",
-      "type": "dashboard",
-      "title": "Compliance",
-      "config": {
-        "widgets": [
-          {
-            "id": "coverage-grid",
-            "title": "scholiq.widget.coverage_grid",
-            "type": "custom"
-          },
-          {
-            "id": "attestation-count",
-            "title": "scholiq.widget.attestation_count",
-            "type": "custom"
-          }
-        ],
-        "layout": [],
-        "actions": [
-          {
-            "id": "viewInMydash",
-            "label": "scholiq.action.viewInMydash"
-          }
-        ]
-      }
-    },
-    {
-      "id": "CourseDetail",
-      "route": "/courses/:id",
-      "type": "detail",
-      "title": "Course Detail",
-      "config": {
-        "register": "scholiq",
-        "schema": "Course"
-      }
-    },
-    {
-      "id": "LessonIndex",
-      "route": "/courses/:courseId/lessons",
-      "type": "index",
-      "title": "Lessons",
-      "config": {
-        "register": "scholiq",
-        "schema": "Lesson"
-      }
-    },
-    {
-      "id": "LessonDetail",
-      "route": "/courses/:courseId/lessons/:id",
-      "type": "detail",
-      "title": "Lesson Detail",
-      "config": {
-        "register": "scholiq",
-        "schema": "Lesson"
-      }
-    },
-    {
-      "id": "LessonPlayer",
-      "route": "/courses/:courseId/lessons/:lessonId/play",
-      "type": "custom",
-      "title": "Lesson Player",
-      "component": "LessonPlayer"
-    },
-    {
-      "id": "Settings",
-      "route": "/settings",
-      "type": "custom",
-      "title": "Settings",
-      "component": "ScholiqSettings"
-    },
-    {
-      "id": "EnrolmentDetail",
-      "route": "/enrolments/:id",
-      "type": "detail",
-      "title": "Enrolment",
-      "config": {
-        "register": "scholiq",
-        "schema": "Enrolment"
-      }
-    },
-    {
-      "id": "BulkEnrol",
-      "route": "/enrolments/bulk",
-      "type": "custom",
-      "title": "Bulk Enrol",
-      "config": {
-        "component": "BulkEnrolModal"
-      }
-    },
-    {
-      "id": "Regulations",
-      "route": "/compliance/regulations",
-      "type": "index",
-      "title": "scholiq.page.regulations.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Regulation"
-      }
-    },
-    {
-      "id": "RegulationDetail",
-      "route": "/compliance/regulations/:slug",
-      "type": "detail",
-      "title": "scholiq.page.regulation.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Regulation"
-      }
-    },
-    {
-      "id": "Attestations",
-      "route": "/compliance/attestations",
-      "type": "index",
-      "title": "scholiq.page.attestations.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Attestation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AttestationDetail",
-      "route": "/compliance/attestations/:id",
-      "type": "detail",
-      "title": "scholiq.page.attestation.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Attestation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AuditPackExport",
-      "route": "/compliance/export",
-      "type": "custom",
-      "title": "scholiq.page.audit_pack_export.title",
-      "config": {
-        "component": "AuditPackExportModal"
-      }
-    },
-    {
-      "id": "CredentialDetail",
-      "route": "/credentials/:id",
-      "type": "detail",
-      "title": "Credential",
-      "config": {
-        "register": "scholiq",
-        "schema": "Credential"
-      }
-    },
-    {
-      "id": "CredentialVerify",
-      "route": "/credentials/:id/verify",
-      "type": "custom",
-      "title": "Verify Credential",
-      "component": "CredentialVerify"
-    },
-    {
-      "id": "LearnerHome",
-      "route": "/learner",
-      "type": "dashboard",
-      "title": "scholiq.page.learner.title",
-      "config": {
-        "widgets": [
-          {
-            "id": "my-mandatory-training",
-            "title": "scholiq.widget.my_mandatory_training",
-            "type": "custom"
-          }
-        ],
-        "layout": []
-      }
-    },
-    {
-      "id": "AdminHealth",
-      "route": "/admin/health",
-      "type": "dashboard",
-      "title": "scholiq.page.admin.health.title",
-      "config": {
-        "widgets": [
-          {
-            "id": "health-stats",
-            "title": "scholiq.widget.health_stats",
-            "type": "custom"
-          }
-        ],
-        "layout": []
-      }
-    },
-    {
-      "id": "Programmes",
-      "route": "/curriculum/programmes",
-      "type": "index",
-      "title": "scholiq.page.programmes.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Programme"
-      }
-    },
-    {
-      "id": "ProgrammeDetail",
-      "route": "/curriculum/programmes/:id",
-      "type": "detail",
-      "title": "scholiq.page.programme.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Programme"
-      }
-    },
-    {
-      "id": "CurriculumPlans",
-      "route": "/curriculum/plans",
-      "type": "index",
-      "title": "scholiq.page.curriculum_plans.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "CurriculumPlan"
-      }
-    },
-    {
-      "id": "CurriculumPlanDetail",
-      "route": "/curriculum/plans/:id",
-      "type": "detail",
-      "title": "scholiq.page.curriculum_plan.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "CurriculumPlan"
-      }
-    },
-    {
-      "id": "Cohorts",
-      "route": "/cohorts",
-      "type": "index",
-      "title": "scholiq.page.cohorts.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Cohort"
-      }
-    },
-    {
-      "id": "CohortDetail",
-      "route": "/cohorts/:id",
-      "type": "detail",
-      "title": "scholiq.page.cohort.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Cohort"
-      }
-    },
-    {
-      "id": "CohortTimetable",
-      "route": "/cohorts/:id/timetable",
-      "type": "custom",
-      "title": "scholiq.page.cohort.timetable.title",
-      "component": "CohortTimetable"
-    },
-    {
-      "id": "Sessions",
-      "route": "/sessions",
-      "type": "index",
-      "title": "scholiq.page.sessions.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Session"
-      }
-    },
-    {
-      "id": "SessionDetail",
-      "route": "/sessions/:id",
-      "type": "detail",
-      "title": "scholiq.page.session.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Session"
-      }
-    },
-    {
-      "id": "Materials",
-      "route": "/materials",
-      "type": "index",
-      "title": "scholiq.page.materials.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Material"
-      }
-    },
-    {
-      "id": "MaterialDetail",
-      "route": "/materials/:id",
-      "type": "detail",
-      "title": "scholiq.page.material.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Material"
-      }
-    },
-    {
-      "id": "Rubrics",
-      "route": "/assignments/rubrics",
-      "type": "index",
-      "title": "scholiq.page.rubrics.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Rubric"
-      }
-    },
-    {
-      "id": "RubricDetail",
-      "route": "/assignments/rubrics/:id",
-      "type": "detail",
-      "title": "scholiq.page.rubric.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Rubric"
-      }
-    },
-    {
-      "id": "Assignments",
-      "route": "/assignments",
-      "type": "index",
-      "title": "scholiq.page.assignments.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assignment"
-      }
-    },
-    {
-      "id": "AssignmentDetail",
-      "route": "/assignments/:id",
-      "type": "detail",
-      "title": "scholiq.page.assignment.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assignment"
-      }
-    },
-    {
-      "id": "Submissions",
-      "route": "/assignments/:assignmentId/submissions",
-      "type": "index",
-      "title": "scholiq.page.submissions.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Submission"
-      }
-    },
-    {
-      "id": "SubmissionDetail",
-      "route": "/assignments/:assignmentId/submissions/:id",
-      "type": "detail",
-      "title": "scholiq.page.submission.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Submission",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "SubmitWorkModal",
-      "route": "/assignments/:assignmentId/submit",
-      "type": "custom",
-      "title": "scholiq.page.submit_work.title",
-      "component": "SubmitWorkModal"
-    },
-    {
-      "id": "MarkSubmissionView",
-      "route": "/assignments/:assignmentId/submissions/:id/mark",
-      "type": "custom",
-      "title": "scholiq.page.mark_submission.title",
-      "component": "MarkSubmissionView"
-    },
-    {
-      "id": "ItemBanks",
-      "route": "/assessments/item-banks",
-      "type": "index",
-      "title": "scholiq.page.item_banks.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "ItemBank"
-      }
-    },
-    {
-      "id": "ItemBankDetail",
-      "route": "/assessments/item-banks/:id",
-      "type": "detail",
-      "title": "scholiq.page.item_bank.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "ItemBank"
-      }
-    },
-    {
-      "id": "Items",
-      "route": "/assessments/items",
-      "type": "index",
-      "title": "scholiq.page.items.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Item"
-      }
-    },
-    {
-      "id": "ItemDetail",
-      "route": "/assessments/items/:id",
-      "type": "detail",
-      "title": "scholiq.page.item.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Item"
-      }
-    },
-    {
-      "id": "Assessments",
-      "route": "/assessments",
-      "type": "index",
-      "title": "scholiq.page.assessments.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assessment"
-      }
-    },
-    {
-      "id": "AssessmentDetail",
-      "route": "/assessments/:id",
-      "type": "detail",
-      "title": "scholiq.page.assessment.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assessment"
-      }
-    },
-    {
-      "id": "AssessmentResults",
-      "route": "/assessments/:assessmentId/results",
-      "type": "index",
-      "title": "scholiq.page.assessment_results.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "AssessmentResult",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AssessmentResultDetail",
-      "route": "/assessments/:assessmentId/results/:id",
-      "type": "detail",
-      "title": "scholiq.page.assessment_result.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "AssessmentResult",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "ProctoringSessions",
-      "route": "/assessments/proctoring-sessions",
-      "type": "index",
-      "title": "scholiq.page.proctoring_sessions.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "ProctoringSession",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "ProctoringSessionDetail",
-      "route": "/assessments/proctoring-sessions/:id",
-      "type": "detail",
-      "title": "scholiq.page.proctoring_session.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "ProctoringSession",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "TakeAssessmentView",
-      "route": "/assessments/:assessmentId/take",
-      "type": "custom",
-      "title": "scholiq.page.take_assessment.title",
-      "component": "TakeAssessmentView"
-    },
-    {
-      "id": "ItemAuthorView",
-      "route": "/assessments/items/:id/author",
-      "type": "custom",
-      "title": "scholiq.page.item_author.title",
-      "component": "ItemAuthorView"
-    },
-    {
-      "id": "ProctoringReviewQueue",
-      "route": "/assessments/proctoring/review",
-      "type": "custom",
-      "title": "scholiq.page.proctoring_review_queue.title",
-      "component": "ProctoringReviewQueue"
-    },
-    {
-      "id": "ImportQtiModal",
-      "route": "/assessments/item-banks/:itemBankId/import",
-      "type": "custom",
-      "title": "scholiq.page.import_qti.title",
-      "component": "ImportQtiModal"
-    },
-    {
-      "id": "GradeScales",
-      "route": "/grades/scales",
-      "type": "index",
-      "title": "scholiq.page.grade_scales.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeScale"
-      }
-    },
-    {
-      "id": "GradeScaleDetail",
-      "route": "/grades/scales/:id",
-      "type": "detail",
-      "title": "scholiq.page.grade_scale.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeScale"
-      }
-    },
-    {
-      "id": "GradeEntries",
-      "route": "/grades/entries",
-      "type": "index",
-      "title": "scholiq.page.grade_entries.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeEntry"
-      }
-    },
-    {
-      "id": "GradeEntryDetail",
-      "route": "/grades/entries/:id",
-      "type": "detail",
-      "title": "scholiq.page.grade_entry.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeEntry"
-      }
-    },
-    {
-      "id": "FinalGrades",
-      "route": "/grades/final",
-      "type": "index",
-      "title": "scholiq.page.final_grades.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "FinalGrade",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "FinalGradeDetail",
-      "route": "/grades/final/:id",
-      "type": "detail",
-      "title": "scholiq.page.final_grade.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "FinalGrade",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "GradebookView",
-      "route": "/grades/cohort/:cohortId/plan/:planId",
-      "type": "custom",
-      "title": "scholiq.page.gradebook.title",
-      "component": "GradebookView"
-    },
-    {
-      "id": "GradeImpactDetail",
-      "route": "/grades/entries/:id/impact",
-      "type": "custom",
-      "title": "scholiq.page.grade_impact.title",
-      "component": "GradeImpactDetail"
-    },
-    {
-      "id": "FeaturesRoadmap",
-      "route": "/features-roadmap",
-      "type": "custom",
-      "title": "Features & roadmap",
-      "component": "FeaturesRoadmap"
-    },
-    {
-      "id": "LearningPlanTemplates",
-      "route": "/learning-plans/templates",
-      "type": "index",
-      "title": "scholiq.page.learning_plan_templates.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanTemplate"
-      }
-    },
-    {
-      "id": "LearningPlanTemplateDetail",
-      "route": "/learning-plans/templates/:id",
-      "type": "detail",
-      "title": "scholiq.page.learning_plan_template.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanTemplate"
-      }
-    },
-    {
-      "id": "LearningPlans",
-      "route": "/learning-plans",
-      "type": "index",
-      "title": "scholiq.page.learning_plans.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlan"
-      }
-    },
-    {
-      "id": "LearningPlanDetail",
-      "route": "/learning-plans/:id",
-      "type": "detail",
-      "title": "scholiq.page.learning_plan.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlan"
-      }
-    },
-    {
-      "id": "LearningPlanEvaluations",
-      "route": "/learning-plans/:planId/evaluations",
-      "type": "index",
-      "title": "scholiq.page.learning_plan_evaluations.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanEvaluation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "LearningPlanEvaluationDetail",
-      "route": "/learning-plans/:planId/evaluations/:id",
-      "type": "detail",
-      "title": "scholiq.page.learning_plan_evaluation.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanEvaluation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "Signatures",
-      "route": "/learning-plans/:planId/signatures",
-      "type": "index",
-      "title": "scholiq.page.signatures.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Signature",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "SignatureDetail",
-      "route": "/learning-plans/:planId/signatures/:id",
-      "type": "detail",
-      "title": "scholiq.page.signature.detail.title",
-      "config": {
-        "register": "scholiq",
-        "schema": "Signature",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "SignPlanModal",
-      "route": "/learning-plans/:planId/sign",
-      "type": "custom",
-      "title": "scholiq.page.sign_plan.title",
-      "component": "SignPlanModal"
-    },
-    {
-      "id": "LearningPlanEditor",
-      "route": "/learning-plans/:planId/edit",
-      "type": "custom",
-      "title": "scholiq.page.learning_plan_editor.title",
-      "component": "LearningPlanEditor"
-    }
-  ]
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+	"version": "0.1.0",
+	"dependencies": [
+		"openregister",
+		"openconnector"
+	],
+	"menu": [
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
+		{
+			"id": "Courses",
+			"label": "Courses",
+			"icon": "icon-folder",
+			"route": "Courses",
+			"order": 20
+		},
+		{
+			"id": "Enrolments",
+			"label": "Enrolments",
+			"icon": "icon-group",
+			"route": "Enrolments",
+			"order": 30
+		},
+		{
+			"id": "Credentials",
+			"label": "Credentials",
+			"icon": "icon-checkmark",
+			"route": "Credentials",
+			"order": 40
+		},
+		{
+			"id": "Curriculum",
+			"label": "Curriculum",
+			"icon": "icon-category-education",
+			"route": "Programmes",
+			"order": 45
+		},
+		{
+			"id": "Grades",
+			"label": "scholiq.nav.grades",
+			"icon": "icon-category-education",
+			"route": "GradeEntries",
+			"order": 46
+		},
+		{
+			"id": "Assignments",
+			"label": "scholiq.nav.assignments",
+			"icon": "icon-clipboardText",
+			"route": "Assignments",
+			"order": 47
+		},
+		{
+			"id": "Assessments",
+			"label": "scholiq.nav.assessments",
+			"icon": "icon-clipboardCheck",
+			"route": "Assessments",
+			"order": 48
+		},
+		{
+			"id": "Compliance",
+			"label": "Compliance",
+			"icon": "icon-menu-sidebar",
+			"route": "Compliance",
+			"order": 50
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://docs.scholiq.nl",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "Settings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"route": "Settings",
+			"section": "settings",
+			"order": 99
+		},
+		{
+			"id": "FeaturesRoadmapMenu",
+			"label": "Features & roadmap",
+			"icon": "icon-toggle",
+			"route": "FeaturesRoadmap",
+			"section": "settings",
+			"order": 100
+		},
+		{
+			"id": "LearningPlans",
+			"label": "scholiq.nav.learning_plans",
+			"icon": "icon-category-social",
+			"route": "LearningPlans",
+			"order": 49
+		},
+		{
+			"id": "Attendance",
+			"label": "scholiq.nav.attendance",
+			"icon": "icon-category-monitoring",
+			"route": "AttendanceRecords",
+			"order": 55
+		}
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "dashboard",
+			"title": "scholiq.page.dashboard.title",
+			"config": {
+				"widgets": [],
+				"layout": []
+			}
+		},
+		{
+			"id": "Courses",
+			"route": "/courses",
+			"type": "index",
+			"title": "Courses",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "Enrolments",
+			"route": "/enrolments",
+			"type": "index",
+			"title": "Enrolments",
+			"config": {
+				"register": "scholiq",
+				"schema": "Enrolment"
+			}
+		},
+		{
+			"id": "Credentials",
+			"route": "/credentials",
+			"type": "index",
+			"title": "Credentials",
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential"
+			}
+		},
+		{
+			"id": "Compliance",
+			"route": "/compliance",
+			"type": "dashboard",
+			"title": "Compliance",
+			"config": {
+				"widgets": [
+					{
+						"id": "coverage-grid",
+						"title": "scholiq.widget.coverage_grid",
+						"type": "custom"
+					},
+					{
+						"id": "attestation-count",
+						"title": "scholiq.widget.attestation_count",
+						"type": "custom"
+					}
+				],
+				"layout": [],
+				"actions": [
+					{
+						"id": "viewInMydash",
+						"label": "scholiq.action.viewInMydash"
+					}
+				]
+			}
+		},
+		{
+			"id": "CourseDetail",
+			"route": "/courses/:id",
+			"type": "detail",
+			"title": "Course Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "LessonIndex",
+			"route": "/courses/:courseId/lessons",
+			"type": "index",
+			"title": "Lessons",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson"
+			}
+		},
+		{
+			"id": "LessonDetail",
+			"route": "/courses/:courseId/lessons/:id",
+			"type": "detail",
+			"title": "Lesson Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson"
+			}
+		},
+		{
+			"id": "LessonPlayer",
+			"route": "/courses/:courseId/lessons/:lessonId/play",
+			"type": "custom",
+			"title": "Lesson Player",
+			"component": "LessonPlayer"
+		},
+		{
+			"id": "Settings",
+			"route": "/settings",
+			"type": "custom",
+			"title": "Settings",
+			"component": "ScholiqSettings"
+		},
+		{
+			"id": "EnrolmentDetail",
+			"route": "/enrolments/:id",
+			"type": "detail",
+			"title": "Enrolment",
+			"config": {
+				"register": "scholiq",
+				"schema": "Enrolment"
+			}
+		},
+		{
+			"id": "BulkEnrol",
+			"route": "/enrolments/bulk",
+			"type": "custom",
+			"title": "Bulk Enrol",
+			"config": {
+				"component": "BulkEnrolModal"
+			}
+		},
+		{
+			"id": "Regulations",
+			"route": "/compliance/regulations",
+			"type": "index",
+			"title": "scholiq.page.regulations.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Regulation"
+			}
+		},
+		{
+			"id": "RegulationDetail",
+			"route": "/compliance/regulations/:slug",
+			"type": "detail",
+			"title": "scholiq.page.regulation.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Regulation"
+			}
+		},
+		{
+			"id": "Attestations",
+			"route": "/compliance/attestations",
+			"type": "index",
+			"title": "scholiq.page.attestations.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Attestation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AttestationDetail",
+			"route": "/compliance/attestations/:id",
+			"type": "detail",
+			"title": "scholiq.page.attestation.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Attestation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AuditPackExport",
+			"route": "/compliance/export",
+			"type": "custom",
+			"title": "scholiq.page.audit_pack_export.title",
+			"config": {
+				"component": "AuditPackExportModal"
+			}
+		},
+		{
+			"id": "CredentialDetail",
+			"route": "/credentials/:id",
+			"type": "detail",
+			"title": "Credential",
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential"
+			}
+		},
+		{
+			"id": "CredentialVerify",
+			"route": "/credentials/:id/verify",
+			"type": "custom",
+			"title": "Verify Credential",
+			"component": "CredentialVerify"
+		},
+		{
+			"id": "LearnerHome",
+			"route": "/learner",
+			"type": "dashboard",
+			"title": "scholiq.page.learner.title",
+			"config": {
+				"widgets": [
+					{
+						"id": "my-mandatory-training",
+						"title": "scholiq.widget.my_mandatory_training",
+						"type": "custom"
+					}
+				],
+				"layout": []
+			}
+		},
+		{
+			"id": "AdminHealth",
+			"route": "/admin/health",
+			"type": "dashboard",
+			"title": "scholiq.page.admin.health.title",
+			"config": {
+				"widgets": [
+					{
+						"id": "health-stats",
+						"title": "scholiq.widget.health_stats",
+						"type": "custom"
+					}
+				],
+				"layout": []
+			}
+		},
+		{
+			"id": "Programmes",
+			"route": "/curriculum/programmes",
+			"type": "index",
+			"title": "scholiq.page.programmes.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Programme"
+			}
+		},
+		{
+			"id": "ProgrammeDetail",
+			"route": "/curriculum/programmes/:id",
+			"type": "detail",
+			"title": "scholiq.page.programme.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Programme"
+			}
+		},
+		{
+			"id": "CurriculumPlans",
+			"route": "/curriculum/plans",
+			"type": "index",
+			"title": "scholiq.page.curriculum_plans.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "CurriculumPlan"
+			}
+		},
+		{
+			"id": "CurriculumPlanDetail",
+			"route": "/curriculum/plans/:id",
+			"type": "detail",
+			"title": "scholiq.page.curriculum_plan.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "CurriculumPlan"
+			}
+		},
+		{
+			"id": "Cohorts",
+			"route": "/cohorts",
+			"type": "index",
+			"title": "scholiq.page.cohorts.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Cohort"
+			}
+		},
+		{
+			"id": "CohortDetail",
+			"route": "/cohorts/:id",
+			"type": "detail",
+			"title": "scholiq.page.cohort.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Cohort"
+			}
+		},
+		{
+			"id": "CohortTimetable",
+			"route": "/cohorts/:id/timetable",
+			"type": "custom",
+			"title": "scholiq.page.cohort.timetable.title",
+			"component": "CohortTimetable"
+		},
+		{
+			"id": "Sessions",
+			"route": "/sessions",
+			"type": "index",
+			"title": "scholiq.page.sessions.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Session"
+			}
+		},
+		{
+			"id": "SessionDetail",
+			"route": "/sessions/:id",
+			"type": "detail",
+			"title": "scholiq.page.session.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Session"
+			}
+		},
+		{
+			"id": "Materials",
+			"route": "/materials",
+			"type": "index",
+			"title": "scholiq.page.materials.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Material"
+			}
+		},
+		{
+			"id": "MaterialDetail",
+			"route": "/materials/:id",
+			"type": "detail",
+			"title": "scholiq.page.material.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Material"
+			}
+		},
+		{
+			"id": "Rubrics",
+			"route": "/assignments/rubrics",
+			"type": "index",
+			"title": "scholiq.page.rubrics.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Rubric"
+			}
+		},
+		{
+			"id": "RubricDetail",
+			"route": "/assignments/rubrics/:id",
+			"type": "detail",
+			"title": "scholiq.page.rubric.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Rubric"
+			}
+		},
+		{
+			"id": "Assignments",
+			"route": "/assignments",
+			"type": "index",
+			"title": "scholiq.page.assignments.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assignment"
+			}
+		},
+		{
+			"id": "AssignmentDetail",
+			"route": "/assignments/:id",
+			"type": "detail",
+			"title": "scholiq.page.assignment.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assignment"
+			}
+		},
+		{
+			"id": "Submissions",
+			"route": "/assignments/:assignmentId/submissions",
+			"type": "index",
+			"title": "scholiq.page.submissions.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Submission"
+			}
+		},
+		{
+			"id": "SubmissionDetail",
+			"route": "/assignments/:assignmentId/submissions/:id",
+			"type": "detail",
+			"title": "scholiq.page.submission.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Submission",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "SubmitWorkModal",
+			"route": "/assignments/:assignmentId/submit",
+			"type": "custom",
+			"title": "scholiq.page.submit_work.title",
+			"component": "SubmitWorkModal"
+		},
+		{
+			"id": "MarkSubmissionView",
+			"route": "/assignments/:assignmentId/submissions/:id/mark",
+			"type": "custom",
+			"title": "scholiq.page.mark_submission.title",
+			"component": "MarkSubmissionView"
+		},
+		{
+			"id": "ItemBanks",
+			"route": "/assessments/item-banks",
+			"type": "index",
+			"title": "scholiq.page.item_banks.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ItemBank"
+			}
+		},
+		{
+			"id": "ItemBankDetail",
+			"route": "/assessments/item-banks/:id",
+			"type": "detail",
+			"title": "scholiq.page.item_bank.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ItemBank"
+			}
+		},
+		{
+			"id": "Items",
+			"route": "/assessments/items",
+			"type": "index",
+			"title": "scholiq.page.items.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Item"
+			}
+		},
+		{
+			"id": "ItemDetail",
+			"route": "/assessments/items/:id",
+			"type": "detail",
+			"title": "scholiq.page.item.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Item"
+			}
+		},
+		{
+			"id": "Assessments",
+			"route": "/assessments",
+			"type": "index",
+			"title": "scholiq.page.assessments.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assessment"
+			}
+		},
+		{
+			"id": "AssessmentDetail",
+			"route": "/assessments/:id",
+			"type": "detail",
+			"title": "scholiq.page.assessment.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assessment"
+			}
+		},
+		{
+			"id": "AssessmentResults",
+			"route": "/assessments/:assessmentId/results",
+			"type": "index",
+			"title": "scholiq.page.assessment_results.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AssessmentResult",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AssessmentResultDetail",
+			"route": "/assessments/:assessmentId/results/:id",
+			"type": "detail",
+			"title": "scholiq.page.assessment_result.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AssessmentResult",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ProctoringSessions",
+			"route": "/assessments/proctoring-sessions",
+			"type": "index",
+			"title": "scholiq.page.proctoring_sessions.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ProctoringSession",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ProctoringSessionDetail",
+			"route": "/assessments/proctoring-sessions/:id",
+			"type": "detail",
+			"title": "scholiq.page.proctoring_session.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ProctoringSession",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "TakeAssessmentView",
+			"route": "/assessments/:assessmentId/take",
+			"type": "custom",
+			"title": "scholiq.page.take_assessment.title",
+			"component": "TakeAssessmentView"
+		},
+		{
+			"id": "ItemAuthorView",
+			"route": "/assessments/items/:id/author",
+			"type": "custom",
+			"title": "scholiq.page.item_author.title",
+			"component": "ItemAuthorView"
+		},
+		{
+			"id": "ProctoringReviewQueue",
+			"route": "/assessments/proctoring/review",
+			"type": "custom",
+			"title": "scholiq.page.proctoring_review_queue.title",
+			"component": "ProctoringReviewQueue"
+		},
+		{
+			"id": "ImportQtiModal",
+			"route": "/assessments/item-banks/:itemBankId/import",
+			"type": "custom",
+			"title": "scholiq.page.import_qti.title",
+			"component": "ImportQtiModal"
+		},
+		{
+			"id": "GradeScales",
+			"route": "/grades/scales",
+			"type": "index",
+			"title": "scholiq.page.grade_scales.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeScale"
+			}
+		},
+		{
+			"id": "GradeScaleDetail",
+			"route": "/grades/scales/:id",
+			"type": "detail",
+			"title": "scholiq.page.grade_scale.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeScale"
+			}
+		},
+		{
+			"id": "GradeEntries",
+			"route": "/grades/entries",
+			"type": "index",
+			"title": "scholiq.page.grade_entries.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeEntry"
+			}
+		},
+		{
+			"id": "GradeEntryDetail",
+			"route": "/grades/entries/:id",
+			"type": "detail",
+			"title": "scholiq.page.grade_entry.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeEntry"
+			}
+		},
+		{
+			"id": "FinalGrades",
+			"route": "/grades/final",
+			"type": "index",
+			"title": "scholiq.page.final_grades.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "FinalGrade",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "FinalGradeDetail",
+			"route": "/grades/final/:id",
+			"type": "detail",
+			"title": "scholiq.page.final_grade.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "FinalGrade",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "GradebookView",
+			"route": "/grades/cohort/:cohortId/plan/:planId",
+			"type": "custom",
+			"title": "scholiq.page.gradebook.title",
+			"component": "GradebookView"
+		},
+		{
+			"id": "GradeImpactDetail",
+			"route": "/grades/entries/:id/impact",
+			"type": "custom",
+			"title": "scholiq.page.grade_impact.title",
+			"component": "GradeImpactDetail"
+		},
+		{
+			"id": "FeaturesRoadmap",
+			"route": "/features-roadmap",
+			"type": "custom",
+			"title": "Features & roadmap",
+			"component": "FeaturesRoadmap"
+		},
+		{
+			"id": "LearningPlanTemplates",
+			"route": "/learning-plans/templates",
+			"type": "index",
+			"title": "scholiq.page.learning_plan_templates.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanTemplate"
+			}
+		},
+		{
+			"id": "LearningPlanTemplateDetail",
+			"route": "/learning-plans/templates/:id",
+			"type": "detail",
+			"title": "scholiq.page.learning_plan_template.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanTemplate"
+			}
+		},
+		{
+			"id": "LearningPlans",
+			"route": "/learning-plans",
+			"type": "index",
+			"title": "scholiq.page.learning_plans.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlan"
+			}
+		},
+		{
+			"id": "LearningPlanDetail",
+			"route": "/learning-plans/:id",
+			"type": "detail",
+			"title": "scholiq.page.learning_plan.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlan"
+			}
+		},
+		{
+			"id": "LearningPlanEvaluations",
+			"route": "/learning-plans/:planId/evaluations",
+			"type": "index",
+			"title": "scholiq.page.learning_plan_evaluations.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanEvaluation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "LearningPlanEvaluationDetail",
+			"route": "/learning-plans/:planId/evaluations/:id",
+			"type": "detail",
+			"title": "scholiq.page.learning_plan_evaluation.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanEvaluation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "Signatures",
+			"route": "/learning-plans/:planId/signatures",
+			"type": "index",
+			"title": "scholiq.page.signatures.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Signature",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "SignatureDetail",
+			"route": "/learning-plans/:planId/signatures/:id",
+			"type": "detail",
+			"title": "scholiq.page.signature.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "Signature",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "SignPlanModal",
+			"route": "/learning-plans/:planId/sign",
+			"type": "custom",
+			"title": "scholiq.page.sign_plan.title",
+			"component": "SignPlanModal"
+		},
+		{
+			"id": "LearningPlanEditor",
+			"route": "/learning-plans/:planId/edit",
+			"type": "custom",
+			"title": "scholiq.page.learning_plan_editor.title",
+			"component": "LearningPlanEditor"
+		},
+		{
+			"id": "AttendanceRecords",
+			"route": "/attendance/records",
+			"type": "index",
+			"title": "scholiq.page.attendance_records.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceRecord"
+			}
+		},
+		{
+			"id": "AttendanceRecordDetail",
+			"route": "/attendance/records/:id",
+			"type": "detail",
+			"title": "scholiq.page.attendance_record.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceRecord"
+			}
+		},
+		{
+			"id": "ExcuseRequests",
+			"route": "/attendance/excuses",
+			"type": "index",
+			"title": "scholiq.page.excuse_requests.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ExcuseRequest"
+			}
+		},
+		{
+			"id": "ExcuseRequestDetail",
+			"route": "/attendance/excuses/:id",
+			"type": "detail",
+			"title": "scholiq.page.excuse_request.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "ExcuseRequest"
+			}
+		},
+		{
+			"id": "AttendanceThresholds",
+			"route": "/attendance/thresholds",
+			"type": "index",
+			"title": "scholiq.page.attendance_thresholds.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceThreshold"
+			}
+		},
+		{
+			"id": "AttendanceThresholdDetail",
+			"route": "/attendance/thresholds/:id",
+			"type": "detail",
+			"title": "scholiq.page.attendance_threshold.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceThreshold"
+			}
+		},
+		{
+			"id": "AttendanceFlags",
+			"route": "/attendance/flags",
+			"type": "index",
+			"title": "scholiq.page.attendance_flags.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceFlag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AttendanceFlagDetail",
+			"route": "/attendance/flags/:id",
+			"type": "detail",
+			"title": "scholiq.page.attendance_flag.detail.title",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceFlag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "MarkAttendanceView",
+			"route": "/sessions/:sessionId/attendance",
+			"type": "custom",
+			"title": "scholiq.page.mark_attendance.title",
+			"component": "MarkAttendanceView"
+		},
+		{
+			"id": "SubmitExcuseModal",
+			"route": "/attendance/excuses/submit",
+			"type": "custom",
+			"title": "scholiq.page.submit_excuse.title",
+			"component": "SubmitExcuseModal"
+		}
+	]
 }

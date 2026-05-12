@@ -5533,6 +5533,742 @@
             "foreignField": "uuid"
           }
         }
+      },
+      "AttendanceRecord": {
+        "slug": "attendance-record",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "AttendanceRecord",
+        "description": "Per-Session per-learner attendance fact. Records whether a learner was present, absent, late, or left early. Not appendOnly — a teacher may correct a mis-marked record; OR's update audit trail is sufficient.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "sessionId",
+          "learnerId",
+          "status",
+          "markedBy",
+          "markedAt",
+          "tenant_id"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the Session this record belongs to."
+          },
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Denormalised Cohort UUID for filtering. Derived from the Session."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "present",
+              "absent-unexcused",
+              "absent-excused",
+              "late",
+              "left-early"
+            ],
+            "description": "Attendance status for this Session."
+          },
+          "minutesAttended": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Actual minutes the learner was present. Null when fully absent."
+          },
+          "markedBy": {
+            "type": "string",
+            "description": "Nextcloud user ID of the teacher or coordinator who marked attendance."
+          },
+          "markedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when attendance was marked."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional free-text reason note from the teacher."
+          },
+          "excuseRequestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the ExcuseRequest that flipped this record to absent-excused."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-relations": {
+          "session": {
+            "register": "scholiq",
+            "schema": "Session",
+            "cardinality": "many-to-one",
+            "joinOn": "sessionId"
+          },
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          },
+          "excuseRequest": {
+            "register": "scholiq",
+            "schema": "ExcuseRequest",
+            "cardinality": "many-to-one",
+            "joinOn": "excuseRequestId"
+          }
+        },
+        "x-openregister-calculations": {
+          "isUnexcusedAbsence": {
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when status is absent-unexcused.",
+            "expression": {
+              "eq": [
+                {
+                  "prop": "status"
+                },
+                "absent-unexcused"
+              ]
+            }
+          },
+          "lesuren": {
+            "type": "number",
+            "materialise": true,
+            "description": "Derived lesuren count. When attended (present/late/left-early): minutesAttended / 60. When fully absent: session.durationMinutes / 60. Used for the 16-lesuur leerplicht threshold.",
+            "expression": {
+              "if": [
+                {
+                  "in": [
+                    {
+                      "prop": "status"
+                    },
+                    [
+                      "present",
+                      "late",
+                      "left-early"
+                    ]
+                  ]
+                },
+                {
+                  "div": [
+                    {
+                      "prop": "minutesAttended"
+                    },
+                    60
+                  ]
+                },
+                {
+                  "div": [
+                    {
+                      "ref": "session.durationMinutes"
+                    },
+                    60
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "ExcuseRequest": {
+        "slug": "excuse-request",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "ExcuseRequest",
+        "description": "Absence excuse submitted by a learner, parent, or 18+ learner-self for a date range. On approval, matching AttendanceRecords are flipped to absent-excused by ExcuseApprovalHandler.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learnerId",
+          "submittedBy",
+          "dateFrom",
+          "dateTo",
+          "reason",
+          "reasonKind",
+          "submittedAuthLevel",
+          "tenant_id"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner whose absence is being excused."
+          },
+          "submittedBy": {
+            "type": "string",
+            "description": "Nextcloud user ID of the submitter (may be a parent or the 18+ learner themselves)."
+          },
+          "dateFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date of the absence period (inclusive, ISO 8601 date)."
+          },
+          "dateTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date of the absence period (inclusive, ISO 8601 date)."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Free-text reason for the absence."
+          },
+          "reasonKind": {
+            "type": "string",
+            "enum": [
+              "illness",
+              "medical-appointment",
+              "family-circumstance",
+              "religious-observance",
+              "bereavement",
+              "other"
+            ],
+            "description": "Structured reason category for reporting purposes."
+          },
+          "attachmentRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional reference to a supporting document (doctor's note, etc.)."
+          },
+          "submittedAuthLevel": {
+            "type": "string",
+            "enum": [
+              "none",
+              "basic",
+              "substantial",
+              "high"
+            ],
+            "description": "eIDAS assurance level of the submission flow. The DigiD handshake itself is out of scope; this field records the achieved level.",
+            "default": "basic"
+          },
+          "decidedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nextcloud user ID of the coordinator who approved or rejected."
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the decision."
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional note from the coordinator explaining the decision."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "approved",
+              "rejected"
+            ],
+            "default": "submitted",
+            "description": "Lifecycle state. Managed by OR lifecycle engine."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "submitted",
+          "transitions": {
+            "approve": {
+              "from": "submitted",
+              "to": "approved"
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "learner": {
+            "register": "scholiq",
+            "schema": "LearnerProfile",
+            "cardinality": "many-to-one",
+            "joinOn": "learnerId"
+          }
+        },
+        "x-openregister-notifications": {
+          "onApproved": {
+            "trigger": {
+              "transition": "approve"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.attendance.excuse.approved",
+            "recipientField": "submittedBy"
+          },
+          "onRejected": {
+            "trigger": {
+              "transition": "reject"
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.attendance.excuse.rejected",
+            "recipientField": "submittedBy"
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "AttendanceThreshold": {
+        "slug": "attendance-threshold",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "AttendanceThreshold",
+        "description": "Configurable threshold rule that watches learner attendance over a window and fires when the metric crosses the limit. The leerplicht-16uur kind is the Dutch Leerplichtwet art. 21a profile. Crossing detection uses the same calculatedChange mechanism as Regulation.ragStatus — NOT a TimedJob (ADR-022).",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "kind",
+          "scope",
+          "metric",
+          "limit",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable threshold rule name."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "leerplicht-16uur",
+              "college-aanwezigheid",
+              "training-attendance",
+              "compliance-presence",
+              "generic"
+            ],
+            "description": "Profile kind. leerplicht-16uur is the Leerplichtwet art. 21a profile (16 unexcused lesuren in 4 rolling weeks)."
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "per-learner",
+              "per-cohort"
+            ],
+            "description": "Whether the threshold applies per individual learner or aggregated per cohort.",
+            "default": "per-learner"
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Cohort this threshold applies to. Null = applies to all cohorts in the tenant."
+          },
+          "window": {
+            "type": "object",
+            "description": "Measurement window definition.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "rolling-weeks",
+                  "fixed-term"
+                ],
+                "description": "Window type."
+              },
+              "weeks": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Number of rolling weeks (when type is rolling-weeks). E.g. 4 for the leerplicht 4-week window."
+              },
+              "termId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Term identifier (when type is fixed-term)."
+              }
+            },
+            "default": {
+              "type": "rolling-weeks",
+              "weeks": 4
+            }
+          },
+          "metric": {
+            "type": "string",
+            "enum": [
+              "unexcused-lesuren",
+              "unexcused-sessions",
+              "attendance-percent-below"
+            ],
+            "description": "Metric being measured. unexcused-lesuren counts lesuren from AttendanceRecords with status absent-unexcused."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Threshold value. E.g. 16 for the leerplicht rule."
+          },
+          "lesuurMinutes": {
+            "type": "integer",
+            "default": 60,
+            "description": "Minutes per lesuur, used when metric is unexcused-lesuren. Default 60."
+          },
+          "onCross": {
+            "type": "object",
+            "description": "Action to take when the threshold is crossed.",
+            "properties": {
+              "notify": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to send notifications to notifyRoles."
+              },
+              "notifyRoles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tenant roles to notify on crossing (e.g. [\"mentor\", \"coordinator\"]).",
+                "default": [
+                  "mentor",
+                  "coordinator"
+                ]
+              },
+              "createFlag": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to create an AttendanceFlag on crossing."
+              },
+              "dataExchangeTarget": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "If set, a DataExchangeJob is queued to this target (e.g. 'leerplicht'). Requires the data-exchange spec. TODO(data-exchange spec)."
+              }
+            },
+            "default": {
+              "notify": true,
+              "notifyRoles": [
+                "mentor",
+                "coordinator"
+              ],
+              "createFlag": true,
+              "dataExchangeTarget": null
+            }
+          },
+          "active": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this threshold rule is currently enforced."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Managed by OR lifecycle engine."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active"
+            },
+            "archive": {
+              "from": [
+                "draft",
+                "active"
+              ],
+              "to": "archived"
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "active"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          }
+        },
+        "x-openregister-calculations": {
+          "unexcusedLesuren": {
+            "type": "number",
+            "materialise": true,
+            "description": "Rolling sum of unexcused lesuren for each learner in the threshold's scope and window. When this value reaches or exceeds `limit`, the threshold is crossed. Reuses the same calculatedChange mechanism as Regulation.ragStatus — NOT a TimedJob (ADR-022).",
+            "expression": {
+              "sum": {
+                "schema": "AttendanceRecord",
+                "field": "lesuren",
+                "filter": {
+                  "cohortId": "@self.cohortId",
+                  "status": "absent-unexcused",
+                  "markedAt": {
+                    "gte": "@window.start",
+                    "lte": "@window.end"
+                  }
+                }
+              }
+            }
+          },
+          "isThresholdCrossed": {
+            "type": "boolean",
+            "materialise": true,
+            "description": "True when unexcusedLesuren >= limit. Drives the onThresholdCrossed notification.",
+            "expression": {
+              "gte": [
+                {
+                  "prop": "unexcusedLesuren"
+                },
+                {
+                  "prop": "limit"
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onThresholdCrossed": {
+            "trigger": {
+              "calculatedChange": "isThresholdCrossed",
+              "to": true
+            },
+            "channel": "nc-notification",
+            "subject": "scholiq.attendance.threshold.crossed",
+            "recipientFromTenantRole": "mentor",
+            "idempotencyKey": "${@self.id}-${learnerId}-${windowStart}"
+          }
+        },
+        "x-openregister-widgets": {
+          "cohortAttendanceGrid": {
+            "type": "cohort-attendance-grid",
+            "title": "scholiq.widget.attendance.cohort",
+            "description": "Shows learners in a cohort sorted by proximity to each applicable threshold.",
+            "props": {
+              "metrics": [
+                "unexcusedLesuren",
+                "isThresholdCrossed"
+              ],
+              "actions": [
+                {
+                  "id": "markAttendance",
+                  "manifestPage": "MarkAttendanceView",
+                  "presetField": "cohortId"
+                },
+                {
+                  "id": "viewFlags",
+                  "manifestPage": "AttendanceFlags"
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "AttendanceFlag": {
+        "slug": "attendance-flag",
+        "icon": "FlagOutline",
+        "version": "0.1.0",
+        "title": "AttendanceFlag",
+        "description": "Created when an AttendanceThreshold is crossed. appendOnly: true per ADR-008 (immutable audit evidence). The flag tracks the mentor's intervention and any outbound leerplicht report via its lifecycle. It NEVER auto-acts against the learner — human-in-the-loop throughout.",
+        "type": "object",
+        "appendOnly": true,
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "learnerId",
+          "attendanceThresholdId",
+          "windowStart",
+          "windowEnd",
+          "metricValue",
+          "tenant_id"
+        ],
+        "properties": {
+          "learnerId": {
+            "type": "string",
+            "description": "Nextcloud user ID of the learner who crossed the threshold."
+          },
+          "attendanceThresholdId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the AttendanceThreshold that was crossed."
+          },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Cohort in context when the threshold was crossed."
+          },
+          "windowStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of the measurement window in which the threshold was crossed."
+          },
+          "windowEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the measurement window in which the threshold was crossed."
+          },
+          "metricValue": {
+            "type": "number",
+            "description": "The metric value at the moment of crossing (e.g. 16 lesuren)."
+          },
+          "breachingRecordIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUIDs of the AttendanceRecords that collectively pushed the metric over the limit.",
+            "default": []
+          },
+          "dataExchangeJobId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the DataExchangeJob queued to the configured target (e.g. leerplichtambtenaar). Null until the job is created. TODO(data-exchange spec)."
+          },
+          "mentorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nextcloud user ID of the learner's mentor, resolved from LearnerProfile.managerId at flag creation."
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in-handling",
+              "reported",
+              "resolved"
+            ],
+            "default": "open",
+            "description": "Flag lifecycle state. Managed by OR lifecycle engine."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "open",
+          "transitions": {
+            "startHandling": {
+              "from": "open",
+              "to": "in-handling"
+            },
+            "report": {
+              "from": "in-handling",
+              "to": "reported",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\AttendanceFlagReportGuard"
+              ]
+            },
+            "resolve": {
+              "from": [
+                "open",
+                "in-handling",
+                "reported"
+              ],
+              "to": "resolved"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "attendanceThreshold": {
+            "register": "scholiq",
+            "schema": "AttendanceThreshold",
+            "cardinality": "many-to-one",
+            "joinOn": "attendanceThresholdId"
+          },
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          }
+        },
+        "x-openregister-calculations": {
+          "daysSinceFlag": {
+            "type": "integer",
+            "materialise": true,
+            "description": "Number of days since the flag was created (windowEnd as proxy). Helps the mentor dashboard sort by urgency.",
+            "expression": {
+              "dateDiff": [
+                "@now",
+                {
+                  "prop": "windowEnd"
+                },
+                "days"
+              ]
+            }
+          }
+        },
+        "x-openregister-seed": []
       }
     }
   }

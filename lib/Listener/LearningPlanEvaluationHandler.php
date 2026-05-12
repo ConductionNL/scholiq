@@ -148,7 +148,12 @@ class LearningPlanEvaluationHandler implements IEventListener
             return;
         }
 
-        $plan  = is_array($plans[0]) ? $plans[0] : $plans[0]->jsonSerialize();
+        if (is_array($plans[0]) === true) {
+            $plan = $plans[0];
+        } else {
+            $plan = $plans[0]->jsonSerialize();
+        }
+
         $goals = $plan['goals'] ?? [];
 
         // Build a goalId → outcome map for O(1) lookups.
@@ -164,7 +169,10 @@ class LearningPlanEvaluationHandler implements IEventListener
         $changed = false;
         foreach ($goals as &$goal) {
             $goalId  = $goal['goalId'] ?? null;
-            $outcome = $goalId !== null ? ($outcomeMap[$goalId] ?? null) : null;
+            $outcome = null;
+            if ($goalId !== null) {
+                $outcome = $outcomeMap[$goalId] ?? null;
+            }
 
             if ($outcome === null) {
                 continue;

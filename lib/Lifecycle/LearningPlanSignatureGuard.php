@@ -200,7 +200,11 @@ class LearningPlanSignatureGuard
             return [];
         }
 
-        $template = is_array($templates[0]) ? $templates[0] : $templates[0]->jsonSerialize();
+        if (is_array($templates[0]) === true) {
+            $template = $templates[0];
+        } else {
+            $template = $templates[0]->jsonSerialize();
+        }
 
         return $template['requiredSignerRoles'] ?? [];
 
@@ -230,7 +234,11 @@ class LearningPlanSignatureGuard
 
         $result = [];
         foreach ($raw as $item) {
-            $result[] = is_array($item) ? $item : $item->jsonSerialize();
+            if (is_array($item) === true) {
+                $result[] = $item;
+            } else {
+                $result[] = $item->jsonSerialize();
+            }
         }
 
         return $result;
@@ -308,7 +316,11 @@ class LearningPlanSignatureGuard
     private function assuranceRank(string $level): int
     {
         $rank = array_search($level, self::ASSURANCE_ORDER, strict: true);
-        return $rank === false ? 0 : (int) $rank;
+        if ($rank === false) {
+            return 0;
+        }
+
+        return (int) $rank;
 
     }//end assuranceRank()
 
