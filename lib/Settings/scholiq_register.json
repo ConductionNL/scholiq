@@ -660,6 +660,30 @@
             "default": "draft",
             "example": "draft"
           },
+          "parentCourseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the parent Course. Makes Course recursive — a 'module' is a Course used as a container. Null for top-level courses."
+          },
+          "curriculumPlanId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the CurriculumPlan governing this course. Consumed by the grading spec."
+          },
+          "programmeIds": {
+            "type": "array",
+            "description": "UUIDs of Programmes that include this Course.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "tenant_id": {
             "type": "string",
             "format": "uuid",
@@ -751,6 +775,26 @@
             "recipients": [
               "admin"
             ]
+          }
+        },
+        "x-openregister-relations": {
+          "parentCourse": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "parentCourseId"
+          },
+          "curriculumPlan": {
+            "register": "scholiq",
+            "schema": "CurriculumPlan",
+            "cardinality": "many-to-one",
+            "joinOn": "curriculumPlanId"
+          },
+          "programmes": {
+            "register": "scholiq",
+            "schema": "Programme",
+            "cardinality": "many-to-many",
+            "joinOn": "programmeIds"
           }
         },
         "x-openregister-seed": []
@@ -1073,6 +1117,14 @@
             ],
             "description": "Machine-readable slug of the linked compliance regulation, e.g. 'avg-2018'. Used by compliance-audit to group evidence."
           },
+          "cohortId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Cohort this enrolment is associated with. Null for individually enrolled learners not in a cohort."
+          },
           "tenant_id": {
             "type": "string",
             "format": "uuid",
@@ -1116,6 +1168,12 @@
             "schema": "Course",
             "cardinality": "many-to-one",
             "joinOn": "courseId"
+          },
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
           }
         },
         "x-openregister-calculations": {
@@ -1940,6 +1998,803 @@
             "materialise": true,
             "description": "Highest-priority Scholiq role for this learner, resolved by RoleSelector (admin group override + static priority map).",
             "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Programme": {
+        "slug": "programme",
+        "icon": "SchoolOutline",
+        "version": "0.1.0",
+        "title": "Programme",
+        "description": "A named educational or training track (HBO-V bachelor, NIS2 board certification, vmbo-tl examenjaar). Aggregates courses, declares a credential to issue on completion, and points at one CurriculumPlan.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "level",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable programme name, e.g. 'HBO-V bachelor 2026'.",
+            "example": "NIS2 Board Certification Programme"
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Institution-assigned programme code.",
+            "example": "NIS2-BOARD-2026"
+          },
+          "level": {
+            "type": "string",
+            "description": "Education or training level.",
+            "enum": [
+              "po",
+              "vo",
+              "mbo",
+              "hbo",
+              "wo",
+              "corporate"
+            ],
+            "example": "corporate"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Plain-language description of the programme."
+          },
+          "curriculumPlanId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the governing CurriculumPlan. Null until a plan is assigned."
+          },
+          "courseIds": {
+            "type": "array",
+            "description": "Ordered list of Course UUIDs that form the programme's content spine.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "credentialTemplateId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Credential template to issue on programme completion. Null = no auto-issuance."
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Programme lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\ProgrammePublishGuard"
+              ]
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived"
+            },
+            "unarchive": {
+              "from": "archived",
+              "to": "draft"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "curriculumPlan": {
+            "register": "scholiq",
+            "schema": "CurriculumPlan",
+            "cardinality": "many-to-one",
+            "joinOn": "curriculumPlanId"
+          },
+          "courses": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-many",
+            "joinOn": "courseIds"
+          }
+        },
+        "x-openregister-calculations": {
+          "courseCount": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "count": {
+                "prop": "courseIds"
+              }
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "CurriculumPlan": {
+        "slug": "curriculum-plan",
+        "icon": "ClipboardTextOutline",
+        "version": "0.1.0",
+        "title": "CurriculumPlan",
+        "description": "The governing assessment plan for a Programme. Carries the ordered component list (kolommen), weight per component, roll-up formula, grade scale, pass rules, and period structure. Profiles: PTA (Dutch VO), OER/studiegids (HE), opleidingsplan (MBO), training-curriculum (corporate), generic.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "kind",
+          "formula",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable plan name.",
+            "example": "PTA Biologie vmbo-tl 2025-2026"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Profile of this curriculum plan.",
+            "enum": [
+              "pta",
+              "oer",
+              "opleidingsplan",
+              "training-curriculum",
+              "generic"
+            ],
+            "example": "pta"
+          },
+          "requiredCourseIds": {
+            "type": "array",
+            "description": "UUIDs of courses that are mandatory in this plan.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "electiveCourseIds": {
+            "type": "array",
+            "description": "UUIDs of elective / optional courses in this plan.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "components": {
+            "type": "array",
+            "description": "Assessment component definitions (kolommen). Each entry maps to one grade component with its weight, period, and kind.",
+            "items": {
+              "type": "object",
+              "required": [
+                "componentId",
+                "label",
+                "weight",
+                "period",
+                "kind"
+              ],
+              "properties": {
+                "componentId": {
+                  "type": "string",
+                  "description": "Stable identifier for this component within the plan."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Display label, e.g. 'Toets periode 1'.",
+                  "example": "Toets periode 1"
+                },
+                "weight": {
+                  "type": "number",
+                  "description": "Relative weight of this component in the roll-up formula. E.g. 3 means this kolom contributes 3x.",
+                  "minimum": 0,
+                  "example": 3
+                },
+                "period": {
+                  "description": "Period identifier or number this component belongs to.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ],
+                  "example": 1
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "Component category.",
+                  "enum": [
+                    "assignment",
+                    "assessment",
+                    "participation"
+                  ],
+                  "example": "assessment"
+                }
+              }
+            }
+          },
+          "formula": {
+            "type": "string",
+            "description": "Roll-up formula for computing the final grade from weighted components.",
+            "enum": [
+              "weighted-average",
+              "last-attempt",
+              "best-of-n",
+              "all-must-pass"
+            ],
+            "example": "weighted-average"
+          },
+          "gradeScaleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the GradeScale object (grading spec). Null = default 1-10 Dutch scale."
+          },
+          "passRules": {
+            "type": "array",
+            "description": "Per-component (or overall) minimum-pass thresholds.",
+            "items": {
+              "type": "object",
+              "required": [
+                "minValue"
+              ],
+              "properties": {
+                "componentId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "If set: applies to that specific component. If null: applies to the final grade."
+                },
+                "minValue": {
+                  "type": "number",
+                  "description": "Minimum passing value (e.g. 5.5 on Dutch 1-10 scale).",
+                  "example": 5.5
+                }
+              }
+            }
+          },
+          "periods": {
+            "type": "array",
+            "description": "Period definitions (e.g. SE-periodes for PTA, blokken for HE).",
+            "items": {
+              "type": "object",
+              "required": [
+                "periodId",
+                "label",
+                "startDate",
+                "endDate"
+              ],
+              "properties": {
+                "periodId": {
+                  "type": "string",
+                  "description": "Stable identifier for this period."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Display label, e.g. 'Periode 1'.",
+                  "example": "Periode 1"
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Start date of the period (ISO 8601)."
+                },
+                "endDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "End date of the period (ISO 8601)."
+                }
+              }
+            }
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Plan lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "draft",
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published"
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived"
+            },
+            "unarchive": {
+              "from": "archived",
+              "to": "draft"
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Cohort": {
+        "slug": "cohort",
+        "icon": "AccountGroupOutline",
+        "version": "0.1.0",
+        "title": "Cohort",
+        "description": "A group of learners doing a Course or Programme together in a given period. Members are LearnerProfile UUIDs; backed by a Nextcloud group for permissioning. Lifecycle: planned → active → completed | archived.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "name",
+          "period",
+          "academicYear",
+          "tenant_id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable cohort name, e.g. '3H Biologie 2025-2026' or 'NIS2 Batch A'.",
+            "example": "NIS2 Batch A — Q1 2026"
+          },
+          "programmeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Programme this cohort runs. Null for standalone course cohorts."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the specific Course this cohort runs (for standalone course cohorts)."
+          },
+          "teacherIds": {
+            "type": "array",
+            "description": "Nextcloud user IDs of assigned teachers / instructors.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "learnerIds": {
+            "type": "array",
+            "description": "Nextcloud user IDs of the LearnerProfile owners enrolled in this cohort.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ncGroupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Backing Nextcloud group ID used for file sharing and permissioning. Null until the cohort is activated."
+          },
+          "period": {
+            "type": "string",
+            "description": "Human-readable period label (e.g. 'Semester 1', 'Q1', 'Periode 1').",
+            "example": "Q1"
+          },
+          "academicYear": {
+            "type": "string",
+            "description": "Academic or training year in YYYY or YYYY-YYYY format.",
+            "example": "2025-2026"
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Cohort lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "planned",
+              "active",
+              "completed",
+              "archived"
+            ],
+            "default": "planned"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "planned",
+          "transitions": {
+            "activate": {
+              "from": "planned",
+              "to": "active",
+              "requires": [
+                "OCA\\Scholiq\\Lifecycle\\CohortMembershipGuard"
+              ]
+            },
+            "complete": {
+              "from": "active",
+              "to": "completed"
+            },
+            "archive": {
+              "from": [
+                "planned",
+                "completed"
+              ],
+              "to": "archived"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "programme": {
+            "register": "scholiq",
+            "schema": "Programme",
+            "cardinality": "many-to-one",
+            "joinOn": "programmeId"
+          },
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          }
+        },
+        "x-openregister-calculations": {
+          "learnerCount": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "count": {
+                "prop": "learnerIds"
+              }
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Session": {
+        "slug": "session",
+        "icon": "CalendarClockOutline",
+        "version": "0.1.0",
+        "title": "Session",
+        "description": "A scheduled occurrence of a Cohort meeting: a les, hoorcollege, or workshop. Carries start/end datetime, location (room or online URL), attached Materials, and linked Assignments. The unit a teacher takes attendance against.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "cohortId",
+          "title",
+          "startsAt",
+          "endsAt",
+          "tenant_id"
+        ],
+        "properties": {
+          "cohortId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the Cohort this session belongs to."
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Course covered in this session. Null for administrative / non-content sessions."
+          },
+          "lessonId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Lesson covered in this session. Null when not tied to a specific lesson."
+          },
+          "title": {
+            "type": "string",
+            "description": "Session title.",
+            "example": "Hoorcollege: Inleiding NIS2 — Scope & Verplichtingen"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 start timestamp of the session."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 end timestamp of the session."
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Room code or online URL (MS Teams, Zoom, etc.).",
+            "example": "Lokaal A-203"
+          },
+          "materialIds": {
+            "type": "array",
+            "description": "UUIDs of Material objects attached to this session.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "assignmentIds": {
+            "type": "array",
+            "description": "UUIDs of Assignment objects linked to this session (forward reference to the assignments spec).",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "lifecycle": {
+            "type": "string",
+            "description": "Session lifecycle state. Managed by OR lifecycle engine.",
+            "enum": [
+              "scheduled",
+              "in-progress",
+              "completed",
+              "cancelled"
+            ],
+            "default": "scheduled"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "property": "lifecycle",
+          "initial": "scheduled",
+          "transitions": {
+            "start": {
+              "from": "scheduled",
+              "to": "in-progress"
+            },
+            "complete": {
+              "from": "in-progress",
+              "to": "completed"
+            },
+            "cancel": {
+              "from": [
+                "scheduled",
+                "in-progress"
+              ],
+              "to": "cancelled"
+            }
+          }
+        },
+        "x-openregister-relations": {
+          "cohort": {
+            "register": "scholiq",
+            "schema": "Cohort",
+            "cardinality": "many-to-one",
+            "joinOn": "cohortId"
+          },
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          },
+          "lesson": {
+            "register": "scholiq",
+            "schema": "Lesson",
+            "cardinality": "many-to-one",
+            "joinOn": "lessonId"
+          },
+          "materials": {
+            "register": "scholiq",
+            "schema": "Material",
+            "cardinality": "many-to-many",
+            "joinOn": "materialIds"
+          }
+        },
+        "x-openregister-calculations": {
+          "durationMinutes": {
+            "type": "integer",
+            "materialise": true,
+            "expression": {
+              "dateDiff": [
+                {
+                  "prop": "endsAt"
+                },
+                {
+                  "prop": "startsAt"
+                },
+                "minutes"
+              ]
+            }
+          },
+          "isPast": {
+            "type": "boolean",
+            "materialise": true,
+            "expression": {
+              "lt": [
+                {
+                  "prop": "endsAt"
+                },
+                "@now"
+              ]
+            }
+          }
+        },
+        "x-openregister-seed": []
+      },
+      "Material": {
+        "slug": "material",
+        "icon": "FilePresentationBoxOutline",
+        "version": "0.1.0",
+        "title": "Material",
+        "description": "Metadata for a file, presentation, reading, video, or SCORM/cmi5 package attached to a Course, Lesson, or Session. The bytes live in OpenRegister's native file attachments; this schema carries type, license, LOM-style tags, and ordering.",
+        "type": "object",
+        "x-openregister": {
+          "active": true,
+          "hardDelete": false,
+          "searchable": true
+        },
+        "required": [
+          "title",
+          "kind",
+          "fileRef",
+          "tenant_id"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Human-readable title of the material.",
+            "example": "Slides — NIS2 Scope & Obligations"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Material type.",
+            "enum": [
+              "slides",
+              "reading",
+              "video",
+              "scorm",
+              "cmi5",
+              "lti",
+              "link",
+              "document",
+              "other"
+            ],
+            "example": "slides"
+          },
+          "fileRef": {
+            "type": "string",
+            "description": "OpenRegister file attachment reference (nc:files path or OR attachment ID). The app does NOT store file bytes.",
+            "example": "/Scholiq/tenant-uuid/materials/slides-nis2.pptx"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "External URL for kind='link' materials. Null for file-backed materials."
+          },
+          "license": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SPDX license identifier or rights statement.",
+            "example": "CC-BY-4.0"
+          },
+          "lomTags": {
+            "type": "array",
+            "description": "NL-LOM / VDEX keyword tags for discoverability.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "order": {
+            "type": "integer",
+            "description": "Display order within its parent (Course, Lesson, or Session). Lower values appear first.",
+            "default": 0,
+            "example": 1
+          },
+          "courseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Course this material is attached to. Null if attached at Lesson or Session level."
+          },
+          "lessonId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Lesson this material is attached to. Null if attached at Course or Session level."
+          },
+          "sessionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "UUID of the Session this material is attached to. Null if attached at Course or Lesson level."
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Tenant identifier for multi-tenant isolation."
+          }
+        },
+        "x-openregister-relations": {
+          "course": {
+            "register": "scholiq",
+            "schema": "Course",
+            "cardinality": "many-to-one",
+            "joinOn": "courseId"
+          },
+          "lesson": {
+            "register": "scholiq",
+            "schema": "Lesson",
+            "cardinality": "many-to-one",
+            "joinOn": "lessonId"
+          },
+          "session": {
+            "register": "scholiq",
+            "schema": "Session",
+            "cardinality": "many-to-one",
+            "joinOn": "sessionId"
           }
         },
         "x-openregister-seed": []

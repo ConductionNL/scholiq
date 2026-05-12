@@ -35,6 +35,13 @@
       "order": 40
     },
     {
+      "id": "Curriculum",
+      "label": "Curriculum",
+      "icon": "icon-category-education",
+      "route": "Programmes",
+      "order": 45
+    },
+    {
       "id": "Compliance",
       "label": "Compliance",
       "icon": "icon-menu-sidebar",
@@ -295,6 +302,113 @@
           }
         ],
         "layout": []
+      }
+    },
+    {
+      "id": "Programmes",
+      "route": "/curriculum/programmes",
+      "type": "index",
+      "title": "scholiq.page.programmes.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Programme"
+      }
+    },
+    {
+      "id": "ProgrammeDetail",
+      "route": "/curriculum/programmes/:id",
+      "type": "detail",
+      "title": "scholiq.page.programme.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Programme"
+      }
+    },
+    {
+      "id": "CurriculumPlans",
+      "route": "/curriculum/plans",
+      "type": "index",
+      "title": "scholiq.page.curriculum_plans.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "CurriculumPlan"
+      }
+    },
+    {
+      "id": "CurriculumPlanDetail",
+      "route": "/curriculum/plans/:id",
+      "type": "detail",
+      "title": "scholiq.page.curriculum_plan.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "CurriculumPlan"
+      }
+    },
+    {
+      "id": "Cohorts",
+      "route": "/cohorts",
+      "type": "index",
+      "title": "scholiq.page.cohorts.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Cohort"
+      }
+    },
+    {
+      "id": "CohortDetail",
+      "route": "/cohorts/:id",
+      "type": "detail",
+      "title": "scholiq.page.cohort.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Cohort"
+      }
+    },
+    {
+      "id": "CohortTimetable",
+      "route": "/cohorts/:id/timetable",
+      "type": "custom",
+      "title": "scholiq.page.cohort.timetable.title",
+      "component": "CohortTimetable"
+    },
+    {
+      "id": "Sessions",
+      "route": "/sessions",
+      "type": "index",
+      "title": "scholiq.page.sessions.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Session"
+      }
+    },
+    {
+      "id": "SessionDetail",
+      "route": "/sessions/:id",
+      "type": "detail",
+      "title": "scholiq.page.session.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Session"
+      }
+    },
+    {
+      "id": "Materials",
+      "route": "/materials",
+      "type": "index",
+      "title": "scholiq.page.materials.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Material"
+      }
+    },
+    {
+      "id": "MaterialDetail",
+      "route": "/materials/:id",
+      "type": "detail",
+      "title": "scholiq.page.material.detail.title",
+      "config": {
+        "register": "scholiq",
+        "schema": "Material"
       }
     }
   ]
