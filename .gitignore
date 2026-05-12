@@ -3,6 +3,13 @@ docusaurus/node_modules/
 docusaurus/build/
 docusaurus/.docusaurus/
 docusaurus/.cache-loader/
+# Docusaurus documentation site (docs/ — journeydoc / ADR-030)
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/
+/docs/.cache-loader/
+# Generated translation files — re-enable when a Dutch translation pass ships
+/docs/i18n/nl/
 node_modules/
 .npm/
 
