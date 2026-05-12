@@ -27,6 +27,7 @@ use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\Scholiq\Listener\GradeRollupHandler;
+use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -108,6 +109,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: GradeRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception: LearningPlanEvaluation.recorded → LearningPlan
+        // goal-status + nextReviewAt update bridge.
+        // When an evaluation transitions to `recorded`, the handler updates the parent
+        // LearningPlan's goals[] statuses and nextReviewAt date then persists via
+        // ObjectService::saveObject. No declarative schema expression covers this cross-object
+        // write.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: LearningPlanEvaluationHandler::class
         );
 
     }//end register()
