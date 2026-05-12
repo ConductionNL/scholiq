@@ -26,6 +26,7 @@ namespace OCA\Scholiq\AppInfo;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
+use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
@@ -97,6 +98,16 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CredentialIssuanceHandler::class
+        );
+
+        // ADR-031 legitimate exception: GradeEntry.published → FinalGrade recompute bridge,
+        // and AssessmentResult.graded → concept GradeEntry creation bridge.
+        // Listens for OR's ObjectTransitionedEvent; the GradeRollupHandler filters to the
+        // relevant schemas and states. All FinalGrade computation logic lives in
+        // GradeFormulaEvaluator (stateless calculation engine — ADR-031 "above schema metadata").
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: GradeRollupHandler::class
         );
 
     }//end register()
