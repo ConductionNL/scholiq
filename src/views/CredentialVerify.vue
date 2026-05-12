@@ -42,14 +42,17 @@
 			</dl>
 
 			<div class="credential-verify__qr">
-				<img :src="qrUrl" :alt="t('scholiq', 'QR code linking to this verification page')" />
-				<p class="credential-verify__qr-url">{{ verificationUrl }}</p>
+				<img :src="qrUrl" :alt="t('scholiq', 'QR code linking to this verification page')">
+				<p class="credential-verify__qr-url">
+					{{ verificationUrl }}
+				</p>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcEmptyContent } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import CheckCircleOutline from 'vue-material-design-icons/CheckCircleOutline.vue'
@@ -90,7 +93,7 @@ export default {
 			this.error = false
 			try {
 				const response = await fetch(
-					OC.generateUrl(`/apps/scholiq/api/credentials/${this.id}/verify`),
+					generateUrl(`/apps/scholiq/api/credentials/${this.id}/verify`),
 					{ method: 'GET', headers: { Accept: 'application/json' } },
 				)
 				if (response.status === 404) {
