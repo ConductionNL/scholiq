@@ -1,4 +1,4 @@
-# Scholiq — Admin Guide
+# Scholiq, Admin Guide
 
 This guide covers installation, register bootstrapping, signing key configuration, and troubleshooting for Nextcloud administrators.
 
@@ -31,14 +31,14 @@ Or via the Nextcloud App Store: search for **Scholiq**, click **Download and ena
 
 Auto-bootstrap of the register on `app:enable` is blocked by openregister#1487, tracked in scholiq#35. Until that is resolved, you must import the register manually after every fresh install.
 
-**Option A — OCC command:**
+**Option A, OCC command:**
 
 ```bash
 docker exec nextcloud php occ openregister:register:import \
   /var/www/html/custom_apps/scholiq/lib/Settings/scholiq_register.json
 ```
 
-**Option B — OpenRegister admin UI:**
+**Option B, OpenRegister admin UI:**
 
 1. Open Nextcloud as admin.
 2. Go to **OpenRegister** > **Registers** > **Import**.
@@ -49,7 +49,7 @@ docker exec nextcloud php occ openregister:register:import \
 
 Open **OpenRegister** > **Schemas** and confirm you see all 9 scholiq schemas listed.
 
-If any are missing, re-run the import. If the import fails, check the OpenRegister version — scholiq requires `openregister ^v0.2.10`.
+If any are missing, re-run the import. If the import fails, check the OpenRegister version, scholiq requires `openregister ^v0.2.10`.
 
 ---
 
@@ -57,8 +57,8 @@ If any are missing, re-run the import. If the import fails, check the OpenRegist
 
 Scholiq uses RSA key pairs for two purposes:
 
-- **Credential signing** — `CredentialSigningService` RS256-signs Open Badges 3.0 assertions.
-- **Attestation HMAC** — `AttestationSigningGuard` uses the tenant key for HMAC-SHA256.
+- **Credential signing**, `CredentialSigningService` RS256-signs Open Badges 3.0 assertions.
+- **Attestation HMAC**, `AttestationSigningGuard` uses the tenant key for HMAC-SHA256.
 
 Keys are stored via Nextcloud's `ICrypto` interface (encrypted at rest).
 
@@ -78,7 +78,7 @@ This generates a new RSA-2048 key pair and stores it in `IAppConfig` under the `
 
 ### Rotate keys
 
-Key rotation does not invalidate existing signatures — each signed object stores the `signingKeyId` used at signing time.
+Key rotation does not invalidate existing signatures, each signed object stores the `signingKeyId` used at signing time.
 
 ```bash
 docker exec nextcloud php occ scholiq:keys:generate --rotate
@@ -143,17 +143,17 @@ docker exec nextcloud php occ openregister:register:import \
 
 **Symptom:** Learners do not receive due-date reminders or completion notifications.
 
-**Check 1 — NC cron:** Nextcloud's background job runner must be active. Check:
+**Check 1, NC cron:** Nextcloud's background job runner must be active. Check:
 ```bash
 docker exec nextcloud php occ background-job:run --list
 ```
 
-**Check 2 — OR notification worker:** OpenRegister's notification dispatch depends on its own cron hook. Verify OR's background jobs are not stalled:
+**Check 2, OR notification worker:** OpenRegister's notification dispatch depends on its own cron hook. Verify OR's background jobs are not stalled:
 ```bash
 docker exec nextcloud php occ background-job:run OCA\\OpenRegister\\BackgroundJob\\NotificationJob
 ```
 
-**Check 3 — User preferences:** Notifications are gated by user preference keys (`notify_assignments`, `notify_due_dates`). Check that these are not disabled in the user's Scholiq settings.
+**Check 3, User preferences:** Notifications are gated by user preference keys (`notify_assignments`, `notify_due_dates`). Check that these are not disabled in the user's Scholiq settings.
 
 ### Attestation signing fails
 

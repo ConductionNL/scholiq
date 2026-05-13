@@ -1,8 +1,8 @@
-# Scholiq — Design References & Wireframes
+# Scholiq, Design References & Wireframes
 
 > Visual design references, UX patterns from competitor analysis, and ASCII wireframes for every primary view in Scholiq. All wireframes are ~70 chars wide and use realistic Dutch + English data (Sven Bakker, Esra Yıldız, Klas 5B, OPP-2026-014, etc.) so the team can pressure-test layout density.
 
-Document version: 1.0 · 2026-05-11 · Companion to [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) and [`docs/FEATURES.md`](./FEATURES.md).
+Document version: 1.0 · 2026-05-11 · Companion to [`docs/Technical/architecture.md`](./architecture.md) and [`docs/Features/features.md`](../Features/features.md).
 
 ---
 
@@ -10,8 +10,8 @@ Document version: 1.0 · 2026-05-11 · Companion to [`docs/ARCHITECTURE.md`](./A
 
 Scholiq's competitive opening is UX. From the intelligence brief:
 
-> **Insight (high)**: "Open-source LMS leaders (Moodle, ILIAS, Open edX) all share dated UX — modern Vue/NL Design surface is the differentiator."
-> **Insight (high)**: "Dutch incumbents (Magister, SOMtoday, ParnasSys) face systemic UX and privacy backlash — opening switching window."
+> **Insight (high)**: "Open-source LMS leaders (Moodle, ILIAS, Open edX) all share dated UX, modern Vue/NL Design surface is the differentiator."
+> **Insight (high)**: "Dutch incumbents (Magister, SOMtoday, ParnasSys) face systemic UX and privacy backlash, opening switching window."
 
 Three rules govern every screen:
 
@@ -29,12 +29,12 @@ Cross-referencing the 52 competitors from the brief against UX patterns worth bo
 
 | Source | Pattern | Adopt in |
 |---|---|---|
-| **Open edX** | Clean learner dashboard — "course cards with progress ring + next-up action" | Student Dashboard |
+| **Open edX** | Clean learner dashboard, "course cards with progress ring + next-up action" | Student Dashboard |
 | **Moodle (Boost)** | Three-column course layout (sidebar nav + content + completion timeline) | Course Detail Page |
 | **Canvas LMS** | Module list with check-off pattern, "release after" gating visualization | Course/Lesson view |
 | **Magister** | Familiar NL idioms (cijferoverzicht, lesoverzicht, schoolafspraak, mentor-attentie) | NL K-12 surfaces |
 | **Studytube** | Course-card grid for corporate onboarding; "verplicht" badges | Corporate Learner Dashboard |
-| **Docebo** | Manager dashboard — completion-rate heatmap by team | Manager Dashboard |
+| **Docebo** | Manager dashboard, completion-rate heatmap by team | Manager Dashboard |
 | **Inspera Assessment** | Item-bank tree + blueprint composer | Assessment Author View |
 | **ProctorU** | Pre-flight checklist (camera / mic / id / room scan) | Proctored Exam Runner |
 | **Credly** | Credential viewer with verifiable-signature affordance | Certificate View |
@@ -368,7 +368,7 @@ Reference: ProctorU pre-flight checklist baked into a persistent right rail. EU 
 +──────────────────────────────────────────────────────────────────────+
 ```
 
-BSN column shows ● only — BSN is encrypted at rest and never displayed (constraint §6.2 of ARCHITECTURE.md). SchoolID is the operational pseudonym.
+BSN column shows ● only, BSN is encrypted at rest and never displayed (constraint §6.2 of ARCHITECTURE.md). SchoolID is the operational pseudonym.
 
 ### 4.8 OPP cycle (Ontwikkelingsperspectief)
 
@@ -488,7 +488,7 @@ Reference: Credly's credential viewer with verifiable-signature affordance. Veri
 | ▾ Edukoppeling (transport)                             ✓ connected  |
 |   Onderliggend voor: BRON/ROD, UWLR, OSO                             |
 |                                                                      |
-| ▾ SURFconext (identity)                                — niet ingest.|
+| ▾ SURFconext (identity)                               , niet ingest.|
 |   Voor HE-tenants. PO/VO blijft NC user-saml of lokaal.              |
 |                                                                      |
 | ▾ Proctoring providers                                               |
@@ -577,7 +577,7 @@ Per skill guardrail "OpenRegister dependency check is mandatory":
 +──────────────────────────────────────────────────────────────────────+
 ```
 
-This view is centered, no sidebar, no MainMenu — full-page empty state via `NcEmptyContent`. Admin CTA links to the NC app store.
+This view is centered, no sidebar, no MainMenu, full-page empty state via `NcEmptyContent`. Admin CTA links to the NC app store.
 
 ---
 
@@ -588,13 +588,13 @@ Scholiq is built on `@conduction/nextcloud-vue` which inherits Nextcloud's mobil
 - **Mobile Teacher Dashboard**: KPI cards stack vertically; "Vandaag" jumps to top; "Mededelingen" collapses to a count badge.
 - **Mobile Student Dashboard**: "Vandaag te doen" full-bleed; course cards swipe horizontally.
 - **Proctored Exam Runner**: tablet-only (mobile blocked by `Mobile.NotSuitableForExam` warning).
-- **Parent app (DigiD-authenticated)**: simplified surface — ziekmelden, cijfers, OPP-ondertekening only. No corporate / compliance surfaces.
+- **Parent app (DigiD-authenticated)**: simplified surface, ziekmelden, cijfers, OPP-ondertekening only. No corporate / compliance surfaces.
 
 ---
 
 ## 7. Iconography
 
-All icons from Material Symbols (rounded variant) — same source as the blue hexagon logo. Domain mapping:
+All icons from Material Symbols (rounded variant), same source as the blue hexagon logo. Domain mapping:
 
 | Domain | Icon (Material Symbols name) |
 |---|---|
@@ -615,18 +615,18 @@ All icons from Material Symbols (rounded variant) — same source as the blue he
 
 ## 8. Open design questions for `/opsx-new`
 
-1. **Parent app shape** — separate Nextcloud "Scholiq Ouders" companion app or simply a role-aware surface inside Scholiq? (Recommendation: role-aware surface; avoids fragmenting NC user base.)
-2. **Federated catalog** — SIVON-wide course catalog: federated via OpenCatalogi or duplicated per tenant? (Recommendation: OpenCatalogi federation when SIVON channel matures.)
-3. **DigiD parent flow** — `nc:user-oidc` direct or via Studielink-like broker for K-12? (Recommendation: nc:user-oidc direct; Studielink is HE-only.)
-4. **Talk room lifecycle** — auto-created per cohort or per-lesson on demand? (Recommendation: per cohort, persistent.)
-5. **Audit log retention** — AVG 5y default, but AI Act audit logs may need 10y for high-risk feature traceability. Resolve at ADR-005 time.
+1. **Parent app shape**, separate Nextcloud "Scholiq Ouders" companion app or simply a role-aware surface inside Scholiq? (Recommendation: role-aware surface; avoids fragmenting NC user base.)
+2. **Federated catalog**, SIVON-wide course catalog: federated via OpenCatalogi or duplicated per tenant? (Recommendation: OpenCatalogi federation when SIVON channel matures.)
+3. **DigiD parent flow**, `nc:user-oidc` direct or via Studielink-like broker for K-12? (Recommendation: nc:user-oidc direct; Studielink is HE-only.)
+4. **Talk room lifecycle**, auto-created per cohort or per-lesson on demand? (Recommendation: per cohort, persistent.)
+5. **Audit log retention**, AVG 5y default, but AI Act audit logs may need 10y for high-risk feature traceability. Resolve at ADR-005 time.
 
 ---
 
 ## 9. References
 
-- ARCHITECTURE.md: [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
-- FEATURES.md: [`docs/FEATURES.md`](./FEATURES.md)
+- architecture.md: [`docs/Technical/architecture.md`](./architecture.md)
+- features.md: [`docs/Features/features.md`](../Features/features.md)
 - Intelligence brief: [`https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md`](https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md)
 - Pipelinq design references (format inspiration): https://github.com/ConductionNL/pipelinq/blob/main/docs/DESIGN-REFERENCES.md
 - Procest design references: https://github.com/ConductionNL/procest/blob/main/docs/DESIGN-REFERENCES.md

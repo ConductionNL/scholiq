@@ -1,28 +1,28 @@
-# Scholiq — Feature Analysis & Product Strategy
+# Scholiq, Feature Analysis & Product Strategy
 
 ## Executive Summary
 
-Scholiq is an open-source, Nextcloud-native learning platform that fuses three categories — Leerlingvolgsysteem (LVS) for Dutch primary and secondary education, Learning Management System (LMS) for corporate and higher education, and credentialing/assessment infrastructure — into one EUPL-1.2 surface. The intelligence brief identifies 159 procurement records, 52 profiled competitors, 354 deduplicated canonical features (71 must, 229 should), 121 verified external sources, and 26 linked standards. No competitor on the market today operates as a Nextcloud app: Moodle, Canvas, Open edX, ILIAS, Sakai and Chamilo all live outside the school's existing collaboration stack, and every Dutch K-12 incumbent (ParnasSys, Magister, SOMtoday, ESIS, It's Learning, SchoolWise, Kindkans, Basispoort) is closed-source SaaS.
+Scholiq is an open-source, Nextcloud-native learning platform that fuses three categories, Leerlingvolgsysteem (LVS) for Dutch primary and secondary education, Learning Management System (LMS) for corporate and higher education, and credentialing/assessment infrastructure, into one EUPL-1.2 surface. The intelligence brief identifies 159 procurement records, 52 profiled competitors, 354 deduplicated canonical features (71 must, 229 should), 121 verified external sources, and 26 linked standards. No competitor on the market today operates as a Nextcloud app: Moodle, Canvas, Open edX, ILIAS, Sakai and Chamilo all live outside the school's existing collaboration stack, and every Dutch K-12 incumbent (ParnasSys, Magister, SOMtoday, ESIS, It's Learning, SchoolWise, Kindkans, Basispoort) is closed-source SaaS.
 
-The opportunity is structural rather than incremental. ParnasSys controls roughly 65% of the Dutch primary segment under Topicus/Visma ownership, while Magister (55%) and SOMtoday (40%) duopolise secondary education — and all three carry a documented UX and privacy backlash captured across AOb, De Correspondent, NOS, FtM and Computable reporting. Open-source LMS leaders share dated interfaces and require separate hosting, identity, file storage and conferencing infrastructure. The EU AI Act (Reg. 2024/1689) reclassifies adaptive learning and proctoring as high-risk systems, and AVG-Onderwijs enforces minimisation, DPIA, parental consent and pseudonymisation via SchoolID and ECK iD. Together these forces create a forced rebuild window: institutions must replace systems they cannot easily explain or audit.
+The opportunity is structural rather than incremental. ParnasSys controls roughly 65% of the Dutch primary segment under Topicus/Visma ownership, while Magister (55%) and SOMtoday (40%) duopolise secondary education, and all three carry a documented UX and privacy backlash captured across AOb, De Correspondent, NOS, FtM and Computable reporting. Open-source LMS leaders share dated interfaces and require separate hosting, identity, file storage and conferencing infrastructure. The EU AI Act (Reg. 2024/1689) reclassifies adaptive learning and proctoring as high-risk systems, and AVG-Onderwijs enforces minimisation, DPIA, parental consent and pseudonymisation via SchoolID and ECK iD. Together these forces create a forced rebuild window: institutions must replace systems they cannot easily explain or audit.
 
 ## 1. Strategic Positioning
 
 ### 1.1 No Nextcloud-native LVS or LMS exists today
 
-Across the 52 competitors profiled in the intelligence database, not one is delivered as a Nextcloud app. Moodle (37k stars, GPL-3.0), Canvas LMS (5.6k stars, AGPL-3.0), Open edX (7.5k stars, AGPL-3.0), ILIAS (400 stars, GPL-3.0), Sakai (1.2k stars, ECL-2.0), Chamilo, OpenOLAT, Forma, ATutor, Claroline, Opigno and Kolibri all assume their own user database, file store, conferencing layer, and admin chrome. Schools that have already adopted Nextcloud for files, talk, calendar and groups currently bolt an LMS on top through SAML and LTI rather than running it natively. Scholiq inverts that relationship — `nc:files` is the content store, `nc:talk` is the virtual classroom, `nc:calendar` is the lesson timetable, `nc:groups` is the cohort, and `nc:user-saml` is the SURFconext bridge. This is the structural differentiator: a school that runs Nextcloud already runs 60% of an LMS.
+Across the 52 competitors profiled in the intelligence database, not one is delivered as a Nextcloud app. Moodle (37k stars, GPL-3.0), Canvas LMS (5.6k stars, AGPL-3.0), Open edX (7.5k stars, AGPL-3.0), ILIAS (400 stars, GPL-3.0), Sakai (1.2k stars, ECL-2.0), Chamilo, OpenOLAT, Forma, ATutor, Claroline, Opigno and Kolibri all assume their own user database, file store, conferencing layer, and admin chrome. Schools that have already adopted Nextcloud for files, talk, calendar and groups currently bolt an LMS on top through SAML and LTI rather than running it natively. Scholiq inverts that relationship, `nc:files` is the content store, `nc:talk` is the virtual classroom, `nc:calendar` is the lesson timetable, `nc:groups` is the cohort, and `nc:user-saml` is the SURFconext bridge. This is the structural differentiator: a school that runs Nextcloud already runs 60% of an LMS.
 
 ### 1.2 Dutch incumbents face a switching window
 
-The intelligence brief flags ParnasSys at roughly 65% market share in PO under Topicus/Visma ownership, and the Magister 55% / SOMtoday 40% duopoly in VO. All three are systemically reviewed for UX debt, privacy posture and pricing opacity across mainstream journalism (AOb, De Correspondent, NOS, FtM) and review platforms (Capterra, G2). Switching costs are real — 12 to 18 month migration cycles — but the brief identifies SIVON, the cooperative procurement channel representing 1,000+ school boards, as a centralised route to address that switching cost across many institutions in parallel. The Dutch government separately spends an estimated €250M annually on civil-servant training (RADIO, A+O fonds Rijk), and no open Dutch assessment platform exists at all — Cito, DiatOets and IEP are closed.
+The intelligence brief flags ParnasSys at roughly 65% market share in PO under Topicus/Visma ownership, and the Magister 55% / SOMtoday 40% duopoly in VO. All three are systemically reviewed for UX debt, privacy posture and pricing opacity across mainstream journalism (AOb, De Correspondent, NOS, FtM) and review platforms (Capterra, G2). Switching costs are real, 12 to 18 month migration cycles, but the brief identifies SIVON, the cooperative procurement channel representing 1,000+ school boards, as a centralised route to address that switching cost across many institutions in parallel. The Dutch government separately spends an estimated €250M annually on civil-servant training (RADIO, A+O fonds Rijk), and no open Dutch assessment platform exists at all, Cito, DiatOets and IEP are closed.
 
 ### 1.3 OSS LMS leaders all carry dated UX
 
-The 13 OSS competitors profiled (Moodle, Canvas, Open edX, ILIAS, Sakai, Chamilo, OpenOLAT, Forma, ATutor, Claroline, Opigno, Kolibri, Gibbon, Totara) hold over 60% of global higher-education share — Moodle alone serves 400M users across 240 countries — but every external review captured in the database surfaces the same complaints: dated theming, slow page rendering, fragmented mobile experience, complicated admin chrome. The intelligence brief flags "modern Vue/NL-Design surface" as a competitive differentiator (insight ID: competitive-gap, impact: high). Scholiq inherits @conduction/nextcloud-vue and the NL Design System out of the gate, including WCAG 2.1 AA, government palette, and apexcharts-based analytics primitives.
+The 13 OSS competitors profiled (Moodle, Canvas, Open edX, ILIAS, Sakai, Chamilo, OpenOLAT, Forma, ATutor, Claroline, Opigno, Kolibri, Gibbon, Totara) hold over 60% of global higher-education share, Moodle alone serves 400M users across 240 countries, but every external review captured in the database surfaces the same complaints: dated theming, slow page rendering, fragmented mobile experience, complicated admin chrome. The intelligence brief flags "modern Vue/NL-Design surface" as a competitive differentiator (insight ID: competitive-gap, impact: high). Scholiq inherits @conduction/nextcloud-vue and the NL Design System out of the gate, including WCAG 2.1 AA, government palette, and apexcharts-based analytics primitives.
 
 ### 1.4 AI Act and AVG force a privacy-first rebuild
 
-EU AI Act (Reg. 2024/1689) classifies adaptive learning and proctoring as high-risk AI — a critical-impact legal-requirement insight. AVG-Onderwijs (Autoriteit Persoonsgegevens guidance) plus the Cyberbeveiligingswet (NIS2) drive DPIA, minimisation, parental consent, immutable evidence logs and pseudonymisation via SchoolID and ECK iD as non-negotiables. Closed-source SaaS incumbents cannot easily provide the audit trail or sovereign hosting that a school's data protection officer increasingly requires. Self-hosted Nextcloud — running on a school's own Strato/Hetzner/SURF infrastructure or behind a Cyso-managed ISAE 3402 boundary — provides the data-control posture that the regulations demand. Scholiq carries that posture inherently because it is a Nextcloud app, not a SaaS tenant.
+EU AI Act (Reg. 2024/1689) classifies adaptive learning and proctoring as high-risk AI, a critical-impact legal-requirement insight. AVG-Onderwijs (Autoriteit Persoonsgegevens guidance) plus the Cyberbeveiligingswet (NIS2) drive DPIA, minimisation, parental consent, immutable evidence logs and pseudonymisation via SchoolID and ECK iD as non-negotiables. Closed-source SaaS incumbents cannot easily provide the audit trail or sovereign hosting that a school's data protection officer increasingly requires. Self-hosted Nextcloud, running on a school's own Strato/Hetzner/SURF infrastructure or behind a Cyso-managed ISAE 3402 boundary, provides the data-control posture that the regulations demand. Scholiq carries that posture inherently because it is a Nextcloud app, not a SaaS tenant.
 
 ### 1.5 SIVON, EDCI and corporate training expand the addressable market
 
@@ -34,21 +34,21 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 
 | Competitor | Segment | License | Stars | Pricing | Features captured |
 |---|---|---|---:|---|---:|
-| Odoo eLearning | Corporate/ERP-LMS | LGPL-3.0 (CE) / Proprietary (EE) | — | subscription | 31 |
+| Odoo eLearning | Corporate/ERP-LMS | LGPL-3.0 (CE) / Proprietary (EE) |, | subscription | 31 |
 | Moodle | OSS LMS | GPL-3.0 | 37,000 | open-source | 15 |
-| Docebo | Corporate LMS | Proprietary | — | per-user | 14 |
-| SAP SuccessFactors Learning | Corporate LMS | Proprietary | — | per-user | 13 |
-| TalentLMS | Corporate LMS | Proprietary | — | subscription | 13 |
+| Docebo | Corporate LMS | Proprietary |, | per-user | 14 |
+| SAP SuccessFactors Learning | Corporate LMS | Proprietary |, | per-user | 13 |
+| TalentLMS | Corporate LMS | Proprietary |, | subscription | 13 |
 | Canvas LMS | OSS LMS | AGPL-3.0 | 5,600 | freemium | 12 |
-| Cornerstone OnDemand | Corporate LMS | Proprietary | — | per-user | 12 |
-| Litmos (SAP) | Corporate LMS | Proprietary | — | per-user | 12 |
-| LearnUpon | Corporate LMS | Proprietary | — | per-user | 12 |
-| Teachable | Course Creator | Proprietary | — | subscription | 12 |
-| 360Learning | Collaborative LMS | Proprietary | — | per-user | 12 |
-| Udemy Business | Course Marketplace | Proprietary | — | per-user | 12 |
-| Kajabi | Course Creator | Proprietary | — | subscription | 12 |
-| eFront | Corporate LMS | Proprietary | — | subscription | 12 |
-| iSpring Learn | Corporate LMS | Proprietary | — | per-user | 12 |
+| Cornerstone OnDemand | Corporate LMS | Proprietary |, | per-user | 12 |
+| Litmos (SAP) | Corporate LMS | Proprietary |, | per-user | 12 |
+| LearnUpon | Corporate LMS | Proprietary |, | per-user | 12 |
+| Teachable | Course Creator | Proprietary |, | subscription | 12 |
+| 360Learning | Collaborative LMS | Proprietary |, | per-user | 12 |
+| Udemy Business | Course Marketplace | Proprietary |, | per-user | 12 |
+| Kajabi | Course Creator | Proprietary |, | subscription | 12 |
+| eFront | Corporate LMS | Proprietary |, | subscription | 12 |
+| iSpring Learn | Corporate LMS | Proprietary |, | per-user | 12 |
 
 ### 2.2 Dutch K-12 Incumbents (segment 6, captured separately)
 
@@ -83,7 +83,7 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 |---|---|---:|---:|---:|---|
 | Course Management (CRUD, versions, prerequisites) | MVP | 153 | 43 | 12 | Top demand; all OSS + corporate competitors deliver it |
 | Classroom management | MVP | 153 | 43 | 12 | Bridges cohort to course; `nc:groups` integration |
-| Resource management | MVP | 153 | 43 | 12 | Books, devices, rooms — `nc:files` for content |
+| Resource management | MVP | 153 | 43 | 12 | Books, devices, rooms, `nc:files` for content |
 | Instructor-led training (ILT) | MVP | 153 | 43 | 12 | Scheduling via `nc:calendar` |
 | Instructor Management | MVP | 151 | 43 | 11 | Roster, qualifications, availability |
 | Drag-and-drop course builder | V1 | 10 | 0 | 5 | UX parity with Teachable/Kajabi |
@@ -99,17 +99,17 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 
 | Feature | Tier | Demand | Tenders | Comp. | Rationale |
 |---|---|---:|---:|---:|---|
-| QTI 3.0 item banks (import + author) | MVP | critical | story | — | IMS QTI 3.0 native (ADR-004); no open NL platform exists |
-| Take an online proctored exam | MVP | critical | story | — | Critical user story; AI Act high-risk surface |
-| Configure proctoring per exam | MVP | critical | story | — | Provider-pluggable proctoring |
-| Detect student exam conflicts | MVP | critical | story | — | Scheduling integrity |
+| QTI 3.0 item banks (import + author) | MVP | critical | story |, | IMS QTI 3.0 native (ADR-004); no open NL platform exists |
+| Take an online proctored exam | MVP | critical | story |, | Critical user story; AI Act high-risk surface |
+| Configure proctoring per exam | MVP | critical | story |, | Provider-pluggable proctoring |
+| Detect student exam conflicts | MVP | critical | story |, | Scheduling integrity |
 | Student quizzes and assessments | V1 | 4 | 0 | 2 | Formative assessment |
 | Soft-publish grades to review the cohort first | V1 | 15 | 5 | 0 | Dutch VO grade-publication pattern |
 | Gradebook | V1 | 4 | 0 | 2 | Cohort-level grade overview |
-| PTA weighting per kolom | V1 | critical | story | — | Dutch VO grading rule |
+| PTA weighting per kolom | V1 | critical | story |, | Dutch VO grading rule |
 | Sync exam calendar to the LMS | V1 | 4 | 0 | 2 | Bidirectional exam scheduling |
-| Inspera-style high-stakes exam orchestration | Enterprise | — | — | 1 | Plug-in providers via ADR-004 |
-| Lockdown browser integration | Enterprise | — | — | — | Provider-specific (Respondus, Safe Exam Browser) |
+| Inspera-style high-stakes exam orchestration | Enterprise |, |, | 1 | Plug-in providers via ADR-004 |
+| Lockdown browser integration | Enterprise |, |, |, | Provider-specific (Respondus, Safe Exam Browser) |
 
 ### 3.3 Certification & Credentials
 
@@ -125,7 +125,7 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | Custom certificates | V1 | 6 | 0 | 3 | Template-driven generation |
 | White-label credentials | V1 | 6 | 0 | 3 | Institution branding |
 | Certificate Template Designer | V1 | 4 | 0 | 2 | Drag-drop template editor |
-| EDCI signing + verification (Europass) | Enterprise | story | — | — | Cryptographic credential signing |
+| EDCI signing + verification (Europass) | Enterprise | story |, |, | Cryptographic credential signing |
 | Skills Framework (e21st CC / o*NET) | Enterprise | 4 | 0 | 2 | Imported skills taxonomies |
 | Track time-to-competence per role | Enterprise | 9 | 3 | 0 | Workforce analytics |
 
@@ -135,16 +135,16 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 |---|---|---:|---:|---:|---|
 | Compliance management | MVP | 166 | 44 | 17 | Highest demand feature in entire app |
 | Compliance Training | MVP | 23 | 1 | 10 | Annual cycle |
-| Capture signed attestation per learner | MVP | critical | story | — | AVG/BIO refresher |
-| Bulk-enroll all employees in annual refresher | MVP | critical | story | — | Cohort enrolment |
-| Detect upcoming certificate expiries | MVP | critical | story | — | Renewal workflow |
+| Capture signed attestation per learner | MVP | critical | story |, | AVG/BIO refresher |
+| Bulk-enroll all employees in annual refresher | MVP | critical | story |, | Cohort enrolment |
+| Detect upcoming certificate expiries | MVP | critical | story |, | Renewal workflow |
 | Compliance tracking | MVP | 16 | 2 | 5 | Coverage % per regulation |
 | Compliance automation | V1 | 23 | 1 | 10 | Rule-driven enrolment |
 | Compliance assessments | V1 | 23 | 1 | 10 | Embedded quizzes |
 | Compliance suite | V1 | 23 | 1 | 10 | Cross-regulation bundle |
-| Annual Compliance Training Audit (audit pack export) | V1 | critical | story | — | Export per regulation |
-| Prove board training (NIS2/Cyberbeveiligingswet) | V1 | critical | story | — | Board-level audit |
-| Maintain immutable evidence log | V1 | critical | story | — | Audit trail (OR-backed) |
+| Annual Compliance Training Audit (audit pack export) | V1 | critical | story |, | Export per regulation |
+| Prove board training (NIS2/Cyberbeveiligingswet) | V1 | critical | story |, | Board-level audit |
+| Maintain immutable evidence log | V1 | critical | story |, | Audit trail (OR-backed) |
 | Global compliance | Enterprise | 23 | 1 | 10 | Multi-jurisdiction packs |
 | SCORM compliance (legacy 1.2/2004) | Enterprise | 23 | 1 | 10 | Shim per ADR-002 |
 
@@ -154,15 +154,15 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 |---|---|---:|---:|---:|---|
 | User management | MVP | 135 | 43 | 3 | `nc:user` + SURFconext |
 | Group management | MVP | 153 | 43 | 12 | `nc:groups` |
-| SURFconext SSO (NL HE) | MVP | story | — | — | ADR-003; eduPersonAffiliation |
-| Nextcloud user-saml (K-12) | MVP | — | — | — | ADR-003 |
-| SchoolID + ECK iD pseudonymisation | MVP | critical | — | — | AVG/AP mandatory |
-| DigiD authentication (parents/students) | MVP | critical | story | — | Studielink, ziekmelding |
+| SURFconext SSO (NL HE) | MVP | story |, |, | ADR-003; eduPersonAffiliation |
+| Nextcloud user-saml (K-12) | MVP |, |, |, | ADR-003 |
+| SchoolID + ECK iD pseudonymisation | MVP | critical |, |, | AVG/AP mandatory |
+| DigiD authentication (parents/students) | MVP | critical | story |, | Studielink, ziekmelding |
 | SSO and API | V1 | 24 | 0 | 12 | OAuth2/OIDC clients |
 | SSO and LDAP | V1 | 4 | 0 | 2 | On-prem directory bind |
 | SCIM user provisioning | V1 | 9 | 1 | 3 | HRIS-driven user lifecycle |
 | Custom user types | V1 | 9 | 1 | 3 | Parent/staff/inspector personas |
-| Federated identity to eduGAIN | Enterprise | — | — | — | International HE |
+| Federated identity to eduGAIN | Enterprise |, |, |, | International HE |
 | Multi-tenant separation per board | Enterprise | 10 | 0 | 5 | ADR-007 |
 
 ### 3.6 Student Administration (NL)
@@ -170,20 +170,20 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | Feature | Tier | Demand | Tenders | Comp. | Rationale |
 |---|---|---:|---:|---:|---|
 | BRON/ROD koppeling (DUO) | MVP | 49 | 5 | 17 | Non-negotiable for PO/VO |
-| OSO Transfer Dossier PO to VO | MVP | critical | story | — | Mandatory NL gatekeeper |
-| Inline correction of DUO afkeurmeldingen | MVP | critical | story | — | Critical user story |
-| VO mentor imports OSO into LAS | V1 | high | story | — | High-priority story |
-| Pull enrolment data from Studielink (HE) | MVP | critical | story | — | DigiD-verified enrolment |
+| OSO Transfer Dossier PO to VO | MVP | critical | story |, | Mandatory NL gatekeeper |
+| Inline correction of DUO afkeurmeldingen | MVP | critical | story |, | Critical user story |
+| VO mentor imports OSO into LAS | V1 | high | story |, | High-priority story |
+| Pull enrolment data from Studielink (HE) | MVP | critical | story |, | DigiD-verified enrolment |
 | Publish course catalog via OOAPI 5.0 | V1 | 15 | 5 | 0 | Edustandaard 5.0 |
 | Rapportage DUO | V1 | 15 | 1 | 6 | DUO reporting cycle |
-| UWLR koppeling (methode-uitwisseling) | MVP | — | — | — | Edukoppeling mandatory |
-| Edukoppeling transport binding | MVP | — | — | — | Gatekeeper standard |
-| Auto-track 16-uur leerplicht threshold | MVP | critical | story | — | Compulsory-education law |
+| UWLR koppeling (methode-uitwisseling) | MVP |, |, |, | Edukoppeling mandatory |
+| Edukoppeling transport binding | MVP |, |, |, | Gatekeeper standard |
+| Auto-track 16-uur leerplicht threshold | MVP | critical | story |, | Compulsory-education law |
 | Report sick via DigiD-authenticated app | V1 | 15 | 1 | 6 | Parent ziekmelding |
-| Mentor sees absence patterns at a glance | V1 | high | story | — | VO mentor workflow |
-| Create OPP from sector template | MVP | critical | story | — | PO special-needs cycle |
-| Parent digitally signs OPP | V1 | high | story | — | Parental consent |
-| Quarterly OPP evaluation reminder | V1 | high | story | — | Cycle automation |
+| Mentor sees absence patterns at a glance | V1 | high | story |, | VO mentor workflow |
+| Create OPP from sector template | MVP | critical | story |, | PO special-needs cycle |
+| Parent digitally signs OPP | V1 | high | story |, | Parental consent |
+| Quarterly OPP evaluation reminder | V1 | high | story |, | Cycle automation |
 
 ### 3.7 Analytics
 
@@ -205,8 +205,8 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | Custom reports | V1 | 8 | 0 | 4 | User-defined queries |
 | Progress Tracking | V1 | 11 | 1 | 4 | Lesson-level |
 | Report renewal status to board | V1 | 13 | 1 | 5 | Compliance KPI |
-| Coverage % per regulation in real time | V1 | critical | story | — | Compliance audit |
-| AI Act high-risk model monitoring | Enterprise | — | — | — | Regulatory artefact |
+| Coverage % per regulation in real time | V1 | critical | story |, | Compliance audit |
+| AI Act high-risk model monitoring | Enterprise |, |, |, | Regulatory artefact |
 
 ### 3.8 Integrations
 
@@ -224,10 +224,10 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | SCORM/xAPI/cmi5 support | MVP | 14 | 0 | 7 | ADR-002; cmi5 primary |
 | SCORM Support (1.2 + 2004 shim) | V1 | 14 | 0 | 7 | Legacy content compatibility |
 | SCORM and Tin Can support | V1 | 8 | 0 | 4 | xAPI alias |
-| LTI 1.3 provider + consumer | MVP | — | — | — | Tool interoperability |
-| QTI 3.0 in/out | V1 | — | — | — | Item-bank portability |
-| Common Cartridge import | V1 | — | — | — | Course portability |
-| Caliper Analytics endpoint | V1 | — | — | — | xAPI alternative |
+| LTI 1.3 provider + consumer | MVP |, |, |, | Tool interoperability |
+| QTI 3.0 in/out | V1 |, |, |, | Item-bank portability |
+| Common Cartridge import | V1 |, |, |, | Course portability |
+| Caliper Analytics endpoint | V1 |, |, |, | xAPI alternative |
 
 ### 3.9 Content & Authoring
 
@@ -255,14 +255,14 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | Reactions and feedback | V1 | 5 | 1 | 1 | Comments/upvotes |
 | Record and review | V1 | 5 | 1 | 1 | Lesson recording (`nc:talk`) |
 | Survey capabilities | V1 | 5 | 1 | 1 | Course evaluation |
-| Knowledge base | V1 | — | — | — | Shared with opencatalogi/decidesk |
+| Knowledge base | V1 |, |, |, | Shared with opencatalogi/decidesk |
 | Blended learning | V1 | 5 | 1 | 1 | Hybrid in-person + online |
 
 ### 3.11 Mobile
 
 | Feature | Tier | Demand | Tenders | Comp. | Rationale |
 |---|---|---:|---:|---:|---|
-| Mobile responsive (NL Design + nc-vue) | MVP | — | — | — | Baseline; no native app needed |
+| Mobile responsive (NL Design + nc-vue) | MVP |, |, |, | Baseline; no native app needed |
 | Mobile Learning | V1 | 22 | 0 | 11 | Offline-capable PWA |
 | Mobile app (Go.Learn-equivalent PWA) | V1 | 18 | 0 | 9 | Branded PWA |
 | White-label mobile app | Enterprise | 22 | 0 | 11 | Institution-branded |
@@ -271,11 +271,11 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 
 | Feature | Tier | Demand | Tenders | Comp. | Rationale |
 |---|---|---:|---:|---:|---|
-| Automations (rules engine) | V1 | — | — | — | Platform shared (5 apps) |
-| Custom plugins (Plugin Ecosystem) | Enterprise | — | — | — | OR + scholiq shared |
+| Automations (rules engine) | V1 |, |, |, | Platform shared (5 apps) |
+| Custom plugins (Plugin Ecosystem) | Enterprise |, |, |, | OR + scholiq shared |
 | Multi-tenant architecture | Enterprise | 10 | 0 | 5 | Per-board separation |
-| Self-hosted | MVP | — | — | — | EUPL-1.2 + NC native |
-| Payment processing | Enterprise | — | — | — | Course commerce |
+| Self-hosted | MVP |, |, |, | EUPL-1.2 + NC native |
+| Payment processing | Enterprise |, |, |, | Course commerce |
 | E-commerce module | Enterprise | 10 | 0 | 5 | Public course sales |
 | Extended enterprise | Enterprise | 4 | 0 | 2 | External-learner portals |
 | Multi-portal architecture | Enterprise | 4 | 0 | 2 | Branded sub-portals |
@@ -287,7 +287,7 @@ The Dutch education market totals 7,400+ schools (PO 6,600, VO 650, HO 51) and r
 | Digital downloads | V1 | 18 | 4 | 3 | Asset delivery |
 | Rooster (timetable) | V1 | 5 | 1 | 1 | NL school timetable |
 | Calendar and scheduling | V1 | 4 | 0 | 2 | `nc:calendar` |
-| Apply 30-60-90 onboarding template | V1 | high | story | — | Corporate onboarding |
+| Apply 30-60-90 onboarding template | V1 | high | story |, | Corporate onboarding |
 | Track Digital Opportunity Index for onboarding | V1 | 12 | 4 | 0 | Onboarding analytics |
 | Enterprise LMS (orchestration) | Enterprise | 5 | 1 | 1 | Cross-tenant admin |
 
@@ -381,7 +381,7 @@ Enterprise tier targets multi-board boards, HE consortia, and Rijksoverheid trai
 74. Shape (block-based content authoring engine)
 75. Inspera-style high-stakes exam orchestration (provider plug-ins per ADR-004)
 76. Lockdown browser integration (Respondus / Safe Exam Browser)
-77. Proctoring providers — pluggable (online + onsite)
+77. Proctoring providers, pluggable (online + onsite)
 78. EDCI signing + verification (cryptographic Europass credentials)
 79. Skills Framework (e21st CC / o*NET imports)
 80. Track time-to-competence per role
@@ -505,7 +505,7 @@ Enterprise tier targets multi-board boards, HE consortia, and Rijksoverheid trai
 
 - Moodle, Canvas and Open edX deliver mature course-management, gradebook and SCORM/xAPI runtimes at scale.
 - Corporate LMS leaders (Docebo, Cornerstone, SAP SuccessFactors) deliver polished compliance reporting and HR-system integrations.
-- ParnasSys, Magister and SOMtoday own deep, audited integrations with BRON/ROD, UWLR, OSO and Edukoppeling — the gatekeeper standards.
+- ParnasSys, Magister and SOMtoday own deep, audited integrations with BRON/ROD, UWLR, OSO and Edukoppeling, the gatekeeper standards.
 - Teachable, Kajabi and Udemy deliver slick course-creator UX, e-commerce and marketing automation.
 
 ### 8.2 What They Lack

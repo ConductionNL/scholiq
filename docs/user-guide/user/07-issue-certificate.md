@@ -6,7 +6,7 @@ description: Turn a published final grade into a signed, verifiable credential t
 
 # Issue a certificate
 
-A Scholiq certificate is a verifiable credential — a JSON document signed with the school's RS256 key, with a public verification URL anyone can hit to confirm the grade is genuine.
+A Scholiq certificate is a verifiable credential, a JSON document signed with the school's RS256 key, with a public verification URL anyone can hit to confirm the grade is genuine.
 
 ## Goal
 
@@ -28,7 +28,7 @@ By the end you will have issued a certificate to one learner for a completed cou
 
    ![Add credential dialog](/screenshots/tutorials/user/07-issue-certificate-02.png)
 
-3. Pick a **Template** — Scholiq ships a default school-letter template; admins can add more under **Curriculum → Templates**. Click **Issue**. Scholiq signs the credential and stores it.
+3. Pick a **Template**, Scholiq ships a default school-letter template; admins can add more under **Curriculum → Templates**. Click **Issue**. Scholiq signs the credential and stores it.
 
    ![Credential issued](/screenshots/tutorials/user/07-issue-certificate-03.png)
 
@@ -48,11 +48,11 @@ The certificate is issued when: the row shows status *Issued* with a signature t
 
 | Symptom | Fix |
 |---|---|
-| *"No signing key configured"* on **Issue** | An admin still needs to generate the RS256 key — go to [Manage Scholiq settings](../admin/03-admin-settings.md) → **Credential Signing** → *Rotate signing key*. |
-| Verifier page shows *Signature does not match* | The key was rotated after the certificate was issued and the verifier is checking against the new key. The old key is kept by Scholiq for verification — wait a minute for the cache, or contact the admin. |
+| *"No signing key configured"* on **Issue** | An admin still needs to generate the RS256 key, go to [Manage Scholiq settings](../admin/03-admin-settings.md) → **Credential Signing** → *Rotate signing key*. |
+| Verifier page shows *Signature does not match* | The key was rotated after the certificate was issued and the verifier is checking against the new key. The old key is kept by Scholiq for verification, wait a minute for the cache, or contact the admin. |
 | You need to revoke a certificate (typo, wrong grade) | Open the credential row and click **Revoke**. The status changes to *Revoked* and the verifier returns *Revoked* with the reason you give. |
 
 ## Reference
 
-- [Track learner progress](./08-track-progress.md) — how the certificate fits into the learner's overall record.
-- [Compliance audit pack](../admin/02-compliance-audit.md) — issued certificates are listed in the audit report.
+- [Track learner progress](./08-track-progress.md), how the certificate fits into the learner's overall record.
+- [Compliance audit pack](../admin/02-compliance-audit.md), issued certificates are listed in the audit report.

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 title: Manage Scholiq settings
-description: The three things every Scholiq admin touches — register import, AI-feature declarations and the credential signing key.
+description: The three things every Scholiq admin touches, register import, AI-feature declarations and the credential signing key.
 ---
 
 # Manage Scholiq settings
@@ -16,7 +16,7 @@ By the end you will have confirmed the right OpenRegister register is wired up, 
 
 - Your account is in the *admin* group.
 - The OpenRegister app is installed and enabled.
-- A backup of the existing signing key if you are about to rotate it — Scholiq keeps old keys for verification, but a deliberate, dated backup makes the GDPR/DPIA story easier.
+- A backup of the existing signing key if you are about to rotate it, Scholiq keeps old keys for verification, but a deliberate, dated backup makes the GDPR/DPIA story easier.
 
 ## Steps
 
@@ -24,11 +24,11 @@ By the end you will have confirmed the right OpenRegister register is wired up, 
 
    ![Scholiq settings page](/screenshots/tutorials/admin/03-admin-settings-01.png)
 
-2. Confirm the **Default register**. This dropdown maps Scholiq to the OpenRegister register that holds its schemas. On a fresh install it is pre-set to the `scholiq` register imported by the app's repair step — leave it unless you are running multiple Scholiq instances against the same Nextcloud.
+2. Confirm the **Default register**. This dropdown maps Scholiq to the OpenRegister register that holds its schemas. On a fresh install it is pre-set to the `scholiq` register imported by the app's repair step, leave it unless you are running multiple Scholiq instances against the same Nextcloud.
 
    ![OpenRegister section](/screenshots/tutorials/admin/03-admin-settings-02.png)
 
-3. Scroll to **AI Features**. The table lists every EU AI Act *high-risk* feature Scholiq has declared. On a fresh install it reads *No AI features declared yet* — when an admin enables an AI-backed feature (proctoring, plagiarism detection, automated grading suggestion) the table fills in and shows the lifecycle state, the responsible DPO acknowledgement and the data-classes-in-scope.
+3. Scroll to **AI Features**. The table lists every EU AI Act *high-risk* feature Scholiq has declared. On a fresh install it reads *No AI features declared yet*, when an admin enables an AI-backed feature (proctoring, plagiarism detection, automated grading suggestion) the table fills in and shows the lifecycle state, the responsible DPO acknowledgement and the data-classes-in-scope.
 
    ![AI Features section](/screenshots/tutorials/admin/03-admin-settings-03.png)
 
@@ -48,12 +48,12 @@ The settings page is healthy when: the Default register is set, the AI Features 
 
 | Symptom | Fix |
 |---|---|
-| Default register dropdown is empty | OpenRegister has no `scholiq` register imported yet — run `php occ scholiq:import-register` on the host, or run the app's repair step from **Nextcloud admin → Overview**. |
-| **Rotate signing key** errors *"keystore locked"* | The Nextcloud server-side encryption keystore is sealed — an admin unseals it from the Nextcloud admin pages, then retry. |
-| Verifier returns *Signature does not match* for old certificates after rotation | The old key is missing from the keystore — restore it from the backup taken before rotation; Scholiq logs the *Public-key fingerprint* of every key it has ever used in the audit trail. |
+| Default register dropdown is empty | OpenRegister has no `scholiq` register imported yet, run `php occ scholiq:import-register` on the host, or run the app's repair step from **Nextcloud admin → Overview**. |
+| **Rotate signing key** errors *"keystore locked"* | The Nextcloud server-side encryption keystore is sealed, an admin unseals it from the Nextcloud admin pages, then retry. |
+| Verifier returns *Signature does not match* for old certificates after rotation | The old key is missing from the keystore, restore it from the backup taken before rotation; Scholiq logs the *Public-key fingerprint* of every key it has ever used in the audit trail. |
 
 ## Reference
 
-- [Run a compliance-training audit](./02-compliance-audit.md) — uses the same signing key.
-- [Issue a certificate](../user/07-issue-certificate.md) — same key, learner-facing flow.
-- [Set up your school structure](./01-school-structure.md) — the structure the settings page assumes you have.
+- [Run a compliance-training audit](./02-compliance-audit.md), uses the same signing key.
+- [Issue a certificate](../user/07-issue-certificate.md), same key, learner-facing flow.
+- [Set up your school structure](./01-school-structure.md), the structure the settings page assumes you have.

@@ -1,4 +1,4 @@
-# Scholiq — User Guide
+# Scholiq, User Guide
 
 This guide covers the three primary personas in Scholiq's compliance-training wedge: **Learner**, **Manager**, and **Compliance Officer**. Each section describes the tasks that persona performs day-to-day.
 
@@ -69,9 +69,9 @@ To share a credential, copy the `verificationUrl` from the credential detail. Ve
 
 Open **Enrolments** and filter by your team members. Each enrolment shows the RAG status:
 
-- **Green** — on track
-- **Amber** — due within 7 days
-- **Red** — overdue
+- **Green**, on track
+- **Amber**, due within 7 days
+- **Red**, overdue
 
 ### Receive overdue alerts
 
@@ -97,10 +97,10 @@ A Regulation groups all compliance evidence for one regulatory framework (e.g. N
 
 1. Open **Compliance** > **Regulations** > **New regulation**.
 2. Fill in:
-   - `slug` — machine-readable identifier (uppercase, e.g. `NIS2`); used to link Courses and Attestations
-   - `name` — human-readable name
-   - `audienceScope` — who must comply (`all-employees`, `board`, `role-specific`, `department`)
-   - `ragRedThreshold` / `ragAmberThreshold` — coverage % thresholds (defaults: 70 / 90)
+   - `slug`, machine-readable identifier (uppercase, e.g. `NIS2`); used to link Courses and Attestations
+   - `name`, human-readable name
+   - `audienceScope`, who must comply (`all-employees`, `board`, `role-specific`, `department`)
+   - `ragRedThreshold` / `ragAmberThreshold`, coverage % thresholds (defaults: 70 / 90)
 3. Leave lifecycle as `draft` until the regulation is ready to enforce.
 4. Click **Publish** when ready. The compliance-officer role receives a notification, and coverage tracking begins.
 
@@ -116,13 +116,13 @@ A Regulation groups all compliance evidence for one regulatory framework (e.g. N
 
 Open **Compliance** > **Regulations**. The coverage grid widget displays for each regulation:
 
-- `coveragePercent` — live percentage of mandatory enrolments that are completed
-- `mandatoryEnrolledCount` — total mandatory enrolments in scope
-- `mandatoryCompletedCount` — completed enrolments
-- `attestationCount` — signed attestations
+- `coveragePercent`, live percentage of mandatory enrolments that are completed
+- `mandatoryEnrolledCount`, total mandatory enrolments in scope
+- `mandatoryCompletedCount`, completed enrolments
+- `attestationCount`, signed attestations
 - RAG status badge (configurable thresholds)
 
-Coverage is computed live by OpenRegister's aggregation engine — no manual refresh needed.
+Coverage is computed live by OpenRegister's aggregation engine, no manual refresh needed.
 
 ### Receive coverage-drop alerts
 
@@ -135,10 +135,10 @@ The audit pack provides evidence for external auditors and board sign-off.
 1. Open **Compliance** > **Export audit pack** (or use the export action from the coverage grid).
 2. Select the Regulation and date range.
 3. Click **Export**. The `AuditPackExportController` assembles a ZIP containing:
-   - `audit-trail.ndjson` — OR audit-trail entries for this regulation and period
-   - `audit-trail.csv` — same data in spreadsheet-friendly format
-   - `manifest.json` — export metadata (regulation, date range, record counts)
-   - `signature-verification.txt` — instructions for offline HMAC/signature verification
+   - `audit-trail.ndjson`, OR audit-trail entries for this regulation and period
+   - `audit-trail.csv`, same data in spreadsheet-friendly format
+   - `manifest.json`, export metadata (regulation, date range, record counts)
+   - `signature-verification.txt`, instructions for offline HMAC/signature verification
 4. Download the ZIP. The export itself is recorded in the OR audit trail.
 
 ### View the NIS2 board-cohort proof
