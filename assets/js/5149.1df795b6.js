@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscholiq_docs=globalThis.webpackChunkscholiq_docs||[]).push([[5149],{75149(c,s,e){e.d(s,{createPacketServices:()=>a.$});var a=e(85626);e(808)}}]);

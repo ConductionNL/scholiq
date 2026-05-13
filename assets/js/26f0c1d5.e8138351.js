@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkscholiq_docs=globalThis.webpackChunkscholiq_docs||[]).push([[4652],{99121(s){s.exports=JSON.parse('{"name":"docusaurus-plugin-redoc","id":"scholiq"}')}}]);

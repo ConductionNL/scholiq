@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkscholiq_docs=globalThis.webpackChunkscholiq_docs||[]).push([[1903],{1903(s,c,a){a.d(c,{createRadarServices:()=>e.f});var e=a(6645);a(808)}}]);
