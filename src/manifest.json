@@ -245,7 +245,8 @@
       "title": "Lessons",
       "config": {
         "register": "scholiq",
-        "schema": "Lesson"
+        "schema": "Lesson",
+        "filter": { "courseId": "@route.courseId" }
       }
     },
     {
@@ -527,7 +528,8 @@
       "title": "Submissions",
       "config": {
         "register": "scholiq",
-        "schema": "Submission"
+        "schema": "Submission",
+        "filter": { "assignmentId": "@route.assignmentId" }
       }
     },
     {
@@ -623,7 +625,16 @@
       "config": {
         "register": "scholiq",
         "schema": "AssessmentResult",
-        "readOnly": true
+        "filter": { "assessmentId": "@route.assessmentId" },
+        "selectable": false,
+        "showAdd": false,
+        "showFormDialog": false,
+        "showEditAction": false,
+        "showCopyAction": false,
+        "showDeleteAction": false,
+        "showMassImport": false,
+        "showMassCopy": false,
+        "showMassDelete": false
       }
     },
     {
@@ -818,7 +829,16 @@
       "config": {
         "register": "scholiq",
         "schema": "LearningPlanEvaluation",
-        "readOnly": true
+        "filter": { "learningPlanId": "@route.planId" },
+        "selectable": false,
+        "showAdd": false,
+        "showFormDialog": false,
+        "showEditAction": false,
+        "showCopyAction": false,
+        "showDeleteAction": false,
+        "showMassImport": false,
+        "showMassCopy": false,
+        "showMassDelete": false
       }
     },
     {
@@ -840,7 +860,16 @@
       "config": {
         "register": "scholiq",
         "schema": "Signature",
-        "readOnly": true
+        "filter": { "subjectKind": "learning-plan", "subjectId": "@route.planId" },
+        "selectable": false,
+        "showAdd": false,
+        "showFormDialog": false,
+        "showEditAction": false,
+        "showCopyAction": false,
+        "showDeleteAction": false,
+        "showMassImport": false,
+        "showMassCopy": false,
+        "showMassDelete": false
       }
     },
     {
