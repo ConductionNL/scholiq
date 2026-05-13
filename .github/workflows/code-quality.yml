@@ -22,7 +22,12 @@ jobs:
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
-      enable-newman: true
+      # Newman disabled: the collections hit `localhost:8080/apps/openregister/...`
+      # (no `/index.php/` prefix → 404 under the CI PHP built-in server) and
+      # assume the Scholiq OpenRegister register/schemas are already seeded.
+      # Re-enable once the collection is rewritten to the CI base_url + a seed
+      # step provisions the `scholiq` register.
+      enable-newman: false
       # scholiq's info.xml declares <app>openregister</app>/<app>openconnector</app>
       # and Application.php registers listeners for OR lifecycle events; OR's
       # `development` carries ObjectCreatedEvent/ObjectTransitionedEvent + the
