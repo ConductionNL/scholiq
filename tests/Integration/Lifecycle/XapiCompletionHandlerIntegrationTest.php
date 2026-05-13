@@ -106,7 +106,7 @@ class XapiCompletionHandlerIntegrationTest extends TestCase
         if ($this->objectService !== null && empty($this->createdUuids) === false) {
             foreach (array_reverse($this->createdUuids) as ['register' => $register, 'schema' => $schema, 'uuid' => $uuid]) {
                 try {
-                    $this->objectService->delete($register, $schema, $uuid);
+                    $this->objectService->deleteObject($uuid);
                 } catch (\Throwable) {
                     // Best-effort cleanup; ignore failures.
                 }
@@ -128,7 +128,7 @@ class XapiCompletionHandlerIntegrationTest extends TestCase
      */
     private function createObject(string $schema, array $data): array
     {
-        $obj = $this->objectService->save(
+        $obj = $this->objectService->saveObject(
             register: 'scholiq',
             schema: $schema,
             object: $data,
