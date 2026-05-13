@@ -352,7 +352,7 @@ export default function Home() {
         <DetailHero
           background="cobalt"
           appId="scholiq"
-          status={{ label: 'Beta', color: 'var(--c-orange-knvb)' }}
+          /* status + version dropped — preset 2.10+ auto-derives from appinfo/info.xml */
           locales="EN"
           title="Scholiq"
           tagline={TAGLINE}
