@@ -1,12 +1,12 @@
 ---
 sidebar_position: 2
 title: Run a compliance-training audit
-description: Generate the signed audit pack Scholiq produces for inspectors — enrolments, attendance, grades, credentials, all in one bundle.
+description: Generate the signed audit pack Scholiq produces for inspectors, enrolments, attendance, grades, credentials, all in one bundle.
 ---
 
 # Run a compliance-training audit
 
-When the inspector calls — or when your QA team needs to prove a cohort got the training they signed up for — Scholiq's audit pack is the artefact you hand over. It is a signed bundle of every enrolment, attendance row, grade entry and credential within a time window.
+When the inspector calls, or when your QA team needs to prove a cohort got the training they signed up for, Scholiq's audit pack is the artefact you hand over. It is a signed bundle of every enrolment, attendance row, grade entry and credential within a time window.
 
 ## Goal
 
@@ -15,8 +15,8 @@ By the end you will have requested an audit pack for one programme over one date
 ## Prerequisites
 
 - Programme + cohort structure in place (see [Set up your school structure](./01-school-structure.md)).
-- The Scholiq signing key generated (see [Manage Scholiq settings](./03-admin-settings.md) → *Credential Signing*) — the audit pack is signed with the same key as certificates.
-- Enough data in scope (enrolments, attendance, grades) — an empty pack still generates, but the inspector will not be impressed.
+- The Scholiq signing key generated (see [Manage Scholiq settings](./03-admin-settings.md) → *Credential Signing*), the audit pack is signed with the same key as certificates.
+- Enough data in scope (enrolments, attendance, grades), an empty pack still generates, but the inspector will not be impressed.
 
 ## Steps
 
@@ -24,11 +24,11 @@ By the end you will have requested an audit pack for one programme over one date
 
    ![Audit-pack request modal](/screenshots/tutorials/admin/02-compliance-audit-01.png)
 
-2. Pick the **Programme** (and optionally a single **Cohort**), the **Date range** the pack should cover, and tick the data classes to include — by default everything: *Enrolments*, *Attendance*, *Grades*, *Credentials*, *Compliance flags*.
+2. Pick the **Programme** (and optionally a single **Cohort**), the **Date range** the pack should cover, and tick the data classes to include, by default everything: *Enrolments*, *Attendance*, *Grades*, *Credentials*, *Compliance flags*.
 
    ![Audit-pack scope](/screenshots/tutorials/admin/02-compliance-audit-02.png)
 
-3. Click **Request**. The job moves to the **Data exchange** queue with status *Queued*. Scholiq runs it as a Nextcloud background job — small packs finish in seconds, big multi-year packs in a few minutes.
+3. Click **Request**. The job moves to the **Data exchange** queue with status *Queued*. Scholiq runs it as a Nextcloud background job, small packs finish in seconds, big multi-year packs in a few minutes.
 
    ![Data exchange jobs list](/screenshots/tutorials/admin/02-compliance-audit-03.png)
 
@@ -48,12 +48,12 @@ The audit pack is good when: the *Completed* row's row counts match what the pro
 
 | Symptom | Fix |
 |---|---|
-| Job sits on *Queued* forever | The Nextcloud background jobs are not running — check `php occ background-job:list` on the host. |
-| Pack is empty | The scope filter is too narrow — date range outside the programme's window, or the cohort has no members. |
-| Inspector says *"signature does not match"* | The signing key was rotated between issuance and verification. The old key stays in Scholiq for verification — wait a minute for cache, or hand them the *Verification URL* (which always picks the right key). |
+| Job sits on *Queued* forever | The Nextcloud background jobs are not running, check `php occ background-job:list` on the host. |
+| Pack is empty | The scope filter is too narrow, date range outside the programme's window, or the cohort has no members. |
+| Inspector says *"signature does not match"* | The signing key was rotated between issuance and verification. The old key stays in Scholiq for verification, wait a minute for cache, or hand them the *Verification URL* (which always picks the right key). |
 
 ## Reference
 
-- [Set up your school structure](./01-school-structure.md) — programmes are the natural scope of an audit pack.
-- [Manage Scholiq settings](./03-admin-settings.md) — credential signing key, AI-feature declarations.
-- [Issue a certificate](../user/07-issue-certificate.md) — uses the same signing key as the audit pack.
+- [Set up your school structure](./01-school-structure.md), programmes are the natural scope of an audit pack.
+- [Manage Scholiq settings](./03-admin-settings.md), credential signing key, AI-feature declarations.
+- [Issue a certificate](../user/07-issue-certificate.md), uses the same signing key as the audit pack.

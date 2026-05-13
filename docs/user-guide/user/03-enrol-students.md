@@ -28,7 +28,7 @@ By the end you will have one or more enrolments on the course, each tied to a le
 
    ![Add enrolment dialog](/screenshots/tutorials/user/03-enrol-students-02.png)
 
-3. For a whole class at once, open the course detail page and switch to the **Enrolments** tab. The toolbar shows **Bulk enrol** — click it to pick a cohort or paste a CSV of learner identifiers.
+3. For a whole class at once, open the course detail page and switch to the **Enrolments** tab. The toolbar shows **Bulk enrol**, click it to pick a cohort or paste a CSV of learner identifiers.
 
    ![Bulk enrol modal](/screenshots/tutorials/user/03-enrol-students-03.png)
 
@@ -48,11 +48,11 @@ The enrolments are good when: the course's *Enrolments* tab shows the learners w
 
 | Symptom | Fix |
 |---|---|
-| Bulk enrol says *unknown learner* for every row | The CSV does not match a stable learner identifier — use the *Learner ID* column from the Learners list, not the display name. |
+| Bulk enrol says *unknown learner* for every row | The CSV does not match a stable learner identifier, use the *Learner ID* column from the Learners list, not the display name. |
 | The same learner appears enrolled twice | Two enrolments with overlapping date windows are allowed (one per cohort, for example). Close the older one by setting an end date if that was not intentional. |
-| *"Course is not open for enrolment"* | The course is in *Draft* or *Closed* status — set it back to *Open* on the course detail page. |
+| *"Course is not open for enrolment"* | The course is in *Draft* or *Closed* status, set it back to *Open* on the course detail page. |
 
 ## Reference
 
-- [Track learner progress](./08-track-progress.md) — what the learner sees once they are enrolled.
-- [Define your school structure](../admin/01-school-structure.md) — cohorts make bulk enrolment one click.
+- [Track learner progress](./08-track-progress.md), what the learner sees once they are enrolled.
+- [Define your school structure](../admin/01-school-structure.md), cohorts make bulk enrolment one click.

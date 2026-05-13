@@ -1,4 +1,4 @@
-# Scholiq — Architecture
+# Scholiq, Architecture
 
 Scholiq is an open-source leerlingvolgsysteem (LVS) + leeromgeving (LMS) for Nextcloud. The **Wave-2 compliance-audit wedge (Path A MVP)** is the shipped baseline documented here.
 
@@ -16,16 +16,16 @@ Scholiq is an open-source leerlingvolgsysteem (LVS) + leeromgeving (LMS) for Nex
 
 Scholiq is a **thin Nextcloud client** that owns no database tables of its own and writes no PHP service classes for behaviour that can be expressed declaratively.
 
-- **All persistent state** — courses, lessons, enrolments, credentials, regulations, attestations, xAPI statements, learner profiles, AI feature flags — lives in **OpenRegister** as schemas declared in `lib/Settings/scholiq_register.json`.
-- **All entity behaviour** that fits an `x-openregister-*` extension — state machines, aggregations, derived fields, notifications, relations, dashboard widgets — is declared in the schema register, not in a PHP service class. (ADR-031.)
-- **All UI shell** — sidebar, page dispatch, dependency check, routing — is consumed from the `CnAppRoot` component in `@conduction/nextcloud-vue`, configured by `src/manifest.json`. (ADR-024.)
-- **All cross-cutting capabilities** — audit trail, RBAC, archival/retention, relations — are consumed from OpenRegister. Scholiq never reimplements an OR abstraction. (ADR-022.)
+- **All persistent state**, courses, lessons, enrolments, credentials, regulations, attestations, xAPI statements, learner profiles, AI feature flags, lives in **OpenRegister** as schemas declared in `lib/Settings/scholiq_register.json`.
+- **All entity behaviour** that fits an `x-openregister-*` extension, state machines, aggregations, derived fields, notifications, relations, dashboard widgets, is declared in the schema register, not in a PHP service class. (ADR-031.)
+- **All UI shell**, sidebar, page dispatch, dependency check, routing, is consumed from the `CnAppRoot` component in `@conduction/nextcloud-vue`, configured by `src/manifest.json`. (ADR-024.)
+- **All cross-cutting capabilities**, audit trail, RBAC, archival/retention, relations, are consumed from OpenRegister. Scholiq never reimplements an OR abstraction. (ADR-022.)
 
 ```
 +----------------------------------------------------------------------+
 |                              Browser                                 |
 |  CnAppRoot (from @conduction/nextcloud-vue) driven by                |
-|  src/manifest.json (Tier 4) — declares menu, pages, dependencies     |
+|  src/manifest.json (Tier 4), declares menu, pages, dependencies     |
 +---------------------------+------------------------------------------+
                             |
                             v
@@ -48,12 +48,12 @@ Scholiq is a **thin Nextcloud client** that owns no database tables of its own a
 
 **Governing ADR chain:**
 
-- [ADR-022](../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md) — apps consume OR abstractions; no parallel implementations.
-- [ADR-024](../../hydra/openspec/architecture/adr-024-app-manifest.md) — every app ships `src/manifest.json`; Tier-4 CnAppRoot.
-- [ADR-031](../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md) — business logic that fits `x-openregister-*` extensions is declared in the schema, not written as PHP.
-- [ADR-002](openspec/architecture/ADR-002-content-runtime-cmi5-xapi.md) — cmi5 + xAPI as primary content runtime.
-- [ADR-005](openspec/architecture/ADR-005-eu-ai-act-gating.md) — EU AI Act high-risk feature gate via schema lifecycle.
-- [ADR-008](openspec/architecture/ADR-008-immutable-audit-trail.md) — immutable audit trail consumed from OR; append-only schemas for evidence objects.
+- [ADR-022](../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md), apps consume OR abstractions; no parallel implementations.
+- [ADR-024](../../hydra/openspec/architecture/adr-024-app-manifest.md), every app ships `src/manifest.json`; Tier-4 CnAppRoot.
+- [ADR-031](../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md), business logic that fits `x-openregister-*` extensions is declared in the schema, not written as PHP.
+- [ADR-002](openspec/architecture/ADR-002-content-runtime-cmi5-xapi.md), cmi5 + xAPI as primary content runtime.
+- [ADR-005](openspec/architecture/ADR-005-eu-ai-act-gating.md), EU AI Act high-risk feature gate via schema lifecycle.
+- [ADR-008](openspec/architecture/ADR-008-immutable-audit-trail.md), immutable audit trail consumed from OR; append-only schemas for evidence objects.
 
 ---
 
@@ -66,15 +66,15 @@ All schemas live in `lib/Settings/scholiq_register.json`. Every schema carries a
 **Schema.org:** `schema:Course`
 
 **Lifecycle:** `draft` → `published` → `archived` (plus `unarchive` back to draft).
-The `publish` transition is guarded by `CoursePublishGuard` — at least one published Lesson must exist.
+The `publish` transition is guarded by `CoursePublishGuard`, at least one published Lesson must exist.
 
 **Calculations:**
-- `lessonCount` — count of Lesson objects with matching `courseId`
-- `isPublished` — boolean derived from `lifecycle == "published"`
+- `lessonCount`, count of Lesson objects with matching `courseId`
+- `isPublished`, boolean derived from `lifecycle == "published"`
 
 **Aggregations:**
-- `enrolledLearners` — count_distinct of learner UUIDs across active Enrolments for this course
-- `completedLearners` — count_distinct of learner UUIDs across completed Enrolments
+- `enrolledLearners`, count_distinct of learner UUIDs across active Enrolments for this course
+- `completedLearners`, count_distinct of learner UUIDs across completed Enrolments
 
 **Key fields:** `code`, `name`, `name_nl`, `level` (po/vo/mbo/hbo/wo/corporate), `language`, `mandatoryTraining`, `regulationSlug`, `renewalCourseSlug`, `certificateTemplate`, `tenant_id`
 
@@ -90,7 +90,7 @@ The `publish` transition is guarded by `CoursePublishGuard` — at least one pub
 
 ### 2.3 XapiStatement (slug `xapi-statement`)
 
-**Append-only:** `true` — records are never mutated after creation per ADR-008.
+**Append-only:** `true`, records are never mutated after creation per ADR-008.
 
 Every save emits an `xapi.statement.received` audit entry via OR's audit-trail abstraction.
 
@@ -103,19 +103,19 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 **Lifecycle:** `pending` → `active` → `completed` | `withdrawn` | `failed`. Withdraw is allowed from both `pending` and `active`.
 
 **Calculations:**
-- `isOverdue` — `lifecycle == "active"` AND `dueDate < @now`
-- `daysRemaining` — date diff between `dueDate` and `@now` (null when no due date)
-- `ragStatus` — `completed` / `red` (overdue) / `amber` (≤7 days) / `green`
+- `isOverdue`, `lifecycle == "active"` AND `dueDate < @now`
+- `daysRemaining`, date diff between `dueDate` and `@now` (null when no due date)
+- `ragStatus`, `completed` / `red` (overdue) / `amber` (≤7 days) / `green`
 
 **Relations:** `learner` (LearnerProfile via `learnerId`), `course` (Course via `courseId`)
 
 **Notifications (all idempotency-keyed where relevant):**
-- `welcomeOnActivate` — on entering `active`
-- `completionOnComplete` — on entering `completed`
-- `reminderT30`, `reminderT7`, `reminderT1` — when `daysRemaining` equals 30/7/1 AND `mandatory == true`
-- `managerAlertOnOverdue` — when `isOverdue` is true; recipient is `managerId` with HR-group fallback
+- `welcomeOnActivate`, on entering `active`
+- `completionOnComplete`, on entering `completed`
+- `reminderT30`, `reminderT7`, `reminderT1`, when `daysRemaining` equals 30/7/1 AND `mandatory == true`
+- `managerAlertOnOverdue`, when `isOverdue` is true; recipient is `managerId` with HR-group fallback
 
-**Widget:** `myMandatoryTraining` — task-list widget showing the learner's own open mandatory enrolments, sorted by due date.
+**Widget:** `myMandatoryTraining`, task-list widget showing the learner's own open mandatory enrolments, sorted by due date.
 
 **Key fields:** `learnerId`, `courseId`, `mandatory`, `dueDate`, `source` (self/manager/hr/bulk/migrated/system), `managerId`, `bulkJobId`, `reason`, `regulationSlug`, `tenant_id`
 
@@ -123,19 +123,19 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 
 **Lifecycle:** `draft` → `published` → `archived`
 
-**Aggregations (cross-schema — joining Enrolment/Attestation/Credential via `regulationSlug`):**
-- `mandatoryEnrolledCount` — count of mandatory Enrolments with matching `regulationSlug` in active/completed/failed states
-- `mandatoryCompletedCount` — count of mandatory completed Enrolments
-- `attestationCount` — count of signed Attestations for this regulation
-- `validCredentialCount` — count_distinct of learner IDs with an issued Credential for this regulation
+**Aggregations (cross-schema, joining Enrolment/Attestation/Credential via `regulationSlug`):**
+- `mandatoryEnrolledCount`, count of mandatory Enrolments with matching `regulationSlug` in active/completed/failed states
+- `mandatoryCompletedCount`, count of mandatory completed Enrolments
+- `attestationCount`, count of signed Attestations for this regulation
+- `validCredentialCount`, count_distinct of learner IDs with an issued Credential for this regulation
 
 **Calculations:**
-- `coveragePercent` — `(mandatoryCompletedCount / mandatoryEnrolledCount) * 100`; returns 0 when no enrolments
-- `ragStatus` — `green` (≥ `ragAmberThreshold`), `amber` (≥ `ragRedThreshold`), `red` (< `ragRedThreshold`); thresholds are per-Regulation fields (defaults: amber=90, red=70)
+- `coveragePercent`, `(mandatoryCompletedCount / mandatoryEnrolledCount) * 100`; returns 0 when no enrolments
+- `ragStatus`, `green` (≥ `ragAmberThreshold`), `amber` (≥ `ragRedThreshold`), `red` (< `ragRedThreshold`); thresholds are per-Regulation fields (defaults: amber=90, red=70)
 
 **Notifications:**
-- `officerAlertOnCoverageDrop` — `calculatedChange` trigger when `ragStatus` transitions to `red`; recipient is the `compliance-officer` tenant role
-- `onPublished` — on the `publish` transition
+- `officerAlertOnCoverageDrop`, `calculatedChange` trigger when `ragStatus` transitions to `red`; recipient is the `compliance-officer` tenant role
+- `onPublished`, on the `publish` transition
 
 **Widgets:** `coverageGrid` (regulation-coverage-grid with coverage/enrolled/completed/attestation metrics + campaign/export actions), `boardProof` (stats-block for board-scoped regulations), `attestationCount` (KPI tile)
 
@@ -143,7 +143,7 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 
 ### 2.6 Attestation (slug `attestation`)
 
-**Append-only:** `true` — evidence records are immutable per ADR-008.
+**Append-only:** `true`, evidence records are immutable per ADR-008.
 
 **Lifecycle:** `drafted` → `signed` → `revoked`. The `sign` transition is guarded by `AttestationSigningGuard`, which:
 1. Verifies a matching `cmi5.completed` XapiStatement exists for the learner + lesson.
@@ -156,24 +156,24 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 
 ### 2.7 Credential (slug `credential`)
 
-**Append-only:** `true` — issued credentials are immutable; revocation is a lifecycle transition, not a delete.
+**Append-only:** `true`, issued credentials are immutable; revocation is a lifecycle transition, not a delete.
 
 **Lifecycle:** `issue` (null → issued, guarded by `CredentialSigningService`), `revoke` (issued → revoked), `expire` (issued → expired, dispatched automatically by the `expiredAlert` notification).
 
 `CredentialSigningService` builds an Open Badges 3.0 JSON-LD assertion and RS256-signs it using the tenant's RSA key from `KeyManagementService`.
 
 **Calculations:**
-- `daysUntilExpiry` — date diff to `expiresAt` (null when no expiry)
-- `expiryStatus` — `none` / `expired` / `expiring-soon` (≤30d) / `expiring` (≤90d) / `valid`
-- `isOpenBadgesV3Signed` — boolean checking `signature` and `openbadges3Payload` are present
-- `isExpiringIn90Days`, `isExpiringIn30Days`, `isExpired` — boolean flags driving notifications
+- `daysUntilExpiry`, date diff to `expiresAt` (null when no expiry)
+- `expiryStatus`, `none` / `expired` / `expiring-soon` (≤30d) / `expiring` (≤90d) / `valid`
+- `isOpenBadgesV3Signed`, boolean checking `signature` and `openbadges3Payload` are present
+- `isExpiringIn90Days`, `isExpiringIn30Days`, `isExpired`, boolean flags driving notifications
 
 **Notifications:**
-- `issuedToLearner` — on `issue` transition
-- `expiringSoonAlert` (idempotency key `expiryT30`) — when `isExpiringIn30Days` is true
-- `expiryT90` (idempotency key `expiryT90`) — when `isExpiringIn90Days` is true
-- `expiredAlert` (idempotency key `expired`) — when `isExpired` is true; also dispatches the `expire` lifecycle transition
-- `revoked` — on `revoke` transition
+- `issuedToLearner`, on `issue` transition
+- `expiringSoonAlert` (idempotency key `expiryT30`), when `isExpiringIn30Days` is true
+- `expiryT90` (idempotency key `expiryT90`), when `isExpiringIn90Days` is true
+- `expiredAlert` (idempotency key `expired`), when `isExpired` is true; also dispatches the `expire` lifecycle transition
+- `revoked`, on `revoke` transition
 
 **Relations:** `learner` (LearnerProfile via `learnerId`), `course` (Course via `courseId`)
 
@@ -184,7 +184,7 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 **Lifecycle:** `active` → `merged` | `deleted`. Merged profiles are retained for audit and back-reference resolution. Deleted profiles are soft-deleted and retained per AVG retention windows.
 
 **Calculation:**
-- `primaryRole` — resolved by `RoleSelector` (PHP exception, see section 3); Nextcloud-admin override takes precedence, then static priority map: compliance-officer > hr > admin/manager > instructor > learner
+- `primaryRole`, resolved by `RoleSelector` (PHP exception, see section 3); Nextcloud-admin override takes precedence, then static priority map: compliance-officer > hr > admin/manager > instructor > learner
 
 **Key fields:** `ncUserId`, `givenName`, `familyName`, `birthDate`, `bsnEncrypted` (encrypted; K-12/government tenants only), `schoolId`, `eckId`, `eduPersonAffiliation`, `roles`, `parentIds`, `managerId`, `department`, `tenant_id`
 
@@ -194,7 +194,7 @@ Every save emits an `xapi.statement.received` audit entry via OR's audit-trail a
 
 **Lifecycle:** `disabled` → `enabled`. The `enable` transition is guarded by `AiFeatureDpoAckGuard`, which checks for a stored DPO acknowledgement in `IAppConfig` before allowing the transition.
 
-No high-risk features ship in v0.1 — the seed array is empty.
+No high-risk features ship in v0.1, the seed array is empty.
 
 **Key fields:** `slug`, `name`, `description`, `riskCategory` (minimal/limited/high/unacceptable), `lifecycle`
 
@@ -215,11 +215,11 @@ Regulation (regulationSlug = "NIS2")
   ragStatus       = green | amber | red  (thresholds configurable per Regulation)
 ```
 
-This pattern means a compliance officer's coverage dashboard is always live — no batch job computes coverage, OR resolves it from the aggregation declarations on each schema read.
+This pattern means a compliance officer's coverage dashboard is always live, no batch job computes coverage, OR resolves it from the aggregation declarations on each schema read.
 
 ---
 
-## 4. ADR-031 PHP exceptions — what ships in `lib/`
+## 4. ADR-031 PHP exceptions, what ships in `lib/`
 
 ADR-031 prohibits writing PHP service classes for behaviour that fits `x-openregister-*` extensions. The following are the **legitimate exceptions** for the Wave-2 wedge, each justified by ADR-031's permitted categories.
 
@@ -227,10 +227,10 @@ ADR-031 prohibits writing PHP service classes for behaviour that fits `x-openreg
 
 | File | ADR-031 category | Justification |
 |---|---|---|
-| `CoursePublishGuard.php` | Lifecycle guard — "PHP guards remain a legitimate seam" | Called by OR's lifecycle engine on the Course `publish` transition. Verifies at least one published Lesson exists before allowing publish. |
+| `CoursePublishGuard.php` | Lifecycle guard, "PHP guards remain a legitimate seam" | Called by OR's lifecycle engine on the Course `publish` transition. Verifies at least one published Lesson exists before allowing publish. |
 | `AttestationSigningGuard.php` | Lifecycle guard + cryptographic operation | Called on Attestation `drafted` → `signed`. Validates a matching `cmi5.completed` XapiStatement exists, then computes HMAC-SHA256 using OR's tenant key. |
 | `AiFeatureDpoAckGuard.php` | Lifecycle guard | Called on AiFeature `disabled` → `enabled`. Verifies a DPO acknowledgement is stored in `IAppConfig` for the feature slug before allowing activation. |
-| `RoleSelector.php` | Domain rule selector — "picks which template applies" | Resolves `primaryRole` on LearnerProfile. Applies Nextcloud-admin group override, then a static priority map. One focused method; not a state machine. |
+| `RoleSelector.php` | Domain rule selector, "picks which template applies" | Resolves `primaryRole` on LearnerProfile. Applies Nextcloud-admin group override, then a static priority map. One focused method; not a state machine. |
 | `XapiCompletionHandler.php` | External-system contract bridge | Bridges an `xapi.statement.received` audit event (from a cmi5 content AU reporting `cmi5:Completed`) to the Enrolment `complete` lifecycle transition. Translates between two standardised protocols. |
 
 ### 4.2 Listeners (`lib/Listener/`)
@@ -256,17 +256,17 @@ ADR-031 prohibits writing PHP service classes for behaviour that fits `x-openreg
 | `PageController.php` | NC framework requirement | Delivers the SPA shell `TemplateResponse`. Required by Nextcloud's routing and template system; no declarative alternative. |
 | `CredentialVerifyController.php` | External-system contract + document generation | Public (unauthenticated) endpoint for verifying a credential by ID. Returns credential validity, OB3 payload, and revocation status. Required to make credentials verifiable outside the Nextcloud session. |
 | `KeyAdminController.php` | NC framework requirement (admin API) | Admin-only REST endpoints for generating, rotating, and inspecting tenant signing keys. Required for the key management UI; no equivalent in OR's schema API. |
-| `AuditPackExportController.php` | Document generation — ADR-008 section 6 | Queries OR's audit trail + Regulation + Attestation objects for a regulation and date range; packages results into a ZIP (audit-trail.ndjson, audit-trail.csv, manifest.json, signature-verification.txt). No business logic — pure query and packaging. |
+| `AuditPackExportController.php` | Document generation, ADR-008 section 6 | Queries OR's audit trail + Regulation + Attestation objects for a regulation and date range; packages results into a ZIP (audit-trail.ndjson, audit-trail.csv, manifest.json, signature-verification.txt). No business logic, pure query and packaging. |
 | `HealthController.php` | NC framework requirement (admin widget) | Provides `GET /api/admin/health` data for the AdminHealth manifest page. Checks OR connection, schema registration, and key presence. |
 | `SettingsController.php` | NC framework requirement | REST endpoints backing the `ScholiqSettings` custom component. Reads/writes user and admin preferences. |
 
 ### 4.5 Anti-patterns that were excluded
 
-Per ADR-031, the following classes were deliberately **not** written: `AttestationService`, `CoverageComputationService`, `EnrolmentService`, `EnrolmentNotificationService`, `EnrolmentDueReminderJob`, `ExpiryDetectionService`, `CredentialExpiryJob`, `CourseService`, `LessonService`, `AiFeatureRegistry`, `AuditTrail`, `AuditedController`, `ComplianceDashboardService`, `BulkEnrolmentService`, `RoleDetectionService`. Every one of these would have been either a state machine, an aggregation, a calculation, a notification dispatcher, or a parallel audit-trail substrate — all categories ADR-031 prohibits for net-new code.
+Per ADR-031, the following classes were deliberately **not** written: `AttestationService`, `CoverageComputationService`, `EnrolmentService`, `EnrolmentNotificationService`, `EnrolmentDueReminderJob`, `ExpiryDetectionService`, `CredentialExpiryJob`, `CourseService`, `LessonService`, `AiFeatureRegistry`, `AuditTrail`, `AuditedController`, `ComplianceDashboardService`, `BulkEnrolmentService`, `RoleDetectionService`. Every one of these would have been either a state machine, an aggregation, a calculation, a notification dispatcher, or a parallel audit-trail substrate, all categories ADR-031 prohibits for net-new code.
 
 ---
 
-## 5. The manifest — `src/manifest.json`
+## 5. The manifest, `src/manifest.json`
 
 Scholiq adopts `CnAppRoot` Tier 4 from `@conduction/nextcloud-vue`. `src/manifest.json` is the single source of truth for menu, pages, and cross-app dependencies.
 

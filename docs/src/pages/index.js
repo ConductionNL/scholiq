@@ -7,7 +7,7 @@
  *
  * Written as .js (not .mdx) because the docs site has the docs plugin
  * pointed at `path: './'`, and an MDX file in src/pages/ trips the
- * MDX-ESM parser even with the docs plugin's `src/**` exclude — likely
+ * MDX-ESM parser even with the docs plugin's `src/**` exclude,likely
  * a quirk of how mdx-loader's micromark stack reuses parser state
  * across files in this Docusaurus 3.10 + this preset combination.
  * Authoring the page in JSX keeps the same component composition.
@@ -25,7 +25,7 @@ import {
   WidgetShelf,
 } from '@conduction/docusaurus-preset/components';
 
-/* Mortarboard / graduation-cap glyph — lifted from scholiq/img/app.svg. */
+/* Mortarboard / graduation-cap glyph,lifted from scholiq/img/app.svg. */
 const SCHOLIQ_ICON = (
   <svg viewBox="0 0 24 24">
     <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
@@ -35,7 +35,7 @@ const SCHOLIQ_ICON = (
 const TAGLINE = (
   <>
     The learning record and learning-management layer for{' '}
-    <span className="next-blue">Nextcloud</span> — courses, enrolment,
+    <span className="next-blue">Nextcloud</span>: courses, enrolment,
     assignments, attendance, grading, certification, and compliance
     training, all manifest-first on OpenRegister.
   </>
@@ -346,7 +346,7 @@ export default function Home() {
   return (
     <Layout
       title="Scholiq"
-      description="The learning record and learning-management layer for Nextcloud — courses, enrolment, assignments, attendance, grading, certification, and compliance training, manifest-first on OpenRegister."
+      description="The learning record and learning-management layer for Nextcloud: courses, enrolment, assignments, attendance, grading, certification, and compliance training, manifest-first on OpenRegister."
     >
       <main className="marketing-page">
         <DetailHero

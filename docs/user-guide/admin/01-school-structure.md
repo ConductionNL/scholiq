@@ -48,12 +48,12 @@ The structure is in place when: the Programmes list has at least one row, the Co
 
 | Symptom | Fix |
 |---|---|
-| The **Programme** dropdown on the cohort dialog is empty | The cohort was opened before the programme was saved — close the dialog, reload, try again. |
-| Bulk-adding learners says *"unknown learner"* | The identifier column does not match — use the *Learner ID* shown on the Learners list, not the display name. |
-| The dashboard *Cohorts* tile shows zero after you saved a cohort | The dashboard caches the count — reload, or wait a minute. |
+| The **Programme** dropdown on the cohort dialog is empty | The cohort was opened before the programme was saved, close the dialog, reload, try again. |
+| Bulk-adding learners says *"unknown learner"* | The identifier column does not match, use the *Learner ID* shown on the Learners list, not the display name. |
+| The dashboard *Cohorts* tile shows zero after you saved a cohort | The dashboard caches the count, reload, or wait a minute. |
 
 ## Reference
 
-- [Create a course](../user/02-create-course.md) — courses can be attached to a programme.
-- [Enrol students](../user/03-enrol-students.md) — bulk enrolment uses cohorts.
-- [Compliance audit pack](./02-compliance-audit.md) — programme structure feeds the audit aggregation.
+- [Create a course](../user/02-create-course.md), courses can be attached to a programme.
+- [Enrol students](../user/03-enrol-students.md), bulk enrolment uses cohorts.
+- [Compliance audit pack](./02-compliance-audit.md), programme structure feeds the audit aggregation.

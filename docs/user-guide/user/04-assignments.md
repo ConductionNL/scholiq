@@ -23,7 +23,7 @@ By the end you will have published an assignment, seen learners submit to it, an
 
    ![Assignments list](/screenshots/tutorials/user/04-assignments-01.png)
 
-2. Click **Add Item**. The new-assignment dialog opens — fill in **Title**, **Brief** (markdown), **Due date**, **Max grade** and pick a **Rubric** if you have one. Pick the **Course** the assignment belongs to.
+2. Click **Add Item**. The new-assignment dialog opens, fill in **Title**, **Brief** (markdown), **Due date**, **Max grade** and pick a **Rubric** if you have one. Pick the **Course** the assignment belongs to.
 
    ![Add assignment dialog](/screenshots/tutorials/user/04-assignments-02.png)
 
@@ -47,11 +47,11 @@ The assignment cycle is complete when: the submission's status moves from *pendi
 
 | Symptom | Fix |
 |---|---|
-| Learners say *"I cannot find the assignment"* | The assignment was saved with status *Draft* — open it and switch status to *Published*. |
+| Learners say *"I cannot find the assignment"* | The assignment was saved with status *Draft*, open it and switch status to *Published*. |
 | The grade input rejects your number | The value falls outside the **Max grade** you set on the assignment, or it does not match the rubric scale. |
-| The rubric dropdown is empty | No rubrics exist yet — create one under **Curriculum → Rubrics** or use the default numeric scale. |
+| The rubric dropdown is empty | No rubrics exist yet, create one under **Curriculum → Rubrics** or use the default numeric scale. |
 
 ## Reference
 
-- [Grade learners and publish final grades](./06-grading.md) — converting submission grades into final course grades.
-- [Issue a certificate](./07-issue-certificate.md) — once final grades are in.
+- [Grade learners and publish final grades](./06-grading.md), converting submission grades into final course grades.
+- [Issue a certificate](./07-issue-certificate.md), once final grades are in.

@@ -6,7 +6,7 @@ description: Record who showed up to a session and flag absences for follow-up.
 
 # Take attendance
 
-Attendance in Scholiq is per *session* — one row of the timetable for a course or cohort. Marks roll up automatically to the learner's attendance record and into compliance reports.
+Attendance in Scholiq is per *session*, one row of the timetable for a course or cohort. Marks roll up automatically to the learner's attendance record and into compliance reports.
 
 ## Goal
 
@@ -48,11 +48,11 @@ Attendance is complete for the session when: the session shows status *Recorded*
 
 | Symptom | Fix |
 |---|---|
-| The session is missing from today's list | The course timetable does not have a session for today, or it is outside the course's start/end window — add or fix it under the course's **Lessons** tab. |
-| The learner you expected is not on the roster | They have no *Active* enrolment on the course — fix the enrolment dates under [Enrol students](./03-enrol-students.md). |
-| You marked the wrong row | Click the same row again, pick the right mark and save — Scholiq keeps the latest mark plus an audit trail (every change shows up under the session's *Logs* tab). |
+| The session is missing from today's list | The course timetable does not have a session for today, or it is outside the course's start/end window, add or fix it under the course's **Lessons** tab. |
+| The learner you expected is not on the roster | They have no *Active* enrolment on the course, fix the enrolment dates under [Enrol students](./03-enrol-students.md). |
+| You marked the wrong row | Click the same row again, pick the right mark and save, Scholiq keeps the latest mark plus an audit trail (every change shows up under the session's *Logs* tab). |
 
 ## Reference
 
-- [Submit an excuse](./05-attendance.md#common-issues) — the learner-side equivalent (the *Submit excuse* button on their attendance row).
-- [Compliance audit pack](../admin/02-compliance-audit.md) — how attendance feeds into the audit report.
+- [Submit an excuse](./05-attendance.md#common-issues), the learner-side equivalent (the *Submit excuse* button on their attendance row).
+- [Compliance audit pack](../admin/02-compliance-audit.md), how attendance feeds into the audit report.

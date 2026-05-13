@@ -1,9 +1,9 @@
-# Scholiq — API Reference
+# Scholiq, API Reference
 
 Scholiq exposes two categories of API surface:
 
-1. **OpenRegister object API** — all CRUD and lifecycle operations on the 9 schemas go through OR's REST API. Scholiq does not wrap these with its own controllers.
-2. **Scholiq-specific endpoints** — thin PHP controllers for operations OR cannot yet express declaratively: public credential verification, audit-pack ZIP export, admin key management, and health diagnostics.
+1. **OpenRegister object API**, all CRUD and lifecycle operations on the 9 schemas go through OR's REST API. Scholiq does not wrap these with its own controllers.
+2. **Scholiq-specific endpoints**, thin PHP controllers for operations OR cannot yet express declaratively: public credential verification, audit-pack ZIP export, admin key management, and health diagnostics.
 
 Base URL (local dev): `http://localhost:8080/index.php/apps`
 
@@ -19,13 +19,13 @@ Scholiq uses the standard OR objects API. The register slug is `scholiq`.
 GET /openregister/api/objects?register=scholiq&schema={schema-slug}
 ```
 
-**Example — list all published courses:**
+**Example, list all published courses:**
 
 ```
 GET /openregister/api/objects?register=scholiq&schema=course&lifecycle=published
 ```
 
-**Example — list mandatory enrolments for a learner:**
+**Example, list mandatory enrolments for a learner:**
 
 ```
 GET /openregister/api/objects?register=scholiq&schema=enrolment&learnerId=alice&mandatory=true
@@ -78,7 +78,7 @@ Content-Type: application/json
 }
 ```
 
-**Example — publish a course:**
+**Example, publish a course:**
 
 ```
 POST /openregister/api/objects/{course-uuid}/transition
@@ -87,7 +87,7 @@ POST /openregister/api/objects/{course-uuid}/transition
 
 If the `CoursePublishGuard` check fails (no published lessons), the response is `422 Unprocessable Entity` with an error message.
 
-**Example — sign an attestation:**
+**Example, sign an attestation:**
 
 ```
 POST /openregister/api/objects/{attestation-uuid}/transition
@@ -119,7 +119,7 @@ All endpoints below require an authenticated Nextcloud session unless marked `@P
 
 Verifies a credential by ID. Returns validity status and the Open Badges 3.0 payload. Writes a `credential.verified` audit entry via OR.
 
-**Response 200 — valid credential:**
+**Response 200, valid credential:**
 
 ```json
 {
@@ -138,7 +138,7 @@ Verifies a credential by ID. Returns validity status and the Open Badges 3.0 pay
 }
 ```
 
-**Response 200 — revoked credential:**
+**Response 200, revoked credential:**
 
 ```json
 {
@@ -254,8 +254,8 @@ Generates a new RSA key pair and stores it via `ICrypto`. Equivalent to `occ sch
 
 User and admin settings endpoints backed by `SettingsController`.
 
-`GET /scholiq/api/settings` — returns current user's Scholiq preferences.
-`POST /scholiq/api/settings` — updates preferences.
+`GET /scholiq/api/settings`, returns current user's Scholiq preferences.
+`POST /scholiq/api/settings`, updates preferences.
 
 **User preference keys:**
 
