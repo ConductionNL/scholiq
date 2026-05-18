@@ -6,22 +6,18 @@ Scholiq is an open-source education app for the Nextcloud workspace. It runs as 
 
 ## Docs
 
-- [Tutorials](https://scholiq.conduction.nl/tutorials): step-by-step walkthroughs.
-- [Features](https://scholiq.conduction.nl/Features): what the app does, organised by capability.
-- [Use cases](https://scholiq.conduction.nl/UseCases): real customer scenarios.
-- [Integrations](https://scholiq.conduction.nl/Integrations): which external systems the app talks to.
-- [Technical](https://scholiq.conduction.nl/Technical): architecture, data model, security posture.
-- [User guide](https://scholiq.conduction.nl/user-guide): end-user documentation.
-- [API](https://scholiq.conduction.nl/api): OpenAPI reference.
+- [Documentation](https://scholiq.conduction.nl/docs/intro): main entry, including tutorials, user guide, and admin guide.
+- [API reference](https://scholiq.conduction.nl/api): OpenAPI documentation.
 
 ## Optional
 
-- [Install](https://scholiq.conduction.nl/installation): install from the Nextcloud app store.
-- [Source](https://scholiq.conduction.nl): repository and issue tracker.
+- [Install](https://www.conduction.nl/install): self-host on your Nextcloud instance.
+- [Source code](https://github.com/ConductionNL/scholiq): repository and issue tracker.
 - [App page](https://www.conduction.nl/apps/scholiq): product positioning on conduction.nl.
 
 ## Contact
 
 - Email: info@conduction.nl
-- GitHub: https://github.com/ConductionNL/scholiq
+- Web: https://www.conduction.nl
+- GitHub: https://github.com/ConductionNL
 - Conduction B.V. · KvK 76741850 · Lauriergracht 14h, Amsterdam, Netherlands
