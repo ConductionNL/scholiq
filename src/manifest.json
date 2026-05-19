@@ -1,1119 +1,1155 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
-  "version": "0.1.0",
-  "dependencies": [
-    "openregister",
-    "openconnector"
-  ],
-  "menu": [
-    {
-      "id": "Dashboard",
-      "label": "Dashboard",
-      "icon": "icon-category-dashboard",
-      "route": "Dashboard",
-      "order": 10
-    },
-    {
-      "id": "Courses",
-      "label": "Courses",
-      "icon": "icon-folder",
-      "route": "Courses",
-      "order": 20
-    },
-    {
-      "id": "Enrolments",
-      "label": "Enrolments",
-      "icon": "icon-group",
-      "route": "Enrolments",
-      "order": 30
-    },
-    {
-      "id": "Credentials",
-      "label": "Credentials",
-      "icon": "icon-checkmark",
-      "route": "Credentials",
-      "order": 40
-    },
-    {
-      "id": "Curriculum",
-      "label": "Curriculum",
-      "icon": "icon-category-organization",
-      "route": "Programmes",
-      "order": 45
-    },
-    {
-      "id": "Grades",
-      "label": "Grades",
-      "icon": "icon-quota",
-      "route": "GradeEntries",
-      "order": 46
-    },
-    {
-      "id": "Assignments",
-      "label": "Assignments",
-      "icon": "icon-file-text",
-      "route": "Assignments",
-      "order": 47
-    },
-    {
-      "id": "Assessments",
-      "label": "Assessments",
-      "icon": "icon-clippy",
-      "route": "Assessments",
-      "order": 48
-    },
-    {
-      "id": "Compliance",
-      "label": "Compliance",
-      "icon": "icon-category-security",
-      "route": "Compliance",
-      "order": 50,
-      "visibleIf": {
-        "user.primaryRole": {
-          "in": [
-            "compliance-officer",
-            "hr"
-          ]
-        }
-      }
-    },
-    {
-      "id": "LearnerHomeMenu",
-      "label": "My learning",
-      "icon": "icon-home",
-      "route": "LearnerHome",
-      "order": 15,
-      "visibleIf": {
-        "user.primaryRole": {
-          "in": [
-            "learner",
-            "manager",
-            "instructor"
-          ]
-        }
-      }
-    },
-    {
-      "id": "AdminHealthMenu",
-      "label": "App health",
-      "icon": "icon-category-monitoring",
-      "route": "AdminHealth",
-      "section": "settings",
-      "order": 95,
-      "visibleIf": {
-        "user.primaryRole": {
-          "eq": "admin"
-        }
-      }
-    },
-    {
-      "id": "Documentation",
-      "label": "Documentation",
-      "icon": "icon-info",
-      "href": "https://docs.scholiq.nl",
-      "section": "settings",
-      "order": 90
-    },
-    {
-      "id": "Settings",
-      "label": "Settings",
-      "icon": "icon-settings",
-      "action": "user-settings",
-      "order": 99,
-      "section": "settings"
-    },
-    {
-      "id": "FeaturesRoadmapMenu",
-      "label": "Features & roadmap",
-      "icon": "icon-toggle",
-      "route": "FeaturesRoadmap",
-      "section": "settings",
-      "order": 100
-    },
-    {
-      "id": "LearningPlans",
-      "label": "Learning plans",
-      "icon": "icon-category-social",
-      "route": "LearningPlans",
-      "order": 49
-    },
-    {
-      "id": "Attendance",
-      "label": "Attendance",
-      "icon": "icon-calendar",
-      "route": "AttendanceRecords",
-      "order": 55
-    },
-    {
-      "id": "DataExchange",
-      "label": "Data exchange",
-      "icon": "icon-category-integration",
-      "route": "DataExchangeJobs",
-      "order": 60
-    },
-    {
-      "id": "LearnerProfilesMenu",
-      "label": "Learners",
-      "icon": "icon-contacts",
-      "route": "LearnerProfiles",
-      "order": 35
-    },
-    {
-      "id": "XapiStatementsMenu",
-      "label": "xAPI statements",
-      "icon": "icon-history",
-      "route": "XapiStatements",
-      "section": "settings",
-      "order": 93
-    },
-    {
-      "id": "AiFeaturesMenu",
-      "label": "AI features",
-      "icon": "icon-category-tools",
-      "route": "AiFeatures",
-      "section": "settings",
-      "order": 94
-    },
-    {
-      "id": "AssistantMenu",
-      "label": "Assistant",
-      "icon": "icon-comment",
-      "route": "Assistant",
-      "order": 92,
-      "section": "settings"
-    }
-  ],
-  "pages": [
-    {
-      "id": "Dashboard",
-      "route": "/",
-      "type": "custom",
-      "title": "Dashboard",
-      "component": "ScholiqDashboard"
-    },
-    {
-      "id": "Courses",
-      "route": "/courses",
-      "type": "index",
-      "title": "Courses",
-      "config": {
-        "register": "scholiq",
-        "schema": "Course"
-      }
-    },
-    {
-      "id": "Enrolments",
-      "route": "/enrolments",
-      "type": "index",
-      "title": "Enrolments",
-      "config": {
-        "register": "scholiq",
-        "schema": "Enrolment"
-      }
-    },
-    {
-      "id": "Credentials",
-      "route": "/credentials",
-      "type": "index",
-      "title": "Credentials",
-      "config": {
-        "register": "scholiq",
-        "schema": "Credential"
-      }
-    },
-    {
-      "id": "Compliance",
-      "route": "/compliance",
-      "type": "custom",
-      "title": "Compliance",
-      "component": "ScholiqCompliance"
-    },
-    {
-      "id": "CourseDetail",
-      "route": "/courses/:id",
-      "type": "detail",
-      "title": "Course Detail",
-      "config": {
-        "register": "scholiq",
-        "schema": "Course"
-      }
-    },
-    {
-      "id": "LessonIndex",
-      "route": "/courses/:courseId/lessons",
-      "type": "index",
-      "title": "Lessons",
-      "config": {
-        "register": "scholiq",
-        "schema": "Lesson",
-        "filter": { "courseId": "@route.courseId" }
-      }
-    },
-    {
-      "id": "LessonDetail",
-      "route": "/courses/:courseId/lessons/:id",
-      "type": "detail",
-      "title": "Lesson Detail",
-      "config": {
-        "register": "scholiq",
-        "schema": "Lesson"
-      }
-    },
-    {
-      "id": "LessonPlayer",
-      "route": "/courses/:courseId/lessons/:lessonId/play",
-      "type": "custom",
-      "title": "Lesson Player",
-      "component": "LessonPlayer"
-    },
-    {
-      "id": "Settings",
-      "route": "/settings",
-      "type": "custom",
-      "title": "Settings",
-      "component": "ScholiqSettings"
-    },
-    {
-      "id": "EnrolmentDetail",
-      "route": "/enrolments/:id",
-      "type": "detail",
-      "title": "Enrolment",
-      "config": {
-        "register": "scholiq",
-        "schema": "Enrolment"
-      }
-    },
-    {
-      "id": "BulkEnrol",
-      "route": "/enrolments/bulk",
-      "type": "custom",
-      "title": "Bulk Enrol",
-      "config": {
-        "component": "BulkEnrolModal"
-      }
-    },
-    {
-      "id": "Regulations",
-      "route": "/compliance/regulations",
-      "type": "index",
-      "title": "Regulations",
-      "config": {
-        "register": "scholiq",
-        "schema": "Regulation"
-      }
-    },
-    {
-      "id": "RegulationDetail",
-      "route": "/compliance/regulations/:slug",
-      "type": "detail",
-      "title": "Regulation",
-      "config": {
-        "register": "scholiq",
-        "schema": "Regulation"
-      }
-    },
-    {
-      "id": "Attestations",
-      "route": "/compliance/attestations",
-      "type": "index",
-      "title": "Attestations",
-      "config": {
-        "register": "scholiq",
-        "schema": "Attestation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AttestationDetail",
-      "route": "/compliance/attestations/:id",
-      "type": "detail",
-      "title": "Attestation",
-      "config": {
-        "register": "scholiq",
-        "schema": "Attestation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AuditPackExport",
-      "route": "/compliance/export",
-      "type": "custom",
-      "title": "Export audit pack",
-      "config": {
-        "component": "AuditPackExportModal"
-      }
-    },
-    {
-      "id": "CredentialDetail",
-      "route": "/credentials/:id",
-      "type": "detail",
-      "title": "Credential",
-      "config": {
-        "register": "scholiq",
-        "schema": "Credential"
-      }
-    },
-    {
-      "id": "CredentialVerify",
-      "route": "/credentials/:id/verify",
-      "type": "custom",
-      "title": "Verify Credential",
-      "component": "CredentialVerify"
-    },
-    {
-      "id": "LearnerHome",
-      "route": "/learner",
-      "type": "custom",
-      "title": "My learning",
-      "component": "ScholiqLearnerHome"
-    },
-    {
-      "id": "AdminHealth",
-      "route": "/admin/health",
-      "type": "custom",
-      "title": "App health",
-      "component": "ScholiqAdminHealth"
-    },
-    {
-      "id": "Programmes",
-      "route": "/curriculum/programmes",
-      "type": "index",
-      "title": "Programmes",
-      "config": {
-        "register": "scholiq",
-        "schema": "Programme"
-      }
-    },
-    {
-      "id": "ProgrammeDetail",
-      "route": "/curriculum/programmes/:id",
-      "type": "detail",
-      "title": "Programme",
-      "config": {
-        "register": "scholiq",
-        "schema": "Programme"
-      }
-    },
-    {
-      "id": "CurriculumPlans",
-      "route": "/curriculum/plans",
-      "type": "index",
-      "title": "Curriculum plans",
-      "config": {
-        "register": "scholiq",
-        "schema": "CurriculumPlan"
-      }
-    },
-    {
-      "id": "CurriculumPlanDetail",
-      "route": "/curriculum/plans/:id",
-      "type": "detail",
-      "title": "Curriculum plan",
-      "config": {
-        "register": "scholiq",
-        "schema": "CurriculumPlan"
-      }
-    },
-    {
-      "id": "Cohorts",
-      "route": "/cohorts",
-      "type": "index",
-      "title": "Cohorts",
-      "config": {
-        "register": "scholiq",
-        "schema": "Cohort"
-      }
-    },
-    {
-      "id": "CohortDetail",
-      "route": "/cohorts/:id",
-      "type": "detail",
-      "title": "Cohort",
-      "config": {
-        "register": "scholiq",
-        "schema": "Cohort"
-      }
-    },
-    {
-      "id": "CohortTimetable",
-      "route": "/cohorts/:id/timetable",
-      "type": "custom",
-      "title": "Cohort timetable",
-      "component": "CohortTimetable"
-    },
-    {
-      "id": "Sessions",
-      "route": "/sessions",
-      "type": "index",
-      "title": "Sessions",
-      "config": {
-        "register": "scholiq",
-        "schema": "Session"
-      }
-    },
-    {
-      "id": "SessionDetail",
-      "route": "/sessions/:id",
-      "type": "detail",
-      "title": "Session",
-      "config": {
-        "register": "scholiq",
-        "schema": "Session"
-      }
-    },
-    {
-      "id": "Materials",
-      "route": "/materials",
-      "type": "index",
-      "title": "Materials",
-      "config": {
-        "register": "scholiq",
-        "schema": "Material"
-      }
-    },
-    {
-      "id": "MaterialDetail",
-      "route": "/materials/:id",
-      "type": "detail",
-      "title": "Material",
-      "config": {
-        "register": "scholiq",
-        "schema": "Material"
-      }
-    },
-    {
-      "id": "Rubrics",
-      "route": "/assignments/rubrics",
-      "type": "index",
-      "title": "Rubrics",
-      "config": {
-        "register": "scholiq",
-        "schema": "Rubric"
-      }
-    },
-    {
-      "id": "RubricDetail",
-      "route": "/assignments/rubrics/:id",
-      "type": "detail",
-      "title": "Rubric",
-      "config": {
-        "register": "scholiq",
-        "schema": "Rubric"
-      }
-    },
-    {
-      "id": "Assignments",
-      "route": "/assignments",
-      "type": "index",
-      "title": "Assignments",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assignment"
-      }
-    },
-    {
-      "id": "AssignmentDetail",
-      "route": "/assignments/:id",
-      "type": "detail",
-      "title": "Assignment",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assignment"
-      }
-    },
-    {
-      "id": "Submissions",
-      "route": "/assignments/:assignmentId/submissions",
-      "type": "index",
-      "title": "Submissions",
-      "config": {
-        "register": "scholiq",
-        "schema": "Submission",
-        "filter": { "assignmentId": "@route.assignmentId" }
-      }
-    },
-    {
-      "id": "SubmissionDetail",
-      "route": "/assignments/:assignmentId/submissions/:id",
-      "type": "detail",
-      "title": "Submission",
-      "config": {
-        "register": "scholiq",
-        "schema": "Submission",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "SubmitWorkModal",
-      "route": "/assignments/:assignmentId/submit",
-      "type": "custom",
-      "title": "Submit work",
-      "component": "SubmitWorkModal"
-    },
-    {
-      "id": "MarkSubmissionView",
-      "route": "/assignments/:assignmentId/submissions/:id/mark",
-      "type": "custom",
-      "title": "Mark submission",
-      "component": "MarkSubmissionView"
-    },
-    {
-      "id": "ItemBanks",
-      "route": "/assessments/item-banks",
-      "type": "index",
-      "title": "Item banks",
-      "config": {
-        "register": "scholiq",
-        "schema": "ItemBank"
-      }
-    },
-    {
-      "id": "ItemBankDetail",
-      "route": "/assessments/item-banks/:id",
-      "type": "detail",
-      "title": "Item bank",
-      "config": {
-        "register": "scholiq",
-        "schema": "ItemBank"
-      }
-    },
-    {
-      "id": "Items",
-      "route": "/assessments/items",
-      "type": "index",
-      "title": "Items",
-      "config": {
-        "register": "scholiq",
-        "schema": "Item"
-      }
-    },
-    {
-      "id": "ItemDetail",
-      "route": "/assessments/items/:id",
-      "type": "detail",
-      "title": "Item",
-      "config": {
-        "register": "scholiq",
-        "schema": "Item"
-      }
-    },
-    {
-      "id": "Assessments",
-      "route": "/assessments",
-      "type": "index",
-      "title": "Assessments",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assessment"
-      }
-    },
-    {
-      "id": "AssessmentDetail",
-      "route": "/assessments/:id",
-      "type": "detail",
-      "title": "Assessment",
-      "config": {
-        "register": "scholiq",
-        "schema": "Assessment"
-      }
-    },
-    {
-      "id": "AssessmentResults",
-      "route": "/assessments/:assessmentId/results",
-      "type": "index",
-      "title": "Assessment results",
-      "config": {
-        "register": "scholiq",
-        "schema": "AssessmentResult",
-        "filter": { "assessmentId": "@route.assessmentId" },
-        "selectable": false,
-        "showAdd": false,
-        "showFormDialog": false,
-        "showEditAction": false,
-        "showCopyAction": false,
-        "showDeleteAction": false,
-        "showMassImport": false,
-        "showMassCopy": false,
-        "showMassDelete": false
-      }
-    },
-    {
-      "id": "AssessmentResultDetail",
-      "route": "/assessments/:assessmentId/results/:id",
-      "type": "detail",
-      "title": "Assessment result",
-      "config": {
-        "register": "scholiq",
-        "schema": "AssessmentResult",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "ProctoringSessions",
-      "route": "/assessments/proctoring-sessions",
-      "type": "index",
-      "title": "Proctoring sessions",
-      "config": {
-        "register": "scholiq",
-        "schema": "ProctoringSession",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "ProctoringSessionDetail",
-      "route": "/assessments/proctoring-sessions/:id",
-      "type": "detail",
-      "title": "Proctoring session",
-      "config": {
-        "register": "scholiq",
-        "schema": "ProctoringSession",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "TakeAssessmentView",
-      "route": "/assessments/:assessmentId/take",
-      "type": "custom",
-      "title": "Take assessment",
-      "component": "TakeAssessmentView"
-    },
-    {
-      "id": "ItemAuthorView",
-      "route": "/assessments/items/:id/author",
-      "type": "custom",
-      "title": "Item author",
-      "component": "ItemAuthorView"
-    },
-    {
-      "id": "ProctoringReviewQueue",
-      "route": "/assessments/proctoring/review",
-      "type": "custom",
-      "title": "Proctoring review queue",
-      "component": "ProctoringReviewQueue"
-    },
-    {
-      "id": "ImportQtiModal",
-      "route": "/assessments/item-banks/:itemBankId/import",
-      "type": "custom",
-      "title": "Import QTI package",
-      "component": "ImportQtiModal"
-    },
-    {
-      "id": "GradeScales",
-      "route": "/grades/scales",
-      "type": "index",
-      "title": "Grade scales",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeScale"
-      }
-    },
-    {
-      "id": "GradeScaleDetail",
-      "route": "/grades/scales/:id",
-      "type": "detail",
-      "title": "Grade scale",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeScale"
-      }
-    },
-    {
-      "id": "GradeEntries",
-      "route": "/grades/entries",
-      "type": "index",
-      "title": "Grade entries",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeEntry"
-      }
-    },
-    {
-      "id": "GradeEntryDetail",
-      "route": "/grades/entries/:id",
-      "type": "detail",
-      "title": "Grade entry",
-      "config": {
-        "register": "scholiq",
-        "schema": "GradeEntry"
-      }
-    },
-    {
-      "id": "FinalGrades",
-      "route": "/grades/final",
-      "type": "index",
-      "title": "Final grades",
-      "config": {
-        "register": "scholiq",
-        "schema": "FinalGrade",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "FinalGradeDetail",
-      "route": "/grades/final/:id",
-      "type": "detail",
-      "title": "Final grade",
-      "config": {
-        "register": "scholiq",
-        "schema": "FinalGrade",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "GradebookView",
-      "route": "/grades/cohort/:cohortId/plan/:planId",
-      "type": "custom",
-      "title": "Gradebook",
-      "component": "GradebookView"
-    },
-    {
-      "id": "GradeImpactDetail",
-      "route": "/grades/entries/:id/impact",
-      "type": "custom",
-      "title": "Grade impact",
-      "component": "GradeImpactDetail"
-    },
-    {
-      "id": "FeaturesRoadmap",
-      "route": "/features-roadmap",
-      "type": "custom",
-      "title": "Features & roadmap",
-      "component": "FeaturesRoadmap"
-    },
-    {
-      "id": "LearningPlanTemplates",
-      "route": "/learning-plans/templates",
-      "type": "index",
-      "title": "Learning plan templates",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanTemplate"
-      }
-    },
-    {
-      "id": "LearningPlanTemplateDetail",
-      "route": "/learning-plans/templates/:id",
-      "type": "detail",
-      "title": "Learning plan template",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanTemplate"
-      }
-    },
-    {
-      "id": "LearningPlans",
-      "route": "/learning-plans",
-      "type": "index",
-      "title": "Learning plans",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlan"
-      }
-    },
-    {
-      "id": "LearningPlanDetail",
-      "route": "/learning-plans/:id",
-      "type": "detail",
-      "title": "Learning plan",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlan"
-      }
-    },
-    {
-      "id": "LearningPlanEvaluations",
-      "route": "/learning-plans/:planId/evaluations",
-      "type": "index",
-      "title": "Learning plan evaluations",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanEvaluation",
-        "filter": { "learningPlanId": "@route.planId" },
-        "selectable": false,
-        "showAdd": false,
-        "showFormDialog": false,
-        "showEditAction": false,
-        "showCopyAction": false,
-        "showDeleteAction": false,
-        "showMassImport": false,
-        "showMassCopy": false,
-        "showMassDelete": false
-      }
-    },
-    {
-      "id": "LearningPlanEvaluationDetail",
-      "route": "/learning-plans/:planId/evaluations/:id",
-      "type": "detail",
-      "title": "Learning plan evaluation",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearningPlanEvaluation",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "Signatures",
-      "route": "/learning-plans/:planId/signatures",
-      "type": "index",
-      "title": "Signatures",
-      "config": {
-        "register": "scholiq",
-        "schema": "Signature",
-        "filter": { "subjectKind": "learning-plan", "subjectId": "@route.planId" },
-        "selectable": false,
-        "showAdd": false,
-        "showFormDialog": false,
-        "showEditAction": false,
-        "showCopyAction": false,
-        "showDeleteAction": false,
-        "showMassImport": false,
-        "showMassCopy": false,
-        "showMassDelete": false
-      }
-    },
-    {
-      "id": "SignatureDetail",
-      "route": "/learning-plans/:planId/signatures/:id",
-      "type": "detail",
-      "title": "Signature",
-      "config": {
-        "register": "scholiq",
-        "schema": "Signature",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "SignPlanModal",
-      "route": "/learning-plans/:planId/sign",
-      "type": "custom",
-      "title": "Sign learning plan",
-      "component": "SignPlanModal"
-    },
-    {
-      "id": "LearningPlanEditor",
-      "route": "/learning-plans/:planId/edit",
-      "type": "custom",
-      "title": "Learning plan editor",
-      "component": "LearningPlanEditor"
-    },
-    {
-      "id": "AttendanceRecords",
-      "route": "/attendance/records",
-      "type": "index",
-      "title": "Attendance records",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceRecord"
-      }
-    },
-    {
-      "id": "AttendanceRecordDetail",
-      "route": "/attendance/records/:id",
-      "type": "detail",
-      "title": "Attendance record",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceRecord"
-      }
-    },
-    {
-      "id": "ExcuseRequests",
-      "route": "/attendance/excuses",
-      "type": "index",
-      "title": "Excuse requests",
-      "config": {
-        "register": "scholiq",
-        "schema": "ExcuseRequest"
-      }
-    },
-    {
-      "id": "ExcuseRequestDetail",
-      "route": "/attendance/excuses/:id",
-      "type": "detail",
-      "title": "Excuse request",
-      "config": {
-        "register": "scholiq",
-        "schema": "ExcuseRequest"
-      }
-    },
-    {
-      "id": "AttendanceThresholds",
-      "route": "/attendance/thresholds",
-      "type": "index",
-      "title": "Attendance thresholds",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceThreshold"
-      }
-    },
-    {
-      "id": "AttendanceThresholdDetail",
-      "route": "/attendance/thresholds/:id",
-      "type": "detail",
-      "title": "Attendance threshold",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceThreshold"
-      }
-    },
-    {
-      "id": "AttendanceFlags",
-      "route": "/attendance/flags",
-      "type": "index",
-      "title": "Attendance flags",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceFlag",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AttendanceFlagDetail",
-      "route": "/attendance/flags/:id",
-      "type": "detail",
-      "title": "Attendance flag",
-      "config": {
-        "register": "scholiq",
-        "schema": "AttendanceFlag",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "MarkAttendanceView",
-      "route": "/sessions/:sessionId/attendance",
-      "type": "custom",
-      "title": "Mark attendance",
-      "component": "MarkAttendanceView"
-    },
-    {
-      "id": "SubmitExcuseModal",
-      "route": "/attendance/excuses/submit",
-      "type": "custom",
-      "title": "Submit excuse",
-      "component": "SubmitExcuseModal"
-    },
-    {
-      "id": "DataMappingProfiles",
-      "route": "/data-exchange/mapping-profiles",
-      "type": "index",
-      "title": "Data mapping profiles",
-      "config": {
-        "register": "scholiq",
-        "schema": "DataMappingProfile"
-      }
-    },
-    {
-      "id": "DataMappingProfileDetail",
-      "route": "/data-exchange/mapping-profiles/:id",
-      "type": "detail",
-      "title": "Data mapping profile",
-      "config": {
-        "register": "scholiq",
-        "schema": "DataMappingProfile"
-      }
-    },
-    {
-      "id": "DataExchangeJobs",
-      "route": "/data-exchange/jobs",
-      "type": "index",
-      "title": "Data exchange jobs",
-      "config": {
-        "register": "scholiq",
-        "schema": "DataExchangeJob"
-      }
-    },
-    {
-      "id": "DataExchangeJobDetail",
-      "route": "/data-exchange/jobs/:id",
-      "type": "detail",
-      "title": "Data exchange job",
-      "config": {
-        "register": "scholiq",
-        "schema": "DataExchangeJob"
-      }
-    },
-    {
-      "id": "RequestExportModal",
-      "route": "/data-exchange/request",
-      "type": "custom",
-      "title": "Request export",
-      "component": "RequestExportModal"
-    },
-    {
-      "id": "OsoDossierReviewView",
-      "route": "/data-exchange/jobs/:id/oso-review",
-      "type": "custom",
-      "title": "OSO dossier review",
-      "component": "OsoDossierReviewView"
-    },
-    {
-      "id": "LearnerProfiles",
-      "route": "/learner-profiles",
-      "type": "index",
-      "title": "Learners",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearnerProfile"
-      }
-    },
-    {
-      "id": "LearnerProfileDetail",
-      "route": "/learner-profiles/:id",
-      "type": "detail",
-      "title": "Learner",
-      "config": {
-        "register": "scholiq",
-        "schema": "LearnerProfile"
-      }
-    },
-    {
-      "id": "XapiStatements",
-      "route": "/xapi-statements",
-      "type": "index",
-      "title": "xAPI statements",
-      "config": {
-        "register": "scholiq",
-        "schema": "XapiStatement",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "XapiStatementDetail",
-      "route": "/xapi-statements/:id",
-      "type": "detail",
-      "title": "xAPI statement",
-      "config": {
-        "register": "scholiq",
-        "schema": "XapiStatement",
-        "readOnly": true
-      }
-    },
-    {
-      "id": "AiFeatures",
-      "route": "/ai-features",
-      "type": "index",
-      "title": "AI features",
-      "config": {
-        "register": "scholiq",
-        "schema": "AiFeature"
-      }
-    },
-    {
-      "id": "AiFeatureDetail",
-      "route": "/ai-features/:id",
-      "type": "detail",
-      "title": "AI feature",
-      "config": {
-        "register": "scholiq",
-        "schema": "AiFeature"
-      }
-    },
-    {
-      "id": "Assistant",
-      "route": "/assistant",
-      "type": "chat",
-      "title": "Assistant"
-    }
-  ]
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"version": "0.1.0",
+	"dependencies": [
+		"openregister",
+		"openconnector"
+	],
+	"menu": [
+		{
+			"id": "Dashboard",
+			"label": "Dashboard",
+			"icon": "icon-category-dashboard",
+			"route": "Dashboard",
+			"order": 10
+		},
+		{
+			"id": "Courses",
+			"label": "Courses",
+			"icon": "icon-folder",
+			"route": "Courses",
+			"order": 20
+		},
+		{
+			"id": "Enrolments",
+			"label": "Enrolments",
+			"icon": "icon-group",
+			"route": "Enrolments",
+			"order": 30
+		},
+		{
+			"id": "Credentials",
+			"label": "Credentials",
+			"icon": "icon-checkmark",
+			"route": "Credentials",
+			"order": 40
+		},
+		{
+			"id": "Curriculum",
+			"label": "Curriculum",
+			"icon": "icon-category-organization",
+			"route": "Programmes",
+			"order": 45
+		},
+		{
+			"id": "Grades",
+			"label": "Grades",
+			"icon": "icon-quota",
+			"route": "GradeEntries",
+			"order": 46
+		},
+		{
+			"id": "Assignments",
+			"label": "Assignments",
+			"icon": "icon-file-text",
+			"route": "Assignments",
+			"order": 47
+		},
+		{
+			"id": "Assessments",
+			"label": "Assessments",
+			"icon": "icon-clippy",
+			"route": "Assessments",
+			"order": 48
+		},
+		{
+			"id": "Compliance",
+			"label": "Compliance",
+			"icon": "icon-category-security",
+			"route": "Compliance",
+			"order": 50,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"compliance-officer",
+						"hr"
+					]
+				}
+			}
+		},
+		{
+			"id": "LearnerHomeMenu",
+			"label": "My learning",
+			"icon": "icon-home",
+			"route": "LearnerHome",
+			"order": 15,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"learner",
+						"manager",
+						"instructor"
+					]
+				}
+			}
+		},
+		{
+			"id": "AdminHealthMenu",
+			"label": "App health",
+			"icon": "icon-category-monitoring",
+			"route": "AdminHealth",
+			"section": "settings",
+			"order": 95,
+			"visibleIf": {
+				"user.primaryRole": {
+					"eq": "admin"
+				}
+			}
+		},
+		{
+			"id": "Documentation",
+			"label": "Documentation",
+			"icon": "icon-info",
+			"href": "https://docs.scholiq.nl",
+			"section": "settings",
+			"order": 90
+		},
+		{
+			"id": "Settings",
+			"label": "Settings",
+			"icon": "icon-settings",
+			"action": "user-settings",
+			"order": 99,
+			"section": "settings"
+		},
+		{
+			"id": "FeaturesRoadmapMenu",
+			"label": "Features & roadmap",
+			"icon": "icon-toggle",
+			"route": "FeaturesRoadmap",
+			"section": "settings",
+			"order": 100
+		},
+		{
+			"id": "LearningPlans",
+			"label": "Learning plans",
+			"icon": "icon-category-social",
+			"route": "LearningPlans",
+			"order": 49
+		},
+		{
+			"id": "Attendance",
+			"label": "Attendance",
+			"icon": "icon-calendar",
+			"route": "AttendanceRecords",
+			"order": 55
+		},
+		{
+			"id": "DataExchange",
+			"label": "Data exchange",
+			"icon": "icon-category-integration",
+			"route": "DataExchangeJobs",
+			"order": 60
+		},
+		{
+			"id": "LearnerProfilesMenu",
+			"label": "Learners",
+			"icon": "icon-contacts",
+			"route": "LearnerProfiles",
+			"order": 35
+		},
+		{
+			"id": "XapiStatementsMenu",
+			"label": "xAPI statements",
+			"icon": "icon-history",
+			"route": "XapiStatements",
+			"section": "settings",
+			"order": 93
+		},
+		{
+			"id": "AiFeaturesMenu",
+			"label": "AI features",
+			"icon": "icon-category-tools",
+			"route": "AiFeatures",
+			"section": "settings",
+			"order": 94
+		},
+		{
+			"id": "AssistantMenu",
+			"label": "Assistant",
+			"icon": "icon-comment",
+			"route": "Assistant",
+			"order": 92,
+			"section": "settings"
+		}
+	],
+	"pages": [
+		{
+			"id": "Dashboard",
+			"route": "/",
+			"type": "custom",
+			"title": "Dashboard",
+			"component": "ScholiqDashboard",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "Courses",
+			"route": "/courses",
+			"type": "index",
+			"title": "Courses",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "Enrolments",
+			"route": "/enrolments",
+			"type": "index",
+			"title": "Enrolments",
+			"config": {
+				"register": "scholiq",
+				"schema": "Enrolment"
+			}
+		},
+		{
+			"id": "Credentials",
+			"route": "/credentials",
+			"type": "index",
+			"title": "Credentials",
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential"
+			}
+		},
+		{
+			"id": "Compliance",
+			"route": "/compliance",
+			"type": "custom",
+			"title": "Compliance",
+			"component": "ScholiqCompliance",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "CourseDetail",
+			"route": "/courses/:id",
+			"type": "detail",
+			"title": "Course Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Course"
+			}
+		},
+		{
+			"id": "LessonIndex",
+			"route": "/courses/:courseId/lessons",
+			"type": "index",
+			"title": "Lessons",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson",
+				"filter": {
+					"courseId": "@route.courseId"
+				}
+			}
+		},
+		{
+			"id": "LessonDetail",
+			"route": "/courses/:courseId/lessons/:id",
+			"type": "detail",
+			"title": "Lesson Detail",
+			"config": {
+				"register": "scholiq",
+				"schema": "Lesson"
+			}
+		},
+		{
+			"id": "LessonPlayer",
+			"route": "/courses/:courseId/lessons/:lessonId/play",
+			"type": "custom",
+			"title": "Lesson Player",
+			"component": "LessonPlayer",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "Settings",
+			"route": "/settings",
+			"type": "custom",
+			"title": "Settings",
+			"component": "ScholiqSettings",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "EnrolmentDetail",
+			"route": "/enrolments/:id",
+			"type": "detail",
+			"title": "Enrolment",
+			"config": {
+				"register": "scholiq",
+				"schema": "Enrolment"
+			}
+		},
+		{
+			"id": "BulkEnrol",
+			"route": "/enrolments/bulk",
+			"type": "custom",
+			"title": "Bulk Enrol",
+			"config": {
+				"component": "BulkEnrolModal"
+			},
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "Regulations",
+			"route": "/compliance/regulations",
+			"type": "index",
+			"title": "Regulations",
+			"config": {
+				"register": "scholiq",
+				"schema": "Regulation"
+			}
+		},
+		{
+			"id": "RegulationDetail",
+			"route": "/compliance/regulations/:slug",
+			"type": "detail",
+			"title": "Regulation",
+			"config": {
+				"register": "scholiq",
+				"schema": "Regulation"
+			}
+		},
+		{
+			"id": "Attestations",
+			"route": "/compliance/attestations",
+			"type": "index",
+			"title": "Attestations",
+			"config": {
+				"register": "scholiq",
+				"schema": "Attestation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AttestationDetail",
+			"route": "/compliance/attestations/:id",
+			"type": "detail",
+			"title": "Attestation",
+			"config": {
+				"register": "scholiq",
+				"schema": "Attestation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AuditPackExport",
+			"route": "/compliance/export",
+			"type": "custom",
+			"title": "Export audit pack",
+			"config": {
+				"component": "AuditPackExportModal"
+			},
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "CredentialDetail",
+			"route": "/credentials/:id",
+			"type": "detail",
+			"title": "Credential",
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential"
+			}
+		},
+		{
+			"id": "CredentialVerify",
+			"route": "/credentials/:id/verify",
+			"type": "custom",
+			"title": "Verify Credential",
+			"component": "CredentialVerify",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "LearnerHome",
+			"route": "/learner",
+			"type": "custom",
+			"title": "My learning",
+			"component": "ScholiqLearnerHome",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "AdminHealth",
+			"route": "/admin/health",
+			"type": "custom",
+			"title": "App health",
+			"component": "ScholiqAdminHealth",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "Programmes",
+			"route": "/curriculum/programmes",
+			"type": "index",
+			"title": "Programmes",
+			"config": {
+				"register": "scholiq",
+				"schema": "Programme"
+			}
+		},
+		{
+			"id": "ProgrammeDetail",
+			"route": "/curriculum/programmes/:id",
+			"type": "detail",
+			"title": "Programme",
+			"config": {
+				"register": "scholiq",
+				"schema": "Programme"
+			}
+		},
+		{
+			"id": "CurriculumPlans",
+			"route": "/curriculum/plans",
+			"type": "index",
+			"title": "Curriculum plans",
+			"config": {
+				"register": "scholiq",
+				"schema": "CurriculumPlan"
+			}
+		},
+		{
+			"id": "CurriculumPlanDetail",
+			"route": "/curriculum/plans/:id",
+			"type": "detail",
+			"title": "Curriculum plan",
+			"config": {
+				"register": "scholiq",
+				"schema": "CurriculumPlan"
+			}
+		},
+		{
+			"id": "Cohorts",
+			"route": "/cohorts",
+			"type": "index",
+			"title": "Cohorts",
+			"config": {
+				"register": "scholiq",
+				"schema": "Cohort"
+			}
+		},
+		{
+			"id": "CohortDetail",
+			"route": "/cohorts/:id",
+			"type": "detail",
+			"title": "Cohort",
+			"config": {
+				"register": "scholiq",
+				"schema": "Cohort"
+			}
+		},
+		{
+			"id": "CohortTimetable",
+			"route": "/cohorts/:id/timetable",
+			"type": "custom",
+			"title": "Cohort timetable",
+			"component": "CohortTimetable",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "Sessions",
+			"route": "/sessions",
+			"type": "index",
+			"title": "Sessions",
+			"config": {
+				"register": "scholiq",
+				"schema": "Session"
+			}
+		},
+		{
+			"id": "SessionDetail",
+			"route": "/sessions/:id",
+			"type": "detail",
+			"title": "Session",
+			"config": {
+				"register": "scholiq",
+				"schema": "Session"
+			}
+		},
+		{
+			"id": "Materials",
+			"route": "/materials",
+			"type": "index",
+			"title": "Materials",
+			"config": {
+				"register": "scholiq",
+				"schema": "Material"
+			}
+		},
+		{
+			"id": "MaterialDetail",
+			"route": "/materials/:id",
+			"type": "detail",
+			"title": "Material",
+			"config": {
+				"register": "scholiq",
+				"schema": "Material"
+			}
+		},
+		{
+			"id": "Rubrics",
+			"route": "/assignments/rubrics",
+			"type": "index",
+			"title": "Rubrics",
+			"config": {
+				"register": "scholiq",
+				"schema": "Rubric"
+			}
+		},
+		{
+			"id": "RubricDetail",
+			"route": "/assignments/rubrics/:id",
+			"type": "detail",
+			"title": "Rubric",
+			"config": {
+				"register": "scholiq",
+				"schema": "Rubric"
+			}
+		},
+		{
+			"id": "Assignments",
+			"route": "/assignments",
+			"type": "index",
+			"title": "Assignments",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assignment"
+			}
+		},
+		{
+			"id": "AssignmentDetail",
+			"route": "/assignments/:id",
+			"type": "detail",
+			"title": "Assignment",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assignment"
+			}
+		},
+		{
+			"id": "Submissions",
+			"route": "/assignments/:assignmentId/submissions",
+			"type": "index",
+			"title": "Submissions",
+			"config": {
+				"register": "scholiq",
+				"schema": "Submission",
+				"filter": {
+					"assignmentId": "@route.assignmentId"
+				}
+			}
+		},
+		{
+			"id": "SubmissionDetail",
+			"route": "/assignments/:assignmentId/submissions/:id",
+			"type": "detail",
+			"title": "Submission",
+			"config": {
+				"register": "scholiq",
+				"schema": "Submission",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "SubmitWorkModal",
+			"route": "/assignments/:assignmentId/submit",
+			"type": "custom",
+			"title": "Submit work",
+			"component": "SubmitWorkModal",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "MarkSubmissionView",
+			"route": "/assignments/:assignmentId/submissions/:id/mark",
+			"type": "custom",
+			"title": "Mark submission",
+			"component": "MarkSubmissionView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "ItemBanks",
+			"route": "/assessments/item-banks",
+			"type": "index",
+			"title": "Item banks",
+			"config": {
+				"register": "scholiq",
+				"schema": "ItemBank"
+			}
+		},
+		{
+			"id": "ItemBankDetail",
+			"route": "/assessments/item-banks/:id",
+			"type": "detail",
+			"title": "Item bank",
+			"config": {
+				"register": "scholiq",
+				"schema": "ItemBank"
+			}
+		},
+		{
+			"id": "Items",
+			"route": "/assessments/items",
+			"type": "index",
+			"title": "Items",
+			"config": {
+				"register": "scholiq",
+				"schema": "Item"
+			}
+		},
+		{
+			"id": "ItemDetail",
+			"route": "/assessments/items/:id",
+			"type": "detail",
+			"title": "Item",
+			"config": {
+				"register": "scholiq",
+				"schema": "Item"
+			}
+		},
+		{
+			"id": "Assessments",
+			"route": "/assessments",
+			"type": "index",
+			"title": "Assessments",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assessment"
+			}
+		},
+		{
+			"id": "AssessmentDetail",
+			"route": "/assessments/:id",
+			"type": "detail",
+			"title": "Assessment",
+			"config": {
+				"register": "scholiq",
+				"schema": "Assessment"
+			}
+		},
+		{
+			"id": "AssessmentResults",
+			"route": "/assessments/:assessmentId/results",
+			"type": "index",
+			"title": "Assessment results",
+			"config": {
+				"register": "scholiq",
+				"schema": "AssessmentResult",
+				"filter": {
+					"assessmentId": "@route.assessmentId"
+				},
+				"selectable": false,
+				"showAdd": false,
+				"showFormDialog": false,
+				"showEditAction": false,
+				"showCopyAction": false,
+				"showDeleteAction": false,
+				"showMassImport": false,
+				"showMassCopy": false,
+				"showMassDelete": false
+			}
+		},
+		{
+			"id": "AssessmentResultDetail",
+			"route": "/assessments/:assessmentId/results/:id",
+			"type": "detail",
+			"title": "Assessment result",
+			"config": {
+				"register": "scholiq",
+				"schema": "AssessmentResult",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ProctoringSessions",
+			"route": "/assessments/proctoring-sessions",
+			"type": "index",
+			"title": "Proctoring sessions",
+			"config": {
+				"register": "scholiq",
+				"schema": "ProctoringSession",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ProctoringSessionDetail",
+			"route": "/assessments/proctoring-sessions/:id",
+			"type": "detail",
+			"title": "Proctoring session",
+			"config": {
+				"register": "scholiq",
+				"schema": "ProctoringSession",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "TakeAssessmentView",
+			"route": "/assessments/:assessmentId/take",
+			"type": "custom",
+			"title": "Take assessment",
+			"component": "TakeAssessmentView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "ItemAuthorView",
+			"route": "/assessments/items/:id/author",
+			"type": "custom",
+			"title": "Item author",
+			"component": "ItemAuthorView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "ProctoringReviewQueue",
+			"route": "/assessments/proctoring/review",
+			"type": "custom",
+			"title": "Proctoring review queue",
+			"component": "ProctoringReviewQueue",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "ImportQtiModal",
+			"route": "/assessments/item-banks/:itemBankId/import",
+			"type": "custom",
+			"title": "Import QTI package",
+			"component": "ImportQtiModal",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "GradeScales",
+			"route": "/grades/scales",
+			"type": "index",
+			"title": "Grade scales",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeScale"
+			}
+		},
+		{
+			"id": "GradeScaleDetail",
+			"route": "/grades/scales/:id",
+			"type": "detail",
+			"title": "Grade scale",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeScale"
+			}
+		},
+		{
+			"id": "GradeEntries",
+			"route": "/grades/entries",
+			"type": "index",
+			"title": "Grade entries",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeEntry"
+			}
+		},
+		{
+			"id": "GradeEntryDetail",
+			"route": "/grades/entries/:id",
+			"type": "detail",
+			"title": "Grade entry",
+			"config": {
+				"register": "scholiq",
+				"schema": "GradeEntry"
+			}
+		},
+		{
+			"id": "FinalGrades",
+			"route": "/grades/final",
+			"type": "index",
+			"title": "Final grades",
+			"config": {
+				"register": "scholiq",
+				"schema": "FinalGrade",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "FinalGradeDetail",
+			"route": "/grades/final/:id",
+			"type": "detail",
+			"title": "Final grade",
+			"config": {
+				"register": "scholiq",
+				"schema": "FinalGrade",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "GradebookView",
+			"route": "/grades/cohort/:cohortId/plan/:planId",
+			"type": "custom",
+			"title": "Gradebook",
+			"component": "GradebookView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "GradeImpactDetail",
+			"route": "/grades/entries/:id/impact",
+			"type": "custom",
+			"title": "Grade impact",
+			"component": "GradeImpactDetail",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "FeaturesRoadmap",
+			"route": "/features-roadmap",
+			"type": "custom",
+			"title": "Features & roadmap",
+			"component": "FeaturesRoadmap",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "LearningPlanTemplates",
+			"route": "/learning-plans/templates",
+			"type": "index",
+			"title": "Learning plan templates",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanTemplate"
+			}
+		},
+		{
+			"id": "LearningPlanTemplateDetail",
+			"route": "/learning-plans/templates/:id",
+			"type": "detail",
+			"title": "Learning plan template",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanTemplate"
+			}
+		},
+		{
+			"id": "LearningPlans",
+			"route": "/learning-plans",
+			"type": "index",
+			"title": "Learning plans",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlan"
+			}
+		},
+		{
+			"id": "LearningPlanDetail",
+			"route": "/learning-plans/:id",
+			"type": "detail",
+			"title": "Learning plan",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlan"
+			}
+		},
+		{
+			"id": "LearningPlanEvaluations",
+			"route": "/learning-plans/:planId/evaluations",
+			"type": "index",
+			"title": "Learning plan evaluations",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanEvaluation",
+				"filter": {
+					"learningPlanId": "@route.planId"
+				},
+				"selectable": false,
+				"showAdd": false,
+				"showFormDialog": false,
+				"showEditAction": false,
+				"showCopyAction": false,
+				"showDeleteAction": false,
+				"showMassImport": false,
+				"showMassCopy": false,
+				"showMassDelete": false
+			}
+		},
+		{
+			"id": "LearningPlanEvaluationDetail",
+			"route": "/learning-plans/:planId/evaluations/:id",
+			"type": "detail",
+			"title": "Learning plan evaluation",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearningPlanEvaluation",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "Signatures",
+			"route": "/learning-plans/:planId/signatures",
+			"type": "index",
+			"title": "Signatures",
+			"config": {
+				"register": "scholiq",
+				"schema": "Signature",
+				"filter": {
+					"subjectKind": "learning-plan",
+					"subjectId": "@route.planId"
+				},
+				"selectable": false,
+				"showAdd": false,
+				"showFormDialog": false,
+				"showEditAction": false,
+				"showCopyAction": false,
+				"showDeleteAction": false,
+				"showMassImport": false,
+				"showMassCopy": false,
+				"showMassDelete": false
+			}
+		},
+		{
+			"id": "SignatureDetail",
+			"route": "/learning-plans/:planId/signatures/:id",
+			"type": "detail",
+			"title": "Signature",
+			"config": {
+				"register": "scholiq",
+				"schema": "Signature",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "SignPlanModal",
+			"route": "/learning-plans/:planId/sign",
+			"type": "custom",
+			"title": "Sign learning plan",
+			"component": "SignPlanModal",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "LearningPlanEditor",
+			"route": "/learning-plans/:planId/edit",
+			"type": "custom",
+			"title": "Learning plan editor",
+			"component": "LearningPlanEditor",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "AttendanceRecords",
+			"route": "/attendance/records",
+			"type": "index",
+			"title": "Attendance records",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceRecord"
+			}
+		},
+		{
+			"id": "AttendanceRecordDetail",
+			"route": "/attendance/records/:id",
+			"type": "detail",
+			"title": "Attendance record",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceRecord"
+			}
+		},
+		{
+			"id": "ExcuseRequests",
+			"route": "/attendance/excuses",
+			"type": "index",
+			"title": "Excuse requests",
+			"config": {
+				"register": "scholiq",
+				"schema": "ExcuseRequest"
+			}
+		},
+		{
+			"id": "ExcuseRequestDetail",
+			"route": "/attendance/excuses/:id",
+			"type": "detail",
+			"title": "Excuse request",
+			"config": {
+				"register": "scholiq",
+				"schema": "ExcuseRequest"
+			}
+		},
+		{
+			"id": "AttendanceThresholds",
+			"route": "/attendance/thresholds",
+			"type": "index",
+			"title": "Attendance thresholds",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceThreshold"
+			}
+		},
+		{
+			"id": "AttendanceThresholdDetail",
+			"route": "/attendance/thresholds/:id",
+			"type": "detail",
+			"title": "Attendance threshold",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceThreshold"
+			}
+		},
+		{
+			"id": "AttendanceFlags",
+			"route": "/attendance/flags",
+			"type": "index",
+			"title": "Attendance flags",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceFlag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AttendanceFlagDetail",
+			"route": "/attendance/flags/:id",
+			"type": "detail",
+			"title": "Attendance flag",
+			"config": {
+				"register": "scholiq",
+				"schema": "AttendanceFlag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "MarkAttendanceView",
+			"route": "/sessions/:sessionId/attendance",
+			"type": "custom",
+			"title": "Mark attendance",
+			"component": "MarkAttendanceView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "SubmitExcuseModal",
+			"route": "/attendance/excuses/submit",
+			"type": "custom",
+			"title": "Submit excuse",
+			"component": "SubmitExcuseModal",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "DataMappingProfiles",
+			"route": "/data-exchange/mapping-profiles",
+			"type": "index",
+			"title": "Data mapping profiles",
+			"config": {
+				"register": "scholiq",
+				"schema": "DataMappingProfile"
+			}
+		},
+		{
+			"id": "DataMappingProfileDetail",
+			"route": "/data-exchange/mapping-profiles/:id",
+			"type": "detail",
+			"title": "Data mapping profile",
+			"config": {
+				"register": "scholiq",
+				"schema": "DataMappingProfile"
+			}
+		},
+		{
+			"id": "DataExchangeJobs",
+			"route": "/data-exchange/jobs",
+			"type": "index",
+			"title": "Data exchange jobs",
+			"config": {
+				"register": "scholiq",
+				"schema": "DataExchangeJob"
+			}
+		},
+		{
+			"id": "DataExchangeJobDetail",
+			"route": "/data-exchange/jobs/:id",
+			"type": "detail",
+			"title": "Data exchange job",
+			"config": {
+				"register": "scholiq",
+				"schema": "DataExchangeJob"
+			}
+		},
+		{
+			"id": "RequestExportModal",
+			"route": "/data-exchange/request",
+			"type": "custom",
+			"title": "Request export",
+			"component": "RequestExportModal",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "OsoDossierReviewView",
+			"route": "/data-exchange/jobs/:id/oso-review",
+			"type": "custom",
+			"title": "OSO dossier review",
+			"component": "OsoDossierReviewView",
+			"_note": "TODO: manual migration required — custom page not auto-converted"
+		},
+		{
+			"id": "LearnerProfiles",
+			"route": "/learner-profiles",
+			"type": "index",
+			"title": "Learners",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearnerProfile"
+			}
+		},
+		{
+			"id": "LearnerProfileDetail",
+			"route": "/learner-profiles/:id",
+			"type": "detail",
+			"title": "Learner",
+			"config": {
+				"register": "scholiq",
+				"schema": "LearnerProfile"
+			}
+		},
+		{
+			"id": "XapiStatements",
+			"route": "/xapi-statements",
+			"type": "index",
+			"title": "xAPI statements",
+			"config": {
+				"register": "scholiq",
+				"schema": "XapiStatement",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "XapiStatementDetail",
+			"route": "/xapi-statements/:id",
+			"type": "detail",
+			"title": "xAPI statement",
+			"config": {
+				"register": "scholiq",
+				"schema": "XapiStatement",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AiFeatures",
+			"route": "/ai-features",
+			"type": "index",
+			"title": "AI features",
+			"config": {
+				"register": "scholiq",
+				"schema": "AiFeature"
+			}
+		},
+		{
+			"id": "AiFeatureDetail",
+			"route": "/ai-features/:id",
+			"type": "detail",
+			"title": "AI feature",
+			"config": {
+				"register": "scholiq",
+				"schema": "AiFeature"
+			}
+		},
+		{
+			"id": "Assistant",
+			"route": "/assistant",
+			"type": "chat",
+			"title": "Assistant"
+		}
+	]
 }

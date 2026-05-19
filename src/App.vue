@@ -15,6 +15,7 @@
 	<CnAppRoot
 		:manifest="manifest"
 		:custom-components="customComponents"
+		:registry="registry"
 		:page-types="pageTypes"
 		app-id="scholiq"
 		:translate="translateForApp">
@@ -51,6 +52,13 @@ export default {
 		 * Registry of consumer-injected components used by `type: "custom"` pages.
 		 */
 		customComponents: {
+			type: Object,
+			default: () => ({}),
+		},
+		/**
+		 * 5-kind component registry (v2 manifest pattern per hydra ADR-036).
+		 */
+		registry: {
 			type: Object,
 			default: () => ({}),
 		},

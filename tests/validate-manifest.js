@@ -28,16 +28,36 @@ const REPO_ROOT = path.resolve(__dirname, '..')
 
 const MANIFEST_PATH = path.join(REPO_ROOT, 'src', 'manifest.json')
 
-const SCHEMA_CANDIDATES = [
-	process.env.APP_MANIFEST_SCHEMA,
-	path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', 'app-manifest.schema.json'),
-	path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', 'app-manifest.schema.json'),
-	'/tmp/worktrees/nextcloud-vue-manifest-v1/src/schemas/app-manifest.schema.json',
-	'/tmp/worktrees/nextcloud-vue-page-type-extensions/src/schemas/app-manifest.schema.json',
-].filter(Boolean)
+/**
+ * Determine whether the manifest is v2 (points to the v2 $schema URL).
+ *
+ * @param {object} manifest Parsed manifest object.
+ * @return {boolean} True when the manifest targets the v2 schema.
+ */
+function isV2Manifest(manifest) {
+	return typeof manifest.$schema === 'string' && manifest.$schema.includes('app-manifest-v2')
+}
 
-function findSchemaPath() {
-	for (const candidate of SCHEMA_CANDIDATES) {
+/**
+ * Build the ordered list of schema file candidates for a given manifest.
+ * V2 manifests prefer the v2 schema file; v1 manifests prefer the v1 file.
+ *
+ * @param {object} manifest Parsed manifest object.
+ * @return {string[]} Candidate paths (env override first, then node_modules, then siblings).
+ */
+function schemaCandidates(manifest) {
+	const schemaFile = isV2Manifest(manifest) ? 'app-manifest-v2.schema.json' : 'app-manifest.schema.json'
+	return [
+		process.env.APP_MANIFEST_SCHEMA,
+		path.join(REPO_ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'schemas', schemaFile),
+		path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', schemaFile),
+		'/tmp/worktrees/nextcloud-vue-manifest-v1/src/schemas/' + schemaFile,
+		'/tmp/worktrees/nextcloud-vue-page-type-extensions/src/schemas/' + schemaFile,
+	].filter(Boolean)
+}
+
+function findSchemaPath(manifest) {
+	for (const candidate of schemaCandidates(manifest)) {
 		try {
 			if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
 				return candidate
@@ -123,13 +143,14 @@ function main() {
 	}
 
 	const manifest = loadJson(MANIFEST_PATH)
+	const schemaVariant = isV2Manifest(manifest) ? 'v2' : 'v1'
 	console.log(`[validate-manifest] manifest: ${MANIFEST_PATH}`)
-	console.log(`[validate-manifest] manifest.version: ${manifest.version}`)
+	console.log(`[validate-manifest] manifest.version: ${manifest.version} (schema variant: ${schemaVariant})`)
 	console.log(`[validate-manifest] pages: ${(manifest.pages || []).length}`)
 
-	const schemaPath = findSchemaPath()
+	const schemaPath = findSchemaPath(manifest)
 	if (!schemaPath) {
-		console.warn('[validate-manifest] no schema candidate resolved; falling back to structural lint.')
+		console.warn(`[validate-manifest] no ${schemaVariant} schema candidate resolved; falling back to structural lint.`)
 		const errors = structuralLint(manifest)
 		if (errors.length === 0) {
 			console.log('[validate-manifest] structural lint: PASS (0 issues)')

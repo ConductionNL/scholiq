@@ -113,10 +113,16 @@ tryLoadTranslations()
 // source map.
 const pageTypesProp = { ...defaultPageTypes }
 
-// customComponents registry: maps names declared in manifest pages/tabs
-// to concrete Vue components.
+// customComponents registry (v1 pattern): maps names declared in manifest
+// pages/tabs to concrete Vue components. Preserved for back-compat.
 const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView, ScholiqDashboard, ScholiqCompliance, ScholiqLearnerHome, ScholiqAdminHealth }
 const customComponentsProp = { ...customComponents }
+
+// 5-kind registry (v2 pattern per hydra ADR-036). Imported as a separate
+// module for clarity. Coexists with customComponents during the migration.
+// eslint-disable-next-line import/extensions
+import registry from './registry.js'
+const registryProp = { ...registry }
 
 // Boot order: initializeStores() must resolve before mount so that any
 // `created()` hooks that call OR APIs run against a configured store.
@@ -128,6 +134,7 @@ const customComponentsProp = { ...customComponents }
 			props: {
 				manifest: bundledManifest,
 				customComponents: customComponentsProp,
+				registry: registryProp,
 				pageTypes: pageTypesProp,
 			},
 		}),
