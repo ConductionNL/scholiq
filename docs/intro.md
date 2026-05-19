@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+description: Get started with Scholiq, learning and course management on Nextcloud. Courses, enrolment, attendance, grading, and compliance training, manifest-first.
 ---
 
 # Scholiq
