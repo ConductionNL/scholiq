@@ -346,7 +346,7 @@ export default function Home() {
   return (
     <Layout
       title="Scholiq, learning and course management for Nextcloud"
-      description="The learning record and learning-management layer for Nextcloud: courses, enrolment, assignments, attendance, grading, certification, and compliance training, manifest-first on OpenRegister."
+      description="Learning record and course management for Nextcloud. Courses, enrolment, assignments, attendance, grading, and compliance training."
     >
       <main className="marketing-page">
         <DetailHero
