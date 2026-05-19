@@ -345,7 +345,7 @@ const WIDGETS = [
 export default function Home() {
   return (
     <Layout
-      title="Scholiq"
+      title="Scholiq, learning and course management for Nextcloud"
       description="The learning record and learning-management layer for Nextcloud: courses, enrolment, assignments, attendance, grading, certification, and compliance training, manifest-first on OpenRegister."
     >
       <main className="marketing-page">
