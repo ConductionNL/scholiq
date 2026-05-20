@@ -15,28 +15,8 @@ import {
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
-import BulkEnrolModal from './views/BulkEnrolModal.vue'
-import CohortTimetable from './views/CohortTimetable.vue'
-import ImportQtiModal from './views/ImportQtiModal.vue'
-import ItemAuthorView from './views/ItemAuthorView.vue'
-import GradebookView from './views/GradebookView.vue'
-import GradeImpactDetail from './views/GradeImpactDetail.vue'
-import LearningPlanEditor from './views/LearningPlanEditor.vue'
-import MarkAttendanceView from './views/MarkAttendanceView.vue'
-import MarkSubmissionView from './views/MarkSubmissionView.vue'
-import SignPlanModal from './views/SignPlanModal.vue'
-import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
-import ScholiqSettings from './views/ScholiqSettings.vue'
-import OsoDossierReviewView from './views/OsoDossierReviewView.vue'
-import RequestExportModal from './views/RequestExportModal.vue'
-import SubmitExcuseModal from './views/SubmitExcuseModal.vue'
-import SubmitWorkModal from './views/SubmitWorkModal.vue'
-import TakeAssessmentView from './views/TakeAssessmentView.vue'
-import FeaturesRoadmapView from './views/FeaturesRoadmap.vue'
-import ScholiqDashboard from './views/ScholiqDashboard.vue'
-import ScholiqCompliance from './views/ScholiqCompliance.vue'
-import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
-import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
+import customComponents from './customComponents.js'
+import registry from './registry.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -73,6 +53,11 @@ function tryLoadTranslations() {
 	}
 }
 
+// Shallow-clone CnPageRenderer to give Vue Router an extensible component
+// object — lib barrel exports are non-extensible (webpack ESM module records)
+// and Vue 2's Vue.extend() adds an internal _Ctor cache entry.
+const RoutePageRenderer = { ...CnPageRenderer }
+
 /**
  * Build the vue-router config from the manifest. Each manifest page becomes
  * one route; the route name IS page.id (per the lib's manifest contract).
@@ -80,11 +65,6 @@ function tryLoadTranslations() {
  * @param {object} manifest The bundled manifest (with `pages[]`).
  * @return {Array<object>} vue-router 3 routes config.
  */
-// Shallow-clone CnPageRenderer to give Vue Router an extensible component
-// object — lib barrel exports are non-extensible (webpack ESM module records)
-// and Vue 2's Vue.extend() adds an internal _Ctor cache entry.
-const RoutePageRenderer = { ...CnPageRenderer }
-
 function routesFromManifest(manifest) {
 	const routes = manifest.pages.map((page) => ({
 		name: page.id,
@@ -106,27 +86,20 @@ const router = new VueRouter({
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
-// `defaultPageTypes` (and consumers' `customComponents`) as frozen module
-// objects in some bundle shapes — Vue 2's `Vue.extend()` mutates component
-// definitions to attach an internal `_Ctor` cache, which throws
-// "Cannot add property _Ctor, object is not extensible" against a frozen
-// source map.
+// `defaultPageTypes` (and consumers' `customComponents` / `registry`) as
+// frozen module objects in some bundle shapes — Vue 2's `Vue.extend()`
+// mutates component definitions to attach an internal `_Ctor` cache, which
+// throws "Cannot add property _Ctor, object is not extensible" against a
+// frozen source map. Cloning yields extensible objects without altering the
+// values the lib resolves at render time.
 const pageTypesProp = { ...defaultPageTypes }
-
-// customComponents registry (v1 pattern): maps names declared in manifest
-// pages/tabs to concrete Vue components. Preserved for back-compat.
-const customComponents = { BulkEnrolModal, CohortTimetable, GradebookView, GradeImpactDetail, ImportQtiModal, ItemAuthorView, LearningPlanEditor, MarkAttendanceView, MarkSubmissionView, OsoDossierReviewView, ProctoringReviewQueue, RequestExportModal, ScholiqSettings, SignPlanModal, SubmitExcuseModal, SubmitWorkModal, TakeAssessmentView, FeaturesRoadmap: FeaturesRoadmapView, ScholiqDashboard, ScholiqCompliance, ScholiqLearnerHome, ScholiqAdminHealth }
 const customComponentsProp = { ...customComponents }
-
-// 5-kind registry (v2 pattern per hydra ADR-036). Imported as a separate
-// module for clarity. Coexists with customComponents during the migration.
-// eslint-disable-next-line import/extensions
-import registry from './registry.js'
 const registryProp = { ...registry }
 
 // Boot order: initializeStores() must resolve before mount so that any
 // `created()` hooks that call OR APIs run against a configured store.
 ;(async () => {
+	// eslint-disable-next-line no-new
 	new Vue({
 		pinia,
 		router,
