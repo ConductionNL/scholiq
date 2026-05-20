@@ -1,0 +1,8 @@
+{
+  "spec_slug": "assessment",
+  "title": "Assessment",
+  "app": "scholiq",
+  "repo": "https://github.com/ConductionNL/scholiq",
+  "depends_on": [],
+  "issue": null
+}
