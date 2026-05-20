@@ -187,10 +187,19 @@
 		{
 			"id": "Dashboard",
 			"route": "/",
-			"type": "custom",
+			"type": "dashboard",
 			"title": "Dashboard",
-			"component": "ScholiqDashboard",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"config": {
+				"widgets": [
+					{ "id": "scholiqDashboard", "title": "Dashboard", "type": "custom" }
+				],
+				"layout": [
+					{ "id": 1, "widgetId": "scholiqDashboard", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+				]
+			},
+			"slots": {
+				"widget-scholiqDashboard": "ScholiqDashboard"
+			}
 		},
 		{
 			"id": "Courses",
@@ -225,10 +234,19 @@
 		{
 			"id": "Compliance",
 			"route": "/compliance",
-			"type": "custom",
+			"type": "dashboard",
 			"title": "Compliance",
-			"component": "ScholiqCompliance",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"config": {
+				"widgets": [
+					{ "id": "scholiqCompliance", "title": "Compliance", "type": "custom" }
+				],
+				"layout": [
+					{ "id": 1, "widgetId": "scholiqCompliance", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+				]
+			},
+			"slots": {
+				"widget-scholiqCompliance": "ScholiqCompliance"
+			}
 		},
 		{
 			"id": "CourseDetail",
@@ -269,15 +287,21 @@
 			"type": "custom",
 			"title": "Lesson Player",
 			"component": "LessonPlayer",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Bespoke lesson playback view (xAPI-instrumented learning content runner). No equivalent typed primitive."
 		},
 		{
 			"id": "Settings",
 			"route": "/settings",
-			"type": "custom",
+			"type": "settings",
 			"title": "Settings",
-			"component": "ScholiqSettings",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"config": {
+				"sections": [
+					{ "id": "scholiq", "title": "Settings" }
+				]
+			},
+			"slots": {
+				"section-scholiq": "ScholiqSettings"
+			}
 		},
 		{
 			"id": "EnrolmentDetail",
@@ -294,10 +318,8 @@
 			"route": "/enrolments/bulk",
 			"type": "custom",
 			"title": "Bulk Enrol",
-			"config": {
-				"component": "BulkEnrolModal"
-			},
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Multi-step modal (audience picker -> course/section -> confirm with batch progress polling) \u2014 no typed primitive for stepped batch workflows.",
+			"component": "BulkEnrolModal"
 		},
 		{
 			"id": "Regulations",
@@ -346,10 +368,8 @@
 			"route": "/compliance/export",
 			"type": "custom",
 			"title": "Export audit pack",
-			"config": {
-				"component": "AuditPackExportModal"
-			},
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Compliance audit-pack export trigger (regulation + date-range -> server-side ZIP stream). Bespoke flow tied to ADR-008.",
+			"component": "AuditPackExportModal"
 		},
 		{
 			"id": "CredentialDetail",
@@ -367,23 +387,41 @@
 			"type": "custom",
 			"title": "Verify Credential",
 			"component": "CredentialVerify",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Public credential verification card with QR code and signature check. Bespoke verification UI."
 		},
 		{
 			"id": "LearnerHome",
 			"route": "/learner",
-			"type": "custom",
+			"type": "dashboard",
 			"title": "My learning",
-			"component": "ScholiqLearnerHome",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"config": {
+				"widgets": [
+					{ "id": "learnerHome", "title": "My learning", "type": "custom" }
+				],
+				"layout": [
+					{ "id": 1, "widgetId": "learnerHome", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+				]
+			},
+			"slots": {
+				"widget-learnerHome": "ScholiqLearnerHome"
+			}
 		},
 		{
 			"id": "AdminHealth",
 			"route": "/admin/health",
-			"type": "custom",
+			"type": "dashboard",
 			"title": "App health",
-			"component": "ScholiqAdminHealth",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"config": {
+				"widgets": [
+					{ "id": "adminHealth", "title": "App health", "type": "custom" }
+				],
+				"layout": [
+					{ "id": 1, "widgetId": "adminHealth", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+				]
+			},
+			"slots": {
+				"widget-adminHealth": "ScholiqAdminHealth"
+			}
 		},
 		{
 			"id": "Programmes",
@@ -451,7 +489,7 @@
 			"type": "custom",
 			"title": "Cohort timetable",
 			"component": "CohortTimetable",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Date-grouped session timetable with attached materials and assignments \u2014 custom layout, not a flat index."
 		},
 		{
 			"id": "Sessions",
@@ -563,7 +601,7 @@
 			"type": "custom",
 			"title": "Submit work",
 			"component": "SubmitWorkModal",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Learner submission flow (draft -> attach -> dispatch submit transition) \u2014 multi-step modal."
 		},
 		{
 			"id": "MarkSubmissionView",
@@ -571,7 +609,7 @@
 			"type": "custom",
 			"title": "Mark submission",
 			"component": "MarkSubmissionView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Marker rubric-driven grading view with inline feedback \u2014 bespoke workflow."
 		},
 		{
 			"id": "ItemBanks",
@@ -694,7 +732,7 @@
 			"type": "custom",
 			"title": "Take assessment",
 			"component": "TakeAssessmentView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Assessment runner (item navigation, autosave, proctoring hooks) \u2014 bespoke workflow."
 		},
 		{
 			"id": "ItemAuthorView",
@@ -702,7 +740,7 @@
 			"type": "custom",
 			"title": "Item author",
 			"component": "ItemAuthorView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Assessment item authoring UI (QTI structures, options, scoring) \u2014 bespoke editor."
 		},
 		{
 			"id": "ProctoringReviewQueue",
@@ -710,7 +748,7 @@
 			"type": "custom",
 			"title": "Proctoring review queue",
 			"component": "ProctoringReviewQueue",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Review queue for proctoring incidents with video/screenshot evidence \u2014 bespoke triage UI."
 		},
 		{
 			"id": "ImportQtiModal",
@@ -718,7 +756,7 @@
 			"type": "custom",
 			"title": "Import QTI package",
 			"component": "ImportQtiModal",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "QTI 2.x / 3.0 / Common Cartridge ZIP upload + parse modal \u2014 bespoke import flow."
 		},
 		{
 			"id": "GradeScales",
@@ -788,7 +826,7 @@
 			"type": "custom",
 			"title": "Gradebook",
 			"component": "GradebookView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Per-cohort grade matrix with weighting and learning-plan overlay \u2014 bespoke layout."
 		},
 		{
 			"id": "GradeImpactDetail",
@@ -796,7 +834,7 @@
 			"type": "custom",
 			"title": "Grade impact",
 			"component": "GradeImpactDetail",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Grade entry impact analysis (which final grades change if this entry is updated) \u2014 bespoke calculation view."
 		},
 		{
 			"id": "FeaturesRoadmap",
@@ -804,7 +842,7 @@
 			"type": "custom",
 			"title": "Features & roadmap",
 			"component": "FeaturesRoadmap",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Thin wrapper around CnFeaturesAndRoadmapView from @conduction/nextcloud-vue \u2014 kept as a custom page until the lib exposes a 'roadmap' page type."
 		},
 		{
 			"id": "LearningPlanTemplates",
@@ -919,7 +957,7 @@
 			"type": "custom",
 			"title": "Sign learning plan",
 			"component": "SignPlanModal",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Learning-plan co-sign flow (signer role selection + DigiD/basic auth choice + Signature object POST) \u2014 bespoke modal."
 		},
 		{
 			"id": "LearningPlanEditor",
@@ -927,7 +965,7 @@
 			"type": "custom",
 			"title": "Learning plan editor",
 			"component": "LearningPlanEditor",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Bespoke learning-plan version editor with goal/competency picking \u2014 no equivalent typed primitive."
 		},
 		{
 			"id": "AttendanceRecords",
@@ -1017,7 +1055,7 @@
 			"type": "custom",
 			"title": "Mark attendance",
 			"component": "MarkAttendanceView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Roster-style attendance marking for a session \u2014 bespoke grid UI."
 		},
 		{
 			"id": "SubmitExcuseModal",
@@ -1025,7 +1063,7 @@
 			"type": "custom",
 			"title": "Submit excuse",
 			"component": "SubmitExcuseModal",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "Absence-excuse submission modal (date range + reason + DigiD-or-click auth level) \u2014 bespoke flow."
 		},
 		{
 			"id": "DataMappingProfiles",
@@ -1073,7 +1111,7 @@
 			"type": "custom",
 			"title": "Request export",
 			"component": "RequestExportModal",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "DataExchangeJob queueing modal with target/profile picker + polling \u2014 bespoke flow."
 		},
 		{
 			"id": "OsoDossierReviewView",
@@ -1081,7 +1119,7 @@
 			"type": "custom",
 			"title": "OSO dossier review",
 			"component": "OsoDossierReviewView",
-			"_note": "TODO: manual migration required — custom page not auto-converted"
+			"_note": "OSO dossier review/sign-off UI for student-transfer data exchange \u2014 bespoke workflow."
 		},
 		{
 			"id": "LearnerProfiles",

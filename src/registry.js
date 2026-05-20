@@ -18,13 +18,16 @@
 //   - nextcloud-app-template scaffold-v2 (#44)
 //   - procest #512 / mydash #206
 
+import AuditPackExportModal from './views/AuditPackExportModal.vue'
 import BulkEnrolModal from './views/BulkEnrolModal.vue'
 import CohortTimetable from './views/CohortTimetable.vue'
+import CredentialVerify from './views/CredentialVerify.vue'
 import ImportQtiModal from './views/ImportQtiModal.vue'
 import ItemAuthorView from './views/ItemAuthorView.vue'
 import GradebookView from './views/GradebookView.vue'
 import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LearningPlanEditor from './views/LearningPlanEditor.vue'
+import LessonPlayer from './views/LessonPlayer.vue'
 import MarkAttendanceView from './views/MarkAttendanceView.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import SignPlanModal from './views/SignPlanModal.vue'
@@ -43,6 +46,7 @@ import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
 
 export default {
 	// Modals (kind:'modal' — opened via action declarations)
+	AuditPackExportModal: { kind: 'modal', component: AuditPackExportModal },
 	BulkEnrolModal: { kind: 'modal', component: BulkEnrolModal },
 	ImportQtiModal: { kind: 'modal', component: ImportQtiModal },
 	RequestExportModal: { kind: 'modal', component: RequestExportModal },
@@ -52,10 +56,12 @@ export default {
 
 	// Pages (kind:'page' — full-screen custom views)
 	CohortTimetable: { kind: 'page', component: CohortTimetable },
+	CredentialVerify: { kind: 'page', component: CredentialVerify },
 	GradebookView: { kind: 'page', component: GradebookView },
 	GradeImpactDetail: { kind: 'page', component: GradeImpactDetail },
 	ItemAuthorView: { kind: 'page', component: ItemAuthorView },
 	LearningPlanEditor: { kind: 'page', component: LearningPlanEditor },
+	LessonPlayer: { kind: 'page', component: LessonPlayer },
 	MarkAttendanceView: { kind: 'page', component: MarkAttendanceView },
 	MarkSubmissionView: { kind: 'page', component: MarkSubmissionView },
 	OsoDossierReviewView: { kind: 'page', component: OsoDossierReviewView },
