@@ -343,8 +343,8 @@
 			"route": "/enrolments/bulk",
 			"type": "custom",
 			"title": "Bulk Enrol",
-			"component": "BulkEnrolModal",
-			"_note": "Multi-step enrolment wizard (audience picker → course/section → confirm + batch progress). Lib gap: multi-step wizard / batch-action UI."
+			"component": "CnWizardDialog",
+			"_note": "Mounts CnWizardDialog from @conduction/nextcloud-vue for the multi-step bulk-enrol flow (audience picker → course/section → confirm + batch progress)."
 		},
 		{
 			"id": "Regulations",
@@ -393,8 +393,8 @@
 			"route": "/compliance/export",
 			"type": "custom",
 			"title": "Export audit pack",
-			"component": "AuditPackExportModal",
-			"_note": "Compliance audit-pack export trigger (regulation + date-range + server-side bundle). Lib gap: configurable export form."
+			"component": "CnExportWizard",
+			"_note": "Mounts CnExportWizard from @conduction/nextcloud-vue for the compliance audit-pack export (regulation + date-range + server-side bundle)."
 		},
 		{
 			"id": "CredentialDetail",
@@ -409,10 +409,14 @@
 		{
 			"id": "CredentialVerify",
 			"route": "/credentials/:id/verify",
-			"type": "custom",
+			"type": "detail",
 			"title": "Verify Credential",
-			"component": "CredentialVerify",
-			"_note": "Public credential verification card (token-scoped, unauthenticated). Lib gap: type:\"detail\" public mode."
+			"config": {
+				"register": "scholiq",
+				"schema": "Credential",
+				"mode": "public",
+				"id": "@route.id"
+			}
 		},
 		{
 			"id": "LearnerHome",
@@ -535,8 +539,8 @@
 			"route": "/cohorts/:id/timetable",
 			"type": "custom",
 			"title": "Cohort timetable",
-			"component": "CohortTimetable",
-			"_note": "Date-grouped session timetable (calendar-like layout). Lib gap: calendar / timeline widget."
+			"component": "CnTimelineView",
+			"_note": "Mounts CnTimelineView from @conduction/nextcloud-vue for the date-grouped session timetable (calendar-like layout)."
 		},
 		{
 			"id": "Sessions",
@@ -647,8 +651,8 @@
 			"route": "/assignments/:assignmentId/submit",
 			"type": "custom",
 			"title": "Submit work",
-			"component": "SubmitWorkModal",
-			"_note": "Assignment submission with file upload + late-submission rules. Lib gap: rich file-submit form."
+			"component": "CnRichSubmitDialog",
+			"_note": "Mounts CnRichSubmitDialog from @conduction/nextcloud-vue for assignment submission (file upload + late-submission rules)."
 		},
 		{
 			"id": "MarkSubmissionView",
@@ -802,8 +806,8 @@
 			"route": "/assessments/item-banks/:itemBankId/import",
 			"type": "custom",
 			"title": "Import QTI package",
-			"component": "ImportQtiModal",
-			"_note": "QTI item-bank import (file upload + parse + preview + commit). Lib gap: rich import wizard."
+			"component": "CnWizardDialog",
+			"_note": "Mounts CnWizardDialog from @conduction/nextcloud-vue for the QTI item-bank import (file upload → parse → preview → commit)."
 		},
 		{
 			"id": "GradeScales",
@@ -872,8 +876,8 @@
 			"route": "/grades/cohort/:cohortId/plan/:planId",
 			"type": "custom",
 			"title": "Gradebook",
-			"component": "GradebookView",
-			"_note": "Gradebook UI (cohort × plan matrix with inline edit, weighted aggregation). Lib gap: spreadsheet widget."
+			"component": "CnDataMatrix",
+			"_note": "Mounts CnDataMatrix from @conduction/nextcloud-vue for the gradebook (cohort × plan inline-edit grid with weighted aggregation)."
 		},
 		{
 			"id": "GradeImpactDetail",
@@ -1001,16 +1005,16 @@
 			"route": "/learning-plans/:planId/sign",
 			"type": "custom",
 			"title": "Sign learning plan",
-			"component": "SignPlanModal",
-			"_note": "Signature flow for learning plans (canvas/typed signature + audit). Lib gap: signature widget."
+			"component": "CnSignatureCapture",
+			"_note": "Mounts CnSignatureCapture from @conduction/nextcloud-vue for the learning-plan signature flow (canvas/typed signature + audit)."
 		},
 		{
 			"id": "LearningPlanEditor",
 			"route": "/learning-plans/:planId/edit",
 			"type": "custom",
 			"title": "Learning plan editor",
-			"component": "LearningPlanEditor",
-			"_note": "Learning-plan editor (drag-drop ordering, dependency chains, milestone scoring). Lib gap: dependency-graph widget."
+			"component": "CnRelationshipGraph",
+			"_note": "Mounts CnRelationshipGraph from @conduction/nextcloud-vue for the learning-plan editor (dependency-chain layout, drag-drop ordering, milestone scoring)."
 		},
 		{
 			"id": "AttendanceRecords",
@@ -1099,16 +1103,16 @@
 			"route": "/sessions/:sessionId/attendance",
 			"type": "custom",
 			"title": "Mark attendance",
-			"component": "MarkAttendanceView",
-			"_note": "Roster-based attendance marking (bulk + per-student state + late codes). Lib gap: attendance-grid widget."
+			"component": "CnDataMatrix",
+			"_note": "Mounts CnDataMatrix from @conduction/nextcloud-vue for roster-based attendance marking (inline-edit grid with bulk + per-student state + late codes)."
 		},
 		{
 			"id": "SubmitExcuseModal",
 			"route": "/attendance/excuses/submit",
 			"type": "custom",
 			"title": "Submit excuse",
-			"component": "SubmitExcuseModal",
-			"_note": "Excuse submission with file attachment + reason taxonomy. Lib gap: rich submit form."
+			"component": "CnRichSubmitDialog",
+			"_note": "Mounts CnRichSubmitDialog from @conduction/nextcloud-vue for excuse submission (file attachment + reason taxonomy)."
 		},
 		{
 			"id": "DataMappingProfiles",
@@ -1155,16 +1159,16 @@
 			"route": "/data-exchange/request",
 			"type": "custom",
 			"title": "Request export",
-			"component": "RequestExportModal",
-			"_note": "Data-exchange export request (regulation + scope + delivery channel). Lib gap: configurable export form."
+			"component": "CnExportWizard",
+			"_note": "Mounts CnExportWizard from @conduction/nextcloud-vue for the data-exchange export request (regulation + scope + delivery channel)."
 		},
 		{
 			"id": "OsoDossierReviewView",
 			"route": "/data-exchange/jobs/:id/oso-review",
 			"type": "custom",
 			"title": "OSO dossier review",
-			"component": "OsoDossierReviewView",
-			"_note": "OSO data-exchange dossier review (XML preview + validation + sign-off). Lib gap: structured-doc review widget."
+			"component": "CnStructuredDocReview",
+			"_note": "Mounts CnStructuredDocReview from @conduction/nextcloud-vue for the OSO dossier review (XML preview + validation + sign-off)."
 		},
 		{
 			"id": "LearnerProfiles",
