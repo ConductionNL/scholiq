@@ -306,32 +306,10 @@
 		{
 			"id": "LessonPlayer",
 			"route": "/courses/:courseId/lessons/:lessonId/play",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Lesson Player",
-			"config": {
-				"widgets": [
-					{
-						"id": "LessonPlayerWidget",
-						"title": "Lesson Player",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "LessonPlayerWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-LessonPlayerWidget": "LessonPlayer"
-			},
-			"_note": "Bespoke lesson playback view (xAPI-instrumented learning content runner). No equivalent typed primitive."
+			"component": "LessonPlayer",
+			"_note": "Interactive lesson playback (scene navigation, media controls, attempt tracking). No lib analogue."
 		},
 		{
 			"id": "Settings",
@@ -363,32 +341,10 @@
 		{
 			"id": "BulkEnrol",
 			"route": "/enrolments/bulk",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Bulk Enrol",
-			"config": {
-				"widgets": [
-					{
-						"id": "BulkEnrolModalWidget",
-						"title": "Bulk Enrol",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "BulkEnrolModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-BulkEnrolModalWidget": "BulkEnrolModal"
-			},
-			"_note": "Multi-step modal (audience picker -> course/section -> confirm with batch progress polling) — no typed primitive for stepped batch workflows."
+			"component": "BulkEnrolModal",
+			"_note": "Multi-step enrolment wizard (audience picker → course/section → confirm + batch progress). Lib gap: multi-step wizard / batch-action UI."
 		},
 		{
 			"id": "Regulations",
@@ -435,32 +391,10 @@
 		{
 			"id": "AuditPackExport",
 			"route": "/compliance/export",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Export audit pack",
-			"config": {
-				"widgets": [
-					{
-						"id": "AuditPackExportModalWidget",
-						"title": "Export audit pack",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "AuditPackExportModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-AuditPackExportModalWidget": "AuditPackExportModal"
-			},
-			"_note": "Compliance audit-pack export trigger (regulation + date-range -> server-side ZIP stream). Bespoke flow tied to ADR-008."
+			"component": "AuditPackExportModal",
+			"_note": "Compliance audit-pack export trigger (regulation + date-range + server-side bundle). Lib gap: configurable export form."
 		},
 		{
 			"id": "CredentialDetail",
@@ -475,32 +409,10 @@
 		{
 			"id": "CredentialVerify",
 			"route": "/credentials/:id/verify",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Verify Credential",
-			"config": {
-				"widgets": [
-					{
-						"id": "CredentialVerifyWidget",
-						"title": "Verify Credential",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "CredentialVerifyWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-CredentialVerifyWidget": "CredentialVerify"
-			},
-			"_note": "Public credential verification card with QR code and signature check. Bespoke verification UI."
+			"component": "CredentialVerify",
+			"_note": "Public credential verification card (token-scoped, unauthenticated). Lib gap: type:\"detail\" public mode."
 		},
 		{
 			"id": "LearnerHome",
@@ -621,32 +533,10 @@
 		{
 			"id": "CohortTimetable",
 			"route": "/cohorts/:id/timetable",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Cohort timetable",
-			"config": {
-				"widgets": [
-					{
-						"id": "CohortTimetableWidget",
-						"title": "Cohort timetable",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "CohortTimetableWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-CohortTimetableWidget": "CohortTimetable"
-			},
-			"_note": "Date-grouped session timetable with attached materials and assignments — custom layout, not a flat index."
+			"component": "CohortTimetable",
+			"_note": "Date-grouped session timetable (calendar-like layout). Lib gap: calendar / timeline widget."
 		},
 		{
 			"id": "Sessions",
@@ -755,62 +645,18 @@
 		{
 			"id": "SubmitWorkModal",
 			"route": "/assignments/:assignmentId/submit",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Submit work",
-			"config": {
-				"widgets": [
-					{
-						"id": "SubmitWorkModalWidget",
-						"title": "Submit work",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "SubmitWorkModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-SubmitWorkModalWidget": "SubmitWorkModal"
-			},
-			"_note": "Learner submission flow (draft -> attach -> dispatch submit transition) — multi-step modal."
+			"component": "SubmitWorkModal",
+			"_note": "Assignment submission with file upload + late-submission rules. Lib gap: rich file-submit form."
 		},
 		{
 			"id": "MarkSubmissionView",
 			"route": "/assignments/:assignmentId/submissions/:id/mark",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Mark submission",
-			"config": {
-				"widgets": [
-					{
-						"id": "MarkSubmissionViewWidget",
-						"title": "Mark submission",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "MarkSubmissionViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-MarkSubmissionViewWidget": "MarkSubmissionView"
-			},
-			"_note": "Marker rubric-driven grading view with inline feedback — bespoke workflow."
+			"component": "MarkSubmissionView",
+			"_note": "Grading UI (rubric scores, inline feedback, attachments). Lib gap: grading workflow widget."
 		},
 		{
 			"id": "ItemBanks",
@@ -930,122 +776,34 @@
 		{
 			"id": "TakeAssessmentView",
 			"route": "/assessments/:assessmentId/take",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Take assessment",
-			"config": {
-				"widgets": [
-					{
-						"id": "TakeAssessmentViewWidget",
-						"title": "Take assessment",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "TakeAssessmentViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-TakeAssessmentViewWidget": "TakeAssessmentView"
-			},
-			"_note": "Assessment runner (item navigation, autosave, proctoring hooks) — bespoke workflow."
+			"component": "TakeAssessmentView",
+			"_note": "Assessment-taking UI (timer, item navigation, autosave, proctoring hooks). No lib analogue."
 		},
 		{
 			"id": "ItemAuthorView",
 			"route": "/assessments/items/:id/author",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Item author",
-			"config": {
-				"widgets": [
-					{
-						"id": "ItemAuthorViewWidget",
-						"title": "Item author",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "ItemAuthorViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-ItemAuthorViewWidget": "ItemAuthorView"
-			},
-			"_note": "Assessment item authoring UI (QTI structures, options, scoring) — bespoke editor."
+			"component": "ItemAuthorView",
+			"_note": "Assessment item authoring (item-bank editor, response key, scoring rules). No lib analogue."
 		},
 		{
 			"id": "ProctoringReviewQueue",
 			"route": "/assessments/proctoring/review",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Proctoring review queue",
-			"config": {
-				"widgets": [
-					{
-						"id": "ProctoringReviewQueueWidget",
-						"title": "Proctoring review queue",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "ProctoringReviewQueueWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-ProctoringReviewQueueWidget": "ProctoringReviewQueue"
-			},
-			"_note": "Review queue for proctoring incidents with video/screenshot evidence — bespoke triage UI."
+			"component": "ProctoringReviewQueue",
+			"_note": "Proctoring review queue with playback annotations + flagged events. No lib analogue."
 		},
 		{
 			"id": "ImportQtiModal",
 			"route": "/assessments/item-banks/:itemBankId/import",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Import QTI package",
-			"config": {
-				"widgets": [
-					{
-						"id": "ImportQtiModalWidget",
-						"title": "Import QTI package",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "ImportQtiModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-ImportQtiModalWidget": "ImportQtiModal"
-			},
-			"_note": "QTI 2.x / 3.0 / Common Cartridge ZIP upload + parse modal — bespoke import flow."
+			"component": "ImportQtiModal",
+			"_note": "QTI item-bank import (file upload + parse + preview + commit). Lib gap: rich import wizard."
 		},
 		{
 			"id": "GradeScales",
@@ -1112,62 +870,18 @@
 		{
 			"id": "GradebookView",
 			"route": "/grades/cohort/:cohortId/plan/:planId",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Gradebook",
-			"config": {
-				"widgets": [
-					{
-						"id": "GradebookViewWidget",
-						"title": "Gradebook",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "GradebookViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-GradebookViewWidget": "GradebookView"
-			},
-			"_note": "Per-cohort grade matrix with weighting and learning-plan overlay — bespoke layout."
+			"component": "GradebookView",
+			"_note": "Gradebook UI (cohort × plan matrix with inline edit, weighted aggregation). Lib gap: spreadsheet widget."
 		},
 		{
 			"id": "GradeImpactDetail",
 			"route": "/grades/entries/:id/impact",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Grade impact",
-			"config": {
-				"widgets": [
-					{
-						"id": "GradeImpactDetailWidget",
-						"title": "Grade impact",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "GradeImpactDetailWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-GradeImpactDetailWidget": "GradeImpactDetail"
-			},
-			"_note": "Grade entry impact analysis (which final grades change if this entry is updated) — bespoke calculation view."
+			"component": "GradeImpactDetail",
+			"_note": "Grade impact detail (factor breakdown + override history). Could be type:\"detail\" once secondary panels lift into widgets."
 		},
 		{
 			"id": "FeaturesRoadmap",
@@ -1285,62 +999,18 @@
 		{
 			"id": "SignPlanModal",
 			"route": "/learning-plans/:planId/sign",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Sign learning plan",
-			"config": {
-				"widgets": [
-					{
-						"id": "SignPlanModalWidget",
-						"title": "Sign learning plan",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "SignPlanModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-SignPlanModalWidget": "SignPlanModal"
-			},
-			"_note": "Learning-plan co-sign flow (signer role selection + DigiD/basic auth choice + Signature object POST) — bespoke modal."
+			"component": "SignPlanModal",
+			"_note": "Signature flow for learning plans (canvas/typed signature + audit). Lib gap: signature widget."
 		},
 		{
 			"id": "LearningPlanEditor",
 			"route": "/learning-plans/:planId/edit",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Learning plan editor",
-			"config": {
-				"widgets": [
-					{
-						"id": "LearningPlanEditorWidget",
-						"title": "Learning plan editor",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "LearningPlanEditorWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-LearningPlanEditorWidget": "LearningPlanEditor"
-			},
-			"_note": "Bespoke learning-plan version editor with goal/competency picking — no equivalent typed primitive."
+			"component": "LearningPlanEditor",
+			"_note": "Learning-plan editor (drag-drop ordering, dependency chains, milestone scoring). Lib gap: dependency-graph widget."
 		},
 		{
 			"id": "AttendanceRecords",
@@ -1427,62 +1097,18 @@
 		{
 			"id": "MarkAttendanceView",
 			"route": "/sessions/:sessionId/attendance",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Mark attendance",
-			"config": {
-				"widgets": [
-					{
-						"id": "MarkAttendanceViewWidget",
-						"title": "Mark attendance",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "MarkAttendanceViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-MarkAttendanceViewWidget": "MarkAttendanceView"
-			},
-			"_note": "Roster-style attendance marking for a session — bespoke grid UI."
+			"component": "MarkAttendanceView",
+			"_note": "Roster-based attendance marking (bulk + per-student state + late codes). Lib gap: attendance-grid widget."
 		},
 		{
 			"id": "SubmitExcuseModal",
 			"route": "/attendance/excuses/submit",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Submit excuse",
-			"config": {
-				"widgets": [
-					{
-						"id": "SubmitExcuseModalWidget",
-						"title": "Submit excuse",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "SubmitExcuseModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-SubmitExcuseModalWidget": "SubmitExcuseModal"
-			},
-			"_note": "Absence-excuse submission modal (date range + reason + DigiD-or-click auth level) — bespoke flow."
+			"component": "SubmitExcuseModal",
+			"_note": "Excuse submission with file attachment + reason taxonomy. Lib gap: rich submit form."
 		},
 		{
 			"id": "DataMappingProfiles",
@@ -1527,62 +1153,18 @@
 		{
 			"id": "RequestExportModal",
 			"route": "/data-exchange/request",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Request export",
-			"config": {
-				"widgets": [
-					{
-						"id": "RequestExportModalWidget",
-						"title": "Request export",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "RequestExportModalWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-RequestExportModalWidget": "RequestExportModal"
-			},
-			"_note": "DataExchangeJob queueing modal with target/profile picker + polling — bespoke flow."
+			"component": "RequestExportModal",
+			"_note": "Data-exchange export request (regulation + scope + delivery channel). Lib gap: configurable export form."
 		},
 		{
 			"id": "OsoDossierReviewView",
 			"route": "/data-exchange/jobs/:id/oso-review",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "OSO dossier review",
-			"config": {
-				"widgets": [
-					{
-						"id": "OsoDossierReviewViewWidget",
-						"title": "OSO dossier review",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "OsoDossierReviewViewWidget",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12,
-						"showTitle": false
-					}
-				]
-			},
-			"slots": {
-				"widget-OsoDossierReviewViewWidget": "OsoDossierReviewView"
-			},
-			"_note": "OSO dossier review/sign-off UI for student-transfer data exchange — bespoke workflow."
+			"component": "OsoDossierReviewView",
+			"_note": "OSO data-exchange dossier review (XML preview + validation + sign-off). Lib gap: structured-doc review widget."
 		},
 		{
 			"id": "LearnerProfiles",
