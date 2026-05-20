@@ -1,0 +1,8 @@
+{
+  "spec_slug": "nextcloud-app",
+  "title": "Nextcloud App Shell",
+  "app": "scholiq",
+  "repo": "https://github.com/ConductionNL/scholiq",
+  "depends_on": [],
+  "issue": null
+}
