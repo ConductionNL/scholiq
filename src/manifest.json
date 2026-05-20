@@ -191,10 +191,21 @@
 			"title": "Dashboard",
 			"config": {
 				"widgets": [
-					{ "id": "scholiqDashboard", "title": "Dashboard", "type": "custom" }
+					{
+						"id": "scholiqDashboard",
+						"title": "Dashboard",
+						"type": "custom"
+					}
 				],
 				"layout": [
-					{ "id": 1, "widgetId": "scholiqDashboard", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+					{
+						"id": 1,
+						"widgetId": "scholiqDashboard",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 12
+					}
 				]
 			},
 			"slots": {
@@ -238,10 +249,21 @@
 			"title": "Compliance",
 			"config": {
 				"widgets": [
-					{ "id": "scholiqCompliance", "title": "Compliance", "type": "custom" }
+					{
+						"id": "scholiqCompliance",
+						"title": "Compliance",
+						"type": "custom"
+					}
 				],
 				"layout": [
-					{ "id": 1, "widgetId": "scholiqCompliance", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+					{
+						"id": 1,
+						"widgetId": "scholiqCompliance",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 12
+					}
 				]
 			},
 			"slots": {
@@ -296,7 +318,10 @@
 			"title": "Settings",
 			"config": {
 				"sections": [
-					{ "id": "scholiq", "title": "Settings" }
+					{
+						"id": "scholiq",
+						"title": "Settings"
+					}
 				]
 			},
 			"slots": {
@@ -396,10 +421,21 @@
 			"title": "My learning",
 			"config": {
 				"widgets": [
-					{ "id": "learnerHome", "title": "My learning", "type": "custom" }
+					{
+						"id": "learnerHome",
+						"title": "My learning",
+						"type": "custom"
+					}
 				],
 				"layout": [
-					{ "id": 1, "widgetId": "learnerHome", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+					{
+						"id": 1,
+						"widgetId": "learnerHome",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 12
+					}
 				]
 			},
 			"slots": {
@@ -413,10 +449,21 @@
 			"title": "App health",
 			"config": {
 				"widgets": [
-					{ "id": "adminHealth", "title": "App health", "type": "custom" }
+					{
+						"id": "adminHealth",
+						"title": "App health",
+						"type": "custom"
+					}
 				],
 				"layout": [
-					{ "id": 1, "widgetId": "adminHealth", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 12 }
+					{
+						"id": 1,
+						"widgetId": "adminHealth",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 12
+					}
 				]
 			},
 			"slots": {
@@ -839,10 +886,8 @@
 		{
 			"id": "FeaturesRoadmap",
 			"route": "/features-roadmap",
-			"type": "custom",
-			"title": "Features & roadmap",
-			"component": "FeaturesRoadmap",
-			"_note": "Thin wrapper around CnFeaturesAndRoadmapView from @conduction/nextcloud-vue \u2014 kept as a custom page until the lib exposes a 'roadmap' page type."
+			"type": "roadmap",
+			"title": "Features & roadmap"
 		},
 		{
 			"id": "LearningPlanTemplates",

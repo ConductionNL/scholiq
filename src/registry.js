@@ -38,7 +38,6 @@ import RequestExportModal from './views/RequestExportModal.vue'
 import SubmitExcuseModal from './views/SubmitExcuseModal.vue'
 import SubmitWorkModal from './views/SubmitWorkModal.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
-import FeaturesRoadmapView from './views/FeaturesRoadmap.vue'
 import ScholiqDashboard from './views/ScholiqDashboard.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
@@ -72,5 +71,4 @@ export default {
 	ScholiqLearnerHome: { kind: 'page', component: ScholiqLearnerHome },
 	ScholiqSettings: { kind: 'page', component: ScholiqSettings },
 	TakeAssessmentView: { kind: 'page', component: TakeAssessmentView },
-	FeaturesRoadmap: { kind: 'page', component: FeaturesRoadmapView },
 }
