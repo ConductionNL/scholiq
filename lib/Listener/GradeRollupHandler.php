@@ -40,6 +40,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Listener;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Grading\GradeFormulaEvaluator;
@@ -169,11 +170,12 @@ class GradeRollupHandler implements IEventListener
                 ]
                 );
 
-        if (empty($existing) === true) {
-            $existingObj = null;
-        } else if (is_array($existing[0]) === true) {
+        $existingObj = null;
+        if (empty($existing) === false && is_array($existing[0]) === true) {
             $existingObj = $existing[0];
-        } else {
+        }
+
+        if (empty($existing) === false && is_array($existing[0]) === false) {
             $existingObj = $existing[0]->jsonSerialize();
         }
 
@@ -228,9 +230,8 @@ class GradeRollupHandler implements IEventListener
             return;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 
@@ -313,7 +314,7 @@ class GradeRollupHandler implements IEventListener
             'value'              => (float) $totalScore,
             'gradeScaleId'       => $scaleId ?? '',
             'grader'             => 'auto',
-            'gradedAt'           => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'gradedAt'           => (new DateTimeImmutable())->format(\DATE_ATOM),
             'tenant_id'          => $tenantId,
             'lifecycle'          => 'concept',
         ];
@@ -328,9 +329,8 @@ class GradeRollupHandler implements IEventListener
             return;
         }
 
-        if (is_array($saved) === true) {
-            $savedData = $saved;
-        } else {
+        $savedData = $saved;
+        if (is_array($saved) === false) {
             $savedData = $saved->jsonSerialize();
         }
 

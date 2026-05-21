@@ -216,16 +216,14 @@ class AssessmentScoringHandler
             case 'textEntry':
             case 'inlineChoice':
                 // Exact or case-insensitive match.
+                $lr = $learnerResponse;
                 if (is_string($learnerResponse) === true) {
                     $lr = mb_strtolower(trim($learnerResponse));
-                } else {
-                    $lr = $learnerResponse;
                 }
 
+                $cr = $correctResponse;
                 if (is_string($correctResponse) === true) {
                     $cr = mb_strtolower(trim($correctResponse));
-                } else {
-                    $cr = $correctResponse;
                 }
 
                 if ($lr === $cr) {

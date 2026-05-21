@@ -28,6 +28,7 @@ namespace OCA\Scholiq\Service;
 
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
+use RuntimeException;
 
 /**
  * Generates and stores RSA-2048 per-tenant keypairs for OB3 credential signing.
@@ -87,7 +88,7 @@ class KeyManagementService
                 );
 
         if ($resource === false) {
-            throw new \RuntimeException('OpenSSL key generation failed: '.openssl_error_string());
+            throw new RuntimeException('OpenSSL key generation failed: '.openssl_error_string());
         }
 
         $privateKeyPem = '';
@@ -97,7 +98,7 @@ class KeyManagementService
         $publicKeyPem = $details['key'] ?? '';
 
         if ($privateKeyPem === '' || $publicKeyPem === '') {
-            throw new \RuntimeException('Failed to export keypair from OpenSSL resource.');
+            throw new RuntimeException('Failed to export keypair from OpenSSL resource.');
         }
 
         $fingerprint      = substr(hash('sha256', $publicKeyPem), 0, 16);

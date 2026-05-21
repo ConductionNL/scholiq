@@ -126,9 +126,8 @@ class OsoDossierReviewGuard
             return false;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 

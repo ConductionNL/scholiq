@@ -32,6 +32,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Lifecycle;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Service\ObjectService;
 use Psr\Log\LoggerInterface;
 
@@ -122,8 +123,8 @@ class SubmissionWindowGuard
             return true;
         }
 
-        $dueAt = new \DateTimeImmutable($dueAtRaw);
-        $now   = new \DateTimeImmutable();
+        $dueAt = new DateTimeImmutable($dueAtRaw);
+        $now   = new DateTimeImmutable();
 
         if ($now <= $dueAt) {
             // Within the window — normal submit.

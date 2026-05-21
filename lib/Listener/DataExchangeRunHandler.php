@@ -142,10 +142,9 @@ class DataExchangeRunHandler implements IEventListener
         $target           = $job['target'] ?? '';
         $mappingProfileId = $job['mappingProfileId'] ?? null;
         $scope            = $job['scope'] ?? [];
-        $tenantId         = $job['tenant_id'] ?? '';
 
         // Record startedAt.
-        $this->saveJobFields(jobId: $jobId, fields: ['startedAt' => date('c')], tenantId: $tenantId);
+        $this->saveJobFields(jobId: $jobId, fields: ['startedAt' => date('c')]);
 
         // 1. Load the DataMappingProfile.
         $profile = null;
@@ -177,7 +176,6 @@ class DataExchangeRunHandler implements IEventListener
                     'errorMessage' => $errorMsg,
                     'lifecycle'    => 'failed',
                 ],
-                tenantId: $tenantId
             );
             return;
         }
@@ -197,12 +195,13 @@ class DataExchangeRunHandler implements IEventListener
         $accepted       = $resultData['recordsAccepted'];
 
         // 6. Determine outcome state.
+        $nextState = 'succeeded';
         if ($rejected > 0 && $accepted > 0) {
             $nextState = 'partial';
-        } else if ($rejected > 0 && $accepted === 0 && $processed > 0) {
+        }
+
+        if ($rejected > 0 && $accepted === 0 && $processed > 0) {
             $nextState = 'failed';
-        } else {
-            $nextState = 'succeeded';
         }
 
         $this->saveJobFields(
@@ -213,7 +212,6 @@ class DataExchangeRunHandler implements IEventListener
                 'connectorRunId' => $connectorRunId,
                 'lifecycle'      => $nextState,
             ],
-            tenantId: $tenantId
         );
 
         $this->logger->info(
@@ -409,9 +407,8 @@ class DataExchangeRunHandler implements IEventListener
                     return null;
                 }
 
-                if (is_array($cohorts[0]) === true) {
-                    $cohort = $cohorts[0];
-                } else {
+                $cohort = $cohorts[0];
+                if (is_array($cohorts[0]) === false) {
                     $cohort = $cohorts[0]->jsonSerialize();
                 }
                 return $cohort['brinNumber'] ?? null;
@@ -478,13 +475,12 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Persist updated fields on the DataExchangeJob without triggering a lifecycle event loop.
      *
-     * @param string              $jobId    UUID of the DataExchangeJob.
-     * @param array<string,mixed> $fields   Fields to update.
-     * @param string              $tenantId Tenant UUID for the save call.
+     * @param string              $jobId  UUID of the DataExchangeJob.
+     * @param array<string,mixed> $fields Fields to update.
      *
      * @return void
      */
-    private function saveJobFields(string $jobId, array $fields, string $tenantId): void
+    private function saveJobFields(string $jobId, array $fields): void
     {
         $existing = $this->objectService->findAll(
             [
@@ -500,9 +496,8 @@ class DataExchangeRunHandler implements IEventListener
             return;
         }
 
-        if (is_array($existing[0]) === true) {
-            $current = $existing[0];
-        } else {
+        $current = $existing[0];
+        if (is_array($existing[0]) === false) {
             $current = $existing[0]->jsonSerialize();
         }
 

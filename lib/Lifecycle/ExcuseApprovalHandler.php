@@ -149,9 +149,8 @@ class ExcuseApprovalHandler implements IEventListener
         $flippedCount = 0;
 
         foreach ($records as $raw) {
-            if (is_array($raw) === true) {
-                $record = $raw;
-            } else {
+            $record = $raw;
+            if (is_array($raw) === false) {
                 $record = $raw->jsonSerialize();
             }
 
