@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Grading;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Service\ObjectService;
 
 /**
@@ -105,7 +106,6 @@ class GradeFormulaEvaluator
             formula: $formula,
             value: $value,
             entries: $entries,
-            components: $components,
             passRules: $passRules,
             passThreshold: $passThreshold
         );
@@ -114,7 +114,7 @@ class GradeFormulaEvaluator
             'value'            => $value,
             'passed'           => $passed,
             'breakdown'        => $breakdown,
-            'lastRecomputedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'lastRecomputedAt' => (new DateTimeImmutable())->format(\DATE_ATOM),
         ];
 
     }//end evaluate()
@@ -204,9 +204,12 @@ class GradeFormulaEvaluator
             return null;
         }
 
+        $scale = [];
         if (is_array($obj) === true) {
             $scale = $obj;
-        } else {
+        }
+
+        if (is_array($obj) === false) {
             $scale = $obj->jsonSerialize();
         }
 
@@ -342,17 +345,15 @@ class GradeFormulaEvaluator
      */
     private function compareGradedAt(array $a, array $b): int
     {
-        $rawA = strtotime($a['gradedAt'] ?? '1970-01-01');
-        $rawB = strtotime($b['gradedAt'] ?? '1970-01-01');
-        if ($rawA === false) {
-            $timeA = 0;
-        } else {
+        $rawA  = strtotime($a['gradedAt'] ?? '1970-01-01');
+        $rawB  = strtotime($b['gradedAt'] ?? '1970-01-01');
+        $timeA = 0;
+        if ($rawA !== false) {
             $timeA = $rawA;
         }
 
-        if ($rawB === false) {
-            $timeB = 0;
-        } else {
+        $timeB = 0;
+        if ($rawB !== false) {
             $timeB = $rawB;
         }
 
@@ -408,10 +409,9 @@ class GradeFormulaEvaluator
         // Compute period averages.
         $periods = [];
         foreach ($periodTotals as $period => $totals) {
+            $periods[$period] = null;
             if ($totals['weight'] > 0) {
                 $periods[$period] = round($totals['sum'] / $totals['weight'], 4);
-            } else {
-                $periods[$period] = null;
             }
         }
 
@@ -427,12 +427,11 @@ class GradeFormulaEvaluator
     /**
      * Determine whether the learner has passed.
      *
-     * @param string               $formula       Formula name.
-     * @param float|null           $value         Computed final value.
-     * @param array<int, array>    $entries       Published entries.
-     * @param array<string, array> $components    Component index.
-     * @param array                $passRules     passRules from the CurriculumPlan.
-     * @param float|null           $passThreshold Threshold from the GradeScale.
+     * @param string            $formula       Formula name.
+     * @param float|null        $value         Computed final value.
+     * @param array<int, array> $entries       Published entries.
+     * @param array             $passRules     passRules from the CurriculumPlan.
+     * @param float|null        $passThreshold Threshold from the GradeScale.
      *
      * @return bool|null Null if insufficient data.
      */
@@ -440,7 +439,6 @@ class GradeFormulaEvaluator
         string $formula,
         ?float $value,
         array $entries,
-        array $components,
         array $passRules,
         ?float $passThreshold,
     ): ?bool {
@@ -486,7 +484,7 @@ class GradeFormulaEvaluator
             'value'            => null,
             'passed'           => null,
             'breakdown'        => [],
-            'lastRecomputedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'lastRecomputedAt' => (new DateTimeImmutable())->format(\DATE_ATOM),
         ];
 
     }//end emptyResult()

@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Service;
 
+use DateTimeImmutable;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
 use OCP\IURLGenerator;
@@ -93,7 +94,7 @@ class CredentialSigningService
         $credentialId = $object['id'] ?? '';
         $learnerId    = $object['learnerId'] ?? '';
         $courseId     = $object['courseId'] ?? null;
-        $issuedAt     = $object['issuedAt'] ?? (new \DateTimeImmutable())->format(\DATE_ATOM);
+        $issuedAt     = $object['issuedAt'] ?? (new DateTimeImmutable())->format(\DATE_ATOM);
         $expiresAt    = $object['expiresAt'] ?? null;
         $tenantId     = $object['tenant_id'] ?? '';
         $issuedBy     = $object['issuedBy'] ?? '';
@@ -130,7 +131,7 @@ class CredentialSigningService
 
         $payload['proof'] = [
             'type'               => 'RsaSignature2018',
-            'created'            => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'created'            => (new DateTimeImmutable())->format(\DATE_ATOM),
             'verificationMethod' => $issuerDid.'#keys-1',
             'proofPurpose'       => 'assertionMethod',
             'jws'                => $jws,
@@ -183,10 +184,9 @@ class CredentialSigningService
             'issuanceDate' => $issuedAt,
         ];
 
+        $achievementId = 'urn:scholiq:manual:'.$credentialId;
         if ($courseId !== null) {
             $achievementId = 'urn:scholiq:course:'.$courseId;
-        } else {
-            $achievementId = 'urn:scholiq:manual:'.$credentialId;
         }
 
         $payload['credentialSubject'] = [

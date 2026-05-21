@@ -285,9 +285,8 @@ class AttendanceFlagCreationHandler implements IEventListener
             return null;
         }
 
-        if (is_array($saved) === true) {
-            $savedData = $saved;
-        } else {
+        $savedData = $saved;
+        if (is_array($saved) === false) {
             $savedData = $saved->jsonSerialize();
         }
 
@@ -327,9 +326,8 @@ class AttendanceFlagCreationHandler implements IEventListener
             return null;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 

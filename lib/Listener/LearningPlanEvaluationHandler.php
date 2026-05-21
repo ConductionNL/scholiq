@@ -148,9 +148,8 @@ class LearningPlanEvaluationHandler implements IEventListener
             return;
         }
 
-        if (is_array($plans[0]) === true) {
-            $plan = $plans[0];
-        } else {
+        $plan = $plans[0];
+        if (is_array($plans[0]) === false) {
             $plan = $plans[0]->jsonSerialize();
         }
 

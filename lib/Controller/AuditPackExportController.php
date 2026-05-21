@@ -35,6 +35,9 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Controller;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Service\AuditHashService;
 use OCA\Scholiq\AppInfo\Application;
@@ -44,6 +47,7 @@ use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IConfig;
 use OCP\IRequest;
+use ZipArchive;
 
 /**
  * Streams the ADR-008 §6 audit-pack ZIP for compliance officers and auditors.
@@ -114,10 +118,9 @@ class AuditPackExportController extends Controller
         foreach ($entries as $entry) {
             $row = $entry->jsonSerialize();
             // Apply regulation filter on the serialised data (changed JSON field).
+            $changed = [];
             if (is_string($row['changed'] ?? null) === true) {
                 $changed = (array) json_decode($row['changed'], associative: true);
-            } else {
-                $changed = [];
             }
 
             if ($regulationSlug !== '' && ($changed['regulationSlug'] ?? '') !== $regulationSlug) {
@@ -129,11 +132,10 @@ class AuditPackExportController extends Controller
 
         // Verify HMAC chain for the full log (inline — AuditHashService::verifyChain
         // is the only real OR method for chain verification, accepting int IDs as bounds).
-        $verification = $this->auditHashService->verifyChain();
+        $verification    = $this->auditHashService->verifyChain();
+        $signatureStatus = 'broken';
         if (($verification['valid'] ?? false) === true) {
             $signatureStatus = 'valid';
-        } else {
-            $signatureStatus = 'broken';
         }
 
         $keyFingerprint = $verification['keyFingerprint'] ?? 'unavailable';
@@ -142,7 +144,7 @@ class AuditPackExportController extends Controller
         }
 
         $eventCount      = count($events);
-        $exportTimestamp = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $exportTimestamp = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
         $tenantId        = $this->config->getSystemValue('instanceid', 'unknown');
 
         // Build the four required files.
@@ -291,11 +293,10 @@ class AuditPackExportController extends Controller
      */
     private function buildVerificationTxt(array $verification): string
     {
-        $valid = ($verification['valid'] ?? false) === true;
+        $valid  = ($verification['valid'] ?? false) === true;
+        $status = 'broken';
         if ($valid === true) {
             $status = 'valid';
-        } else {
-            $status = 'broken';
         }
 
         $entriesVerified = $verification['entriesVerified'] ?? 0;
@@ -307,12 +308,13 @@ class AuditPackExportController extends Controller
         $lines[] = 'Status          : '.$status;
         $lines[] = 'Entries verified: '.$entriesVerified;
 
+        $lines[] = '';
         if ($brokenAt !== null) {
-            $lines[] = '';
             $lines[] = 'WARNING: Chain integrity broken at entry id: '.$brokenAt;
             $lines[] = 'This indicates a record was modified or deleted after recording.';
-        } else {
-            $lines[] = '';
+        }
+
+        if ($brokenAt === null) {
             $lines[] = 'All HMAC signatures verified. Evidence log is intact.';
         }
 
@@ -337,8 +339,8 @@ class AuditPackExportController extends Controller
             return '';
         }
 
-        $zip = new \ZipArchive();
-        if ($zip->open($tmpFile, \ZipArchive::OVERWRITE) !== true) {
+        $zip = new ZipArchive();
+        if ($zip->open($tmpFile, ZipArchive::OVERWRITE) !== true) {
             unlink($tmpFile);
             return '';
         }

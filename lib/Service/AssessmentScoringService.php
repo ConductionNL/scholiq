@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Service;
 
+use InvalidArgumentException;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Lifecycle\AssessmentScoringHandler;
 use Psr\Log\LoggerInterface;
@@ -87,7 +88,7 @@ class AssessmentScoringService
         );
 
         if (empty($results) === true) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 "AssessmentResult with UUID '{$assessmentResultId}' not found."
             );
         }

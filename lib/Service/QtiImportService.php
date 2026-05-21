@@ -37,8 +37,12 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Service;
 
+use DOMDocument;
+use DOMXPath;
 use OCA\OpenRegister\Service\ObjectService;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+use ZipArchive;
 
 /**
  * Imports QTI 2.x / 3.0 packages and Common Cartridge files into the Scholiq
@@ -110,7 +114,7 @@ class QtiImportService
 
             $createdUuids = [];
             foreach ($itemXmlPaths as $xmlPath) {
-                $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId, packageType: $packageType);
+                $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId);
                 if ($uuid !== null) {
                     $createdUuids[] = $uuid;
                 }
@@ -143,10 +147,10 @@ class QtiImportService
      */
     private function extractZip(string $zipPath, string $targetDir): void
     {
-        $zip    = new \ZipArchive();
+        $zip    = new ZipArchive();
         $result = $zip->open($zipPath);
         if ($result !== true) {
-            throw new \RuntimeException("Cannot open ZIP archive '{$zipPath}': ZipArchive error {$result}.");
+            throw new RuntimeException("Cannot open ZIP archive '{$zipPath}': ZipArchive error {$result}.");
         }
 
         $zip->extractTo($targetDir);
@@ -212,13 +216,13 @@ class QtiImportService
             return $globResult;
         }
 
-        $xml = new \DOMDocument();
+        $xml = new DOMDocument();
         if ($xml->load($manifestPath) === false) {
             return [];
         }
 
         $paths = [];
-        $xpath = new \DOMXPath($xml);
+        $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('imscp', 'http://www.imsglobal.org/xsd/imscp_v1p1');
 
         // QTI packages list items as resources in the manifest.
@@ -263,10 +267,9 @@ class QtiImportService
         // If no items found via manifest, look for XML files with QTI namespaces.
         if (empty($paths) === true) {
             $globAll = glob($dir.'/*.xml');
+            $allXml  = [];
             if ($globAll !== false) {
                 $allXml = $globAll;
-            } else {
-                $allXml = [];
             }
 
             foreach ($allXml as $xmlFile) {
@@ -291,15 +294,14 @@ class QtiImportService
      * Other interaction types are imported with raw qtiBody and a placeholder
      * correctResponse pending future parser extensions.
      *
-     * @param string $xmlPath     Absolute path to the item XML file.
-     * @param string $itemBankId  UUID of the target ItemBank.
-     * @param string $packageType Package type (qti3 / qti2 / cc / unknown).
+     * @param string $xmlPath    Absolute path to the item XML file.
+     * @param string $itemBankId UUID of the target ItemBank.
      *
      * @return string|null Created Item UUID, or null on parse failure.
      */
-    private function importSingleItem(string $xmlPath, string $itemBankId, string $packageType): ?string
+    private function importSingleItem(string $xmlPath, string $itemBankId): ?string
     {
-        $xml = new \DOMDocument();
+        $xml = new DOMDocument();
         libxml_use_internal_errors(true);
         if ($xml->load($xmlPath) === false) {
             $this->logger->warning('[QtiImportService] Failed to parse XML: {path}', ['path' => $xmlPath]);
@@ -308,7 +310,7 @@ class QtiImportService
 
         libxml_clear_errors();
 
-        $xpath = new \DOMXPath($xml);
+        $xpath = new DOMXPath($xml);
 
         // Register namespaces for both QTI versions.
         $xpath->registerNamespace('qti3', self::QTI3_NS);
@@ -322,10 +324,9 @@ class QtiImportService
         }
 
         $rawTitle = $root->getAttribute('title');
+        $title    = basename($xmlPath, '.xml');
         if ($rawTitle !== '') {
             $title = $rawTitle;
-        } else {
-            $title = basename($xmlPath, '.xml');
         }
 
         $qtiBody = $xml->saveXML();
@@ -342,11 +343,11 @@ class QtiImportService
         $maxScore        = 1.0;
 
         if ($interactionType === 'choice') {
-            [$correctResponse, $maxScore] = $this->parseChoiceItem(xml: $xml, xpath: $xpath);
+            [$correctResponse, $maxScore] = $this->parseChoiceItem(xml: $xml);
         } else if ($interactionType === 'extendedText') {
             // Essay — no correctResponse by definition.
             $correctResponse = null;
-            $maxScore        = $this->parseOutcomeMaxScore(xml: $xml, xpath: $xpath);
+            $maxScore        = $this->parseOutcomeMaxScore(xml: $xml);
         }
 
         $itemData = [
@@ -367,12 +368,13 @@ class QtiImportService
             return null;
         }
 
+        $uuid = null;
         if (is_array($saved) === true) {
             $uuid = $saved['uuid'] ?? null;
-        } else if (is_object($saved) === true) {
+        }
+
+        if (is_array($saved) === false && is_object($saved) === true) {
             $uuid = $saved->getUuid() ?? null;
-        } else {
-            $uuid = null;
         }
 
         if (is_string($uuid) === true) {
@@ -403,12 +405,11 @@ class QtiImportService
     /**
      * Parse a `choice` interaction item: extract the correct response and maxScore.
      *
-     * @param \DOMDocument $xml   Parsed QTI item document.
-     * @param \DOMXPath    $xpath Configured XPath evaluator.
+     * @param \DOMDocument $xml Parsed QTI item document.
      *
      * @return array{0: mixed, 1: float} [correctResponse, maxScore] tuple.
      */
-    private function parseChoiceItem(\DOMDocument $xml, \DOMXPath $xpath): array
+    private function parseChoiceItem(\DOMDocument $xml): array
     {
         // Find the correctResponse declaration (QTI 3.0 and 2.x both use <correctResponse>).
         $correctResponseNodes = $xml->getElementsByTagName('correctResponse');
@@ -422,14 +423,13 @@ class QtiImportService
             }
 
             // Single-response choice: return string; multi-response: return array.
+            $correctResponse = $values;
             if (count($values) === 1) {
                 $correctResponse = $values[0];
-            } else {
-                $correctResponse = $values;
             }
         }
 
-        $maxScore = $this->parseOutcomeMaxScore(xml: $xml, xpath: $xpath);
+        $maxScore = $this->parseOutcomeMaxScore(xml: $xml);
 
         return [$correctResponse, $maxScore];
     }//end parseChoiceItem()
@@ -437,12 +437,11 @@ class QtiImportService
     /**
      * Parse the outcome MAXSCORE or defaultValue from a QTI item.
      *
-     * @param \DOMDocument $xml   Parsed QTI item document.
-     * @param \DOMXPath    $xpath Configured XPath evaluator.
+     * @param \DOMDocument $xml Parsed QTI item document.
      *
      * @return float Maximum score (defaults to 1.0 if not found).
      */
-    private function parseOutcomeMaxScore(\DOMDocument $xml, \DOMXPath $xpath): float
+    private function parseOutcomeMaxScore(\DOMDocument $xml): float
     {
         // Look for <outcomeDeclaration identifier="SCORE"> with <defaultValue>.
         $outcomeNodes = $xml->getElementsByTagName('outcomeDeclaration');
@@ -490,9 +489,10 @@ class QtiImportService
             $path = $dir.'/'.$item;
             if (is_dir($path) === true) {
                 $this->removeDirectory(dir: $path);
-            } else {
-                unlink($path);
+                continue;
             }
+
+            unlink($path);
         }
 
         rmdir($dir);

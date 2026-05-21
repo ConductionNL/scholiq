@@ -114,9 +114,8 @@ class AttendanceFlagReportGuard
             return false;
         }
 
-        if (is_array($jobs[0]) === true) {
-            $job = $jobs[0];
-        } else {
+        $job = $jobs[0];
+        if (is_array($jobs[0]) === false) {
             $job = $jobs[0]->jsonSerialize();
         }
 

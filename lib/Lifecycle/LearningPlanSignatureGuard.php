@@ -200,9 +200,8 @@ class LearningPlanSignatureGuard
             return [];
         }
 
-        if (is_array($templates[0]) === true) {
-            $template = $templates[0];
-        } else {
+        $template = $templates[0];
+        if (is_array($templates[0]) === false) {
             $template = $templates[0]->jsonSerialize();
         }
 
@@ -234,11 +233,12 @@ class LearningPlanSignatureGuard
 
         $result = [];
         foreach ($raw as $item) {
-            if (is_array($item) === true) {
-                $result[] = $item;
-            } else {
-                $result[] = $item->jsonSerialize();
+            $row = $item;
+            if (is_array($item) === false) {
+                $row = $item->jsonSerialize();
             }
+
+            $result[] = $row;
         }
 
         return $result;
@@ -261,12 +261,13 @@ class LearningPlanSignatureGuard
 
             if (isset($byRole[$role]) === false) {
                 $byRole[$role] = $sig;
-            } else {
-                // Keep the signature with the higher assurance.
-                $existing = $byRole[$role]['assuranceLevel'] ?? 'none';
-                if ($this->assuranceRank(level: $assurance) > $this->assuranceRank(level: $existing)) {
-                    $byRole[$role] = $sig;
-                }
+                continue;
+            }
+
+            // Keep the signature with the higher assurance.
+            $existing = $byRole[$role]['assuranceLevel'] ?? 'none';
+            if ($this->assuranceRank(level: $assurance) > $this->assuranceRank(level: $existing)) {
+                $byRole[$role] = $sig;
             }
         }
 

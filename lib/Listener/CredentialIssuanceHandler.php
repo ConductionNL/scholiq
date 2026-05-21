@@ -34,6 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Listener;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
@@ -92,7 +93,7 @@ class CredentialIssuanceHandler implements IEventListener
         $courseId    = $enrolment['courseId'] ?? null;
         $learnerId   = $enrolment['learnerId'] ?? '';
         $tenantId    = $enrolment['tenant_id'] ?? '';
-        $completedAt = $enrolment['completedAt'] ?? (new \DateTimeImmutable())->format(\DATE_ATOM);
+        $completedAt = $enrolment['completedAt'] ?? (new DateTimeImmutable())->format(\DATE_ATOM);
 
         if ($courseId === null || $learnerId === '' || $tenantId === '') {
             return;
@@ -119,7 +120,7 @@ class CredentialIssuanceHandler implements IEventListener
         // Calculate expiry date if the course defines a validity period.
         $expiresAt = null;
         if (empty($course['defaultExpiresAfterDays']) === false) {
-            $expiresAt = (new \DateTimeImmutable($completedAt))
+            $expiresAt = (new DateTimeImmutable($completedAt))
                 ->modify('+'.(int) $course['defaultExpiresAfterDays'].' days')
                 ->format(\DATE_ATOM);
         }
