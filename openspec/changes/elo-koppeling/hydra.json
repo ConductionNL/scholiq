@@ -1,0 +1,8 @@
+{
+  "spec_slug": "elo-koppeling",
+  "title": "ELO Koppeling \u2014 Push, Pull & SSO",
+  "app": "scholiq",
+  "repo": "https://github.com/ConductionNL/scholiq",
+  "depends_on": [],
+  "issue": null
+}
