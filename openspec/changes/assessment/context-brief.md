@@ -12,6 +12,17 @@ replaces: [assessment-engine, proctoring]
 
 # Assessment
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Studenten > Beoordelingen
+
+**Rationale:** qualitative assessment under student  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Why
 
 Beyond hand-in assignments, institutions run **structured tests**: a vmbo `toets`, an HBO `tentamen`, a state `examen`, a certification `exam`, a formative `quiz`. These have an item bank, a scoring scheme, often a time limit, sometimes proctoring. No open-source Dutch assessment platform exists today (Cito / DiatOets / IEP are all proprietary); IMS **QTI 3.0** is the lock-in escape hatch. And the **EU AI Act** (Reg. 2024/1689) classifies online proctoring as high-risk AI — so proctoring must be a *pluggable provider*, never a hard dependency on one US vendor, and any AI-assisted flag-review must register in the `AiFeature` gate (ADR-005). This spec merges what were two separate Dutch stubs (`assessment-engine` + `proctoring`) into one capability: proctoring is *configuration on an Assessment*, not a standalone schema.
