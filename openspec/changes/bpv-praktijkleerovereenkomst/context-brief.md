@@ -28,6 +28,17 @@ standards:
 
 # BPV Praktijkleerovereenkomst en Beoordeling
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Praktijk > Praktijkleerovereenkomsten
+
+**Rationale:** BPV agreements  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Beheer van de beroepspraktijkvorming (BPV) voor MBO-studenten, met de praktijkleerovereenkomst (POK) als wettelijk centraal document, koppeling aan SBB-erkende leerbedrijven, planning en uren-registratie van praktijkperioden, periodieke beoordelingen door school en leerbedrijf, en afsluitende beroepspraktijkexamens. De BPV is het hart van de MBO-opleiding: voor BOL-trajecten gemiddeld 20-60% van de studietijd, voor BBL-trajecten het grootste deel. De POK is een driepartijenovereenkomst tussen school, student en leerbedrijf (bij BBL plus een arbeidsovereenkomst) die juridisch verplicht is voordat de student aan de praktijkperiode mag beginnen.
