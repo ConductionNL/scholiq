@@ -28,6 +28,17 @@ standards:
 
 # Bekostigingsteldatum 1 Oktober en 1 Februari
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Aanleveringen > Bekostigingsteldatum
+
+**Rationale:** funding count dates  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Voorbereiding, uitvoering en verantwoording van de wettelijke teldatumtellingen waarop de Rijksbekostiging van scholen en MBO-/HBO-instellingen is gebaseerd: 1 oktober voor PO en VO, 1 februari voor MBO en HBO. De teldatum bepaalt voor een heel kalenderjaar (of studiejaar) welke bedragen de instelling ontvangt voor personele en materiele bekostiging, plus alle aanvullende bekostigingsstromen voor achterstanden, passend onderwijs, anderstaligen, leerwegondersteuning, en specifieke voorzieningen. Een fout van een enkele leerling kan duizenden euros per jaar schelen, een systematische fout tienduizenden tot honderdduizenden, en bij onjuiste bestuursdeclaratie kan de minister de bekostiging terugvorderen plus correctie-rente opleggen.
