@@ -11,6 +11,17 @@ profiles: [opdracht-vo, opdracht-he, werkstuk, portfolio-item]
 
 # Assignments & Submissions
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Cursussen > Opdrachten (+ Student tab)
+
+**Rationale:** opdrachten live on course, shown on student  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Why
 
 Learners hand work in; teachers grade it. That loop is universal — a vmbo `opdracht`, an HBO `werkstuk`, a university `portfolio-item`, a corporate `case study`. Scholiq can hold courses and lessons but has nowhere for a learner to *submit* anything and nowhere for a teacher to mark it against criteria. This spec adds the deliverable side of assessment (the structured-test side is the `assessment` spec): an `Assignment` belongs to a Course or Session, has a due date and a `Rubric`; a learner files a `Submission` (one or more attachments) which moves through draft → submitted → returned; the grade a teacher gives a Submission becomes a `GradeEntry` (see `grading`) so it can roll up into a final grade per the CurriculumPlan.
