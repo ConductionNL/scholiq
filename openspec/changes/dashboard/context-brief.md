@@ -9,6 +9,17 @@ created: 2026-05-11
 
 # Role-Aware Dashboards
 
+## Placement & Information Architecture
+
+**Placement type:** `SUB_PAGE` — Sub-page beneath a top-level menu entry. Renders as a page inside the parent surface (usually reachable via a router child route or a tab on the parent index page).
+
+**Lives at:** Studenten > Dashboards
+
+**Rationale:** role-aware dashboards  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Why
 "Analytics dashboard" (#17, 39 demand) and "Student Analytics" (#18, 34 demand) score in the top 20 canonical features. Insight #16: OSS LMS leaders share dated UX — a modern Vue / NL-Design dashboard surface is the structural differentiator. Eight stories across six roles (mentor pattern view, manager team progress, board compliance %, board renewal report, principal Cito overview, parent grade digest, pupil grade-impact view, civil-servant RADIO progress) anchor this spec.
 
