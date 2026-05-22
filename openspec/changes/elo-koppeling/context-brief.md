@@ -4,6 +4,17 @@ Draft — scholiq spec brief, 2026-05-21.
 
 # ELO Koppeling — Push, Pull & SSO
 
+## Placement & Information Architecture
+
+**Placement type:** `SETTING` — Setting under the app's Beheer/Admin/Configuration surface. Lives in the existing settings UI; no top-level menu entry.
+
+**Lives at:** Beheer > ELO-koppeling
+
+**Rationale:** LMS adapter  
+_Source: /tmp/ia-small5.md_
+
+> **Implementation note for builders:** Respect the placement above. Do not promote this spec to a top-level menu item, sub-page, or new route unless the placement type explicitly says so. If the placement is `DETAIL_TAB`, `WIDGET`, `ACTION`, `SETTING`, or `INFRA`, the feature must NOT introduce a new entry in the app sidebar. When in doubt, ask before creating a new top-level surface.
+
 ## Purpose
 
 Establish a bidirectional integration layer between scholiq and the dominant Nederlandse Electronische Leeromgevingen (ELO's): Moodle, itslearning, Magister, Somtoday, en (waar relevant) Google Classroom en Microsoft Teams for Education. Scholiq beheert de administratieve werkelijkheid van de instelling (leerlingen, klassen, cursussen, docententoewijzingen, roosters), terwijl de ELO de didactische werkelijkheid beheert (lesmateriaal, opdrachten, toetsen, cijfers). Vandaag overlapt dit: docenten muteren leerling-lijsten in twee systemen, cijfers worden geëxporteerd uit de ELO en handmatig ingelezen in het LAS/SIS, en nieuwe medewerkers krijgen pas na dagen toegang. scholiq fixt dit met een adapter-architectuur: push van administratieve data naar de ELO (cursussen, gebruikers, klas-inschrijvingen) op basis van events in scholiq, en pull van didactische data terug (ingeleverde opdrachten, resultaten, voortgang). Standaarden — OneRoster, LTI 1.3, SCORM 2004, xAPI, Edu-iX/Edu-V — verzekeren dat één implementatie aan meerdere ELO's koppelt. SSO loopt via SURFconext/Entree zodat docenten en leerlingen vanuit scholiq met één klik in de ELO landen.
