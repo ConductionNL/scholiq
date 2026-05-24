@@ -42,11 +42,20 @@ Institutions record who was present, and some are obliged to act when absence cr
 
 ## Requirements
 
-- The system MUST persist `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, `AttendanceFlag` as OpenRegister objects with `x-openregister-lifecycle` (ExcuseRequest: submitted → approved | rejected; AttendanceFlag: open → in-handling → reported → resolved), `x-openregister-relations` (AttendanceRecord↔Session/learner, Flag↔learner/threshold), `x-openregister-calculations` (per-learner rolling counts vs each threshold), and `x-openregister-notifications` (`onCross` mentor/coordinator alert, idempotency-keyed). `AttendanceFlag` MUST be `appendOnly: true` (audit per ADR-008).
-- The threshold-crossing detection MUST be a declared calculation + `calculatedChange` trigger — NOT a PHP TimedJob. It MUST reuse the same threshold machinery as compliance-`Regulation` coverage thresholds (no parallel mechanism — ADR-022).
-- The external authenticated sick-reporting flow's auth strength MUST be declarative config; the DigiD handshake itself is a `data-exchange`/openconnector concern.
-- The report to an external authority (leerplichtambtenaar via Digikoppeling, etc.) MUST be a `DataExchangeJob` (see `data-exchange`), not implemented inline here.
-- Frontend declarative: `src/manifest.json` pages for AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail; a custom `MarkAttendanceView` (the Session roster grid — genuine UI), `SubmitExcuseModal`, and a `cohort-attendance` dashboard widget. No PHP CRUD controllers.
+### Requirement: Persist Attendance domain objects in OpenRegister
+The system MUST persist `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, `AttendanceFlag` as OpenRegister objects with `x-openregister-lifecycle` (ExcuseRequest: submitted → approved | rejected; AttendanceFlag: open → in-handling → reported → resolved), `x-openregister-relations` (AttendanceRecord↔Session/learner, Flag↔learner/threshold), `x-openregister-calculations` (per-learner rolling counts vs each threshold), and `x-openregister-notifications` (`onCross` mentor/coordinator alert, idempotency-keyed). `AttendanceFlag` MUST be `appendOnly: true` (audit per ADR-008).
+
+### Requirement: Threshold crossing is a declared calculation trigger
+The threshold-crossing detection MUST be a declared calculation + `calculatedChange` trigger — NOT a PHP TimedJob. It MUST reuse the same threshold machinery as compliance-`Regulation` coverage thresholds (no parallel mechanism — ADR-022).
+
+### Requirement: Sick-reporting auth strength is declarative config
+The external authenticated sick-reporting flow's auth strength MUST be declarative config; the DigiD handshake itself is a `data-exchange`/openconnector concern.
+
+### Requirement: External authority reporting via DataExchangeJob
+The report to an external authority (leerplichtambtenaar via Digikoppeling, etc.) MUST be a `DataExchangeJob` (see `data-exchange`), not implemented inline here.
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail; a custom `MarkAttendanceView` (the Session roster grid — genuine UI), `SubmitExcuseModal`, and a `cohort-attendance` dashboard widget. No PHP CRUD controllers.
 
 ## Standards
 

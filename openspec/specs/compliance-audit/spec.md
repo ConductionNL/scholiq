@@ -29,9 +29,15 @@ Audience-targeted bulk-enrol of compliance modules (all employees / by departmen
 - GIVEN any training event happens, WHEN it is recorded, THEN the entry is append-only, digitally signed, and any tampering attempt produces an alert.
 
 ## Requirements
-- The system MUST capture attestations with timestamp, IP, employee ID, regulation code, and score.
-- The system MUST maintain an append-only digitally signed evidence log; any mutation attempt MUST raise an alert.
-- The system MUST export an audit-ready ZIP per regulation and date range.
+
+### Requirement: Capture attestations with full provenance
+The system MUST capture attestations with timestamp, IP, employee ID, regulation code, and score.
+
+### Requirement: Maintain an append-only signed evidence log
+The system MUST maintain an append-only digitally signed evidence log; any mutation attempt MUST raise an alert.
+
+### Requirement: Export audit-ready ZIP per regulation and date range
+The system MUST export an audit-ready ZIP per regulation and date range.
 
 ## Standards
 NIS2 / Cyberbeveiligingswet, AVG, AVG-Onderwijs, BIO/BIO2, Schema.org `EducationalOccupationalCredential`, ISO 27001 evidence patterns.

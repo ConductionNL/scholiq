@@ -29,10 +29,18 @@ Standard Nextcloud app shell: `appinfo/info.xml` declaring dependency on OpenReg
 - GIVEN a user opens a list with zero rows, WHEN the empty state renders, THEN it uses `NcEmptyContent` with title, illustration, and a primary action button.
 
 ## Requirements
-- The system MUST declare `openregister` and `openconnector` as `<dependencies>` in `appinfo/info.xml` and refuse to bootstrap without them.
-- The system MUST use Vue Router in hash mode for all navigation; custom hash routing or `$emit('navigate')` patterns are forbidden.
-- The system MUST render `NcEmptyContent` for every empty list/state; raw "no data" strings are forbidden.
-- The system MUST use the NL Design System double-fallback CSS pattern (`var(--cn-X, var(--color-X, fallback))`); hardcoded colours are forbidden.
+
+### Requirement: Declare openregister + openconnector deps and refuse to bootstrap without them
+The system MUST declare `openregister` and `openconnector` as `<dependencies>` in `appinfo/info.xml` and refuse to bootstrap without them.
+
+### Requirement: Vue Router in hash mode for all navigation
+The system MUST use Vue Router in hash mode for all navigation; custom hash routing or `$emit('navigate')` patterns are forbidden.
+
+### Requirement: Render NcEmptyContent for every empty state
+The system MUST render `NcEmptyContent` for every empty list/state; raw "no data" strings are forbidden.
+
+### Requirement: Use NL Design System double-fallback CSS pattern
+The system MUST use the NL Design System double-fallback CSS pattern (`var(--cn-X, var(--color-X, fallback))`); hardcoded colours are forbidden.
 
 ## Standards
 Nextcloud OCP (`IAppManager`, `IConfig`, `IUserSession`, `IRootFolder`, `IGroupManager`, `Calendar\IManager`, `Notification\IManager`, `Talk\IBroker`, `Activity\IManager`), NL Design System tokens, WCAG 2.1 AA.

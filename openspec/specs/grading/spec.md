@@ -42,10 +42,17 @@ Component grades have to roll up into a final grade, and the roll-up rule belong
 
 ## Requirements
 
-- The system MUST persist `GradeScale`, `GradeEntry`, `FinalGrade` as OpenRegister objects. `GradeEntry` has `x-openregister-lifecycle` (concept → published → revised) and `x-openregister-notifications` keyed so a re-publish/backfill doesn't double-notify. `FinalGrade` is computed via `x-openregister-calculations` + cross-schema aggregation over the learner's published `GradeEntry`s, parameterised by the `CurriculumPlan.formula` + component weights.
-- Notification dispatch MUST honour per-parent / per-18+-learner preference (instant vs daily digest), backed by a `NotificationPreference` schema or the existing OR notification-preference mechanism (whichever OR exposes).
-- The roll-up MUST NOT be a PHP TimedJob — it MUST be a declared calculation that re-fires on `GradeEntry` publish (the `calculatedChange` trigger feature). The only PHP exception allowed: a stateless `GradeFormulaEvaluator` invoked by the calculation engine if a formula can't be expressed in JSON-logic (ADR-031 "calculation engine above schema metadata").
-- Frontend declarative: `src/manifest.json` pages for GradeEntry/FinalGrade index+detail per cohort; a custom `GradebookView` (the cohort grid with concept→publish — genuine UI) and `GradeImpactDetail` Vue component. No PHP CRUD controllers.
+### Requirement: Persist grading domain objects in OpenRegister
+The system MUST persist `GradeScale`, `GradeEntry`, `FinalGrade` as OpenRegister objects. `GradeEntry` has `x-openregister-lifecycle` (concept → published → revised) and `x-openregister-notifications` keyed so a re-publish/backfill doesn't double-notify. `FinalGrade` is computed via `x-openregister-calculations` + cross-schema aggregation over the learner's published `GradeEntry`s, parameterised by the `CurriculumPlan.formula` + component weights.
+
+### Requirement: Notification dispatch honours per-parent/per-18+-learner preference
+Notification dispatch MUST honour per-parent / per-18+-learner preference (instant vs daily digest), backed by a `NotificationPreference` schema or the existing OR notification-preference mechanism (whichever OR exposes).
+
+### Requirement: Roll-up is a declared calculation, not a TimedJob
+The roll-up MUST NOT be a PHP TimedJob — it MUST be a declared calculation that re-fires on `GradeEntry` publish (the `calculatedChange` trigger feature). The only PHP exception allowed: a stateless `GradeFormulaEvaluator` invoked by the calculation engine if a formula can't be expressed in JSON-logic (ADR-031 "calculation engine above schema metadata").
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for GradeEntry/FinalGrade index+detail per cohort; a custom `GradebookView` (the cohort grid with concept→publish — genuine UI) and `GradeImpactDetail` Vue component. No PHP CRUD controllers.
 
 ## Standards
 

@@ -29,9 +29,15 @@ Manual and bulk enrolment of learners into courses, modules, and learning paths;
 - GIVEN a course has unmet prerequisites, WHEN a learner attempts enrolment, THEN the system blocks the enrolment and explains which prerequisite failed.
 
 ## Requirements
-- The system MUST support bulk enrolment via cohort, role, department, or CSV upload.
-- The system MUST validate prerequisites before enrolment is persisted.
-- The system MUST provision an LMS account within 60 seconds of an HE enrolment via Studielink.
+
+### Requirement: Bulk enrolment via cohort, role, department or CSV
+The system MUST support bulk enrolment via cohort, role, department, or CSV upload.
+
+### Requirement: Validate prerequisites before persistence
+The system MUST validate prerequisites before enrolment is persisted.
+
+### Requirement: Provision LMS account within 60 seconds via Studielink
+The system MUST provision an LMS account within 60 seconds of an HE enrolment via Studielink.
 
 ## Standards
 Studielink, Edukoppeling, OOAPI 5.0, IMS LIS (legacy), Schema.org `EducationEvent`, eduPersonAffiliation propagation.

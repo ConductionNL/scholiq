@@ -41,11 +41,20 @@ Some learners need an individualised plan: a school pupil with extra ondersteuni
 
 ## Requirements
 
-- The system MUST persist `LearningPlan`, `LearningPlanEvaluation`, `Signature` as OpenRegister objects with `x-openregister-lifecycle` (LearningPlan: draft → active → under-evaluation → closed | superseded), `x-openregister-relations` (LearningPlan↔learner/template/cohort, Evaluation↔LearningPlan, Signature↔LearningPlan-version), `x-openregister-calculations` (LearningPlan `goalsMetCount`, `nextReviewDue`, `isFullySigned`), and `x-openregister-notifications` (`quarterlyReviewReminder`, `signatureRequested`, idempotency-keyed).
-- The review-reminder MUST be a declared notification off the plan's period — not a PHP TimedJob.
-- LearningPlan MUST be effectively append-on-version: a material change creates a new version requiring re-sign; prior versions and their signatures are immutable (`appendOnly: true` on the version records, or an OR versioning mechanism if available).
-- Signing assurance-level capture MUST be declarative config; the actual DigiD/eIDAS handshake is an external auth concern (see `data-exchange` / openconnector), not implemented here.
-- Frontend declarative: `src/manifest.json` pages for LearningPlan index/detail (with a version-history + signature tab) and LearningPlanEvaluation; a custom `SignPlanModal` Vue component for the co-sign flow. No PHP CRUD controllers; the version-immutability is enforced by the schema's `appendOnly` / lifecycle.
+### Requirement: Persist LearningPlan domain objects in OpenRegister
+The system MUST persist `LearningPlan`, `LearningPlanEvaluation`, `Signature` as OpenRegister objects with `x-openregister-lifecycle` (LearningPlan: draft → active → under-evaluation → closed | superseded), `x-openregister-relations` (LearningPlan↔learner/template/cohort, Evaluation↔LearningPlan, Signature↔LearningPlan-version), `x-openregister-calculations` (LearningPlan `goalsMetCount`, `nextReviewDue`, `isFullySigned`), and `x-openregister-notifications` (`quarterlyReviewReminder`, `signatureRequested`, idempotency-keyed).
+
+### Requirement: Review reminder is a declared notification
+The review-reminder MUST be a declared notification off the plan's period — not a PHP TimedJob.
+
+### Requirement: Append-on-version with immutable prior versions
+LearningPlan MUST be effectively append-on-version: a material change creates a new version requiring re-sign; prior versions and their signatures are immutable (`appendOnly: true` on the version records, or an OR versioning mechanism if available).
+
+### Requirement: Signing assurance level is declarative config
+Signing assurance-level capture MUST be declarative config; the actual DigiD/eIDAS handshake is an external auth concern (see `data-exchange` / openconnector), not implemented here.
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for LearningPlan index/detail (with a version-history + signature tab) and LearningPlanEvaluation; a custom `SignPlanModal` Vue component for the co-sign flow. No PHP CRUD controllers; the version-immutability is enforced by the schema's `appendOnly` / lifecycle.
 
 ## Standards
 

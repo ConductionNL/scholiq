@@ -41,11 +41,20 @@ An institution's data has to flow to and from external systems: a Dutch school's
 
 ## Requirements
 
-- The system MUST persist `DataExchangeJob`, `DataMappingProfile` as OpenRegister objects with `x-openregister-lifecycle` (queued → running → succeeded | failed | partial; OSO adds pending-parent-review), `x-openregister-relations`, `x-openregister-notifications` (job-done alert), and audit-trail emission on every transition (ADR-008). `DataExchangeJob` artefacts MUST be OR file attachments.
-- Scholiq MUST NOT implement Edukoppeling, StUF, OSO-XML, OOAPI, or SAML/OAuth attribute-release wire protocols. Those MUST be OpenConnector source/target configurations referenced by the `target` field. (File the OpenConnector adapter issues: BRON/ROD, OSO PO→VO, leerplicht-Digikoppeling, SURFconext attributes, generic HR.)
-- Federated authentication (DigiD / SURFconext / eduID) is OUT of this spec — it is a Nextcloud-auth-provider + OpenConnector concern; Scholiq only persists the pseudonymous identifiers on `LearnerProfile` (already does).
-- The OSO parent-review gate MUST be a lifecycle state; the dossier MUST NOT leave the queue until parent approval is recorded.
-- Frontend declarative: `src/manifest.json` pages for DataExchangeJob/DataMappingProfile index+detail; a custom `RequestExportModal` and `OsoDossierReviewView` Vue component. No PHP CRUD controllers; the job execution is an OR-event-driven handler that calls OpenConnector (an ADR-031 "external-system bridge" exception, single method).
+### Requirement: Persist DataExchangeJob and DataMappingProfile in OpenRegister
+The system MUST persist `DataExchangeJob`, `DataMappingProfile` as OpenRegister objects with `x-openregister-lifecycle` (queued → running → succeeded | failed | partial; OSO adds pending-parent-review), `x-openregister-relations`, `x-openregister-notifications` (job-done alert), and audit-trail emission on every transition (ADR-008). `DataExchangeJob` artefacts MUST be OR file attachments.
+
+### Requirement: Delegate wire protocols to OpenConnector
+Scholiq MUST NOT implement Edukoppeling, StUF, OSO-XML, OOAPI, or SAML/OAuth attribute-release wire protocols. Those MUST be OpenConnector source/target configurations referenced by the `target` field. (File the OpenConnector adapter issues: BRON/ROD, OSO PO→VO, leerplicht-Digikoppeling, SURFconext attributes, generic HR.)
+
+### Requirement: Federated authentication is out of scope
+Federated authentication (DigiD / SURFconext / eduID) is OUT of this spec — it is a Nextcloud-auth-provider + OpenConnector concern; Scholiq only persists the pseudonymous identifiers on `LearnerProfile` (already does).
+
+### Requirement: OSO parent-review is a lifecycle gate
+The OSO parent-review gate MUST be a lifecycle state; the dossier MUST NOT leave the queue until parent approval is recorded.
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for DataExchangeJob/DataMappingProfile index+detail; a custom `RequestExportModal` and `OsoDossierReviewView` Vue component. No PHP CRUD controllers; the job execution is an OR-event-driven handler that calls OpenConnector (an ADR-031 "external-system bridge" exception, single method).
 
 ## Standards
 
