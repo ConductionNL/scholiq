@@ -31,6 +31,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
  */
 
 declare(strict_types=1);
@@ -68,6 +70,8 @@ class DataExchangeRunGuard
      *                                               - 'to'         : 'running'
      *
      * @return bool False for OSO jobs in queued state; true otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     public function check(array &$transitionContext): bool
     {

@@ -29,6 +29,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-2
  */
 
 declare(strict_types=1);
@@ -91,6 +94,8 @@ class AuditPackExportController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     public function export(
         string $regulationSlug='',
@@ -192,6 +197,8 @@ class AuditPackExportController extends Controller
      * @param array<int,array<string,mixed>> $events Audit-trail events.
      *
      * @return string NDJSON string.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     private function buildNdjson(array $events): string
     {
@@ -209,6 +216,8 @@ class AuditPackExportController extends Controller
      * @param array<int,array<string,mixed>> $events Audit-trail events.
      *
      * @return string CSV string.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     private function buildCsv(array $events): string
     {
@@ -258,6 +267,8 @@ class AuditPackExportController extends Controller
      * @param string $keyFingerprint  Public verification key fingerprint.
      *
      * @return string JSON string.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     private function buildManifestJson(
         string $tenantId,
@@ -290,6 +301,8 @@ class AuditPackExportController extends Controller
      * @param array<string,mixed> $verification OR AuditHashService::verifyChain() response.
      *
      * @return string Plain-text verification report.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-2
      */
     private function buildVerificationTxt(array $verification): string
     {
@@ -331,6 +344,8 @@ class AuditPackExportController extends Controller
      * @param array<string,string> $files Map of filename => content.
      *
      * @return string Raw ZIP bytes.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     private function buildZip(array $files): string
     {

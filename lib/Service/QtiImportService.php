@@ -31,6 +31,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
  */
 
 declare(strict_types=1);
@@ -101,6 +103,8 @@ class QtiImportService
      * @return string[] Array of created Item UUIDs.
      *
      * @throws \RuntimeException When the archive cannot be opened or is not a recognised format.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     public function import(string $packagePath, string $itemBankId): array
     {
@@ -144,6 +148,8 @@ class QtiImportService
      * @return void
      *
      * @throws \RuntimeException When the ZIP cannot be opened.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function extractZip(string $zipPath, string $targetDir): void
     {
@@ -163,6 +169,8 @@ class QtiImportService
      * @param string $dir Extracted package directory.
      *
      * @return string 'qti3' | 'qti2' | 'cc' | 'unknown'
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function detectPackageType(string $dir): string
     {
@@ -201,6 +209,8 @@ class QtiImportService
      * @param string $packageType Package type string.
      *
      * @return string[] Absolute paths to item XML files.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function collectItemPaths(string $dir, string $packageType): array
     {
@@ -298,6 +308,8 @@ class QtiImportService
      * @param string $itemBankId UUID of the target ItemBank.
      *
      * @return string|null Created Item UUID, or null on parse failure.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function importSingleItem(string $xmlPath, string $itemBankId): ?string
     {
@@ -390,6 +402,8 @@ class QtiImportService
      * @param \DOMDocument $xml Parsed QTI item document.
      *
      * @return string Interaction type slug from INTERACTION_MAP, or 'extendedText' as fallback.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function detectInteractionType(\DOMDocument $xml): string
     {
@@ -408,6 +422,8 @@ class QtiImportService
      * @param \DOMDocument $xml Parsed QTI item document.
      *
      * @return array{0: mixed, 1: float} [correctResponse, maxScore] tuple.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function parseChoiceItem(\DOMDocument $xml): array
     {
@@ -440,6 +456,8 @@ class QtiImportService
      * @param \DOMDocument $xml Parsed QTI item document.
      *
      * @return float Maximum score (defaults to 1.0 if not found).
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function parseOutcomeMaxScore(\DOMDocument $xml): float
     {
@@ -469,6 +487,8 @@ class QtiImportService
      * @param string $dir Absolute path to the directory.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function removeDirectory(string $dir): void
     {

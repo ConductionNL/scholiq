@@ -26,6 +26,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-9
  */
 
 declare(strict_types=1);
@@ -85,6 +87,8 @@ class SubmissionWindowGuard
      *                                               - 'to'         : 'submitted' (may be mutated to 'late')
      *
      * @return bool True to allow the transition; false blocks it (HTTP 422 from OR engine).
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-9
      */
     public function check(array &$transitionContext): bool
     {

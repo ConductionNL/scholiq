@@ -31,6 +31,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-2
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
  */
 
 declare(strict_types=1);
@@ -109,6 +112,8 @@ class AttestationSigningGuard
      *
      * @return bool True when pre-condition is satisfied and signature has been
      *              computed; false blocks the transition with HTTP 422.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-2
      */
     public function check(array &$transitionContext): bool
     {
@@ -166,6 +171,8 @@ class AttestationSigningGuard
      * @param string $lessonId  Lesson UUID.
      *
      * @return bool True when at least one matching statement exists.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
      */
     private function xapiCompletionExists(string $learnerId, string $lessonId): bool
     {
@@ -202,6 +209,8 @@ class AttestationSigningGuard
      * @param array<string,mixed> $object The Attestation property array.
      *
      * @return string Canonical JSON string.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-2
      */
     private function buildCanonicalPayload(array $object): string
     {

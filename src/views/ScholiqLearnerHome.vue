@@ -4,6 +4,8 @@
 <!--
  ScholiqLearnerHome — "My learning" dashboard for learners.
  Shows the current user's mandatory training obligations.
+
+ @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-18
 -->
 <template>
 	<CnDashboardPage

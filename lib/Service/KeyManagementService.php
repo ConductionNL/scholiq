@@ -20,6 +20,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
  */
 
 declare(strict_types=1);
@@ -77,6 +79,8 @@ class KeyManagementService
      * @return array{fingerprint: string, publicKey: string} Public key data.
      *
      * @throws \RuntimeException If OpenSSL key generation fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function generateTenantKeypair(string $tenantId): array
     {
@@ -132,6 +136,8 @@ class KeyManagementService
      * @param string $tenantId Tenant UUID.
      *
      * @return array{fingerprint: string, publicKey: string}|null Key data, or null if not configured.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function getTenantKeyStatus(string $tenantId): ?array
     {

@@ -34,6 +34,10 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-22
  */
 
 declare(strict_types=1);
@@ -81,6 +85,8 @@ class GradeRollupHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     public function handle(Event $event): void
     {
@@ -113,6 +119,8 @@ class GradeRollupHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function handleGradeEntryPublished(ObjectTransitionedEvent $event): void
     {
@@ -145,6 +153,8 @@ class GradeRollupHandler implements IEventListener
      * @param array  $entry            The published GradeEntry.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
      */
     private function recomputeFinalGrade(
         string $learnerId,
@@ -214,6 +224,8 @@ class GradeRollupHandler implements IEventListener
      * @param array  $gradeEntry Published GradeEntry data.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-22
      */
     private function fanOutParentNotifications(string $learnerId, array $gradeEntry): void
     {
@@ -282,6 +294,8 @@ class GradeRollupHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
      */
     private function handleAssessmentResultGraded(ObjectTransitionedEvent $event): void
     {

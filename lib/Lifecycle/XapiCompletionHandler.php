@@ -20,6 +20,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
  */
 
 declare(strict_types=1);
@@ -97,6 +99,8 @@ class XapiCompletionHandler implements IEventListener
      * @return void
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
      */
     public function handle(Event $event): void
     {

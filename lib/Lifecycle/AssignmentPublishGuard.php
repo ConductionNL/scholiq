@@ -24,6 +24,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-9
  */
 
 declare(strict_types=1);
@@ -67,6 +69,8 @@ class AssignmentPublishGuard
      *                                               - 'to'         : 'published'
      *
      * @return bool True if the Assignment has courseId or sessionId; false blocks the transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-9
      */
     public function check(array &$transitionContext): bool
     {

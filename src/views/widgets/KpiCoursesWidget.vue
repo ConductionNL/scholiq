@@ -1,7 +1,11 @@
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <!-- Copyright (C) 2026 Conduction B.V. -->
 
-<!-- KPI tile: total course count. -->
+<!--
+ KPI tile: total course count.
+
+ @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+-->
 <template>
 	<KpiCard
 		schema="Course"
