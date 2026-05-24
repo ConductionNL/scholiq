@@ -24,6 +24,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-13
  */
 
 declare(strict_types=1);
@@ -70,6 +72,8 @@ class CohortMembershipGuard
      *                                               - 'to'         : 'active'
      *
      * @return bool True if the Cohort has at least one learner; false blocks the transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-13
      */
     public function check(array &$transitionContext): bool
     {

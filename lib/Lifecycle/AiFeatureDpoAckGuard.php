@@ -25,6 +25,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-6
  */
 
 declare(strict_types=1);
@@ -76,6 +78,8 @@ class AiFeatureDpoAckGuard
      *
      * @return bool True when the DPO has acknowledged this feature; false blocks
      *              the transition (OR will return a 422 with guard name in body).
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-6
      */
     public function check(array $transitionContext): bool
     {

@@ -23,6 +23,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-13
  */
 
 declare(strict_types=1);
@@ -74,6 +76,8 @@ class CoursePublishGuard
      *                                               - 'to'         : 'published'
      *
      * @return bool True if the Course has at least one published Lesson; false blocks transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-13
      */
     public function check(array &$transitionContext): bool
     {

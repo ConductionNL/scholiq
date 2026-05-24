@@ -36,6 +36,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-20
  */
 
 declare(strict_types=1);
@@ -99,6 +102,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     public function handle(Event $event): void
     {
@@ -128,6 +133,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The running-state transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function runJob(ObjectTransitionedEvent $event): void
     {
@@ -234,6 +241,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param string $profileId UUID of the DataMappingProfile.
      *
      * @return array<string,mixed>|null The profile data, or null if not found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function loadMappingProfile(string $profileId): ?array
     {
@@ -264,6 +273,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed> $scope The job scope (schema, filters, cohortId, period).
      *
      * @return array<int,array<string,mixed>> Source objects.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function querySourceObjects(array $scope): array
     {
@@ -314,6 +325,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed>|null       $profile DataMappingProfile data, or null.
      *
      * @return array<int,array<string,mixed>> Mapped payload records.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function buildPayload(array $objects, ?array $profile): array
     {
@@ -363,6 +376,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed> $object    The full source object (for context lookups).
      *
      * @return mixed The transformed value.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function applyTransform(mixed $value, ?string $transform, array $object): mixed
     {
@@ -436,6 +451,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<int,array<string,mixed>> $payload The mapped payload to send.
      *
      * @return array<string,mixed>|null Response data, or null on failure.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-20
      */
     private function callOpenConnector(string $target, array $payload): ?array
     {
@@ -479,6 +496,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed> $fields Fields to update.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function saveJobFields(string $jobId, array $fields): void
     {

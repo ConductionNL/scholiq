@@ -21,6 +21,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
  */
 
 declare(strict_types=1);
@@ -75,6 +77,8 @@ class AssessmentScoringService
      * @return void
      *
      * @throws \InvalidArgumentException When the AssessmentResult cannot be found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     public function autoScore(string $assessmentResultId): void
     {

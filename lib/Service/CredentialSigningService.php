@@ -25,6 +25,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
  */
 
 declare(strict_types=1);
@@ -158,6 +160,8 @@ class CredentialSigningService
      * @param string      $verificationUrl Public URL for unauthenticated verification.
      *
      * @return array<string,mixed> OB3 JSON-LD array (without proof).
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function buildOb3Payload(
         string $credentialId,
@@ -212,6 +216,8 @@ class CredentialSigningService
      * @param string              $tenantId The tenant UUID whose key to use.
      *
      * @return string|null RS256 compact JWS string, or null if the key is absent / signing fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function signPayload(array $payload, string $tenantId): ?string
     {
@@ -257,6 +263,8 @@ class CredentialSigningService
      * @param string $tenantId Tenant UUID.
      *
      * @return string|null DID string, or null if no key has been generated yet.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     private function resolveIssuerDid(string $tenantId): ?string
     {

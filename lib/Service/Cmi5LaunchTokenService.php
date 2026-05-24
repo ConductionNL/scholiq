@@ -26,6 +26,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
  */
 
 declare(strict_types=1);
@@ -88,6 +90,8 @@ class Cmi5LaunchTokenService
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      *
      * TODO(course-management): implement with openssl_sign once key-pair is provisioned.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
      */
     public function mintLaunchToken(string $learnerId, string $lessonId, string $registrationId): string
     {

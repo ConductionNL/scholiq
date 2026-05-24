@@ -24,6 +24,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-18
  */
 
 declare(strict_types=1);
@@ -77,6 +79,8 @@ class RoleSelector
      * @param array<string,mixed> $calculationContext Context provided by OR's calculation engine.
      *
      * @return string Highest-priority Scholiq role, defaults to 'learner'.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-18
      */
     public function calculate(array $calculationContext): string
     {

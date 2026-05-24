@@ -5,6 +5,8 @@
  ScholiqDashboard — main management dashboard.
  Renders CnDashboardPage with KPI tiles + manage-* list widgets.
  All widgets are custom (fetched via OR REST API).
+
+ @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
 -->
 <template>
 	<CnDashboardPage

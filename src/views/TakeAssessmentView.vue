@@ -14,6 +14,8 @@
 
   SPDX-License-Identifier: EUPL-1.2
   Copyright (C) 2026 Conduction B.V.
+
+  @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 -->
 
 <template>

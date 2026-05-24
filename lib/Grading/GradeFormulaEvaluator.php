@@ -29,6 +29,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
  */
 
 declare(strict_types=1);
@@ -72,6 +74,8 @@ class GradeFormulaEvaluator
      * @param string $learnerId        Nextcloud user ID of the learner.
      *
      * @return array{value: float|null, passed: bool|null, breakdown: array, lastRecomputedAt: string}
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     public function evaluate(string $curriculumPlanId, string $learnerId): array
     {
@@ -125,6 +129,8 @@ class GradeFormulaEvaluator
      * @param string $curriculumPlanId UUID.
      *
      * @return array|null
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function fetchPlan(string $curriculumPlanId): ?array
     {
@@ -149,6 +155,8 @@ class GradeFormulaEvaluator
      * @param string $learnerId        NC user ID.
      *
      * @return array<int, array>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function fetchPublishedEntries(string $curriculumPlanId, string $learnerId): array
     {
@@ -187,6 +195,8 @@ class GradeFormulaEvaluator
      * @param string|null $gradeScaleId UUID or null.
      *
      * @return float|null
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function fetchPassThreshold(?string $gradeScaleId): ?float
     {
@@ -228,6 +238,8 @@ class GradeFormulaEvaluator
      * @param array $plan CurriculumPlan data.
      *
      * @return array<string, array>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function indexComponents(array $plan): array
     {
@@ -251,6 +263,8 @@ class GradeFormulaEvaluator
      * @param array<string, array> $components Component index.
      *
      * @return float
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function effectiveWeight(array $entry, array $components): float
     {
@@ -272,6 +286,8 @@ class GradeFormulaEvaluator
      * @param array<string, array> $components Component index from the plan.
      *
      * @return array{0: float|null, 1: array}  [value, breakdown]
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function applyFormula(
         string $formula,
@@ -295,6 +311,8 @@ class GradeFormulaEvaluator
      * @param array<int, array> $entries All published entries.
      *
      * @return array<int, array>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function lastAttemptEntries(array $entries): array
     {
@@ -318,6 +336,8 @@ class GradeFormulaEvaluator
      * @param array<int, array> $entries All published entries.
      *
      * @return array<int, array>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function bestOfNEntries(array $entries): array
     {
@@ -342,6 +362,8 @@ class GradeFormulaEvaluator
      * @param array $b Second entry.
      *
      * @return int Negative if a < b, positive if a > b, 0 if equal.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function compareGradedAt(array $a, array $b): int
     {
@@ -368,6 +390,8 @@ class GradeFormulaEvaluator
      * @param array<string, array> $components Component index.
      *
      * @return array{0: float|null, 1: array}
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function weightedAverage(array $entries, array $components): array
     {
@@ -434,6 +458,8 @@ class GradeFormulaEvaluator
      * @param float|null        $passThreshold Threshold from the GradeScale.
      *
      * @return bool|null Null if insufficient data.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function evaluatePassed(
         string $formula,
