@@ -29,9 +29,15 @@ Certificate templates (visual + metadata); issuance triggered by course/exam com
 - GIVEN a degree is awarded, WHEN the registrar confirms, THEN a Bologna Diploma Supplement is generated and an EDCI credential is issued.
 
 ## Requirements
-- The system MUST issue EDCI / Europass credentials and Open Badges 3.0 with verifiable URLs.
-- The system MUST detect expiries on a daily schedule and dispatch tiered notifications.
-- The system MUST auto-enrol learners in renewal or delta modules when triggered by expiry or content-version change.
+
+### Requirement: Issue EDCI/Europass and Open Badges 3.0 credentials
+The system MUST issue EDCI / Europass credentials and Open Badges 3.0 with verifiable URLs.
+
+### Requirement: Detect expiries on a daily schedule
+The system MUST detect expiries on a daily schedule and dispatch tiered notifications.
+
+### Requirement: Auto-enrol on renewal or content-version change
+The system MUST auto-enrol learners in renewal or delta modules when triggered by expiry or content-version change.
 
 ## Standards
 EDCI (Europass), Open Badges 3.0, E-Portfolio NL, Bologna Diploma Supplement, Schema.org `EducationalOccupationalCredential`.

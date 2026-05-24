@@ -41,11 +41,20 @@ Every educational institution — a school, a university faculty, or a corporate
 
 ## Requirements
 
-- The system MUST persist `Programme`, `CurriculumPlan`, `Cohort`, `Session`, `Material` as OpenRegister objects with `x-openregister-lifecycle` (draft → published → archived for Programme/Course; scheduled → in-progress → completed | cancelled for Session) and `x-openregister-relations` (Cohort↔Programme/Course, Session↔Cohort/Course, Material↔Course/Lesson/Session).
-- The `Course` schema MUST be recursive (`parentCourseId` self-reference) and MUST carry `curriculumPlanId` + `programmeIds`.
-- The `CurriculumPlan` MUST carry a structured component list `{ componentId, label, weight, period, kind: assignment|assessment|participation }[]` and a roll-up `formula` (named: `weighted-average` | `last-attempt` | `best-of-n` | `all-must-pass`).
-- Materials MUST reference OpenRegister file attachments; this app MUST NOT store file bytes itself.
-- Frontend MUST be declarative: `src/manifest.json` pages for Programme/CurriculumPlan/Cohort/Session index+detail; a custom Vue view only for the cohort timetable if a manifest page can't render it. No PHP CRUD controllers.
+### Requirement: Persist school-structure domain objects in OpenRegister
+The system MUST persist `Programme`, `CurriculumPlan`, `Cohort`, `Session`, `Material` as OpenRegister objects with `x-openregister-lifecycle` (draft → published → archived for Programme/Course; scheduled → in-progress → completed | cancelled for Session) and `x-openregister-relations` (Cohort↔Programme/Course, Session↔Cohort/Course, Material↔Course/Lesson/Session).
+
+### Requirement: Course schema is recursive with curriculumPlanId + programmeIds
+The `Course` schema MUST be recursive (`parentCourseId` self-reference) and MUST carry `curriculumPlanId` + `programmeIds`.
+
+### Requirement: CurriculumPlan carries component list and roll-up formula
+The `CurriculumPlan` MUST carry a structured component list `{ componentId, label, weight, period, kind: assignment|assessment|participation }[]` and a roll-up `formula` (named: `weighted-average` | `last-attempt` | `best-of-n` | `all-must-pass`).
+
+### Requirement: Materials reference OpenRegister file attachments
+Materials MUST reference OpenRegister file attachments; this app MUST NOT store file bytes itself.
+
+### Requirement: Frontend is declarative with cohort-timetable exception
+Frontend MUST be declarative: `src/manifest.json` pages for Programme/CurriculumPlan/Cohort/Session index+detail; a custom Vue view only for the cohort timetable if a manifest page can't render it. No PHP CRUD controllers.
 
 ## Standards
 

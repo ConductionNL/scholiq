@@ -42,12 +42,23 @@ Beyond hand-in assignments, institutions run **structured tests**: a vmbo `toets
 
 ## Requirements
 
-- The system MUST persist `Assessment`, `Item`, `ItemBank`, `AssessmentResult`, `ProctoringSession` as OpenRegister objects with `x-openregister-lifecycle` (AssessmentResult: in-progress → submitted → graded), `x-openregister-relations`, and `x-openregister-calculations` (AssessmentResult `autoScore`, `totalScore`, `passed`).
-- Items MUST be QTI 3.0 (importing QTI 2.x and Common Cartridge is required; QTI 3.0 is the canonical stored form).
-- Proctoring MUST be a declared `x-proctoring.provider` config resolving to `ProctoringProviderInterface`; the app MUST ship NO concrete provider. A proctoring flag MUST NOT auto-alter a result (EU AI Act Art. 14).
-- Any AI-assisted flag review MUST be registered via the `AiFeature` schema with a DPO acknowledgement before it can be enabled (ADR-005); v1 ships with `flagReviewMode: manual` only — `ai-assisted` is a future, gated feature.
-- A graded `AssessmentResult` MUST emit (or update) a `GradeEntry` for its CurriculumPlan component (consumed by `grading`).
-- Frontend declarative: `src/manifest.json` pages for Assessment/ItemBank index+detail; a custom `TakeAssessmentView` (the timed test-taking surface — genuine UI), `ItemAuthorView`, and `ProctoringReviewQueue` Vue components. No PHP CRUD controllers. The only PHP: `ProctoringProviderInterface` + the auto-scoring lifecycle handler (an ADR-031 "calculation engine above schema metadata" exception) + QTI import.
+### Requirement: Persist Assessment domain objects in OpenRegister
+The system MUST persist `Assessment`, `Item`, `ItemBank`, `AssessmentResult`, `ProctoringSession` as OpenRegister objects with `x-openregister-lifecycle` (AssessmentResult: in-progress → submitted → graded), `x-openregister-relations`, and `x-openregister-calculations` (AssessmentResult `autoScore`, `totalScore`, `passed`).
+
+### Requirement: Items use QTI 3.0 as canonical form
+Items MUST be QTI 3.0 (importing QTI 2.x and Common Cartridge is required; QTI 3.0 is the canonical stored form).
+
+### Requirement: Proctoring is a pluggable provider
+Proctoring MUST be a declared `x-proctoring.provider` config resolving to `ProctoringProviderInterface`; the app MUST ship NO concrete provider. A proctoring flag MUST NOT auto-alter a result (EU AI Act Art. 14).
+
+### Requirement: AI-assisted flag review requires DPO acknowledgement
+Any AI-assisted flag review MUST be registered via the `AiFeature` schema with a DPO acknowledgement before it can be enabled (ADR-005); v1 ships with `flagReviewMode: manual` only — `ai-assisted` is a future, gated feature.
+
+### Requirement: Graded AssessmentResult emits a GradeEntry
+A graded `AssessmentResult` MUST emit (or update) a `GradeEntry` for its CurriculumPlan component (consumed by `grading`).
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for Assessment/ItemBank index+detail; a custom `TakeAssessmentView` (the timed test-taking surface — genuine UI), `ItemAuthorView`, and `ProctoringReviewQueue` Vue components. No PHP CRUD controllers. The only PHP: `ProctoringProviderInterface` + the auto-scoring lifecycle handler (an ADR-031 "calculation engine above schema metadata" exception) + QTI import.
 
 ## Standards
 

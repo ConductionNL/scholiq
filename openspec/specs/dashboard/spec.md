@@ -29,9 +29,15 @@ Per-role landing dashboards composed via `@conduction/nextcloud-vue` primitives 
 - GIVEN heavier cross-tenant analytics are needed, WHEN the user requests them, THEN the dashboard deep-links into mydash (single-sign-on session shared).
 
 ## Requirements
-- The system MUST present a different default dashboard per resolved role (teacher / student / parent / HR / compliance / inspector / mentor / manager).
-- The system MUST use `@conduction/nextcloud-vue` dashboard components (CnDashboardPage et al.) — no custom equivalents.
-- The system MUST delegate cross-tenant or heavy-aggregation analytics to mydash via deep links rather than reimplementing.
+
+### Requirement: Per-resolved-role default dashboard
+The system MUST present a different default dashboard per resolved role (teacher / student / parent / HR / compliance / inspector / mentor / manager).
+
+### Requirement: Use @conduction/nextcloud-vue dashboard components
+The system MUST use `@conduction/nextcloud-vue` dashboard components (CnDashboardPage et al.) — no custom equivalents.
+
+### Requirement: Delegate heavy analytics to mydash via deep links
+The system MUST delegate cross-tenant or heavy-aggregation analytics to mydash via deep links rather than reimplementing.
 
 ## Standards
 NL Design System, WCAG 2.1 AA, Schema.org `Dataset` / `Observation`, Caliper Analytics for event source.

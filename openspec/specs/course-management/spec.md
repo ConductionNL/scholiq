@@ -29,9 +29,15 @@ Authoring of courses, modules, and lessons; cloning of templates; ordered learni
 - GIVEN an HE administrator queries `/ooapi/v5/courses`, WHEN the request authenticates, THEN the response complies with OOAPI 5.0 and includes ECTS, language, and level fields.
 
 ## Requirements
-- The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
-- The system MUST publish the course catalog via OOAPI 5.0 endpoints.
-- The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
+
+### Requirement: Course/Module/Lesson hierarchy in OpenRegister
+The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
+
+### Requirement: Publish course catalog via OOAPI 5.0
+The system MUST publish the course catalog via OOAPI 5.0 endpoints.
+
+### Requirement: Run cmi5 + xAPI natively with SCORM shim
+The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
 
 ## Standards
 SCORM, xAPI, cmi5, LTI 1.3, Common Cartridge, NL LOM, VDEX, OAI-PMH, OOAPI 5.0, Schema.org `Course` / `CourseInstance`, ECTS, Bologna.
