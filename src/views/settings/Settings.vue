@@ -47,11 +47,23 @@ export default {
 			successMessage: '',
 		}
 	},
+	/**
+	 * Seed the form from the current settings store state.
+	 *
+	 * @return {void}
+	 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
+	 */
 	created() {
 		const settingsStore = useSettingsStore()
 		this.form.register = settingsStore.settings?.register || ''
 	},
 	methods: {
+		/**
+		 * Persist the form through the settings store and show a success message.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
+		 */
 		async save() {
 			this.saving = true
 			this.successMessage = ''

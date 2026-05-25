@@ -57,6 +57,8 @@ class PageController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude framework glue — returns the static index TemplateResponse that boots the Vue SPA; no business behavior
      */
     public function index(): TemplateResponse
     {
@@ -70,6 +72,8 @@ class PageController extends Controller
      * @NoCSRFRequired
      *
      * @return TemplateResponse
+     *
+     * @spec exclude framework glue — deep-link catch-all that delegates to index() so Vue Router can resolve the path; no business behavior
      */
     public function catchAll(): TemplateResponse
     {
@@ -87,6 +91,8 @@ class PageController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-5
      */
     public function manifest(): JSONResponse
     {

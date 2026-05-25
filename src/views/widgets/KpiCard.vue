@@ -77,6 +77,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Fetch the object count for this schema from OpenRegister.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		async fetchCount() {
 			this.loading = true
 			try {
@@ -95,6 +101,12 @@ export default {
 			}
 		},
 
+		/**
+		 * Navigate to the configured router link when the card is clickable.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		navigate() {
 			if (this.link) {
 				this.$router.push(this.link).catch(() => {})

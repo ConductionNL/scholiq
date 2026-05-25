@@ -119,12 +119,19 @@ export default {
 		 * before persistence.
 		 *
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
 		 */
 		sanitisedContent() {
 			return this.lesson?.content ?? ''
 		},
 	},
 
+	/**
+	 * Load the Course + Lesson pair on mount for xAPI-instrumented playback.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
+	 */
 	async mounted() {
 		try {
 			const [courseRes, lessonRes] = await Promise.all([
@@ -143,6 +150,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Navigate back to the parent course detail view.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
+		 */
 		goBack() {
 			if (this.$router) {
 				this.$router.push({ name: 'CourseDetail', params: { id: this.courseId } }).catch(() => {})

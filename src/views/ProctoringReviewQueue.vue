@@ -142,6 +142,7 @@ export default {
 		/**
 		 * Sessions that have at least one pending flag.
 		 * @return {object[]}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		sessionsWithPendingFlags() {
 			return this.sessions.filter((s) => this.pendingCount(s) > 0)
@@ -157,6 +158,7 @@ export default {
 		 * Fetch all ProctoringSession objects.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async loadSessions() {
 			this.loading = true
@@ -184,6 +186,7 @@ export default {
 		 *
 		 * @param {object} session ProctoringSession object
 		 * @return {number}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		pendingCount(session) {
 			return (session.flags ?? []).filter((f) => f.reviewDecision === 'pending').length
@@ -197,6 +200,7 @@ export default {
 		 * @param {object} flag       The flag to decide on
 		 * @param {string} decision   'allowed' or 'annulled'
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async recordDecision(session, flag, decision) {
 			const currentUser = getCurrentUser()
@@ -258,6 +262,7 @@ export default {
 		 *
 		 * @param {string} dt ISO datetime string
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		formatDate(dt) {
 			if (!dt) return ''
@@ -279,6 +284,7 @@ export default {
 		 *
 		 * @param {string} uuid Full UUID
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		shortId(uuid) {
 			return (uuid ?? '').slice(0, 8)

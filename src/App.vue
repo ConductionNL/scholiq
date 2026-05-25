@@ -78,6 +78,7 @@ export default {
 		 *
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
+		 * @spec exclude framework glue — thin wrapper over @nextcloud/l10n translate that binds the app id for CnAppRoot; no business behavior
 		 */
 		translateForApp(key) {
 			return ncT('scholiq', key)

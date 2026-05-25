@@ -37,6 +37,12 @@ export default {
 			appVersion: document.getElementById('scholiq-settings')?.dataset?.version || 'Unknown',
 		}
 	},
+	/**
+	 * Initialise the Pinia stores at boot before rendering settings.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-4
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true

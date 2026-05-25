@@ -86,6 +86,8 @@ class KeyAdminController extends Controller
      * Return the public key status (fingerprint + public key PEM) for a tenant.
      *
      * @return JSONResponse {fingerprint, publicKey} or {configured: false}.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function keyStatus(): JSONResponse
     {
