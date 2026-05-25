@@ -32,6 +32,10 @@ return [
         ['name' => 'settings#create', 'url' => '/api/settings',      'verb' => 'POST'],
         ['name' => 'settings#load',   'url' => '/api/settings/load', 'verb' => 'POST'],
 
+        // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+        ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+        ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
+
         // SPA catch-all — Vue history mode; specific routes MUST precede this.
         ['name' => 'page#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
     ],
