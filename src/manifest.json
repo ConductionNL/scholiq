@@ -111,23 +111,15 @@
 			"label": "Documentation",
 			"icon": "icon-info",
 			"href": "https://docs.scholiq.nl",
-			"section": "settings",
+			"section": "footer",
 			"order": 90
-		},
-		{
-			"id": "Settings",
-			"label": "Settings",
-			"icon": "icon-settings",
-			"action": "user-settings",
-			"order": 99,
-			"section": "settings"
 		},
 		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
 			"icon": "icon-toggle",
 			"route": "FeaturesRoadmap",
-			"section": "settings",
+			"section": "footer",
 			"order": 100
 		},
 		{
