@@ -155,6 +155,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * Returns the app ID that namespaces every tool id.
      *
      * @return string "scholiq"
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-1
      */
     public function getAppId(): string
     {
@@ -169,6 +171,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * Per-object authorisation runs in invokeTool().
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-1
      */
     public function getTools(): array
     {
@@ -186,6 +190,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $arguments Tool arguments from the LLM call.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-2
      */
     public function invokeTool(string $toolId, array $arguments): array
     {
@@ -215,6 +221,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $args Tool arguments.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-3
      */
     private function handleListCourses(array $args): array
     {
@@ -279,6 +287,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $args Tool arguments.
      *
      * @return array{error?: array<string, mixed>, limit?: int, status?: string|null}
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-3
      */
     private function validateListCoursesArgs(array $args): array
     {
@@ -333,6 +343,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $args Tool arguments.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-4
      */
     private function handleGetCourseDetails(array $args): array
     {
@@ -410,6 +422,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param string $courseUuid The parent course UUID.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-4
      */
     private function loadCourseModules(string $courseUuid): array
     {
@@ -453,6 +467,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param string               $courseUuid The course UUID.
      *
      * @return array<string, string>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-3
      */
     private function courseSource(array $course, string $courseUuid): array
     {
@@ -485,6 +501,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      *   and is NOT wrapped in catch(\Throwable).
      *
      * @return bool True when the caller is an authenticated user.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-3
      */
     private function requireCourseReadAccess(): bool
     {
@@ -514,6 +532,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param string $courseRef The course id/uuid/slug/code.
      *
      * @return array<string, mixed>|null The normalised course array, or null.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-4
      */
     private function findCourse(string $courseRef): ?array
     {
@@ -555,6 +575,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $course The normalised course array.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-3
      */
     private function courseSummary(array $course): array
     {
@@ -581,6 +603,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $lesson The normalised lesson array.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-4
      */
     private function moduleSummary(array $lesson): array
     {
@@ -610,6 +634,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param string $uuid The object UUID.
      *
      * @return string The deep link path, e.g. /apps/scholiq/courses/<uuid>.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-4
      */
     private function buildDeepLink(string $type, string $uuid): string
     {
@@ -629,6 +655,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param mixed $item Raw item from ObjectService.
      *
      * @return array<string, mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-5
      */
     private function toArray(mixed $item): array
     {
@@ -661,6 +689,8 @@ class ScholiqToolProvider implements IMcpToolProvider
      * @param array<string, mixed> $item The normalised object array.
      *
      * @return string The UUID, or empty string when not found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-ai-companion-tools/tasks.md#task-5
      */
     private function extractUuid(array $item): string
     {
