@@ -202,6 +202,7 @@ export default {
 		/**
 		 * Current item object.
 		 * @return {object|null}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		currentItem() {
 			return this.items[this.currentItemIndex] ?? null
@@ -210,6 +211,7 @@ export default {
 		/**
 		 * Current response for the active item.
 		 * @return {unknown}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		currentResponse() {
 			const item = this.currentItem
@@ -220,6 +222,7 @@ export default {
 		/**
 		 * Formatted time remaining string (MM:SS).
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		formattedTimeRemaining() {
 			if (this.secondsRemaining === null) return ''
@@ -231,6 +234,7 @@ export default {
 		/**
 		 * True when fewer than 5 minutes remain.
 		 * @return {boolean}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		timeWarning() {
 			return this.secondsRemaining !== null && this.secondsRemaining <= 300
@@ -240,6 +244,13 @@ export default {
 	watch: {
 		assessmentId: {
 			immediate: true,
+			/**
+			 * React to assessmentId prop changes by (re)initialising the view.
+			 *
+			 * @param {string} newId New assessment UUID
+			 * @return {void}
+			 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+			 */
 			handler(newId) {
 				if (newId) {
 					this.init(newId)
@@ -258,6 +269,7 @@ export default {
 		 *
 		 * @param {string} id Assessment UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async init(id) {
 			this.loading = true
@@ -288,6 +300,7 @@ export default {
 		 *
 		 * @param {string} id Assessment UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async loadAssessment(id) {
 			const url = generateUrl(`/apps/openregister/api/objects/scholiq/Assessment/${id}`)
@@ -305,6 +318,7 @@ export default {
 		 * Fetch Item objects for all itemRefs on the assessment.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async loadItems() {
 			const itemRefs = this.assessment?.itemRefs ?? []
@@ -335,6 +349,7 @@ export default {
 		 *
 		 * @param {string} assessmentId Assessment UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async createResult(assessmentId) {
 			const currentUser = getCurrentUser()
@@ -370,6 +385,7 @@ export default {
 		 * Start the countdown timer if the assessment has a time limit.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		startTimer() {
 			const minutes = this.assessment?.timeLimitMinutes ?? null
@@ -391,6 +407,7 @@ export default {
 		 * Clear the countdown timer.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		clearTimer() {
 			if (this.timerInterval !== null) {
@@ -403,6 +420,7 @@ export default {
 		 * Dismiss the proctoring notice and proceed with creating the result.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async dismissProctoringNotice() {
 			this.showProctoringNotice = false
@@ -422,6 +440,7 @@ export default {
 		 *
 		 * @param {unknown} value Learner's response value
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		setResponse(value) {
 			const item = this.currentItem
@@ -433,6 +452,7 @@ export default {
 		 * Navigate to the previous item.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		prevItem() {
 			if (this.currentItemIndex > 0) {
@@ -444,6 +464,7 @@ export default {
 		 * Navigate to the next item.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		nextItem() {
 			if (this.currentItemIndex < this.items.length - 1) {
@@ -456,6 +477,7 @@ export default {
 		 * The OR-side AssessmentScoringHandler auto-scores choice/textEntry items.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async submitAssessment() {
 			if (!this.resultId) return
@@ -524,6 +546,7 @@ export default {
 		 *
 		 * @param {string} qtiBody Raw QTI XML/JSON body
 		 * @return {string} Cleaned prompt text
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		extractPrompt(qtiBody) {
 			if (!qtiBody) return ''
@@ -537,6 +560,7 @@ export default {
 		 *
 		 * @param {string} qtiBody Raw QTI XML body
 		 * @return {Array<{id: string, label: string}>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		extractChoices(qtiBody) {
 			if (!qtiBody) return []

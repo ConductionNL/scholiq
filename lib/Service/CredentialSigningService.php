@@ -88,6 +88,8 @@ class CredentialSigningService
      *                                               - 'to'         : 'issued'
      *
      * @return bool True if signing succeeded (transition allowed); false blocks transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function check(array &$transitionContext): bool
     {

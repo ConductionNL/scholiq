@@ -227,6 +227,7 @@ export default {
 		 * Sum of points for all selected criterion levels.
 		 *
 		 * @return {number}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		computedScore() {
 			return Object.values(this.selectedLevels).reduce(
@@ -239,6 +240,7 @@ export default {
 		 * Grade after applying the late penalty (when submission is late).
 		 *
 		 * @return {number}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		effectiveGrade() {
 			const penalty = this.assignment.latePenaltyPercent || 0
@@ -250,6 +252,13 @@ export default {
 	watch: {
 		id: {
 			immediate: true,
+			/**
+			 * React to the submission id prop changing by loading all data.
+			 *
+			 * @param {string} newId New submission UUID
+			 * @return {void}
+			 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
+			 */
 			handler(newId) {
 				if (newId) {
 					this.loadData(newId)
@@ -264,6 +273,7 @@ export default {
 		 *
 		 * @param {string} submissionId Submission UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		async loadData(submissionId) {
 			this.loading = true
@@ -303,6 +313,7 @@ export default {
 		 *
 		 * @param {string} submissionId Submission UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		async loadSubmission(submissionId) {
 			const url = generateUrl(
@@ -323,6 +334,7 @@ export default {
 		 *
 		 * @param {string} id Assignment UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		async loadAssignment(id) {
 			const url = generateUrl(`/apps/openregister/api/objects/scholiq/Assignment/${id}`)
@@ -341,6 +353,7 @@ export default {
 		 *
 		 * @param {string} rubricId Rubric UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		async loadRubric(rubricId) {
 			const url = generateUrl(
@@ -373,6 +386,7 @@ export default {
 		 * @param {object} criterion Rubric criterion object
 		 * @param {object} level     Selected level object
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		selectLevel(criterion, level) {
 			this.selectedLevels = {
@@ -385,6 +399,7 @@ export default {
 		 * Build the rubricScores array from current selections.
 		 *
 		 * @return {Array<{criterionId: string, levelId: string, points: number}>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		buildRubricScores() {
 			return Object.entries(this.selectedLevels).map(([criterionId, sel]) => ({
@@ -400,6 +415,7 @@ export default {
 		 * the `return` lifecycle transition.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
 		 */
 		async saveAndReturn() {
 			if (!this.submission) {

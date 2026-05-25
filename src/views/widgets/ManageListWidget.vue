@@ -104,7 +104,12 @@ export default {
 	},
 
 	computed: {
-		/** All columns after the first (displayed as secondary metadata) */
+		/**
+		 * All columns after the first (displayed as secondary metadata).
+		 *
+		 * @return {string[]}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		extraColumns() {
 			return this.columns.slice(1)
 		},
@@ -115,6 +120,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Fetch the top-N objects of this schema from OpenRegister.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		async fetchItems() {
 			this.loading = true
 			try {
@@ -137,6 +148,7 @@ export default {
 		 *
 		 * @param {object} item OR object record.
 		 * @return {string} Display name.
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
 		 */
 		itemName(item) {
 			const firstCol = this.columns[0] ?? 'name'
@@ -149,6 +161,7 @@ export default {
 		 * @param {object} item OR object record.
 		 * @param {string} field Field name to format.
 		 * @return {string} Formatted value or empty string.
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
 		 */
 		formatField(item, field) {
 			const val = item[field]
@@ -156,6 +169,12 @@ export default {
 			return String(val)
 		},
 
+		/**
+		 * Navigate to the configured index/new route.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		navigate() {
 			this.$router.push(this.indexRoute).catch(() => {})
 		},

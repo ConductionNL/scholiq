@@ -3,6 +3,12 @@ import { generateUrl } from '@nextcloud/router'
 import { useObjectStore } from './modules/object.js'
 import { useSettingsStore } from './modules/settings.js'
 
+/**
+ * Initialise the object + settings Pinia stores at app boot.
+ *
+ * @return {Promise<{settingsStore: object, objectStore: object}>}
+ * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-4
+ */
 export async function initializeStores() {
 	const settingsStore = useSettingsStore()
 	const objectStore = useObjectStore()

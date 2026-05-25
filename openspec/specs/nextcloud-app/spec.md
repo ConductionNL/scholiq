@@ -5,6 +5,12 @@ status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-003, adr-008, adr-011, adr-012]   # TODO until ADRs land
 created: 2026-05-11
+retrofit_extensions:
+  - REQ-005
+  - REQ-006
+  - REQ-007
+  - REQ-008
+  - REQ-009
 ---
 
 # Nextcloud App Shell
@@ -41,6 +47,73 @@ The system MUST render `NcEmptyContent` for every empty list/state; raw "no data
 
 ### Requirement: Use NL Design System double-fallback CSS pattern
 The system MUST use the NL Design System double-fallback CSS pattern (`var(--cn-X, var(--color-X, fallback))`); hardcoded colours are forbidden.
+
+### Requirement: Expose app settings through a read/write Settings API
+The system MUST expose the app's persisted settings (the keys managed by `SettingsService`, currently `register`) plus the derived metadata fields `openregisters` (whether OpenRegister is installed) and `isAdmin` (whether the current user is in the admin group) through a JSON Settings API. A GET request MUST return the merged settings + metadata; a POST request MUST persist only the known config keys present in the payload and return the updated merged settings. The frontend settings store and the personal/admin Settings views MUST read and write exclusively through this API.
+
+#### Scenario: Reading current settings
+- **WHEN** the frontend requests `GET /apps/scholiq/api/settings`
+- **THEN** the response contains every managed config key, an `openregisters` boolean, and an `isAdmin` boolean
+
+#### Scenario: Persisting a changed setting
+- **WHEN** the frontend POSTs `{ register: "scholiq" }` to the Settings API
+- **THEN** only the `register` config key is written and the response echoes the updated merged settings
+
+#### Notes
+- Unknown keys in a POST payload are silently ignored (only `CONFIG_KEYS` are written).
+- `isAdmin` is `false` when there is no logged-in user.
+
+### Requirement: Configure default register and AI features via OpenRegister-backed pickers
+The admin settings surface MUST let an administrator pick a default OpenRegister register and review the configured AI features. The register options MUST be loaded from OpenRegister's `/apps/openregister/api/registers` endpoint; the AI feature list MUST be read from the Scholiq Settings API response (`aiFeatures`). Selecting a default register MUST persist it via the Settings API. Loading failures MUST be caught and logged without breaking the settings panel.
+
+#### Scenario: Loading the register picker
+- **WHEN** the admin settings view is created
+- **THEN** it fetches the register list and the AI-feature list in parallel and populates the picker options
+
+#### Scenario: Saving the default register
+- **WHEN** the admin selects a register in the picker
+- **THEN** the chosen register slug is POSTed to the Settings API as `default_register`
+
+#### Notes
+- A fetch failure on either list logs to console and leaves the relevant list empty rather than throwing.
+
+### Requirement: Allow the credential signing key to be rotated from settings
+The admin settings surface MUST provide an action that rotates the tenant's RS256 credential signing key and surface a success/failure message to the user.
+
+#### Scenario: Rotating the signing key
+- **WHEN** the admin triggers the rotate-signing-key action
+- **THEN** the backend re-import/key endpoint is called and a localized success or failure message is shown
+
+#### Notes
+- Observed: the rotate action POSTs to `/apps/scholiq/api/settings/load` (the config re-import route) rather than a dedicated key-rotation endpoint. This is documented as observed behavior, not endorsed — a dedicated rotation endpoint is a future tightening.
+
+### Requirement: Provide a configurable generic OpenRegister object store initialised at boot
+The frontend MUST initialise a generic Pinia object store at application boot, configuring it with the OpenRegister object and schema base URLs. The store MUST allow registering named object types (type → schema + register) and fetching objects of a registered type with arbitrary query params, returning an empty array (and warning) for unregistered types and on fetch failure. Boot initialisation MUST also trigger the initial settings fetch.
+
+#### Scenario: Booting the stores
+- **WHEN** `initializeStores()` runs
+- **THEN** the object store is configured with the OR object/schema base URLs and the settings store performs its initial fetch
+
+#### Scenario: Fetching an unregistered type
+- **WHEN** `fetchObjects` is called for a type that was never registered
+- **THEN** it warns and returns an empty array without issuing a request
+
+#### Notes
+- Fetch failures are caught, logged, and surface as an empty array — callers never see a rejected promise.
+
+### Requirement: Serve a read-only admin health endpoint and the bundled app manifest
+The system MUST expose an admin-only health endpoint reporting OpenRegister connectivity, the count of registered schemas, a 24-hour audit-trail event count, whether MyDash is installed, and the last audit-pack export timestamp. The system MUST also serve the bundled `src/manifest.json` blob unchanged via a manifest endpoint (ADR-024 §4).
+
+#### Scenario: Reading health diagnostics
+- **WHEN** an admin requests the health endpoint
+- **THEN** the response contains `openregister_connected`, `schemas_registered`, `audit_trail_events_24h`, `mydash_installed`, and `last_audit_pack_export`
+
+#### Scenario: Serving the manifest
+- **WHEN** the frontend requests the manifest endpoint
+- **THEN** the bundled `src/manifest.json` is returned as JSON
+
+#### Notes
+- Observed: `audit_trail_events_24h` returns `0` and `last_audit_pack_export` returns `null` in v0.1 — placeholders pending an OpenRegister audit-event query API. `openregister_connected` is derived from the presence of the bundled register manifest file, not a live connection probe.
 
 ## Standards
 Nextcloud OCP (`IAppManager`, `IConfig`, `IUserSession`, `IRootFolder`, `IGroupManager`, `Calendar\IManager`, `Notification\IManager`, `Talk\IBroker`, `Activity\IManager`), NL Design System tokens, WCAG 2.1 AA.
