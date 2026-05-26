@@ -44,12 +44,16 @@ use DateTimeZone;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Service\AuditHashService;
 use OCA\Scholiq\AppInfo\Application;
+use OCA\Scholiq\Service\ActionAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IConfig;
 use OCP\IRequest;
+use OCP\IUserSession;
 use ZipArchive;
 
 /**
@@ -69,16 +73,20 @@ class AuditPackExportController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest         $request          HTTP request.
-     * @param AuditTrailMapper $auditTrailMapper OR audit-trail database mapper.
-     * @param AuditHashService $auditHashService OR HMAC chain verification service.
-     * @param IConfig          $config           Nextcloud system config for tenant ID lookup.
+     * @param IRequest          $request          HTTP request.
+     * @param AuditTrailMapper  $auditTrailMapper OR audit-trail database mapper.
+     * @param AuditHashService  $auditHashService OR HMAC chain verification service.
+     * @param IConfig           $config           Nextcloud system config for tenant ID lookup.
+     * @param IUserSession      $userSession      Nextcloud user session.
+     * @param ActionAuthService $actionAuth       ADR-023 action authorization service.
      */
     public function __construct(
         IRequest $request,
         private readonly AuditTrailMapper $auditTrailMapper,
         private readonly AuditHashService $auditHashService,
         private readonly IConfig $config,
+        private readonly IUserSession $userSession,
+        private readonly ActionAuthService $actionAuth,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -92,16 +100,22 @@ class AuditPackExportController extends Controller
      *
      * @return DataDownloadResponse|JSONResponse ZIP stream or JSON error.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function export(
         string $regulationSlug='',
         string $dateFrom='',
         string $dateTo='',
     ): DataDownloadResponse|JSONResponse {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['error' => 'Not authenticated'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $this->actionAuth->requireAction(user: $user, action: 'audit-pack.export');
+
         if ($regulationSlug === '' || $dateFrom === '' || $dateTo === '') {
             return new JSONResponse(
                 data: ['error' => 'regulationSlug, dateFrom, and dateTo are required'],

@@ -93,9 +93,13 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <repair-steps>
         <install>
             <step>OCA\Scholiq\Repair\InitializeSettings</step>
+            <!-- ADR-023: seed the action-authorization matrix (default admin-only). -->
+            <step>OCA\Scholiq\Repair\InitializeActions</step>
         </install>
         <post-migration>
             <step>OCA\Scholiq\Repair\InitializeSettings</step>
+            <!-- ADR-023: seed the action-authorization matrix (default admin-only). -->
+            <step>OCA\Scholiq\Repair\InitializeActions</step>
         </post-migration>
     </repair-steps>
 </info>

@@ -25,9 +25,13 @@ namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Renders the main SPA template and serves the bundled app manifest.
@@ -41,12 +45,15 @@ class PageController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest $request The request object.
+     * @param IRequest     $request     The request object.
+     * @param IUserSession $userSession The user session.
      *
      * @return void
      */
-    public function __construct(IRequest $request)
-    {
+    public function __construct(
+        IRequest $request,
+        private readonly IUserSession $userSession,
+    ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
@@ -87,15 +94,18 @@ class PageController extends Controller
      * V0.2 (deferred): will merge partial overrides from IAppConfig for
      * admin-customised menu order / hidden pages.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-5
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function manifest(): JSONResponse
     {
+        if ($this->userSession->getUser() === null) {
+            return new JSONResponse(data: ['error' => 'Not authenticated'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
         $manifestPath = __DIR__.'/../../src/manifest.json';
         $manifestJson = file_get_contents($manifestPath);
         $manifest     = json_decode($manifestJson, associative: true);
