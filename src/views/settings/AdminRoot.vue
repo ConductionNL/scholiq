@@ -17,6 +17,7 @@
 		</CnVersionInfoCard>
 
 		<Settings v-if="storesReady" />
+		<ActionAuthMatrix />
 	</div>
 </template>
 
@@ -24,6 +25,7 @@
 import { loadState } from '@nextcloud/initial-state'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import Settings from './Settings.vue'
+import ActionAuthMatrix from '../../components/admin/ActionAuthMatrix.vue'
 import { initializeStores } from '../../store/store.js'
 
 export default {
@@ -31,6 +33,7 @@ export default {
 	components: {
 		CnVersionInfoCard,
 		Settings,
+		ActionAuthMatrix,
 	},
 	data() {
 		return {

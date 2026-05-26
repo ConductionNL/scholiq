@@ -34,6 +34,8 @@ namespace OCA\Scholiq\Controller;
 use OCA\Scholiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 
@@ -69,14 +71,14 @@ class HealthController extends Controller
     /**
      * Return health diagnostics for the AdminHealth dashboard page.
      *
-     * Admin-only: enforced by route definition (no @NoAdminRequired annotation).
-     *
-     * @NoCSRFRequired
+     * Admin-only: gated via #[AuthorizedAdminSetting] (ADR-023 Rule 3).
      *
      * @return JSONResponse
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-5
      */
+    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[NoCSRFRequired]
     public function index(): JSONResponse
     {
         // OR connection check: attempt to load the register manifest.

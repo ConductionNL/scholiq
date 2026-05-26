@@ -33,11 +33,15 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
+use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\QtiImportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * Handles QTI package upload and import into an ItemBank.
@@ -57,14 +61,18 @@ class QtiImportController extends Controller
     /**
      * Constructor.
      *
-     * @param IRequest         $request          HTTP request.
-     * @param QtiImportService $qtiImportService QTI import service.
+     * @param IRequest          $request          HTTP request.
+     * @param QtiImportService  $qtiImportService QTI import service.
+     * @param IUserSession      $userSession      Nextcloud user session.
+     * @param ActionAuthService $actionAuth       ADR-023 action authorization service.
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly QtiImportService $qtiImportService,
+        private readonly IUserSession $userSession,
+        private readonly ActionAuthService $actionAuth,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -76,13 +84,22 @@ class QtiImportController extends Controller
      *
      * @return JSONResponse JSON with created item UUIDs and count, or an error.
      *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function import(string $itemBankId=''): JSONResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(
+                data: ['error' => 'Not authenticated'],
+                statusCode: Http::STATUS_UNAUTHORIZED
+            );
+        }
+
+        $this->actionAuth->requireAction(user: $user, action: 'qti.import');
+
         if ($itemBankId === '') {
             return new JSONResponse(
                 data: ['error' => 'itemBankId is required'],
