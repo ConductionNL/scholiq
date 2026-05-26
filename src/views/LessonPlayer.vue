@@ -169,6 +169,7 @@ export default {
 .lesson-player {
 	padding: 16px;
 }
+
 .lesson-player__loading,
 .lesson-player__error,
 .lesson-player__placeholder {
@@ -178,23 +179,29 @@ export default {
 	gap: 8px;
 	padding: 32px 16px;
 }
+
 .lesson-player__header {
 	margin-bottom: 24px;
 }
+
 .lesson-player__course {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 4px;
 }
+
 .lesson-player__title {
 	margin: 0 0 8px;
 }
+
 .lesson-player__summary {
 	color: var(--color-text-maxcontrast);
 	margin: 0;
 }
+
 .lesson-player__body {
 	line-height: 1.6;
 }
+
 .lesson-player__footer {
 	margin-top: 32px;
 	display: flex;
