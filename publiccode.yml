@@ -1,0 +1,64 @@
+publiccodeYmlVersion: "0.4"
+
+name: Scholiq
+url: "https://github.com/ConductionNL/scholiq"
+softwareVersion: "0.1.2"
+releaseDate: "2026-05-26"
+developmentStatus: beta
+softwareType: "standalone/other"
+
+platforms:
+  - nextcloud
+
+categories:
+  - learning-management-system
+  - knowledge-management
+
+description:
+  en:
+    shortDescription: >
+      Learning management and educational administration for Nextcloud.
+    longDescription: >
+      Scholiq is a learning management system (LMS) built on Nextcloud and Open Register.
+      It supports course management, student enrolment, progress tracking, and educational
+      administration. Designed for Dutch educational institutions and government training
+      programmes, it integrates with existing Nextcloud collaboration tools and adheres
+      to Dutch government interoperability standards.
+    features:
+      - Course and curriculum management
+      - Student enrolment and progress tracking
+      - Educational administration
+      - Integration with Nextcloud collaboration tools
+
+  nl:
+    shortDescription: >
+      Leerbeheersysteem en onderwijsadministratie voor Nextcloud.
+    longDescription: >
+      Scholiq is een leerbeheersysteem (LMS) gebouwd op Nextcloud en Open Register.
+      Het ondersteunt cursusmanagement, inschrijving van studenten, voortgangsbewaking
+      en onderwijsadministratie. Ontworpen voor Nederlandse onderwijsinstellingen en
+      overheidsopleidingen, integreert het met bestaande Nextcloud-samenwerkingstools
+      en voldoet aan Nederlandse overheidsstandaarden voor interoperabiliteit.
+    features:
+      - Cursus- en curriculummanagement
+      - Inschrijving en voortgangsbewaking van studenten
+      - Onderwijsadministratie
+      - Integratie met Nextcloud-samenwerkingstools
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: "Conduction B.V."
+  repoOwner: "Conduction B.V."
+
+maintenance:
+  type: community
+  contacts:
+    - name: Conduction B.V.
+      email: info@conduction.nl
+      affiliation: Conduction B.V.
+
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - nl
+    - en
