@@ -413,50 +413,86 @@
                 "x-openregister-notifications": {
                     "issuedToLearner": {
                         "trigger": {
-                            "lifecycleEnter": "issued"
+                            "type": "transition",
+                            "action": "issue"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.credential.issued",
-                        "recipient": "@self.learnerId"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je diploma '{{kind}}' is uitgereikt",
+                            "en": "Your credential '{{kind}}' was issued"
+                        }
                     },
-                    "expiringSoonAlert": {
+                    "expiringSoon": {
                         "trigger": {
-                            "calculated": "isExpiringIn30Days",
-                            "eq": true
+                            "type": "calculatedChange",
+                            "field": "daysUntilExpiry",
+                            "condition": "lte",
+                            "value": 30,
+                            "previously": "gt"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.credential.expiring.t30",
-                        "recipient": "@self.learnerId",
-                        "idempotencyKey": "expiryT30"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je diploma '{{kind}}' verloopt binnen 30 dagen",
+                            "en": "Your credential '{{kind}}' expires within 30 days"
+                        }
                     },
-                    "expiryT90": {
+                    "expired": {
                         "trigger": {
-                            "calculated": "isExpiringIn90Days",
-                            "eq": true
+                            "type": "transition",
+                            "action": "expire"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.credential.expiring.t90",
-                        "recipient": "@self.learnerId",
-                        "idempotencyKey": "expiryT90"
-                    },
-                    "expiredAlert": {
-                        "trigger": {
-                            "calculated": "isExpired",
-                            "eq": true
-                        },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.credential.expired",
-                        "recipient": "@self.learnerId",
-                        "idempotencyKey": "expired",
-                        "alsoDispatchLifecycle": "expire"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je diploma '{{kind}}' is verlopen",
+                            "en": "Your credential '{{kind}}' has expired"
+                        }
                     },
                     "revoked": {
                         "trigger": {
-                            "lifecycleEnter": "revoked"
+                            "type": "transition",
+                            "action": "revoke"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.credential.revoked",
-                        "recipient": "@self.learnerId"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je diploma '{{kind}}' is ingetrokken",
+                            "en": "Your credential '{{kind}}' was revoked"
+                        }
                     }
                 },
                 "x-openregister-seed": [],
@@ -529,23 +565,49 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "enable": {
+                    "enabled": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "enable"
+                        },
+                        "enabled": true,
                         "channels": [
                             "activity"
                         ],
-                        "template": "scholiq.ai_feature.enabled",
                         "recipients": [
-                            "admin"
-                        ]
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "AI-functie '{{title}}' is ingeschakeld",
+                            "en": "AI feature '{{title}}' was enabled"
+                        }
                     },
-                    "disable": {
+                    "disabled": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "disable"
+                        },
+                        "enabled": true,
                         "channels": [
                             "activity"
                         ],
-                        "template": "scholiq.ai_feature.disabled",
                         "recipients": [
-                            "admin"
-                        ]
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "AI-functie '{{title}}' is uitgeschakeld",
+                            "en": "AI feature '{{title}}' was disabled"
+                        }
                     }
                 },
                 "x-openregister-seed": []
@@ -757,24 +819,50 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "publish": {
+                    "published": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "publish"
+                        },
+                        "enabled": true,
                         "channels": [
                             "activity"
                         ],
-                        "template": "scholiq.course.published",
                         "recipients": [
-                            "admin",
-                            "hr"
-                        ]
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "admin",
+                                    "hr"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Cursus '{{title}}' is gepubliceerd",
+                            "en": "Course '{{title}}' was published"
+                        }
                     },
-                    "archive": {
+                    "archived": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "archive"
+                        },
+                        "enabled": true,
                         "channels": [
                             "activity"
                         ],
-                        "template": "scholiq.course.archived",
                         "recipients": [
-                            "admin"
-                        ]
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Cursus '{{title}}' is gearchiveerd",
+                            "en": "Course '{{title}}' was archived"
+                        }
                     }
                 },
                 "x-openregister-relations": {
@@ -924,14 +1012,27 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "publish": {
+                    "published": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "publish"
+                        },
+                        "enabled": true,
                         "channels": [
                             "activity"
                         ],
-                        "template": "scholiq.lesson.published",
                         "recipients": [
-                            "admin"
-                        ]
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Les '{{title}}' is gepubliceerd",
+                            "en": "Lesson '{{title}}' was published"
+                        }
                     }
                 },
                 "x-openregister-seed": []
@@ -1276,90 +1377,97 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "welcomeOnActivate": {
+                    "activated": {
                         "trigger": {
-                            "lifecycleEnter": "active"
+                            "type": "transition",
+                            "action": "activate"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.activated",
-                        "recipient": "@self.learnerId",
-                        "userPreferenceKey": "notify_assignments"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je bent ingeschreven voor een verplichte cursus",
+                            "en": "You have been enrolled in a mandatory course"
+                        }
                     },
-                    "completionOnComplete": {
+                    "completed": {
                         "trigger": {
-                            "lifecycleEnter": "completed"
+                            "type": "transition",
+                            "action": "complete"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.completed",
-                        "recipient": "@self.learnerId",
-                        "userPreferenceKey": "notify_assignments"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je hebt de cursus afgerond",
+                            "en": "You completed the course"
+                        }
                     },
-                    "reminderT30": {
+                    "dueReminder": {
                         "trigger": {
-                            "calculated": "daysRemaining",
-                            "eq": 30,
-                            "and": {
-                                "eq": [
-                                    {
-                                        "prop": "mandatory"
-                                    },
-                                    true
-                                ]
+                            "type": "scheduled",
+                            "intervalSec": 86400,
+                            "filter": {
+                                "mandatory": true
                             }
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.due.t30",
-                        "recipient": "@self.learnerId",
-                        "userPreferenceKey": "notify_due_dates",
-                        "idempotencyKey": "reminderT30"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je verplichte cursus moet binnenkort afgerond zijn",
+                            "en": "Your mandatory course is due soon"
+                        }
                     },
-                    "reminderT7": {
+                    "overdue": {
                         "trigger": {
-                            "calculated": "daysRemaining",
-                            "eq": 7,
-                            "and": {
-                                "eq": [
-                                    {
-                                        "prop": "mandatory"
-                                    },
-                                    true
-                                ]
+                            "type": "scheduled",
+                            "intervalSec": 86400,
+                            "filter": {
+                                "mandatory": true
                             }
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.due.t7",
-                        "recipient": "@self.learnerId",
-                        "userPreferenceKey": "notify_due_dates",
-                        "idempotencyKey": "reminderT7"
-                    },
-                    "reminderT1": {
-                        "trigger": {
-                            "calculated": "daysRemaining",
-                            "eq": 1,
-                            "and": {
-                                "eq": [
-                                    {
-                                        "prop": "mandatory"
-                                    },
-                                    true
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "managerId"
+                            },
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "hr"
                                 ]
                             }
-                        },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.due.t1",
-                        "recipient": "@self.learnerId",
-                        "userPreferenceKey": "notify_due_dates",
-                        "idempotencyKey": "reminderT1"
-                    },
-                    "managerAlertOnOverdue": {
-                        "trigger": {
-                            "calculated": "isOverdue",
-                            "eq": true
-                        },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.enrolment.overdue",
-                        "recipient": "@self.managerId",
-                        "fallbackRecipientFromTenantRole": "hr"
+                        ],
+                        "subject": {
+                            "nl": "Een verplichte cursus van een medewerker is over tijd",
+                            "en": "An employee's mandatory course is overdue"
+                        }
                     }
                 },
                 "x-openregister-seed": [],
@@ -1641,22 +1749,27 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "officerAlertOnCoverageDrop": {
+                    "published": {
                         "trigger": {
-                            "calculatedChange": "ragStatus",
-                            "to": "red"
+                            "type": "transition",
+                            "action": "publish"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.compliance.coverage.dropped",
-                        "recipientFromTenantRole": "compliance-officer"
-                    },
-                    "onPublished": {
-                        "trigger": {
-                            "transition": "publish"
-                        },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.compliance.regulation.published",
-                        "recipientFromTenantRole": "compliance-officer"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "compliance-officer"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Regelgeving '{{name}}' is gepubliceerd",
+                            "en": "Regulation '{{name}}' was published"
+                        }
                     }
                 },
                 "x-openregister-widgets": {
@@ -4699,14 +4812,6 @@
                         }
                     }
                 },
-                "x-openregister-notifications": {
-                    "gradePublished": {
-                        "event": "lifecycle.published",
-                        "recipient": "@self.learnerId",
-                        "idempotencyKey": "${@self.id}-${@self.lifecycle}",
-                        "description": "Notifies the learner (and parents via GradeRollupHandler fan-out) when a GradeEntry is published. IdempotencyKey prevents double-fire on re-publish or backfill."
-                    }
-                },
                 "x-openregister-relations": {
                     "learner": {
                         "field": "learnerId",
@@ -5300,22 +5405,6 @@
                         "description": "True when every required signer role (from template) has a Signature on this version with sufficient assurance. Evaluated by LearningPlanSignatureGuard on activate.",
                         "expression": "computed"
                     }
-                },
-                "x-openregister-notifications": {
-                    "quarterlyReviewReminder": {
-                        "trigger": "calculatedChange",
-                        "condition": "nextReviewDue == true",
-                        "recipient": "coordinatorId",
-                        "idempotencyKey": "${@self.id}-${@self.nextReviewAt}",
-                        "description": "Fires when nextReviewDue becomes true (nextReviewAt <= today). Driven by calculatedChange — NOT a TimedJob."
-                    },
-                    "signatureRequested": {
-                        "trigger": "lifecycle.enter.draft",
-                        "condition": "version > 0",
-                        "recipient": "each-required-signer-from-template",
-                        "idempotencyKey": "${@self.id}-v${@self.version}-${role}",
-                        "description": "Fires when a new plan version enters draft with required signer roles. One notification per required role per version."
-                    }
                 }
             },
             "LearningPlanEvaluation": {
@@ -5830,21 +5919,45 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "onApproved": {
+                    "approved": {
                         "trigger": {
-                            "transition": "approve"
+                            "type": "transition",
+                            "action": "approve"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.attendance.excuse.approved",
-                        "recipientField": "submittedBy"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je verzuimmelding is goedgekeurd",
+                            "en": "Your absence request was approved"
+                        }
                     },
-                    "onRejected": {
+                    "rejected": {
                         "trigger": {
-                            "transition": "reject"
+                            "type": "transition",
+                            "action": "reject"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.attendance.excuse.rejected",
-                        "recipientField": "submittedBy"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je verzuimmelding is afgewezen",
+                            "en": "Your absence request was rejected"
+                        }
                     }
                 },
                 "x-openregister-seed": []
@@ -6082,15 +6195,30 @@
                     }
                 },
                 "x-openregister-notifications": {
-                    "onThresholdCrossed": {
+                    "thresholdCrossed": {
                         "trigger": {
-                            "calculatedChange": "isThresholdCrossed",
-                            "to": true
+                            "type": "calculatedChange",
+                            "field": "unexcusedLesuren",
+                            "condition": "gte",
+                            "value": 16,
+                            "previously": "lt"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.attendance.threshold.crossed",
-                        "recipientFromTenantRole": "mentor",
-                        "idempotencyKey": "${@self.id}-${learnerId}-${windowStart}"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "mentor"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Verzuimgrens overschreden voor een leerling",
+                            "en": "Attendance threshold crossed for a learner"
+                        }
                     }
                 },
                 "x-openregister-widgets": {
@@ -6849,16 +6977,22 @@
                 "x-openregister-notifications": {
                     "jobFinished": {
                         "trigger": {
-                            "lifecycleEnter": [
-                                "succeeded",
-                                "failed",
-                                "partial"
-                            ]
+                            "type": "transition"
                         },
-                        "channel": "nc-notification",
-                        "subject": "scholiq.data-exchange.job.finished",
-                        "recipient": "@self.requestedBy",
-                        "idempotencyKey": "${@self.id}-finished"
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "requestedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je data-uitwisseling is afgerond ({{lifecycle}})",
+                            "en": "Your data exchange finished ({{lifecycle}})"
+                        }
                     }
                 },
                 "x-openregister-seed": []

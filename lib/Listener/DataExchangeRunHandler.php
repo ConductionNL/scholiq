@@ -36,6 +36,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-20
  */
 
 declare(strict_types=1);
@@ -99,6 +102,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     public function handle(Event $event): void
     {
@@ -128,6 +133,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The running-state transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function runJob(ObjectTransitionedEvent $event): void
     {
@@ -142,10 +149,9 @@ class DataExchangeRunHandler implements IEventListener
         $target           = $job['target'] ?? '';
         $mappingProfileId = $job['mappingProfileId'] ?? null;
         $scope            = $job['scope'] ?? [];
-        $tenantId         = $job['tenant_id'] ?? '';
 
         // Record startedAt.
-        $this->saveJobFields(jobId: $jobId, fields: ['startedAt' => date('c')], tenantId: $tenantId);
+        $this->saveJobFields(jobId: $jobId, fields: ['startedAt' => date('c')]);
 
         // 1. Load the DataMappingProfile.
         $profile = null;
@@ -177,7 +183,6 @@ class DataExchangeRunHandler implements IEventListener
                     'errorMessage' => $errorMsg,
                     'lifecycle'    => 'failed',
                 ],
-                tenantId: $tenantId
             );
             return;
         }
@@ -197,12 +202,13 @@ class DataExchangeRunHandler implements IEventListener
         $accepted       = $resultData['recordsAccepted'];
 
         // 6. Determine outcome state.
+        $nextState = 'succeeded';
         if ($rejected > 0 && $accepted > 0) {
             $nextState = 'partial';
-        } else if ($rejected > 0 && $accepted === 0 && $processed > 0) {
+        }
+
+        if ($rejected > 0 && $accepted === 0 && $processed > 0) {
             $nextState = 'failed';
-        } else {
-            $nextState = 'succeeded';
         }
 
         $this->saveJobFields(
@@ -213,7 +219,6 @@ class DataExchangeRunHandler implements IEventListener
                 'connectorRunId' => $connectorRunId,
                 'lifecycle'      => $nextState,
             ],
-            tenantId: $tenantId
         );
 
         $this->logger->info(
@@ -236,6 +241,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param string $profileId UUID of the DataMappingProfile.
      *
      * @return array<string,mixed>|null The profile data, or null if not found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function loadMappingProfile(string $profileId): ?array
     {
@@ -266,6 +273,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed> $scope The job scope (schema, filters, cohortId, period).
      *
      * @return array<int,array<string,mixed>> Source objects.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function querySourceObjects(array $scope): array
     {
@@ -316,6 +325,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed>|null       $profile DataMappingProfile data, or null.
      *
      * @return array<int,array<string,mixed>> Mapped payload records.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function buildPayload(array $objects, ?array $profile): array
     {
@@ -365,6 +376,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<string,mixed> $object    The full source object (for context lookups).
      *
      * @return mixed The transformed value.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
     private function applyTransform(mixed $value, ?string $transform, array $object): mixed
     {
@@ -409,9 +422,8 @@ class DataExchangeRunHandler implements IEventListener
                     return null;
                 }
 
-                if (is_array($cohorts[0]) === true) {
-                    $cohort = $cohorts[0];
-                } else {
+                $cohort = $cohorts[0];
+                if (is_array($cohorts[0]) === false) {
                     $cohort = $cohorts[0]->jsonSerialize();
                 }
                 return $cohort['brinNumber'] ?? null;
@@ -439,6 +451,8 @@ class DataExchangeRunHandler implements IEventListener
      * @param array<int,array<string,mixed>> $payload The mapped payload to send.
      *
      * @return array<string,mixed>|null Response data, or null on failure.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-20
      */
     private function callOpenConnector(string $target, array $payload): ?array
     {
@@ -478,13 +492,14 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Persist updated fields on the DataExchangeJob without triggering a lifecycle event loop.
      *
-     * @param string              $jobId    UUID of the DataExchangeJob.
-     * @param array<string,mixed> $fields   Fields to update.
-     * @param string              $tenantId Tenant UUID for the save call.
+     * @param string              $jobId  UUID of the DataExchangeJob.
+     * @param array<string,mixed> $fields Fields to update.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
-    private function saveJobFields(string $jobId, array $fields, string $tenantId): void
+    private function saveJobFields(string $jobId, array $fields): void
     {
         $existing = $this->objectService->findAll(
             [
@@ -500,9 +515,8 @@ class DataExchangeRunHandler implements IEventListener
             return;
         }
 
-        if (is_array($existing[0]) === true) {
-            $current = $existing[0];
-        } else {
+        $current = $existing[0];
+        if (is_array($existing[0]) === false) {
             $current = $existing[0]->jsonSerialize();
         }
 

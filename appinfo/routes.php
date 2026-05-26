@@ -10,17 +10,6 @@ return [
         // ADR-024 §4 — manifest endpoint (bundled blob, override hook deferred to v0.2).
         ['name' => 'page#manifest',  'url' => '/api/manifest', 'verb' => 'GET'],
 
-        // xAPI LRS — external-system contract, legitimate PHP per ADR-031.
-        ['name' => 'lrs#postStatements', 'url' => '/api/lrs/statements',             'verb' => 'POST'],  // ADR-002
-        ['name' => 'lrs#getStatements',  'url' => '/api/lrs/statements',             'verb' => 'GET'],
-
-        // SCORM compatibility shim — external-system contract per ADR-031.
-        ['name' => 'scorm#launch', 'url' => '/api/scorm/{lessonId}/launch', 'verb' => 'GET'],  // ADR-002
-        ['name' => 'scorm#api',    'url' => '/api/scorm/{lessonId}/api',    'verb' => 'POST'],
-
-        // cmi5 JWT minting — cryptographic operation, legitimate PHP per ADR-031.
-        ['name' => 'cmi5_launch#token', 'url' => '/api/lessons/{lessonId}/launch', 'verb' => 'GET'],
-
         // Public credential verification — no auth, per ADR-031 external-system contract.
         ['name' => 'credential#verify', 'url' => '/api/credentials/{id}/verify', 'verb' => 'GET'],
 
@@ -42,6 +31,10 @@ return [
         ['name' => 'settings#index',  'url' => '/api/settings',      'verb' => 'GET'],
         ['name' => 'settings#create', 'url' => '/api/settings',      'verb' => 'POST'],
         ['name' => 'settings#load',   'url' => '/api/settings/load', 'verb' => 'POST'],
+
+        // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+        ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+        ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 
         // SPA catch-all — Vue history mode; specific routes MUST precede this.
         ['name' => 'page#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],

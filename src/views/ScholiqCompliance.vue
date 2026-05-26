@@ -5,6 +5,8 @@
  ScholiqCompliance — compliance dashboard page.
  Renders KPI tiles for regulations and signed attestations, plus a
  "View in MyDash" header action.
+
+ @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
 -->
 <template>
 	<CnDashboardPage
@@ -55,6 +57,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Open MyDash in a new tab for heavier compliance analytics.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
+		 */
 		viewInMydash() {
 			// Open MyDash in a new tab — URL is installation-specific.
 			window.open('/apps/mydash', '_blank')

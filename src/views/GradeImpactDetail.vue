@@ -13,6 +13,8 @@
 
   SPDX-License-Identifier: EUPL-1.2
   Copyright (C) 2026 Conduction B.V.
+
+  @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 -->
 
 <template>
@@ -161,6 +163,7 @@ export default {
 		 * The weight of the plan component matching this entry's componentId.
 		 *
 		 * @return {number}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		planComponentWeight() {
 			if (!this.plan || !this.entry) {
@@ -177,6 +180,7 @@ export default {
 		 * Effective weight: per-entry override or plan component default.
 		 *
 		 * @return {number}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		effectiveWeight() {
 			if (this.entry?.weight !== null && this.entry?.weight !== undefined) {
@@ -190,6 +194,7 @@ export default {
 		 * Points contributed by this entry to the weighted sum.
 		 *
 		 * @return {number|null}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		pointsContributed() {
 			if (!this.entry || this.entry.value === null || this.entry.value === undefined) {
@@ -203,6 +208,7 @@ export default {
 		 * Weighted average of published entries in the same period.
 		 *
 		 * @return {number|null}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		periodAverage() {
 			if (this.periodEntries.length === 0) {
@@ -224,6 +230,13 @@ export default {
 	watch: {
 		id: {
 			immediate: true,
+			/**
+			 * React to the GradeEntry id prop changing by loading all data.
+			 *
+			 * @param {string} newId New GradeEntry UUID
+			 * @return {void}
+			 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
+			 */
 			handler(newId) {
 				if (newId) {
 					this.loadData(newId)
@@ -238,6 +251,7 @@ export default {
 		 *
 		 * @param {string} entryId GradeEntry UUID.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		async loadData(entryId) {
 			this.loading = true
@@ -266,6 +280,7 @@ export default {
 		 *
 		 * @param {string} entryId GradeEntry UUID.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		async loadEntry(entryId) {
 			const url = generateUrl(`/apps/openregister/api/objects/scholiq/GradeEntry/${entryId}`)
@@ -283,6 +298,7 @@ export default {
 		 *
 		 * @param {string} planId CurriculumPlan UUID.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		async loadPlan(planId) {
 			if (!planId) {
@@ -303,6 +319,7 @@ export default {
 		 * Fetch other published GradeEntries in the same period for this learner + plan.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		async loadPeriodEntries() {
 			if (!this.entry) {
@@ -330,6 +347,7 @@ export default {
 		 * Fetch the FinalGrade for this learner + curriculumPlan.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		async loadFinalGrade() {
 			if (!this.entry) {
@@ -359,6 +377,7 @@ export default {
 		 *
 		 * @param {number|null} value Grade value.
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		formatValue(value) {
 			if (value === null || value === undefined) {
@@ -373,6 +392,7 @@ export default {
 		 *
 		 * @param {string} isoString ISO-8601 datetime string.
 		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
 		 */
 		formatDate(isoString) {
 			if (!isoString) {

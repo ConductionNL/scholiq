@@ -32,6 +32,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-23
  */
 
 declare(strict_types=1);
@@ -88,6 +90,8 @@ class LearningPlanEvaluationHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-23
      */
     public function handle(Event $event): void
     {
@@ -117,6 +121,8 @@ class LearningPlanEvaluationHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-23
      */
     private function handleEvaluationRecorded(ObjectTransitionedEvent $event): void
     {
@@ -148,9 +154,8 @@ class LearningPlanEvaluationHandler implements IEventListener
             return;
         }
 
-        if (is_array($plans[0]) === true) {
-            $plan = $plans[0];
-        } else {
+        $plan = $plans[0];
+        if (is_array($plans[0]) === false) {
             $plan = $plans[0]->jsonSerialize();
         }
 

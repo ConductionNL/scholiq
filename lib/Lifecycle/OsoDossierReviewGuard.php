@@ -32,6 +32,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-17
  */
 
 declare(strict_types=1);
@@ -84,6 +86,8 @@ class OsoDossierReviewGuard
      *                                               - 'actor'      : NC user ID of the requester
      *
      * @return bool True if the actor is a parent of the learner; false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-17
      */
     public function check(array &$transitionContext): bool
     {
@@ -126,9 +130,8 @@ class OsoDossierReviewGuard
             return false;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 

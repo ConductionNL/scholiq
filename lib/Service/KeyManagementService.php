@@ -20,6 +20,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
  */
 
 declare(strict_types=1);
@@ -28,6 +30,7 @@ namespace OCA\Scholiq\Service;
 
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
+use RuntimeException;
 
 /**
  * Generates and stores RSA-2048 per-tenant keypairs for OB3 credential signing.
@@ -76,6 +79,8 @@ class KeyManagementService
      * @return array{fingerprint: string, publicKey: string} Public key data.
      *
      * @throws \RuntimeException If OpenSSL key generation fails.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function generateTenantKeypair(string $tenantId): array
     {
@@ -87,7 +92,7 @@ class KeyManagementService
                 );
 
         if ($resource === false) {
-            throw new \RuntimeException('OpenSSL key generation failed: '.openssl_error_string());
+            throw new RuntimeException('OpenSSL key generation failed: '.openssl_error_string());
         }
 
         $privateKeyPem = '';
@@ -97,7 +102,7 @@ class KeyManagementService
         $publicKeyPem = $details['key'] ?? '';
 
         if ($privateKeyPem === '' || $publicKeyPem === '') {
-            throw new \RuntimeException('Failed to export keypair from OpenSSL resource.');
+            throw new RuntimeException('Failed to export keypair from OpenSSL resource.');
         }
 
         $fingerprint      = substr(hash('sha256', $publicKeyPem), 0, 16);
@@ -131,6 +136,8 @@ class KeyManagementService
      * @param string $tenantId Tenant UUID.
      *
      * @return array{fingerprint: string, publicKey: string}|null Key data, or null if not configured.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function getTenantKeyStatus(string $tenantId): ?array
     {

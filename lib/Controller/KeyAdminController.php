@@ -22,6 +22,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
  */
 
 declare(strict_types=1);
@@ -61,6 +63,8 @@ class KeyAdminController extends Controller
      * Generate or rotate the RSA-2048 signing keypair for a tenant.
      *
      * @return JSONResponse {fingerprint, publicKey} on success; {error} on failure.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function generateKey(): JSONResponse
     {
@@ -82,6 +86,8 @@ class KeyAdminController extends Controller
      * Return the public key status (fingerprint + public key PEM) for a tenant.
      *
      * @return JSONResponse {fingerprint, publicKey} or {configured: false}.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     public function keyStatus(): JSONResponse
     {

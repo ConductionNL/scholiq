@@ -30,6 +30,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
  */
 
 declare(strict_types=1);
@@ -74,6 +76,8 @@ class ExcuseApprovalHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     public function handle(Event $event): void
     {
@@ -101,6 +105,8 @@ class ExcuseApprovalHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The ExcuseRequest-approved transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     private function flipAttendanceRecords(ObjectTransitionedEvent $event): void
     {
@@ -149,9 +155,8 @@ class ExcuseApprovalHandler implements IEventListener
         $flippedCount = 0;
 
         foreach ($records as $raw) {
-            if (is_array($raw) === true) {
-                $record = $raw;
-            } else {
+            $record = $raw;
+            if (is_array($raw) === false) {
                 $record = $raw->jsonSerialize();
             }
 

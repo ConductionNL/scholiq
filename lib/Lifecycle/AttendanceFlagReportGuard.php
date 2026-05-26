@@ -30,6 +30,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
  */
 
 declare(strict_types=1);
@@ -84,6 +86,8 @@ class AttendanceFlagReportGuard
      *                                               - 'to'         : 'reported'
      *
      * @return bool True if the report transition is allowed; false otherwise.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     public function check(array &$transitionContext): bool
     {
@@ -114,9 +118,8 @@ class AttendanceFlagReportGuard
             return false;
         }
 
-        if (is_array($jobs[0]) === true) {
-            $job = $jobs[0];
-        } else {
+        $job = $jobs[0];
+        if (is_array($jobs[0]) === false) {
             $job = $jobs[0]->jsonSerialize();
         }
 

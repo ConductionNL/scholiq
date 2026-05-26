@@ -24,6 +24,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
  */
 
 declare(strict_types=1);
@@ -76,6 +78,8 @@ class QtiImportController extends Controller
      *
      * @NoAdminRequired
      * @NoCSRFRequired
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     public function import(string $itemBankId=''): JSONResponse
     {

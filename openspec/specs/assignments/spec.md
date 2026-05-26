@@ -39,11 +39,20 @@ Learners hand work in; teachers grade it. That loop is universal — a vmbo `opd
 
 ## Requirements
 
-- The system MUST persist `Assignment`, `Submission`, `Rubric` as OpenRegister objects with `x-openregister-lifecycle` (Submission: draft → submitted → late → returned), `x-openregister-relations` (Assignment↔Course/Session/Rubric, Submission↔Assignment/learner), and `x-openregister-calculations` (Submission `isLate`, `effectiveGrade`).
-- Submission attachments MUST use OpenRegister file attachments; no app-local file storage.
-- Marking a Submission MUST emit (or update) a `GradeEntry` consumed by the `grading` spec; this spec MUST NOT compute final grades itself.
-- The plagiarism-check hook MUST be a declared `x-plagiarism.provider` config on `Assignment` resolving to a pluggable PHP interface (no bundled provider) — analogous to proctoring providers in the `assessment` spec.
-- Frontend declarative: `src/manifest.json` pages for Assignment index/detail and a custom `SubmitWorkModal` + `MarkSubmissionView` Vue component (genuine UI that a manifest index/detail page can't express). No PHP CRUD controllers; the late-window enforcement is an `x-openregister-lifecycle` guard.
+### Requirement: Persist Assignment domain objects in OpenRegister
+The system MUST persist `Assignment`, `Submission`, `Rubric` as OpenRegister objects with `x-openregister-lifecycle` (Submission: draft → submitted → late → returned), `x-openregister-relations` (Assignment↔Course/Session/Rubric, Submission↔Assignment/learner), and `x-openregister-calculations` (Submission `isLate`, `effectiveGrade`).
+
+### Requirement: Submission attachments use OpenRegister file attachments
+Submission attachments MUST use OpenRegister file attachments; no app-local file storage.
+
+### Requirement: Marking a Submission emits a GradeEntry
+Marking a Submission MUST emit (or update) a `GradeEntry` consumed by the `grading` spec; this spec MUST NOT compute final grades itself.
+
+### Requirement: Plagiarism check is a pluggable provider
+The plagiarism-check hook MUST be a declared `x-plagiarism.provider` config on `Assignment` resolving to a pluggable PHP interface (no bundled provider) — analogous to proctoring providers in the `assessment` spec.
+
+### Requirement: Frontend is declarative with named custom views
+Frontend declarative: `src/manifest.json` pages for Assignment index/detail and a custom `SubmitWorkModal` + `MarkSubmissionView` Vue component (genuine UI that a manifest index/detail page can't express). No PHP CRUD controllers; the late-window enforcement is an `x-openregister-lifecycle` guard.
 
 ## Standards
 

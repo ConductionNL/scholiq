@@ -15,6 +15,7 @@
 	<CnAppRoot
 		:manifest="manifest"
 		:custom-components="customComponents"
+		:registry="registry"
 		:page-types="pageTypes"
 		app-id="scholiq"
 		:translate="translateForApp">
@@ -55,6 +56,13 @@ export default {
 			default: () => ({}),
 		},
 		/**
+		 * 5-kind component registry (v2 manifest pattern per hydra ADR-036).
+		 */
+		registry: {
+			type: Object,
+			default: () => ({}),
+		},
+		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 */
 		pageTypes: {
@@ -70,6 +78,7 @@ export default {
 		 *
 		 * @param {string} key Translation key.
 		 * @return {string} Translated string (or the key on miss).
+		 * @spec exclude framework glue — thin wrapper over @nextcloud/l10n translate that binds the app id for CnAppRoot; no business behavior
 		 */
 		translateForApp(key) {
 			return ncT('scholiq', key)

@@ -34,12 +34,17 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-22
  */
 
 declare(strict_types=1);
 
 namespace OCA\Scholiq\Listener;
 
+use DateTimeImmutable;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Grading\GradeFormulaEvaluator;
@@ -80,6 +85,8 @@ class GradeRollupHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     public function handle(Event $event): void
     {
@@ -112,6 +119,8 @@ class GradeRollupHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
      */
     private function handleGradeEntryPublished(ObjectTransitionedEvent $event): void
     {
@@ -144,6 +153,8 @@ class GradeRollupHandler implements IEventListener
      * @param array  $entry            The published GradeEntry.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
      */
     private function recomputeFinalGrade(
         string $learnerId,
@@ -169,11 +180,12 @@ class GradeRollupHandler implements IEventListener
                 ]
                 );
 
-        if (empty($existing) === true) {
-            $existingObj = null;
-        } else if (is_array($existing[0]) === true) {
+        $existingObj = null;
+        if (empty($existing) === false && is_array($existing[0]) === true) {
             $existingObj = $existing[0];
-        } else {
+        }
+
+        if (empty($existing) === false && is_array($existing[0]) === false) {
             $existingObj = $existing[0]->jsonSerialize();
         }
 
@@ -212,6 +224,8 @@ class GradeRollupHandler implements IEventListener
      * @param array  $gradeEntry Published GradeEntry data.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-22
      */
     private function fanOutParentNotifications(string $learnerId, array $gradeEntry): void
     {
@@ -228,9 +242,8 @@ class GradeRollupHandler implements IEventListener
             return;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 
@@ -281,6 +294,8 @@ class GradeRollupHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The transition event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-21
      */
     private function handleAssessmentResultGraded(ObjectTransitionedEvent $event): void
     {
@@ -313,7 +328,7 @@ class GradeRollupHandler implements IEventListener
             'value'              => (float) $totalScore,
             'gradeScaleId'       => $scaleId ?? '',
             'grader'             => 'auto',
-            'gradedAt'           => (new \DateTimeImmutable())->format(\DATE_ATOM),
+            'gradedAt'           => (new DateTimeImmutable())->format(\DATE_ATOM),
             'tenant_id'          => $tenantId,
             'lifecycle'          => 'concept',
         ];
@@ -328,9 +343,8 @@ class GradeRollupHandler implements IEventListener
             return;
         }
 
-        if (is_array($saved) === true) {
-            $savedData = $saved;
-        } else {
+        $savedData = $saved;
+        if (is_array($saved) === false) {
             $savedData = $saved->jsonSerialize();
         }
 

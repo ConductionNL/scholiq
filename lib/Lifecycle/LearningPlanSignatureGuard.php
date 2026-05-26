@@ -32,6 +32,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-16
  */
 
 declare(strict_types=1);
@@ -105,6 +108,8 @@ class LearningPlanSignatureGuard
      *                                               - 'to'         : 'active'
      *
      * @return bool True when all required roles have signed with sufficient assurance.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
     public function check(array &$transitionContext): bool
     {
@@ -180,6 +185,8 @@ class LearningPlanSignatureGuard
      * @param string|null $templateId Template UUID or null.
      *
      * @return string[] Empty array when no template or no roles defined.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
     private function fetchRequiredRoles(?string $templateId): array
     {
@@ -200,9 +207,8 @@ class LearningPlanSignatureGuard
             return [];
         }
 
-        if (is_array($templates[0]) === true) {
-            $template = $templates[0];
-        } else {
+        $template = $templates[0];
+        if (is_array($templates[0]) === false) {
             $template = $templates[0]->jsonSerialize();
         }
 
@@ -217,6 +223,8 @@ class LearningPlanSignatureGuard
      * @param int    $version Plan version number.
      *
      * @return array<int,array<string,mixed>>
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
     private function fetchSignatures(string $planId, int $version): array
     {
@@ -234,11 +242,12 @@ class LearningPlanSignatureGuard
 
         $result = [];
         foreach ($raw as $item) {
-            if (is_array($item) === true) {
-                $result[] = $item;
-            } else {
-                $result[] = $item->jsonSerialize();
+            $row = $item;
+            if (is_array($item) === false) {
+                $row = $item->jsonSerialize();
             }
+
+            $result[] = $row;
         }
 
         return $result;
@@ -251,6 +260,8 @@ class LearningPlanSignatureGuard
      * @param array<int,array<string,mixed>> $signatures Raw signature objects.
      *
      * @return array<string,array<string,mixed>> Map of role → signature.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
     private function indexByRole(array $signatures): array
     {
@@ -261,12 +272,13 @@ class LearningPlanSignatureGuard
 
             if (isset($byRole[$role]) === false) {
                 $byRole[$role] = $sig;
-            } else {
-                // Keep the signature with the higher assurance.
-                $existing = $byRole[$role]['assuranceLevel'] ?? 'none';
-                if ($this->assuranceRank(level: $assurance) > $this->assuranceRank(level: $existing)) {
-                    $byRole[$role] = $sig;
-                }
+                continue;
+            }
+
+            // Keep the signature with the higher assurance.
+            $existing = $byRole[$role]['assuranceLevel'] ?? 'none';
+            if ($this->assuranceRank(level: $assurance) > $this->assuranceRank(level: $existing)) {
+                $byRole[$role] = $sig;
             }
         }
 
@@ -281,6 +293,8 @@ class LearningPlanSignatureGuard
      * @param string $kind The plan kind.
      *
      * @return string Assurance level string.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-16
      */
     private function minimumAssurance(string $role, string $kind): string
     {
@@ -299,6 +313,8 @@ class LearningPlanSignatureGuard
      * @param string $minimum The minimum required assurance level.
      *
      * @return bool True when actual >= minimum.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-16
      */
     private function assuranceSatisfies(string $actual, string $minimum): bool
     {
@@ -312,6 +328,8 @@ class LearningPlanSignatureGuard
      * @param string $level Assurance level string.
      *
      * @return int Rank (0–3). Unknown levels map to 0.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-16
      */
     private function assuranceRank(string $level): int
     {
@@ -334,6 +352,8 @@ class LearningPlanSignatureGuard
      * @param string|null $supersedesId UUID of the LearningPlan version to supersede.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
     private function supersedesPriorVersion(?string $supersedesId): void
     {

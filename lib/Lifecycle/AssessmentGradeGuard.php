@@ -29,6 +29,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-7
  */
 
 declare(strict_types=1);
@@ -81,6 +83,8 @@ class AssessmentGradeGuard
      *                                               - 'to'         : 'graded'
      *
      * @return bool True if all manual-scoring items have scores; false blocks the transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-7
      */
     public function check(array &$transitionContext): bool
     {

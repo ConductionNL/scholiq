@@ -35,6 +35,9 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-11
  */
 
 declare(strict_types=1);
@@ -87,6 +90,8 @@ class AttendanceFlagCreationHandler implements IEventListener
      * @param Event $event The dispatched event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     public function handle(Event $event): void
     {
@@ -121,6 +126,8 @@ class AttendanceFlagCreationHandler implements IEventListener
      * @param ObjectTransitionedEvent $event The threshold-crossed event.
      *
      * @return void
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     private function createFlag(ObjectTransitionedEvent $event): void
     {
@@ -248,6 +255,8 @@ class AttendanceFlagCreationHandler implements IEventListener
      * @param string $tenantId    Tenant UUID.
      *
      * @return string|null UUID of the created DataExchangeJob, or null on failure.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-11
      */
     private function queueDataExchangeJob(
         string $target,
@@ -285,9 +294,8 @@ class AttendanceFlagCreationHandler implements IEventListener
             return null;
         }
 
-        if (is_array($saved) === true) {
-            $savedData = $saved;
-        } else {
+        $savedData = $saved;
+        if (is_array($saved) === false) {
             $savedData = $saved->jsonSerialize();
         }
 
@@ -311,6 +319,8 @@ class AttendanceFlagCreationHandler implements IEventListener
      * @param string $learnerId NC user ID of the learner.
      *
      * @return string|null NC user ID of the mentor, or null.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-10
      */
     private function resolveMentorId(string $learnerId): ?string
     {
@@ -327,9 +337,8 @@ class AttendanceFlagCreationHandler implements IEventListener
             return null;
         }
 
-        if (is_array($profiles[0]) === true) {
-            $profile = $profiles[0];
-        } else {
+        $profile = $profiles[0];
+        if (is_array($profiles[0]) === false) {
             $profile = $profiles[0]->jsonSerialize();
         }
 

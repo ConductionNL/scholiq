@@ -17,6 +17,8 @@
 
   SPDX-License-Identifier: EUPL-1.2
   Copyright (C) 2026 Conduction B.V.
+
+  @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 -->
 
 <template>
@@ -229,6 +231,13 @@ export default {
 	watch: {
 		id: {
 			immediate: true,
+			/**
+			 * React to the route id prop changing by loading the item.
+			 *
+			 * @param {string} newId New item UUID
+			 * @return {void}
+			 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+			 */
 			handler(newId) {
 				if (newId) {
 					this.loadItem(newId)
@@ -243,6 +252,7 @@ export default {
 		 *
 		 * @param {string} itemId Item UUID
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async loadItem(itemId) {
 			this.loading = true
@@ -297,6 +307,7 @@ export default {
 		 * Add a new blank choice option.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		addChoice() {
 			const nextId = String.fromCharCode(65 + this.form.choices.length)
@@ -308,6 +319,7 @@ export default {
 		 *
 		 * @param {number} idx Index to remove
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		removeChoice(idx) {
 			if (this.form.choices.length <= 2) return
@@ -321,6 +333,7 @@ export default {
 		 * Build the QTI 3.0 item XML body from the form values.
 		 *
 		 * @return {string} QTI 3.0 XML string
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		buildQtiBody() {
 			const { interactionType, prompt, choices, correctChoiceIdx } = this.form
@@ -376,6 +389,7 @@ export default {
 		 *
 		 * @param {string} str Raw string
 		 * @return {string} XML-escaped string
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		escapeXml(str) {
 			return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -385,6 +399,7 @@ export default {
 		 * Save the item to OR (POST for new, PUT for existing).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 */
 		async saveItem() {
 			this.saving = true

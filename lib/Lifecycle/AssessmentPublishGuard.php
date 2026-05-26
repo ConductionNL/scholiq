@@ -26,6 +26,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
  */
 
 declare(strict_types=1);
@@ -83,6 +85,8 @@ class AssessmentPublishGuard
      *                                               - 'to'         : 'published'
      *
      * @return bool True if the Assessment may be published; false blocks the transition (HTTP 422).
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     public function check(array &$transitionContext): bool
     {

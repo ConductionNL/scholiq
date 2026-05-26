@@ -17,6 +17,12 @@ export const useSettingsStore = defineStore('settings', {
 	},
 
 	actions: {
+		/**
+		 * Fetch the Scholiq settings (incl. openregisters + isAdmin metadata) from the Settings API.
+		 *
+		 * @return {Promise<object|null>}
+		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
+		 */
 		async fetchSettings() {
 			this.loading = true
 			try {
@@ -38,6 +44,13 @@ export const useSettingsStore = defineStore('settings', {
 			return null
 		},
 
+		/**
+		 * Persist settings via the Settings API and update local state.
+		 *
+		 * @param {object} settings Settings payload to persist
+		 * @return {Promise<object|null>}
+		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
+		 */
 		async saveSettings(settings) {
 			this.loading = true
 			try {

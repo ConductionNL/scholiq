@@ -15,6 +15,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-26
  */
 
 declare(strict_types=1);
@@ -70,6 +72,8 @@ class SettingsService
      * Check whether OpenRegister is installed and available.
      *
      * @return bool
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-26
      */
     public function isOpenRegisterAvailable(): bool
     {
@@ -83,6 +87,8 @@ class SettingsService
      * fields (openregisters, isAdmin) consumed by the frontend.
      *
      * @return array<string,mixed>
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
      */
     public function getSettings(): array
     {
@@ -109,6 +115,8 @@ class SettingsService
      * @param array<string,mixed> $data The data to update
      *
      * @return array<string,mixed> The updated settings
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
      */
     public function updateSettings(array $data): array
     {
@@ -127,6 +135,8 @@ class SettingsService
      * @param bool $force Force re-import even if already configured.
      *
      * @return array<string,mixed> Result with success flag, message, and version.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-26
      */
     public function loadConfiguration(bool $force=false): array
     {

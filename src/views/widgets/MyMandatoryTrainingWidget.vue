@@ -63,6 +63,12 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Fetch the current user's pending/active mandatory enrolments from OpenRegister.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		async fetchEnrolments() {
 			this.loading = true
 			try {
@@ -85,6 +91,13 @@ export default {
 			}
 		},
 
+		/**
+		 * Format an ISO date string as a localised date.
+		 *
+		 * @param {string} dateStr ISO date string
+		 * @return {string}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		formatDate(dateStr) {
 			if (!dateStr) return ''
 			try {
@@ -94,6 +107,13 @@ export default {
 			}
 		},
 
+		/**
+		 * Navigate to the lessons view for the enrolment's course.
+		 *
+		 * @param {object} enrolment Enrolment object
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
+		 */
 		startCourse(enrolment) {
 			const courseId = enrolment.courseId
 			if (courseId) {

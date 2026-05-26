@@ -26,6 +26,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
  */
 
 declare(strict_types=1);
@@ -72,6 +74,8 @@ class CredentialVerifyController extends Controller
      *
      * @NoCSRFRequired
      * @PublicPage
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
     #[NoCSRFRequired]
     #[PublicPage]

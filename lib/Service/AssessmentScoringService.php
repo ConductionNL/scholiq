@@ -21,12 +21,15 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
  */
 
 declare(strict_types=1);
 
 namespace OCA\Scholiq\Service;
 
+use InvalidArgumentException;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Lifecycle\AssessmentScoringHandler;
 use Psr\Log\LoggerInterface;
@@ -74,6 +77,8 @@ class AssessmentScoringService
      * @return void
      *
      * @throws \InvalidArgumentException When the AssessmentResult cannot be found.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     public function autoScore(string $assessmentResultId): void
     {
@@ -87,7 +92,7 @@ class AssessmentScoringService
         );
 
         if (empty($results) === true) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 "AssessmentResult with UUID '{$assessmentResultId}' not found."
             );
         }

@@ -74,6 +74,8 @@ class HealthController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse
+     *
+     * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-5
      */
     public function index(): JSONResponse
     {

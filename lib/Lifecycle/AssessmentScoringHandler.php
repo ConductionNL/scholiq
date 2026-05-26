@@ -28,6 +28,8 @@
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
  */
 
 declare(strict_types=1);
@@ -88,6 +90,8 @@ class AssessmentScoringHandler
      *                                               - 'to'         : 'submitted'
      *
      * @return bool Always true — scoring is a side-effect; never blocks the transition.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     public function check(array &$transitionContext): bool
     {
@@ -200,6 +204,8 @@ class AssessmentScoringHandler
      * @param float  $maxScore        Maximum points for this item (from itemRefs override or item).
      *
      * @return float Score in range [0, maxScore].
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     private function scoreResponse(
         string $interactionType,
@@ -216,16 +222,14 @@ class AssessmentScoringHandler
             case 'textEntry':
             case 'inlineChoice':
                 // Exact or case-insensitive match.
+                $lr = $learnerResponse;
                 if (is_string($learnerResponse) === true) {
                     $lr = mb_strtolower(trim($learnerResponse));
-                } else {
-                    $lr = $learnerResponse;
                 }
 
+                $cr = $correctResponse;
                 if (is_string($correctResponse) === true) {
                     $cr = mb_strtolower(trim($correctResponse));
-                } else {
-                    $cr = $correctResponse;
                 }
 
                 if ($lr === $cr) {
