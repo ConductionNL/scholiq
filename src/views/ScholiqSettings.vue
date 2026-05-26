@@ -29,6 +29,7 @@
 					:options="registerOptions"
 					:loading="registersLoading"
 					:placeholder="t('scholiq', 'Select a register…')"
+					:aria-label-combobox="t('scholiq', 'Default register')"
 					label="title"
 					@input="saveDefaultRegister" />
 			</div>
