@@ -335,6 +335,10 @@ class QtiImportService
             return null;
         }
 
+        if (($root instanceof \DOMElement) === false) {
+            return null;
+        }
+
         $rawTitle = $root->getAttribute('title');
         $title    = basename($xmlPath, '.xml');
         if ($rawTitle !== '') {
@@ -434,6 +438,10 @@ class QtiImportService
         if ($correctResponseNodes->length > 0) {
             $crNode = $correctResponseNodes->item(0);
             $values = [];
+            if (($crNode instanceof \DOMElement) === false) {
+                return [null, $this->parseOutcomeMaxScore(xml: $xml)];
+            }
+
             foreach ($crNode->getElementsByTagName('value') as $valueNode) {
                 $values[] = trim($valueNode->nodeValue);
             }
