@@ -27,3 +27,9 @@ if (is_dir($serverTestsLib)) {
 if (interface_exists(\OCA\OpenRegister\Mcp\IMcpToolProvider::class) === false) {
     require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
 }
+
+// ObjectEntity stub — loaded when the openregister runtime is absent.
+// Required by CredentialVerifyControllerTest to mock ObjectService::find().
+if (class_exists(\OCA\OpenRegister\Db\ObjectEntity::class) === false) {
+    require_once __DIR__ . '/Stubs/Db/ObjectEntity.php';
+}

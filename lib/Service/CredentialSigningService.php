@@ -113,7 +113,7 @@ class CredentialSigningService
         }
 
         $verificationUrl = $this->urlGenerator->linkToRouteAbsolute(
-            'scholiq.credential.verify',
+            'scholiq.credentialVerify.verify',
             ['id' => $credentialId]
         );
 
@@ -133,10 +133,23 @@ class CredentialSigningService
             return false;
         }
 
+        $publicKey = $this->appConfig->getValueString(
+            app: 'scholiq',
+            key: self::PUBLIC_KEY_PREFIX.$tenantId,
+            default: ''
+        );
+
+        if ($publicKey !== '') {
+            $kid = substr(hash('sha256', $publicKey), 0, 16);
+        } else {
+            $kid = 'unknown';
+        }
+
         $payload['proof'] = [
-            'type'               => 'RsaSignature2018',
+            'type'               => 'DataIntegrityProof',
+            'cryptosuite'        => 'rsa-signature-2025',
             'created'            => (new DateTimeImmutable())->format(\DATE_ATOM),
-            'verificationMethod' => $issuerDid.'#keys-1',
+            'verificationMethod' => $issuerDid.'#'.$kid,
             'proofPurpose'       => 'assertionMethod',
             'jws'                => $jws,
         ];
@@ -214,6 +227,12 @@ class CredentialSigningService
     /**
      * Sign a canonicalised payload with the tenant's RSA private key (RS256).
      *
+     * Produces an RFC 7515 compact JWS with detached payload (b64:false, RFC 7797).
+     * Header and signature are base64url-encoded per RFC 4648 §5. The `kid` value
+     * is derived from the SHA-256 fingerprint of the tenant's public key so that
+     * external verifiers can identify the correct verification method in the DID
+     * document without holding prior state.
+     *
      * @param array<string,mixed> $payload  The JSON-LD payload to sign.
      * @param string              $tenantId The tenant UUID whose key to use.
      *
@@ -239,12 +258,26 @@ class CredentialSigningService
             return null;
         }
 
+        // Derive kid from the public-key fingerprint stored at key-generation time.
+        $publicKeyPem = $this->appConfig->getValueString(
+            app: 'scholiq',
+            key: self::PUBLIC_KEY_PREFIX.$tenantId,
+            default: ''
+        );
+        if ($publicKeyPem !== '') {
+            $kid = substr(hash('sha256', $publicKeyPem), 0, 16);
+        } else {
+            $kid = 'unknown';
+        }
+
         $canonicalised = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($canonicalised === false) {
             return null;
         }
 
-        $header       = base64_encode(json_encode(['alg' => 'RS256', 'b64' => false, 'crit' => ['b64']]));
+        // RFC 7515: header must be base64url — NOT plain base64 ('+', '/', '=' are invalid in JWS).
+        $headerJson   = json_encode(['alg' => 'RS256', 'b64' => false, 'crit' => ['b64'], 'kid' => $kid]);
+        $header       = rtrim(strtr(base64_encode($headerJson), '+/', '-_'), '=');
         $signingInput = $header.'.'.$canonicalised;
 
         $signature = '';
