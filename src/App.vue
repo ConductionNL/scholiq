@@ -3,8 +3,8 @@
 
 <!--
  Scholiq app shell. Mounts CnAppRoot with the bundled manifest and the
- customComponents registry. CnAppRoot reads manifest.dependencies and
- renders a dependency-missing empty state for absent apps automatically
+ v2 kind-tagged registry (ADR-036). CnAppRoot reads manifest.dependencies
+ and renders a dependency-missing empty state for absent apps automatically
  (per ADR-024) — no app-local OpenRegisterGuard is needed.
 
  The #user-settings slot feeds ScholiqSettings into CnAppRoot's hosted
@@ -14,7 +14,6 @@
 <template>
 	<CnAppRoot
 		:manifest="manifest"
-		:custom-components="customComponents"
 		:registry="registry"
 		:page-types="pageTypes"
 		app-id="scholiq"
@@ -49,14 +48,11 @@ export default {
 			required: true,
 		},
 		/**
-		 * Registry of consumer-injected components used by `type: "custom"` pages.
-		 */
-		customComponents: {
-			type: Object,
-			default: () => ({}),
-		},
-		/**
-		 * 5-kind component registry (v2 manifest pattern per hydra ADR-036).
+		 * V2 kind-tagged registry (ADR-036) — each entry is
+		 * `{ kind: "page", component: ... }`. CnPageRenderer resolves
+		 * every `type:"custom"` page's `component` string against the
+		 * `kind: "page"` entries here. Replaces the deprecated
+		 * `customComponents` prop.
 		 */
 		registry: {
 			type: Object,
