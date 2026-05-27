@@ -32,6 +32,8 @@ namespace OCA\Scholiq\Service;
 use InvalidArgumentException;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Lifecycle\AssessmentScoringHandler;
+use OCP\IGroupManager;
+use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -55,6 +57,8 @@ class AssessmentScoringService
      * @param ObjectService            $objectService  OR object service for fetching and saving objects.
      * @param AssessmentScoringHandler $scoringHandler The scoring logic implementation.
      * @param LoggerInterface          $logger         PSR logger.
+     * @param IGroupManager            $groupManager   NC group manager for admin-role check.
+     * @param IUserSession             $userSession    NC user session for caller identity.
      *
      * @return void
      */
@@ -62,6 +66,8 @@ class AssessmentScoringService
         private readonly ObjectService $objectService,
         private readonly AssessmentScoringHandler $scoringHandler,
         private readonly LoggerInterface $logger,
+        private readonly IGroupManager $groupManager,
+        private readonly IUserSession $userSession,
     ) {
     }//end __construct()
 
@@ -72,16 +78,30 @@ class AssessmentScoringService
      * Items with interactionType `extendedText` or null correctResponse are left with
      * autoScore null and require teacher manual scoring before the result can be graded.
      *
+     * Requires the caller to be a Nextcloud admin (group `admin`). This prevents any
+     * future controller or MCP tool from calling autoScore without proper authorization
+     * and overwriting scores outside the normal lifecycle. (#195)
+     *
      * @param string $assessmentResultId UUID of the AssessmentResult to score.
      *
      * @return void
      *
      * @throws \InvalidArgumentException When the AssessmentResult cannot be found.
+     * @throws \RuntimeException         When the caller is not an admin.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
     public function autoScore(string $assessmentResultId): void
     {
+        // #195: Enforce admin-only access so no unauthorized code path can call
+        // autoScore and overwrite grades outside the normal lifecycle transition.
+        $user = $this->userSession->getUser();
+        if ($user === null || $this->groupManager->isInGroup($user->getUID(), 'admin') === false) {
+            throw new \RuntimeException(
+                'autoScore may only be called by an admin user.'
+            );
+        }
+
         $results = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
