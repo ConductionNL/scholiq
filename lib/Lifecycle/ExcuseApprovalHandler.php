@@ -128,16 +128,35 @@ class ExcuseApprovalHandler implements IEventListener
             return;
         }
 
-        $fromTs = strtotime($dateFrom);
-        $toTs   = strtotime($dateTo);
-
-        if ($fromTs === false || $toTs === false) {
+        // #203: use DateTimeImmutable with strict ISO 8601 parsing to reject relative
+        // date strings like 'last year', '-5 days', 'yesterday' etc. strtotime accepts
+        // those, which would allow excusing arbitrary historic absences. DateTimeImmutable
+        // with a format constraint rejects non-date values without silent acceptance.
+        try {
+            $fromDt = new \DateTimeImmutable($dateFrom);
+            $toDt   = new \DateTimeImmutable($dateTo);
+        } catch (\Exception) {
             $this->logger->warning(
                 '[ExcuseApprovalHandler] ExcuseRequest {id} has unparsable dates ({from}–{to}) — skipping.',
                 ['id' => $requestId, 'from' => $dateFrom, 'to' => $dateTo]
             );
             return;
         }
+
+        // Reject relative-string dates that parse but are not ISO 8601 formatted.
+        // A valid stored date must match YYYY-MM-DD (with optional time/TZ).
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $dateFrom) === 0
+            || preg_match('/^\d{4}-\d{2}-\d{2}/', $dateTo) === 0
+        ) {
+            $this->logger->warning(
+                '[ExcuseApprovalHandler] ExcuseRequest {id} dates are not ISO 8601 ({from}–{to}) — skipping.',
+                ['id' => $requestId, 'from' => $dateFrom, 'to' => $dateTo]
+            );
+            return;
+        }
+
+        $fromTs = $fromDt->getTimestamp();
+        $toTs   = $toDt->getTimestamp();
 
         // Fetch all absent-unexcused records for this learner.
         $records = $this->objectService->findAll(

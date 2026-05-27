@@ -50,6 +50,7 @@ use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Http\Client\IClientService;
+use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 
@@ -79,11 +80,19 @@ class DataExchangeRunHandler implements IEventListener
     private const OPENCONNECTOR_RUN_PATH = '/apps/openconnector/api/sources/%s/run';
 
     /**
+     * App-config key for the OpenConnector internal API token.
+     * Admins must set `scholiq.openconnector_api_token` to a valid app-password
+     * or API token for the internal source-run call to succeed. Fixes #189.
+     */
+    private const OPENCONNECTOR_TOKEN_KEY = 'openconnector_api_token';
+
+    /**
      * Constructor.
      *
      * @param ObjectService   $objectService OR object access service.
      * @param IClientService  $clientService NC HTTP client factory.
      * @param IURLGenerator   $urlGenerator  NC URL generator for internal requests.
+     * @param IAppConfig      $appConfig     NC app config for token lookup.
      * @param LoggerInterface $logger        PSR logger.
      *
      * @return void
@@ -92,6 +101,7 @@ class DataExchangeRunHandler implements IEventListener
         private readonly ObjectService $objectService,
         private readonly IClientService $clientService,
         private readonly IURLGenerator $urlGenerator,
+        private readonly IAppConfig $appConfig,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -485,14 +495,36 @@ class DataExchangeRunHandler implements IEventListener
         $path = sprintf(self::OPENCONNECTOR_RUN_PATH, rawurlencode($target));
         $url  = $this->urlGenerator->getAbsoluteURL('/index.php'.$path);
 
+        // #189: attach the configured API token so the OpenConnector endpoint
+        // does not need to be @PublicPage (and is therefore not unauthenticated).
+        $apiToken = $this->appConfig->getValueString(
+            app: 'scholiq',
+            key: self::OPENCONNECTOR_TOKEN_KEY,
+            default: ''
+        );
+
+        $requestOptions = [
+            'json'    => ['payload' => $payload],
+            'timeout' => 120,
+        ];
+
+        if ($apiToken !== '') {
+            $requestOptions['headers'] = [
+                'Authorization' => 'Bearer '.$apiToken,
+            ];
+        } else {
+            $this->logger->warning(
+                '[DataExchangeRunHandler] No OpenConnector API token configured ('
+                .'scholiq.openconnector_api_token); the call may fail with 401/403. '
+                .'Set the token via the Scholiq admin settings.'
+            );
+        }
+
         try {
             $client   = $this->clientService->newClient();
             $response = $client->post(
                 $url,
-                [
-                    'json'    => ['payload' => $payload],
-                    'timeout' => 120,
-                ]
+                $requestOptions
             );
 
             $body = json_decode($response->getBody(), true);

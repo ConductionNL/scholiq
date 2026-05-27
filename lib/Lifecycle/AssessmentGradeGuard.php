@@ -153,6 +153,9 @@ class AssessmentGradeGuard
             $item            = $items[0];
             $interactionType = $item['interactionType'] ?? '';
             $correctResponse = $item['correctResponse'] ?? null;
+
+            // An item needs manual scoring if it is an extendedText interaction (always) or
+            // if correctResponse is null (could not be auto-scored by AssessmentScoringHandler).
             $needsManualScoring = ($interactionType === 'extendedText') || ($correctResponse === null);
 
             if ($needsManualScoring === false) {
@@ -162,10 +165,17 @@ class AssessmentGradeGuard
             $response    = $responseByItemId[$itemId] ?? null;
             $manualScore = $response['manualScore'] ?? null;
 
-            if ($manualScore === null) {
+            // #199: an item without correctResponse that also has a non-null autoScore
+            // (e.g. a teacher corrected it via the scoring interface without using
+            // the manualScore field name) should not silently block grading.
+            // Treat autoScore as an acceptable fallback when manualScore is absent.
+            $autoScore = $response['autoScore'] ?? null;
+
+            if ($manualScore === null && $autoScore === null) {
                 $this->logger->info(
-                    '[AssessmentGradeGuard] Item {itemId} needs manual scoring but manualScore is null; blocking grade.',
-                    ['itemId' => $itemId]
+                    '[AssessmentGradeGuard] Item {itemId} (interactionType={type}) needs manual scoring but '
+                    .'neither manualScore nor autoScore is set; blocking grade.',
+                    ['itemId' => $itemId, 'type' => $interactionType]
                 );
                 return false;
             }
