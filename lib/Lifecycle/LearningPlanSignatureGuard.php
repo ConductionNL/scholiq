@@ -119,6 +119,7 @@ class LearningPlanSignatureGuard
         $version      = (int) ($plan['version'] ?? 1);
         $kind         = $plan['kind'] ?? '';
         $supersedesId = $plan['supersedesId'] ?? null;
+        $learnerId    = $plan['learnerId'] ?? '';
 
         if ($planId === '') {
             $this->logger->warning('[LearningPlanSignatureGuard] Plan has no id; blocking activation.');
@@ -140,6 +141,10 @@ class LearningPlanSignatureGuard
 
         // Fetch all Signatures for this plan + version.
         $signatures = $this->fetchSignatures(planId: $planId, version: $version);
+
+        // #180: filter 'parent' signatures to those whose signerId is in LearnerProfile.parentIds
+        // so self-claimed parent roles cannot satisfy the co-sign gate.
+        $signatures = $this->filterVerifiedParentSignatures(signatures: $signatures, learnerId: $learnerId);
 
         // Index by signerRole (keep highest assurance per role).
         $sigsByRole = $this->indexByRole(signatures: $signatures);
@@ -253,6 +258,72 @@ class LearningPlanSignatureGuard
         return $result;
 
     }//end fetchSignatures()
+
+    /**
+     * Verify that signers claiming the 'parent' role are registered parents of the learner.
+     *
+     * Filters the signature list so only signatures where the signerId appears in the
+     * learner's LearnerProfile.parentIds array count as valid 'parent' co-signs. Fixes #180.
+     *
+     * Other roles (teacher, student, supervisor, etc.) are passed through unchanged.
+     *
+     * @param array<int,array<string,mixed>> $signatures Raw signature objects.
+     * @param string                         $learnerId  The learner's ID from the LearningPlan.
+     *
+     * @return array<int,array<string,mixed>> Filtered signature objects.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
+     */
+    private function filterVerifiedParentSignatures(array $signatures, string $learnerId): array
+    {
+        if ($learnerId === '' || empty($signatures) === true) {
+            return $signatures;
+        }
+
+        // Load the LearnerProfile to resolve the authoritative parentIds.
+        $profiles = $this->objectService->findAll(
+            [
+                'register' => self::SCHOLIQ_REGISTER,
+                'schema'   => 'learner-profile',
+                'filters'  => ['learnerId' => $learnerId],
+                'limit'    => 1,
+            ]
+        );
+
+        $authorisedParentIds = [];
+        if (empty($profiles) === false) {
+            $profile = $profiles[0];
+            if (is_array($profiles[0]) === false) {
+                $profile = $profiles[0]->jsonSerialize();
+            }
+
+            $authorisedParentIds = $profile['parentIds'] ?? [];
+        }
+
+        $filtered = [];
+        foreach ($signatures as $sig) {
+            if (($sig['signerRole'] ?? '') !== 'parent') {
+                // Non-parent roles pass through — only 'parent' needs join-verification.
+                $filtered[] = $sig;
+                continue;
+            }
+
+            $signerId = $sig['signerId'] ?? ($sig['userId'] ?? '');
+            if (in_array($signerId, $authorisedParentIds, strict: true) === true) {
+                // Signer is a registered parent of this learner — accept.
+                $filtered[] = $sig;
+                continue;
+            }
+
+            $this->logger->warning(
+                '[LearningPlanSignatureGuard] Parent co-sign from {signer} rejected — not in LearnerProfile.parentIds for learner {learner}.',
+                ['signer' => $signerId, 'learner' => $learnerId]
+            );
+        }//end foreach
+
+        return $filtered;
+
+    }//end filterVerifiedParentSignatures()
 
     /**
      * Index signatures by signerRole, keeping the highest assurance per role.

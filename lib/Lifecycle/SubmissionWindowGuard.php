@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Lifecycle;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use OCA\OpenRegister\Service\ObjectService;
 use Psr\Log\LoggerInterface;
 
@@ -127,8 +128,22 @@ class SubmissionWindowGuard
             return true;
         }
 
-        $dueAt = new DateTimeImmutable($dueAtRaw);
-        $now   = new DateTimeImmutable();
+        // #202: use explicit UTC timezone for both timestamps so DST transitions on the
+        // server do not cause inconsistent deadline comparisons. Stored dueAt values must
+        // include a timezone offset (ISO 8601); if they don't we default to UTC.
+        // #219: wrap DateTimeImmutable construction in a try/catch to surface malformed
+        // dueAt values as a guard rejection rather than an unhandled 500.
+        try {
+            $dueAt = new DateTimeImmutable($dueAtRaw, new DateTimeZone('UTC'));
+        } catch (\Exception $e) {
+            $this->logger->warning(
+                '[SubmissionWindowGuard] Assignment {id} has malformed dueAt value; blocking submit.',
+                ['id' => $assignmentId]
+            );
+            return false;
+        }
+
+        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
         if ($now <= $dueAt) {
             // Within the window — normal submit.

@@ -140,26 +140,109 @@ class QtiImportService
     }//end import()
 
     /**
-     * Extract a ZIP archive to a target directory.
+     * Extract a ZIP archive to a target directory with zip-slip and decompression-bomb protection.
+     *
+     * Defences applied (fixes #207):
+     *   - ZIP slip: every entry path is resolved with realpath after creating any
+     *     parent directories and verified to be inside $targetDir.
+     *   - Decompression bomb: total uncompressed size is checked before extraction;
+     *     individual files over 100 MB are rejected.
      *
      * @param string $zipPath   Absolute path to the ZIP file.
      * @param string $targetDir Absolute path to the destination directory.
      *
      * @return void
      *
-     * @throws \RuntimeException When the ZIP cannot be opened.
+     * @throws \RuntimeException When the ZIP cannot be opened or a security violation is detected.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     private function extractZip(string $zipPath, string $targetDir): void
     {
+        // #207: decompression-bomb cap — 256 MB total uncompressed per import.
+        $maxTotalBytes    = 256 * 1024 * 1024;
+        $maxFileSizeBytes = 100 * 1024 * 1024;
+
         $zip    = new ZipArchive();
         $result = $zip->open($zipPath);
         if ($result !== true) {
             throw new RuntimeException("Cannot open ZIP archive '{$zipPath}': ZipArchive error {$result}.");
         }
 
-        $zip->extractTo($targetDir);
+        // #207: pre-flight check — total uncompressed size before extracting anything.
+        $totalUncompressed = 0;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if ($stat === false) {
+                continue;
+            }
+
+            $totalUncompressed += $stat['size'];
+        }
+
+        if ($totalUncompressed > $maxTotalBytes) {
+            $zip->close();
+            throw new RuntimeException(
+                "ZIP archive exceeds maximum allowed uncompressed size ({$maxTotalBytes} bytes)."
+            );
+        }
+
+        // #207: extract entry by entry to prevent zip-slip path traversal.
+        $targetDirReal = realpath($targetDir);
+        if ($targetDirReal === false) {
+            // Ensure target directory exists before calling realpath.
+            mkdir(directory: $targetDir, permissions: 0700, recursive: true);
+            $targetDirReal = realpath($targetDir);
+        }
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if ($stat === false) {
+                continue;
+            }
+
+            // #207: reject individual files larger than the per-file cap.
+            if ($stat['size'] > $maxFileSizeBytes) {
+                $zip->close();
+                throw new RuntimeException(
+                    "ZIP entry '{$stat['name']}' exceeds maximum allowed file size ({$maxFileSizeBytes} bytes)."
+                );
+            }
+
+            $entryName = $stat['name'];
+
+            // Build absolute destination path and resolve any '..' segments.
+            $destPath = $targetDirReal.DIRECTORY_SEPARATOR.$entryName;
+
+            // For directories: ensure they exist inside targetDir.
+            if (str_ends_with($entryName, '/') === true) {
+                mkdir(directory: $destPath, permissions: 0700, recursive: true);
+                continue;
+            }
+
+            // Ensure parent directory exists.
+            $parentDir = dirname($destPath);
+            if (is_dir($parentDir) === false) {
+                mkdir(directory: $parentDir, permissions: 0700, recursive: true);
+            }
+
+            // #207: zip-slip check — resolved path must start with targetDir.
+            $resolvedParent = realpath($parentDir);
+            if ($resolvedParent === false || str_starts_with($resolvedParent, $targetDirReal) === false) {
+                $zip->close();
+                throw new RuntimeException(
+                    "ZIP entry '{$entryName}' would extract outside the target directory (zip-slip attack)."
+                );
+            }
+
+            $content = $zip->getFromIndex($i);
+            if ($content === false) {
+                continue;
+            }
+
+            file_put_contents(filename: $destPath, data: $content);
+        }//end for
+
         $zip->close();
     }//end extractZip()
 
