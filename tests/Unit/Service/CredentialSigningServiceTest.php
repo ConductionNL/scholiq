@@ -74,7 +74,7 @@ class CredentialSigningServiceTest extends TestCase
 
         $details            = openssl_pkey_get_details($resource);
         $this->publicKeyPem = $details['key'];
-        $this->fingerprint  = substr(hash('sha256', $this->publicKeyPem), 0, 16);
+        $this->fingerprint  = substr(hash('sha256', $this->publicKeyPem), 0, 32);
     }//end setUp()
 
     /**
@@ -228,7 +228,7 @@ class CredentialSigningServiceTest extends TestCase
         $header = json_decode($decoded, associative: true);
         self::assertIsArray($header, 'JWS header must be valid JSON');
         self::assertArrayHasKey('kid', $header, 'JWS header must contain kid');
-        self::assertSame(16, strlen($header['kid']), 'kid must be a 16-char hex fingerprint');
+        self::assertSame(32, strlen($header['kid']), 'kid must be a 32-char hex fingerprint');
     }//end testJwsHeaderContainsKid()
 
     // -------------------------------------------------------------------------
@@ -342,7 +342,7 @@ class CredentialSigningServiceTest extends TestCase
         $vm        = $context['object']['openbadges3Payload']['proof']['verificationMethod'] ?? '';
         $fragment  = substr($vm, strrpos($vm, '#') + 1);
 
-        self::assertSame(16, strlen($fragment), 'verificationMethod fragment must be the 16-char key fingerprint');
+        self::assertSame(32, strlen($fragment), 'verificationMethod fragment must be the 32-char key fingerprint');
         self::assertSame($this->fingerprint, $fragment, 'verificationMethod fragment must match the stored key fingerprint');
     }//end testCheckVerificationMethodContainsKidFragment()
 

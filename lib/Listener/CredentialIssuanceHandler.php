@@ -121,6 +121,27 @@ class CredentialIssuanceHandler implements IEventListener
             return;
         }
 
+        $enrolmentId = $enrolment['id'] ?? ($enrolment['uuid'] ?? null);
+
+        // #181: idempotency guard — check whether a credential already exists for this
+        // enrolment so that admin re-saves and event replays do not issue duplicates.
+        if ($enrolmentId !== null) {
+            $existing = $this->objectService->findAll(
+                [
+                    'register' => self::SCHOLIQ_REGISTER,
+                    'schema'   => 'credential',
+                    'filters'  => [
+                        'enrolmentId' => $enrolmentId,
+                        'source'      => 'auto',
+                    ],
+                    'limit'    => 1,
+                ]
+            );
+            if (empty($existing) === false) {
+                return;
+            }
+        }
+
         // Calculate expiry date if the course defines a validity period.
         $expiresAt = null;
         if (empty($course['defaultExpiresAfterDays']) === false) {
@@ -129,14 +150,17 @@ class CredentialIssuanceHandler implements IEventListener
                 ->format(\DATE_ATOM);
         }
 
-        // Persist via OR. The schema's `issue` transition requires[]
-        // CredentialSigningService::check() which injects OB3 payload + signature.
+        // #182: Create the credential in `draft` lifecycle first so OR evaluates the
+        // `issue` transition requires[] guard (CredentialSigningService::check()).
+        // Writing `lifecycle: 'issued'` directly on a new object bypasses the signing
+        // guard when OR only evaluates `requires:` on state-change transitions.
         $this->objectService->saveObject(
             register: self::SCHOLIQ_REGISTER,
             schema: 'credential',
             object: [
                 'learnerId'      => $learnerId,
                 'courseId'       => $courseId,
+                'enrolmentId'    => $enrolmentId,
                 'kind'           => 'certificate',
                 'issuedAt'       => $completedAt,
                 'expiresAt'      => $expiresAt,
@@ -144,7 +168,7 @@ class CredentialIssuanceHandler implements IEventListener
                 'source'         => 'auto',
                 'regulationSlug' => $course['regulationSlug'] ?? null,
                 'tenant_id'      => $tenantId,
-                'lifecycle'      => 'issued',
+                'lifecycle'      => 'draft',
             ]
         );
     }//end handle()

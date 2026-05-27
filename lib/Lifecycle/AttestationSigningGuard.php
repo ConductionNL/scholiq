@@ -62,11 +62,14 @@ class AttestationSigningGuard
     /**
      * XAPI verb IDs that count as "completed" for attestation pre-condition.
      *
+     * NOTE: these IRIs must match XapiCompletionHandler::COMPLETION_VERBS exactly —
+     * both classes must agree on the same xAPI ADL vocabulary. Fixes #201.
+     *
      * @var string[]
      */
     private const COMPLETION_VERBS = [
-        'https://w3id.org/xapi/adl/verbs/completed',
-        'https://w3id.org/xapi/adl/verbs/passed',
+        'http://adlnet.gov/expapi/verbs/completed',
+        'http://adlnet.gov/expapi/verbs/passed',
     ];
 
     /**
@@ -131,7 +134,7 @@ class AttestationSigningGuard
         }
 
         // Step 1 — Verify cmi5.completed (or cmi5.passed) XapiStatement exists.
-        $completionExists = $this->xapiCompletionExists(learnerId: $learnerId, lessonId: $lessonId);
+        $completionExists = $this->xapiCompletionExists(learnerId: $learnerId, lessonId: $lessonId, tenantId: $tenantId);
 
         if ($completionExists === false) {
             $this->logger->info(
@@ -167,25 +170,36 @@ class AttestationSigningGuard
     /**
      * Query OR for a cmi5.completed or cmi5.passed XapiStatement for the given pair.
      *
+     * The query is always scoped to the tenant so that a crafted xAPI statement
+     * in another tenant cannot satisfy this guard. Fixes #178.
+     *
      * @param string $learnerId Learner identifier.
      * @param string $lessonId  Lesson UUID.
+     * @param string $tenantId  Tenant ID to scope the query. Fixes #178.
      *
      * @return bool True when at least one matching statement exists.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
      */
-    private function xapiCompletionExists(string $learnerId, string $lessonId): bool
+    private function xapiCompletionExists(string $learnerId, string $lessonId, string $tenantId): bool
     {
         foreach (self::COMPLETION_VERBS as $verbId) {
+            $filters = [
+                'actor.id'  => $learnerId,
+                'object.id' => $lessonId,
+                'verb.id'   => $verbId,
+            ];
+
+            // #178: always scope to tenant_id to prevent cross-tenant forgery.
+            if ($tenantId !== '') {
+                $filters['tenant_id'] = $tenantId;
+            }
+
             $results = $this->objectService->findAll(
                 [
                     'register' => 'scholiq',
                     'schema'   => 'XapiStatement',
-                    'filters'  => [
-                        'actor.id'  => $learnerId,
-                        'object.id' => $lessonId,
-                        'verb.id'   => $verbId,
-                    ],
+                    'filters'  => $filters,
                     'limit'    => 1,
                 ]
             );
@@ -193,7 +207,7 @@ class AttestationSigningGuard
             if (count($results) > 0) {
                 return true;
             }
-        }
+        }//end foreach
 
         return false;
     }//end xapiCompletionExists()
@@ -201,10 +215,10 @@ class AttestationSigningGuard
     /**
      * Build a canonical JSON string of the Attestation payload for HMAC input.
      *
-     * Fields are sorted alphabetically and `signature` / `signingKeyId` are
-     * excluded to avoid circular dependency. The resulting string is the stable
-     * input to HMAC-SHA256 — any tampering of the stored record will produce a
-     * different digest when verified offline.
+     * Fields are sorted alphabetically at ALL nesting levels (recursive ksort) and
+     * `signature` / `signingKeyId` are excluded to avoid circular dependency. Using
+     * recursive key-sorting ensures the HMAC is stable across JSON decode/re-encode
+     * cycles and PHP versions regardless of insertion order in nested arrays. Fixes #177.
      *
      * @param array<string,mixed> $object The Attestation property array.
      *
@@ -218,9 +232,30 @@ class AttestationSigningGuard
         $excluded = ['signature', 'signingKeyId', 'lifecycle'];
         $payload  = array_diff_key($object, array_flip($excluded));
 
-        // Sort keys for a deterministic canonical form.
-        ksort($payload);
+        // Recursive sort so nested arrays are also deterministically ordered. Fixes #177.
+        $payload = $this->deepKsort(data: $payload);
 
         return (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }//end buildCanonicalPayload()
+
+    /**
+     * Recursively sort an array by keys at all nesting levels.
+     *
+     * @param array<string,mixed> $data The array to sort.
+     *
+     * @return array<string,mixed> The sorted array.
+     */
+    private function deepKsort(array $data): array
+    {
+        foreach ($data as &$value) {
+            if (is_array($value) === true) {
+                $value = $this->deepKsort(data: $value);
+            }
+        }//end foreach
+
+        unset($value);
+
+        ksort($data);
+        return $data;
+    }//end deepKsort()
 }//end class

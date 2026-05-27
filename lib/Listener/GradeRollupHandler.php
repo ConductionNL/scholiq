@@ -256,29 +256,42 @@ class GradeRollupHandler implements IEventListener
         // Each parent receives a gradePublished notification.
         // OR's notification subsystem respects the parent's own notification preference
         // (instant vs daily-digest) stored via UserService::getNotificationPreferences().
-        // We build a synthetic notification object per parent — OR dispatches or queues it
-        // based on the recipient's stored preference mode.
+        //
+        // #183: do NOT re-save the GradeEntry object to send parent notifications —
+        // that would either create duplicate GradeEntry records (if OR strips the id)
+        // or re-trigger lifecycle events (if OR preserves the id). Instead, use a
+        // dedicated 'grade-notification' schema so the canonical GradeEntry is never
+        // touched during fan-out. If a dedicated notification schema is not yet available,
+        // use OR's _notification side-channel on a fresh record with no GradeEntry data
+        // to avoid contaminating the gradebook. Here we write a minimal notification
+        // record (no grade fields, no uuid that matches the original GradeEntry).
+        $sourceId = $gradeEntry['id'] ?? ($gradeEntry['uuid'] ?? '');
         foreach ($parentIds as $parentId) {
             if (empty($parentId) === true) {
                 continue;
             }
 
-            // Persist a lightweight notification record via OR so BatchNotificationJob
-            // can pick it up for digest recipients.
+            // Write a lightweight, isolated notification record.
+            // The record has no id (fresh insert) and only the fields needed for the
+            // notification — it is NOT the GradeEntry object itself. Fixes #183.
             $this->objectService->saveObject(
                 register: self::SCHOLIQ_REGISTER,
-                schema: 'grade-entry',
-                object: array_merge(
-                        $gradeEntry,
-                        [
-                            '_notification' => [
-                                'event'          => 'gradePublished',
-                                'recipient'      => $parentId,
-                                'sourceId'       => $gradeEntry['id'] ?? '',
-                                'idempotencyKey' => ($gradeEntry['id'] ?? '').'-parent-'.$parentId,
-                            ],
-                        ]
-                        )
+                schema: 'grade-notification',
+                object: [
+                    'event'          => 'gradePublished',
+                    'recipient'      => $parentId,
+                    'sourceId'       => $sourceId,
+                    'learnerId'      => $gradeEntry['learnerId'] ?? '',
+                    'courseId'       => $gradeEntry['courseId'] ?? null,
+                    'idempotencyKey' => $sourceId.'-parent-'.$parentId,
+                    'tenant_id'      => $gradeEntry['tenant_id'] ?? '',
+                    '_notification'  => [
+                        'event'          => 'gradePublished',
+                        'recipient'      => $parentId,
+                        'sourceId'       => $sourceId,
+                        'idempotencyKey' => $sourceId.'-parent-'.$parentId,
+                    ],
+                ]
             );
         }//end foreach
 

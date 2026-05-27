@@ -140,7 +140,8 @@ class CredentialSigningService
         );
 
         if ($publicKey !== '') {
-            $kid = substr(hash('sha256', $publicKey), 0, 16);
+            // Use 32-char fingerprint (128-bit) to match KeyManagementService. Fixes #193.
+            $kid = substr(hash('sha256', $publicKey), 0, 32);
         } else {
             $kid = 'unknown';
         }
@@ -208,9 +209,15 @@ class CredentialSigningService
             $achievementId = 'urn:scholiq:course:'.$courseId;
         }
 
+        // #190: credentialSubject.id must never embed a BSN, email, or NC UID.
+        // We UUID-validate learnerId and fall back to a hash-based pseudonym if
+        // it looks like an e-mail address or otherwise non-UUID identifier, ensuring
+        // PII is never embedded in a publicly shareable verifiable credential.
+        $subjectId = $this->buildSubjectId(learnerId: $learnerId);
+
         $payload['credentialSubject'] = [
             'type'        => 'AchievementSubject',
-            'id'          => 'urn:scholiq:learner:'.$learnerId,
+            'id'          => $subjectId,
             'achievement' => [
                 'type' => 'Achievement',
                 'id'   => $achievementId,
@@ -265,7 +272,8 @@ class CredentialSigningService
             default: ''
         );
         if ($publicKeyPem !== '') {
-            $kid = substr(hash('sha256', $publicKeyPem), 0, 16);
+            // Use 32-char fingerprint (128-bit) to match KeyManagementService. Fixes #193.
+            $kid = substr(hash('sha256', $publicKeyPem), 0, 32);
         } else {
             $kid = 'unknown';
         }
@@ -288,6 +296,33 @@ class CredentialSigningService
 
         return $header.'..'.rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
     }//end signPayload()
+
+    /**
+     * Build a privacy-safe credentialSubject.id from learnerId.
+     *
+     * If the learnerId is a valid UUID it is used verbatim as a URN (safe, opaque).
+     * Otherwise — to prevent embedding an email, NC UID, or BSN — the value is
+     * replaced with a deterministic SHA-256 pseudonym so no PII appears in the
+     * publicly shareable credential. Fixes #190.
+     *
+     * @param string $learnerId Raw learner identifier from the Credential record.
+     *
+     * @return string `urn:scholiq:learner:{uuid-or-pseudonym}`.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
+     */
+    private function buildSubjectId(string $learnerId): string
+    {
+        // UUID v4 regex — only format guaranteed to be opaque / non-PII.
+        $uuidPattern = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
+        if (preg_match($uuidPattern, $learnerId) === 1) {
+            return 'urn:scholiq:learner:'.$learnerId;
+        }
+
+        // Non-UUID: pseudonymise with a stable one-way hash to avoid embedding PII.
+        $pseudonym = 'pseudo-'.hash('sha256', 'scholiq-learner:'.$learnerId);
+        return 'urn:scholiq:learner:'.$pseudonym;
+    }//end buildSubjectId()
 
     /**
      * Resolve the DID for a tenant from app config.
@@ -314,7 +349,8 @@ class CredentialSigningService
         }
 
         // Synthetic did:web using a fingerprint of the public key.
-        $fingerprint = substr(hash('sha256', $publicKey), 0, 16);
+        // Use 32-char fingerprint (128-bit) to match KeyManagementService.
+        $fingerprint = substr(hash('sha256', $publicKey), 0, 32);
 
         return 'did:web:scholiq:'.$tenantId.':'.$fingerprint;
     }//end resolveIssuerDid()

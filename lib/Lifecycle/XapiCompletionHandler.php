@@ -157,18 +157,44 @@ class XapiCompletionHandler implements IEventListener
         }
 
         // Guard 4: lesson must be the final published lesson of the course.
+        // #200: sort by `order` field (not insertion order) to find the true last lesson.
         $publishedLessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
                 'filters'  => ['courseId' => $courseId, 'lifecycle' => 'published'],
+                'sort'     => ['order' => 'ASC'],
             ]
         );
 
-        $lessonIds    = array_column($publishedLessons, 'uuid');
-        $lastLessonId = end($lessonIds);
+        if (empty($publishedLessons) === true) {
+            return;
+        }
 
-        if ($lastLessonId !== ($lesson['uuid'] ?? null)) {
+        // Find the lesson with the highest `order` value — that is the final lesson.
+        $maxOrder   = -1;
+        $lastLesson = null;
+        foreach ($publishedLessons as $pl) {
+            if (is_array($pl) === true) {
+                $plData = $pl;
+            } else {
+                $plData = $pl->jsonSerialize();
+            }
+
+            $order = (int) ($plData['order'] ?? 0);
+            if ($order > $maxOrder) {
+                $maxOrder   = $order;
+                $lastLesson = $plData;
+            }
+        }//end foreach
+
+        if (is_array($lesson) === true) {
+            $lessonData = $lesson;
+        } else {
+            $lessonData = $lesson->jsonSerialize();
+        }
+
+        if ($lastLesson === null || ($lastLesson['uuid'] ?? null) !== ($lessonData['uuid'] ?? null)) {
             return;
         }
 
@@ -180,7 +206,16 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        // Find the active Enrolment for this learner + course.
+        // #179: verify the actor claim is authentic — the learnerId from the xAPI
+        // statement must match an active Enrolment whose learnerId field also matches
+        // the authenticated statement originator. We enforce this by scoping the
+        // Enrolment lookup strictly to learnerId + courseId + active, then verifying
+        // the found enrolment's learnerId equals what the xAPI actor claimed.
+        // An attacker forging a statement with a different actor.name would need the
+        // target's enrolment to be active — the worst-case outcome is completing that
+        // enrolment. To fully prevent this the xAPI ingest endpoint must authenticate
+        // the sender and set a `verified_actor_id` field; here we add the minimum
+        // defence: scope to the exact learnerId in the active enrolment only.
         $enrolments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
@@ -202,7 +237,24 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        $enrolmentId = $enrolments[0]['uuid'];
+        if (is_array($enrolments[0]) === true) {
+            $enrolmentData = $enrolments[0];
+        } else {
+            $enrolmentData = $enrolments[0]->jsonSerialize();
+        }
+
+        // #179: secondary integrity check — the enrolment's own learnerId must
+        // match the actor claim to prevent a statement for learner A inadvertently
+        // completing learner B's enrolment if there is a lookup collision.
+        if (($enrolmentData['learnerId'] ?? '') !== $learnerId) {
+            $this->logger->warning(
+                '[XapiCompletionHandler] Enrolment learnerId mismatch — actor claim rejected.',
+                ['claimed' => $learnerId, 'enrolled' => $enrolmentData['learnerId'] ?? '']
+            );
+            return;
+        }
+
+        $enrolmentId = $enrolmentData['uuid'];
 
         // Dispatch the `complete` transition. OR's lifecycle engine emits the
         // enrolment.completed audit entry and the completionOnComplete notification

@@ -259,7 +259,9 @@ class AssessmentScoringHandler
                 return round(($correctCount / $totalExpected) * $maxScore, 2);
 
             case 'hotspot':
-                // Treat correctResponse as an array of accepted identifiers.
+                // Treat correctResponse as an array of required identifiers.
+                // #185: partial scoring — award marks proportionally for the fraction
+                // of correct hotspots hit, rather than full marks for any single hit.
                 if (is_array($correctResponse) === false) {
                     $correctResponse = [$correctResponse];
                 }
@@ -268,11 +270,14 @@ class AssessmentScoringHandler
                     $learnerResponse = [$learnerResponse];
                 }
 
-                $hits = count(array_intersect($learnerResponse, $correctResponse));
-                if ($hits > 0) {
-                    return $maxScore;
+                $totalRequired = count($correctResponse);
+                if ($totalRequired === 0) {
+                    return 0.0;
                 }
-                return 0.0;
+
+                // Correct hits: learner clicked a required hotspot (no negatives for wrong hits).
+                $hits = count(array_intersect($learnerResponse, $correctResponse));
+                return round(($hits / $totalRequired) * $maxScore, 2);
 
             default:
                 return 0.0;
