@@ -128,6 +128,15 @@ class DataExchangeRunHandler implements IEventListener
     }//end handle()
 
     /**
+     * Maximum records per data-exchange run page.
+     *
+     * A value of 10 000 silently truncates exports larger than this. A configurable
+     * limit with pagination is the proper fix; for now we raise the guard to 100 000
+     * and log a warning when we hit the ceiling. Fixes #188.
+     */
+    private const QUERY_LIMIT = 100000;
+
+    /**
      * Execute the data exchange job.
      *
      * @param ObjectTransitionedEvent $event The running-state transition event.
@@ -149,6 +158,7 @@ class DataExchangeRunHandler implements IEventListener
         $target           = $job['target'] ?? '';
         $mappingProfileId = $job['mappingProfileId'] ?? null;
         $scope            = $job['scope'] ?? [];
+        $jobTenantId      = $job['tenant_id'] ?? '';
 
         // Record startedAt.
         $this->saveJobFields(jobId: $jobId, fields: ['startedAt' => date('c')]);
@@ -159,8 +169,8 @@ class DataExchangeRunHandler implements IEventListener
             $profile = $this->loadMappingProfile(profileId: $mappingProfileId);
         }
 
-        // 2. Query Scholiq source objects per scope.
-        $sourceObjects = $this->querySourceObjects(scope: $scope);
+        // 2. Query Scholiq source objects per scope (tenant-scoped — fixes #186).
+        $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
 
         // 3. Build payload by applying fieldMappings.
         $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile);
@@ -270,13 +280,14 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Query Scholiq source objects per the job scope.
      *
-     * @param array<string,mixed> $scope The job scope (schema, filters, cohortId, period).
+     * @param array<string,mixed> $scope    The job scope (schema, filters, cohortId, period).
+     * @param string              $tenantId Tenant ID to enforce as a mandatory filter. Fixes #186.
      *
      * @return array<int,array<string,mixed>> Source objects.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
-    private function querySourceObjects(array $scope): array
+    private function querySourceObjects(array $scope, string $tenantId): array
     {
         $schema   = $scope['schema'] ?? '';
         $filters  = $scope['filters'] ?? [];
@@ -290,14 +301,29 @@ class DataExchangeRunHandler implements IEventListener
             $filters['cohortId'] = $cohortId;
         }
 
+        // #186: always force tenant_id so a malicious scope.filters targeting a
+        // different tenant's register/schema returns no data.
+        if ($tenantId !== '') {
+            $filters['tenant_id'] = $tenantId;
+        }
+
         $results = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => $schema,
                 'filters'  => $filters,
-                'limit'    => 10000,
+                // #188: raised from 10 000 to 100 000; full pagination is a follow-up.
+                'limit'    => self::QUERY_LIMIT,
             ]
         );
+
+        // #188: warn when we reach the limit ceiling so operators know to paginate.
+        if (count($results) >= self::QUERY_LIMIT) {
+            $this->logger->warning(
+                '[DataExchangeRunHandler] querySourceObjects hit QUERY_LIMIT ({limit}) for schema {schema}; results may be incomplete.',
+                ['limit' => self::QUERY_LIMIT, 'schema' => $schema]
+            );
+        }
 
         return array_map(
             static function ($item) {

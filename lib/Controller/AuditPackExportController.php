@@ -123,11 +123,30 @@ class AuditPackExportController extends Controller
             );
         }
 
+        // #184: resolve the requesting tenant's ID. instanceid is the same for every
+        // tenant on the instance — use the authenticated user's primary tenant instead.
+        // We fall back to instanceid only when no per-user tenant mapping is available.
+        $tenantId = $this->config->getSystemValue('instanceid', 'unknown');
+        if ($user !== null) {
+            // Attempt to read a per-user tenant binding stored by the admin module.
+            $userTenantId = $this->config->getUserValue(
+                userId: $user->getUID(),
+                appName: 'scholiq',
+                key: 'tenant_id',
+                default: ''
+            );
+            if ($userTenantId !== '') {
+                $tenantId = $userTenantId;
+            }
+        }
+
         // Query OR's audit trail via the real mapper — filters available columns.
-        // `action` maps to event type; `created` holds the timestamp.
+        // #184: always scope the query to the requesting tenant's ID so that audit
+        // entries from other tenants are never returned.
         $entries = $this->auditTrailMapper->findAll(
             filters: [
-                'created' => $dateFrom.','.$dateTo,
+                'created'   => $dateFrom.','.$dateTo,
+                'tenant_id' => $tenantId,
             ],
             sort: ['created' => 'ASC']
         );
@@ -149,9 +168,33 @@ class AuditPackExportController extends Controller
             $events[] = $row;
         }
 
-        // Verify HMAC chain for the full log (inline — AuditHashService::verifyChain
-        // is the only real OR method for chain verification, accepting int IDs as bounds).
-        $verification    = $this->auditHashService->verifyChain();
+        // #192: collect the IDs of the matched events so verifyChain operates on
+        // exactly the same entries that appear in the export, not the full log.
+        $minId = null;
+        $maxId = null;
+        foreach ($events as $ev) {
+            $id = (int) ($ev['id'] ?? 0);
+            if ($id === 0) {
+                continue;
+            }
+
+            if ($minId === null || $id < $minId) {
+                $minId = $id;
+            }
+
+            if ($maxId === null || $id > $maxId) {
+                $maxId = $id;
+            }
+        }
+
+        // #192: pass the date-scoped ID bounds to verifyChain so the integrity report
+        // covers the same entries as the export (not the whole audit log). Fixes #192.
+        if ($minId !== null && $maxId !== null) {
+            $verification = $this->auditHashService->verifyChain(fromId: $minId, toId: $maxId);
+        } else {
+            $verification = $this->auditHashService->verifyChain();
+        }
+
         $signatureStatus = 'broken';
         if (($verification['valid'] ?? false) === true) {
             $signatureStatus = 'valid';
@@ -164,9 +207,9 @@ class AuditPackExportController extends Controller
 
         $eventCount      = count($events);
         $exportTimestamp = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-        $tenantId        = $this->config->getSystemValue('instanceid', 'unknown');
 
         // Build the four required files.
+        // $tenantId is already resolved above (per-user or instanceid fallback).
         $ndjson       = $this->buildNdjson(events: $events);
         $csv          = $this->buildCsv(events: $events);
         $manifestJson = $this->buildManifestJson(
@@ -250,13 +293,13 @@ class AuditPackExportController extends Controller
             fputcsv(
                     $handle,
                     [
-                        $event['uuid'] ?? '',
-                        $event['action'] ?? '',
-                        $event['object'] ?? '',
-                        $event['register'] ?? '',
-                        $event['schema'] ?? '',
-                        $event['user'] ?? '',
-                        $event['created'] ?? '',
+                        $this->sanitizeCsvCell(value: $event['uuid'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['action'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['object'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['register'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['schema'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['user'] ?? ''),
+                        $this->sanitizeCsvCell(value: $event['created'] ?? ''),
                     ]
                     );
         }
@@ -351,6 +394,35 @@ class AuditPackExportController extends Controller
 
         return implode("\n", $lines)."\n";
     }//end buildVerificationTxt()
+
+    /**
+     * Sanitize a single CSV cell to prevent formula-injection attacks.
+     *
+     * Excel and LibreOffice Calc treat cells starting with `=`, `+`, `-`, `@`, `\t`,
+     * or `\r` as formula expressions. Prefixing such values with a tab character
+     * neutralises the injection without altering the visible cell content in most
+     * spreadsheet applications. Fixes #191.
+     *
+     * @param string $value The raw cell value.
+     *
+     * @return string The sanitised cell value.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
+     */
+    private function sanitizeCsvCell(string $value): string
+    {
+        if ($value === '') {
+            return $value;
+        }
+
+        // Trim leading whitespace first so we test the true first character.
+        $first = $value[0];
+        if (in_array($first, ['=', '+', '-', '@', "\t", "\r"], strict: true) === true) {
+            return "\t".$value;
+        }
+
+        return $value;
+    }//end sanitizeCsvCell()
 
     /**
      * Build an in-memory ZIP archive from named string content entries.

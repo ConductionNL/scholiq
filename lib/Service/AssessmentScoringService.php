@@ -97,7 +97,12 @@ class AssessmentScoringService
             );
         }
 
-        $resultObject = $results[0];
+        $raw = $results[0];
+        if (is_array($raw) === true) {
+            $resultObject = $raw;
+        } else {
+            $resultObject = $raw->jsonSerialize();
+        }
 
         // Wrap in a transition context matching the handler contract.
         $transitionContext = [
@@ -109,9 +114,12 @@ class AssessmentScoringService
 
         $this->scoringHandler->check($transitionContext);
 
-        // Persist the updated responses.
+        // #194/#223: use named args so saveObject picks the correct register/schema
+        // from the stored state rather than relying on positional stale-state fallback.
         $this->objectService->saveObject(
-            $transitionContext['object'],
+            register: self::SCHOLIQ_REGISTER,
+            schema: 'assessment-result',
+            object: $transitionContext['object']
         );
 
         $this->logger->info(
