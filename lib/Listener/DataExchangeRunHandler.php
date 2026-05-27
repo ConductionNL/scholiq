@@ -183,7 +183,25 @@ class DataExchangeRunHandler implements IEventListener
         $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
 
         // 3. Build payload by applying fieldMappings.
-        $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile);
+        // #206: bsn-to-pseudonym throws \RuntimeException when eckId is absent — catch
+        // here and fail the job fail-closed rather than shipping null pseudonym values.
+        try {
+            $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile);
+        } catch (\RuntimeException $e) {
+            $this->logger->error(
+                '[DataExchangeRunHandler] Job {id} aborted during payload build: {msg}',
+                ['id' => $jobId, 'msg' => $e->getMessage()]
+            );
+            $this->saveJobFields(
+                jobId: $jobId,
+                fields: [
+                    'finishedAt'   => date('c'),
+                    'errorMessage' => $e->getMessage(),
+                    'lifecycle'    => 'failed',
+                ],
+            );
+            return;
+        }
 
         // 4. Delegate to OpenConnector.
         $connectorResult = $this->callOpenConnector(target: $target, payload: $payload);
@@ -423,9 +441,18 @@ class DataExchangeRunHandler implements IEventListener
 
         switch ($transform) {
             case 'bsn-to-pseudonym':
-                // BSN MUST NEVER leave OpenConnector. Use the ECK iD pseudonym.
-                // If eckId is set on the object, prefer it. Fall back to null.
-                return $object['eckId'] ?? null;
+                // BSN MUST NEVER leave Scholiq. Use the ECK iD pseudonym instead.
+                // #206: if eckId is absent, fail the entire job (fail-closed) rather
+                // than shipping a null pseudonym — a null value in the payload might
+                // cause the receiving system to fall back to an unencrypted BSN field.
+                $eckId = $object['eckId'] ?? null;
+                if ($eckId === null || $eckId === '') {
+                    $objectId = $object['id'] ?? ($object['uuid'] ?? 'unknown');
+                    throw new \RuntimeException(
+                        "bsn-to-pseudonym: object {$objectId} has no eckId — job aborted to prevent BSN leakage."
+                    );
+                }
+                return $eckId;
 
             case 'date-iso8601':
                 if ($value === null || $value === '') {

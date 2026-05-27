@@ -2003,7 +2003,9 @@
                             "string",
                             "null"
                         ],
-                        "description": "Encrypted BSN — only populated for K-12 or government tenants."
+                        "description": "Encrypted BSN — only populated for K-12 or government tenants. MUST be the base64-encoded ICrypto ciphertext; raw/plaintext BSNs are rejected by the minLength + pattern constraints below.",
+                        "minLength": 20,
+                        "pattern": "^[A-Za-z0-9+/=]+$"
                     },
                     "schoolId": {
                         "type": [

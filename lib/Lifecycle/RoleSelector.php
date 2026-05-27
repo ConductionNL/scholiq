@@ -34,6 +34,7 @@ namespace OCA\Scholiq\Lifecycle;
 
 use OCP\IGroupManager;
 use OCP\IUser;
+use Psr\Log\LoggerInterface;
 
 /**
  * Resolves the highest-priority Scholiq role for a LearnerProfile.
@@ -61,10 +62,12 @@ class RoleSelector
     /**
      * Constructor.
      *
-     * @param IGroupManager $groupManager Nextcloud group manager for admin override check.
+     * @param IGroupManager   $groupManager Nextcloud group manager for admin override check.
+     * @param LoggerInterface $logger       PSR logger.
      */
     public function __construct(
         private readonly IGroupManager $groupManager,
+        private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
 
@@ -92,6 +95,11 @@ class RoleSelector
             return 'admin';
         }
 
+        // #204: for privileged roles (compliance-officer, hr, instructor, manager) verify the
+        // claim via NC group membership so learners cannot self-elevate by editing
+        // LearnerProfile.roles.  Only the 'learner' role can come from a LearnerProfile
+        // record alone; every higher role MUST be backed by an NC group.
+        // The NC group naming convention is: `scholiq-{role}` (e.g. `scholiq-instructor`).
         $roles = $object['roles'] ?? [];
         if (empty($roles) === true || is_array($roles) === false) {
             return 'learner';
@@ -102,11 +110,26 @@ class RoleSelector
 
         foreach ($roles as $role) {
             $priority = self::PRIORITY[$role] ?? 0;
-            if ($priority > $bestPriority) {
-                $bestPriority = $priority;
-                $bestRole     = $role;
+            if ($priority <= $bestPriority) {
+                continue;
             }
-        }
+
+            // 'learner' is the only role that does not need NC group backing.
+            if ($role !== 'learner' && $user instanceof IUser) {
+                $groupName = 'scholiq-'.$role;
+                if ($this->groupManager->isInGroup(userId: $user->getUID(), group: $groupName) === false) {
+                    // Claimed role not backed by NC group — silently demote to learner.
+                    $this->logger->warning(
+                        '[RoleSelector] User {uid} claims role {role} but is not in NC group {group}; role ignored.',
+                        ['uid' => $user->getUID(), 'role' => $role, 'group' => $groupName]
+                    );
+                    continue;
+                }
+            }
+
+            $bestPriority = $priority;
+            $bestRole     = $role;
+        }//end foreach
 
         return $bestRole;
     }//end calculate()

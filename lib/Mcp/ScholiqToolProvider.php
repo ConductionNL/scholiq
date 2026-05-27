@@ -390,6 +390,27 @@ class ScholiqToolProvider implements IMcpToolProvider
             ];
         }
 
+        // #197: non-admin learners must not see draft courses via MCP.
+        // Admins may view drafts; regular authenticated users see only published courses.
+        $courseLifecycle = $course['lifecycle'] ?? ($course['status'] ?? 'published');
+        if ($courseLifecycle !== 'published') {
+            $user   = $this->userSession->getUser();
+            $userId = '';
+            if ($user !== null) {
+                $userId = $user->getUID();
+            }
+
+            if ($userId === '' || $this->groupManager->isAdmin($userId) === false) {
+                // Non-admin trying to view a non-published course via MCP → not found
+                // (do not leak existence of drafts to learners).
+                return [
+                    'isError' => true,
+                    'error'   => 'not_found',
+                    'message' => 'Course not found.',
+                ];
+            }
+        }
+
         $courseUuid = $this->extractUuid(item: $course);
         $modules    = $this->loadCourseModules(courseUuid: $courseUuid);
 
