@@ -328,6 +328,12 @@ class LearningPlanSignatureGuard
     /**
      * Index signatures by signerRole, keeping the highest assurance per role.
      *
+     * #198: when multiple signatures exist for the same role and the later one has a
+     * higher assurance level than an existing one, we log a warning so the audit trail
+     * preserves evidence of the potential forgery. The guard still uses the highest
+     * assurance for the gate check (so legitimate upgrades also work), but the warning
+     * makes the replacement visible in server logs for compliance review.
+     *
      * @param array<int,array<string,mixed>> $signatures Raw signature objects.
      *
      * @return array<string,array<string,mixed>> Map of role → signature.
@@ -349,9 +355,22 @@ class LearningPlanSignatureGuard
             // Keep the signature with the higher assurance.
             $existing = $byRole[$role]['assuranceLevel'] ?? 'none';
             if ($this->assuranceRank(level: $assurance) > $this->assuranceRank(level: $existing)) {
+                // #198: log when a higher-assurance signature supersedes an existing one.
+                // This may indicate a legitimate upgrade (DigiD step-up) or a forged
+                // over-ride; the compliance officer can review both signatures in OR's
+                // audit trail.
+                $this->logger->warning(
+                    '[LearningPlanSignatureGuard] Higher-assurance signature for role {role} supersedes existing '
+                    .'(old={old}, new={new}) — verify this is a legitimate assurance upgrade.',
+                    [
+                        'role' => $role,
+                        'old'  => $existing,
+                        'new'  => $assurance,
+                    ]
+                );
                 $byRole[$role] = $sig;
             }
-        }
+        }//end foreach
 
         return $byRole;
 
