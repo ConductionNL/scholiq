@@ -9,6 +9,8 @@ created: 2026-05-11
 
 # Compliance Training & Audit
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, signed evidence log, and ZIP export — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 "Compliance management" is the **#1 canonical feature** (166 demand, 44 tenders, 17 competitors). NIS2 / Cyberbeveiligingswet compels Dutch boards to demonstrate cyber-awareness training of every member. AVG/BIO mandate annual refresher cycles. This spec is the primary purchasing reason for corporate, government, and HE buyers.
 

@@ -9,6 +9,8 @@ created: 2026-05-11
 
 # Role-Aware Dashboards
 
+@e2e exclude Pure backend/data-model spec. All requirements define role resolution and dashboard component usage — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 "Analytics dashboard" (#17, 39 demand) and "Student Analytics" (#18, 34 demand) score in the top 20 canonical features. Insight #16: OSS LMS leaders share dated UX — a modern Vue / NL-Design dashboard surface is the structural differentiator. Eight stories across six roles (mentor pattern view, manager team progress, board compliance %, board renewal report, principal Cito overview, parent grade digest, pupil grade-impact view, civil-servant RADIO progress) anchor this spec.
 

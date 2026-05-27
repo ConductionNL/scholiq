@@ -1,3 +1,5 @@
+@e2e exclude All scenarios verify filesystem layout (docs/ folder existence, file presence) and build tool execution (npm run build exit code) — these are CI checks, not browser-observable behaviors. Covered by CI build pipeline.
+
 ## ADDED Requirements
 
 ### Requirement: Canonical folder taxonomy

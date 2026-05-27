@@ -12,6 +12,8 @@ replaces: [absence-leerplicht]
 
 # Attendance & Threshold Reporting
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, declarative calculation triggers, and notification config — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 
 Institutions record who was present, and some are obliged to act when absence crosses a threshold. The Dutch **Leerplichtwet** art. 21a obliges every school to report `ongeoorloofd verzuim` of 16 lesuren in 4 weeks to the `leerplichtambtenaar`; HE programmes track `college-aanwezigheid` for attendance-based credit; corporate compliance training needs presence proof for an audit; some certifications require N hours of attended instruction. The structure is the same: an `AttendanceRecord` per (Session, learner) with a status, and an `AttendanceThreshold` rule that watches a learner's records over a window and fires a trigger when crossed. This generalises the Dutch `absence-leerplicht` stub: the 16-uur leerplicht rule is one `AttendanceThreshold` profile; the *report to the leerplichtambtenaar* is a `data-exchange` adapter (Digikoppeling), not part of this spec.

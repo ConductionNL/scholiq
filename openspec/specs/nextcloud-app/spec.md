@@ -91,10 +91,12 @@ The admin settings surface MUST provide an action that rotates the tenant's RS25
 The frontend MUST initialise a generic Pinia object store at application boot, configuring it with the OpenRegister object and schema base URLs. The store MUST allow registering named object types (type → schema + register) and fetching objects of a registered type with arbitrary query params, returning an empty array (and warning) for unregistered types and on fetch failure. Boot initialisation MUST also trigger the initial settings fetch.
 
 #### Scenario: Booting the stores
+@e2e exclude Pure JS/Pinia store initialization — observable only by instrumenting Vue internals, not by DOM assertions. Covered by unit tests.
 - **WHEN** `initializeStores()` runs
 - **THEN** the object store is configured with the OR object/schema base URLs and the settings store performs its initial fetch
 
 #### Scenario: Fetching an unregistered type
+@e2e exclude Pure JS/Pinia store behavior — no DOM change occurs for an unregistered type warning. Covered by unit tests.
 - **WHEN** `fetchObjects` is called for a type that was never registered
 - **THEN** it warns and returns an empty array without issuing a request
 
@@ -105,10 +107,12 @@ The frontend MUST initialise a generic Pinia object store at application boot, c
 The system MUST expose an admin-only health endpoint reporting OpenRegister connectivity, the count of registered schemas, a 24-hour audit-trail event count, whether MyDash is installed, and the last audit-pack export timestamp. The system MUST also serve the bundled `src/manifest.json` blob unchanged via a manifest endpoint (ADR-024 §4).
 
 #### Scenario: Reading health diagnostics
+@e2e exclude Admin-only backend API endpoint — returns JSON with no corresponding UI page that renders the health fields. Covered by PHPUnit/Newman API tests.
 - **WHEN** an admin requests the health endpoint
 - **THEN** the response contains `openregister_connected`, `schemas_registered`, `audit_trail_events_24h`, `mydash_installed`, and `last_audit_pack_export`
 
 #### Scenario: Serving the manifest
+@e2e exclude Backend JSON-passthrough endpoint — returns the raw manifest blob with no UI rendering. The manifest content is exercised indirectly by all SPA navigation tests.
 - **WHEN** the frontend requests the manifest endpoint
 - **THEN** the bundled `src/manifest.json` is returned as JSON
 
