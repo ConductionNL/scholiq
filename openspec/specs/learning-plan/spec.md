@@ -12,6 +12,8 @@ replaces: [opp-cycle]
 
 # Individual Learning Plan
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, version-chain immutability, and notification config — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 
 Some learners need an individualised plan: a school pupil with extra ondersteuningsbehoeften, a university student on a remediation track, an employee on a personal-development plan. The structure is the same everywhere — a set of **goals**, the **support measures** in place to reach them, a **review cycle** with dated **evaluations**, and **signatures** (the learner / parent / coordinator co-sign each version). In the Netherlands the **Wet Passend Onderwijs** makes the **Ontwikkelingsperspectief (OPP)** mandatory for every pupil with extra needs, and `handelingsplannen` sit underneath it; ParnasSys owns ~65% of the PO market but the OPP UI is widely criticised. This spec generalises it: `LearningPlan` is the abstract document, the Dutch **OPP** is one profile (with its sector-template structure and DigiD parent-signing), an **IEP** (US), a higher-ed **PDP**, and a corporate **IDP** are others.

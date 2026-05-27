@@ -12,6 +12,8 @@ replaces: [assessment-engine, proctoring]
 
 # Assessment
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, lifecycle guards, a pluggable PHP interface (ProctoringProviderInterface), and a calculation engine hook — none of this is expressed as UI scenarios. No `#### Scenario:` headings exist in this spec.
+
 ## Why
 
 Beyond hand-in assignments, institutions run **structured tests**: a vmbo `toets`, an HBO `tentamen`, a state `examen`, a certification `exam`, a formative `quiz`. These have an item bank, a scoring scheme, often a time limit, sometimes proctoring. No open-source Dutch assessment platform exists today (Cito / DiatOets / IEP are all proprietary); IMS **QTI 3.0** is the lock-in escape hatch. And the **EU AI Act** (Reg. 2024/1689) classifies online proctoring as high-risk AI — so proctoring must be a *pluggable provider*, never a hard dependency on one US vendor, and any AI-assisted flag-review must register in the `AiFeature` gate (ADR-005). This spec merges what were two separate Dutch stubs (`assessment-engine` + `proctoring`) into one capability: proctoring is *configuration on an Assessment*, not a standalone schema.

@@ -9,6 +9,8 @@ created: 2026-05-11
 
 # Course Management
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, OOAPI endpoints, and cmi5/xAPI runtime — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 Course Management ranks #2 of 354 canonical features (153 demand, 43 tenders, 12 competitors). All 13 OSS LMS leaders ship it; the differentiator is a modern Vue/NL-Design surface — insight #16 says "OSS LMS leaders all share dated UX". Without authoring, Scholiq cannot anchor the LVS, eLearning, training, and certification surfaces above it.
 

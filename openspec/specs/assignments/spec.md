@@ -11,6 +11,8 @@ profiles: [opdracht-vo, opdracht-he, werkstuk, portfolio-item]
 
 # Assignments & Submissions
 
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, lifecycle guards (late-submission enforcement), and a pluggable plagiarism PHP interface — no `#### Scenario:` headings exist in this spec.
+
 ## Why
 
 Learners hand work in; teachers grade it. That loop is universal — a vmbo `opdracht`, an HBO `werkstuk`, a university `portfolio-item`, a corporate `case study`. Scholiq can hold courses and lessons but has nowhere for a learner to *submit* anything and nowhere for a teacher to mark it against criteria. This spec adds the deliverable side of assessment (the structured-test side is the `assessment` spec): an `Assignment` belongs to a Course or Session, has a due date and a `Rubric`; a learner files a `Submission` (one or more attachments) which moves through draft → submitted → returned; the grade a teacher gives a Submission becomes a `GradeEntry` (see `grading`) so it can roll up into a final grade per the CurriculumPlan.
