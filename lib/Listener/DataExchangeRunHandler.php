@@ -46,6 +46,7 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Lifecycle\TransitionEngine;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -89,16 +90,18 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Constructor.
      *
-     * @param ObjectService   $objectService OR object access service.
-     * @param IClientService  $clientService NC HTTP client factory.
-     * @param IURLGenerator   $urlGenerator  NC URL generator for internal requests.
-     * @param IAppConfig      $appConfig     NC app config for token lookup.
-     * @param LoggerInterface $logger        PSR logger.
+     * @param ObjectService   $objectService    OR object access service.
+     * @param TransitionEngine $transitionEngine OR lifecycle engine for job state transitions.
+     * @param IClientService  $clientService    NC HTTP client factory.
+     * @param IURLGenerator   $urlGenerator     NC URL generator for internal requests.
+     * @param IAppConfig      $appConfig        NC app config for token lookup.
+     * @param LoggerInterface $logger           PSR logger.
      *
      * @return void
      */
     public function __construct(
         private readonly ObjectService $objectService,
+        private readonly TransitionEngine $transitionEngine,
         private readonly IClientService $clientService,
         private readonly IURLGenerator $urlGenerator,
         private readonly IAppConfig $appConfig,
@@ -193,14 +196,16 @@ class DataExchangeRunHandler implements IEventListener
                 '[DataExchangeRunHandler] Job {id} aborted during query/payload build: {msg}',
                 ['id' => $jobId, 'msg' => $e->getMessage()]
             );
+            // C4 fix: persist result fields first, then drive lifecycle via transition engine
+            // so OR's audit-trail and declared transition guards run correctly.
             $this->saveJobFields(
                 jobId: $jobId,
                 fields: [
                     'finishedAt'   => date('c'),
                     'errorMessage' => $e->getMessage(),
-                    'lifecycle'    => 'failed',
                 ],
             );
+            $this->transitionEngine->transition($jobId, 'fail');
             return;
         }
 
@@ -215,14 +220,15 @@ class DataExchangeRunHandler implements IEventListener
                 $target,
                 $target
             );
+            // C4 fix: persist error fields first, then drive lifecycle via transition engine.
             $this->saveJobFields(
                 jobId: $jobId,
                 fields: [
                     'finishedAt'   => date('c'),
                     'errorMessage' => $errorMsg,
-                    'lifecycle'    => 'failed',
                 ],
             );
+            $this->transitionEngine->transition($jobId, 'fail');
             return;
         }
 
@@ -250,15 +256,17 @@ class DataExchangeRunHandler implements IEventListener
             $nextState = 'failed';
         }
 
+        // C4 fix: persist result fields first (no lifecycle), then drive lifecycle via
+        // the transition engine so OR's audit-trail and declared transition guards fire.
         $this->saveJobFields(
             jobId: $jobId,
             fields: [
                 'finishedAt'     => date('c'),
                 'result'         => $resultData,
                 'connectorRunId' => $connectorRunId,
-                'lifecycle'      => $nextState,
             ],
         );
+        $this->transitionEngine->transition($jobId, $nextState);
 
         $this->logger->info(
             '[DataExchangeRunHandler] Job {id} → {state}. target={t}, processed={p}, accepted={a}, rejected={r}.',
