@@ -99,6 +99,7 @@ class QtiImportService
      *
      * @param string $packagePath Absolute path to the .zip package file.
      * @param string $itemBankId  UUID of the target ItemBank.
+     * @param string $tenantId    Optional tenant UUID; defaults to single-tenant mode when empty.
      *
      * @return string[] Array of created Item UUIDs.
      *

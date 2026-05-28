@@ -94,9 +94,11 @@ class AiFeatureDpoAckGuard
         // M1: scope DPO-ack key to the tenant so that acknowledging for tenant A
         // does not inadvertently enable the feature for tenant B.
         // Key format: dpo_ack.<tenantId>.<slug> (tenantId non-empty) or dpo_ack.<slug> (legacy/single-tenant).
-        $ackKey = $tenantId !== ''
-            ? self::ACK_KEY_PREFIX.$tenantId.'.'.$slug
-            : self::ACK_KEY_PREFIX.$slug;
+        if ($tenantId !== '') {
+            $ackKey = self::ACK_KEY_PREFIX.$tenantId.'.'.$slug;
+        } else {
+            $ackKey = self::ACK_KEY_PREFIX.$slug;
+        }
 
         $ack = $this->appConfig->getValueString(
             app: 'scholiq',

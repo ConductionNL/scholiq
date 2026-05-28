@@ -90,12 +90,12 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Constructor.
      *
-     * @param ObjectService   $objectService    OR object access service.
+     * @param ObjectService    $objectService    OR object access service.
      * @param TransitionEngine $transitionEngine OR lifecycle engine for job state transitions.
-     * @param IClientService  $clientService    NC HTTP client factory.
-     * @param IURLGenerator   $urlGenerator     NC URL generator for internal requests.
-     * @param IAppConfig      $appConfig        NC app config for token lookup.
-     * @param LoggerInterface $logger           PSR logger.
+     * @param IClientService   $clientService    NC HTTP client factory.
+     * @param IURLGenerator    $urlGenerator     NC URL generator for internal requests.
+     * @param IAppConfig       $appConfig        NC app config for token lookup.
+     * @param LoggerInterface  $logger           PSR logger.
      *
      * @return void
      */
@@ -190,7 +190,7 @@ class DataExchangeRunHandler implements IEventListener
         // C3: buildPayload throws when mandatory-profile target has no profile.
         try {
             $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
-            $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile, target: $target);
+            $payload       = $this->buildPayload(objects: $sourceObjects, profile: $profile, target: $target);
         } catch (\RuntimeException $e) {
             $this->logger->error(
                 '[DataExchangeRunHandler] Job {id} aborted during query/payload build: {msg}',
@@ -400,6 +400,23 @@ class DataExchangeRunHandler implements IEventListener
      */
     private const MANDATORY_PROFILE_TARGETS = ['bron-rod', 'bron-vo', 'oso-transfer', 'edukoppeling'];
 
+    /**
+     * Build the payload array for OpenConnector from source objects and an optional mapping profile.
+     *
+     * Applies field mappings from the profile when present; falls back to a PII-stripped
+     * pass-through when the profile is absent. Targets in MANDATORY_PROFILE_TARGETS throw
+     * a RuntimeException when no profile is provided (C3 — prevents unredacted PII export).
+     *
+     * @param array<int,array<string,mixed>> $objects Source objects retrieved from OR.
+     * @param array<string,mixed>|null       $profile Loaded DataMappingProfile, or null for pass-through.
+     * @param string                         $target  Data-exchange target slug (e.g. 'bron-rod').
+     *
+     * @return array<int,array<string,mixed>> Mapped (and PII-stripped) payload ready for OpenConnector.
+     *
+     * @throws \RuntimeException When the target requires a profile but none is configured.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+     */
     private function buildPayload(array $objects, ?array $profile, string $target=''): array
     {
         // C3: for targets that require a mapping profile, null profile is a hard fail.

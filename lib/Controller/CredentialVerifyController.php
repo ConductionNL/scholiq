@@ -128,7 +128,7 @@ class CredentialVerifyController extends Controller
         }
 
         // Write credential.verified audit entry via OR object update (L3).
-        $this->writeVerifiedAuditEntry(data: $data, credentialId: $id);
+        $this->writeVerifiedAuditEntry(data: $data);
 
         $valid = ($lifecycle === 'issued') && ($isExpired !== true);
 
@@ -335,12 +335,11 @@ class CredentialVerifyController extends Controller
      * Best-effort: errors are silently swallowed so the verify response is not
      * blocked by audit write failures.
      *
-     * @param array<string,mixed> $data         Serialised Credential data.
-     * @param string              $credentialId Credential UUID.
+     * @param array<string,mixed> $data Serialised Credential data (must contain 'id').
      *
      * @return void
      */
-    private function writeVerifiedAuditEntry(array $data, string $credentialId): void
+    private function writeVerifiedAuditEntry(array $data): void
     {
         try {
             // Append a verifiedAt timestamp to trigger OR's audit trail write.
