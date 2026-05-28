@@ -150,10 +150,10 @@ class CredentialIssuanceHandler implements IEventListener
                 ->format(\DATE_ATOM);
         }
 
-        // #182: Create the credential in `draft` lifecycle first so OR evaluates the
-        // `issue` transition requires[] guard (CredentialSigningService::check()).
-        // Writing `lifecycle: 'issued'` directly on a new object bypasses the signing
-        // guard when OR only evaluates `requires:` on state-change transitions.
+        // C1 fix: Do NOT write `lifecycle` — let OR auto-fire the `issue` transition
+        // from null (initial: issued) which invokes the `requires:` guard
+        // (CredentialSigningService::check()) before persisting the object.
+        // Writing any lifecycle value directly bypasses the signing guard.
         $this->objectService->saveObject(
             register: self::SCHOLIQ_REGISTER,
             schema: 'credential',
@@ -168,7 +168,6 @@ class CredentialIssuanceHandler implements IEventListener
                 'source'         => 'auto',
                 'regulationSlug' => $course['regulationSlug'] ?? null,
                 'tenant_id'      => $tenantId,
-                'lifecycle'      => 'draft',
             ]
         );
     }//end handle()

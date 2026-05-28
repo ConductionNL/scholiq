@@ -117,6 +117,15 @@
                         ],
                         "description": "Regulation identifier (e.g. NIS2) inherited from the Course."
                     },
+                    "enrolmentId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid",
+                        "description": "UUID of the originating Enrolment that triggered issuance. Used for idempotency (one credential per enrolment). Distinct from renewalEnrolmentId which records the renewal enrolment created on expiry.",
+                        "x-openregister-index": true
+                    },
                     "renewalEnrolmentId": {
                         "type": [
                             "string",
@@ -1120,6 +1129,14 @@
                         ],
                         "format": "uuid",
                         "description": "UUID of the Lesson this statement relates to (Scholiq denormalisation)"
+                    },
+                    "verified_actor_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Server-trusted learner identifier stamped by the xAPI ingest controller after authenticating the sender. NEVER derived from payload.actor.*. XapiCompletionHandler reads ONLY this field to prevent credential forgery (C6).",
+                        "x-openregister-index": true
                     },
                     "tenant_id": {
                         "type": "string",
