@@ -128,9 +128,10 @@ class CredentialVerifyControllerTest extends TestCase
      */
     private function buildValidJws(array $payloadToSign, string $kid): string
     {
-        $headerJson   = (string) json_encode(['alg' => 'RS256', 'b64' => false, 'crit' => ['b64'], 'kid' => $kid]);
-        $headerB64    = rtrim(strtr(base64_encode($headerJson), '+/', '-_'), '=');
-        $canonicalised = (string) json_encode($payloadToSign, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $headerJson    = (string) json_encode(['alg' => 'RS256', 'b64' => false, 'crit' => ['b64'], 'kid' => $kid]);
+        $headerB64     = rtrim(strtr(base64_encode($headerJson), '+/', '-_'), '=');
+        // H6: sort keys recursively to match CredentialSigningService::canonicalisePayload.
+        $canonicalised = (string) json_encode($this->sortKeysRecursive(data: $payloadToSign), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $signingInput  = $headerB64.'.'.$canonicalised;
 
         $signature = '';
@@ -139,6 +140,29 @@ class CredentialVerifyControllerTest extends TestCase
 
         return $headerB64.'..'.$sigB64;
     }//end buildValidJws()
+
+    /**
+     * Recursively sort array keys (RFC 8785 JCS) — mirrors CredentialSigningService::canonicalisePayload.
+     *
+     * @param array<string,mixed> $data The array to sort.
+     *
+     * @return array<string,mixed> Sorted copy.
+     */
+    private function sortKeysRecursive(array $data): array
+    {
+        $isObject = count(array_filter(array_keys($data), 'is_string')) > 0;
+        if ($isObject === true) {
+            ksort($data, SORT_STRING);
+        }
+
+        foreach ($data as $key => $value) {
+            if (is_array($value) === true) {
+                $data[$key] = $this->sortKeysRecursive(data: $value);
+            }
+        }
+
+        return $data;
+    }//end sortKeysRecursive()
 
     /**
      * A valid, issued, non-expired credential with a valid JWS returns {valid:true} with 200.

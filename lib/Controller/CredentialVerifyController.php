@@ -273,6 +273,10 @@ class CredentialVerifyController extends Controller
         $payloadToVerify = $payload;
         unset($payloadToVerify['proof']);
 
+        // H6: RFC 8785 (JCS) — sort keys recursively before encoding so that the
+        // verify-side signing input matches the sign-side input exactly.
+        $payloadToVerify = $this->canonicalisePayload(payload: $payloadToVerify);
+
         $canonicalised = json_encode($payloadToVerify, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($canonicalised === false) {
             return false;
@@ -296,6 +300,34 @@ class CredentialVerifyController extends Controller
 
         return $result === 1;
     }//end verifyJwsSignature()
+
+    /**
+     * Recursively sort an array's keys (RFC 8785 JCS) for deterministic JSON output.
+     *
+     * Mirrors CredentialSigningService::canonicalisePayload so that the verify-side
+     * signing input is byte-for-byte identical to the sign-side input.
+     *
+     * @param array<string,mixed> $payload The payload to canonicalise.
+     *
+     * @return array<string,mixed> The same data with all object-level keys sorted.
+     */
+    private function canonicalisePayload(array $payload): array
+    {
+        $isObject = count(array_filter(array_keys($payload), 'is_string')) > 0;
+
+        if ($isObject === true) {
+            ksort($payload, SORT_STRING);
+        }
+
+        foreach ($payload as $key => $value) {
+            if (is_array($value) === true) {
+                $payload[$key] = $this->canonicalisePayload(payload: $value);
+            }
+        }
+
+        return $payload;
+
+    }//end canonicalisePayload()
 
     /**
      * Record a credential.verified audit entry on the Credential object via OR.
