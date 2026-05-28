@@ -247,13 +247,13 @@ class DataExchangeRunHandler implements IEventListener
         $accepted       = $resultData['recordsAccepted'];
 
         // 6. Determine outcome state.
-        $nextState = 'succeeded';
+        $nextState = 'succeed';
         if ($rejected > 0 && $accepted > 0) {
             $nextState = 'partial';
         }
 
         if ($rejected > 0 && $accepted === 0 && $processed > 0) {
-            $nextState = 'failed';
+            $nextState = 'fail';
         }
 
         // C4 fix: persist result fields first (no lifecycle), then drive lifecycle via
