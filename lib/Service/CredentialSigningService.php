@@ -317,6 +317,7 @@ class CredentialSigningService
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
+
     /**
      * Recursively sort an array's keys (RFC 8785 JCS) for deterministic JSON output.
      *
