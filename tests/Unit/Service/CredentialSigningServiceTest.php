@@ -121,6 +121,29 @@ class CredentialSigningServiceTest extends TestCase
         return new CredentialSigningService($appConfig, $crypto, $urlGenerator);
     }//end makeService()
 
+    /**
+     * Recursively sort array keys (RFC 8785 JCS) — mirrors CredentialSigningService::canonicalisePayload.
+     *
+     * @param array<string,mixed> $data The array to sort.
+     *
+     * @return array<string,mixed> Sorted copy.
+     */
+    private function sortKeysRecursive(array $data): array
+    {
+        $isObject = count(array_filter(array_keys($data), 'is_string')) > 0;
+        if ($isObject === true) {
+            ksort($data, SORT_STRING);
+        }
+
+        foreach ($data as $key => $value) {
+            if (is_array($value) === true) {
+                $data[$key] = $this->sortKeysRecursive($value);
+            }
+        }
+
+        return $data;
+    }//end sortKeysRecursive()
+
     // -------------------------------------------------------------------------
     // signPayload — JWS header is valid base64url (no +, /, = characters) — Fix #175
     // -------------------------------------------------------------------------
@@ -265,7 +288,8 @@ class CredentialSigningServiceTest extends TestCase
         [$headerB64, $sigB64] = explode('..', $jws, 2);
 
         // Re-derive the signing input (header + '.' + canonicalised payload — detached b64:false mode).
-        $canonicalised = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        // H6: sort keys recursively (RFC 8785 JCS) to match CredentialSigningService::canonicalisePayload.
+        $canonicalised = json_encode($this->sortKeysRecursive($payload), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $signingInput  = $headerB64.'.'.$canonicalised;
 
         // Decode base64url signature.
