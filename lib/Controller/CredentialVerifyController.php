@@ -11,8 +11,8 @@
  * surface that must bypass NC session middleware via @PublicPage + @NoCSRFRequired."
  *
  * Returns only credential metadata: no personal data beyond the opaque learner
- * UUID used in the OB3 payload (REQ-CE-002-B). Writes a `credential.verified`
- * audit entry via OR's audit-trail API.
+ * UUID used in the OB3 payload (REQ-CE-002-B). Read-only — does not mutate any
+ * credential record (CR-2: removed unauthenticated write path).
  *
  * @category Controller
  * @package  OCA\Scholiq\Controller
@@ -47,7 +47,7 @@ use OCP\IRequest;
  * Public credential verification endpoint.
  *
  * No session auth, no CSRF. Returns {valid, issuedAt, expiresAt, issuerName}
- * — no personal data. Writes a `credential.verified` audit entry via OR.
+ * — no personal data. Read-only: no writes from the anonymous context (CR-2).
  * Validates the JWS proof to confirm cryptographic integrity (C1 fix).
  */
 class CredentialVerifyController extends Controller
@@ -126,9 +126,6 @@ class CredentialVerifyController extends Controller
                     200
                     );
         }
-
-        // Write credential.verified audit entry via OR object update (L3).
-        $this->writeVerifiedAuditEntry(data: $data);
 
         $valid = ($lifecycle === 'issued') && ($isExpired !== true);
 
@@ -328,26 +325,4 @@ class CredentialVerifyController extends Controller
         return $payload;
 
     }//end canonicalisePayload()
-
-    /**
-     * Record a credential.verified audit entry on the Credential object via OR.
-     *
-     * Best-effort: errors are silently swallowed so the verify response is not
-     * blocked by audit write failures.
-     *
-     * @param array<string,mixed> $data Serialised Credential data (must contain 'id').
-     *
-     * @return void
-     */
-    private function writeVerifiedAuditEntry(array $data): void
-    {
-        try {
-            // Append a verifiedAt timestamp to trigger OR's audit trail write.
-            // OR records an audit entry for every saveObject call.
-            $update = array_merge($data, ['lastVerifiedAt' => date('c')]);
-            $this->objectService->saveObject('scholiq', 'credential', $update);
-        } catch (\Throwable) {
-            // Best-effort — audit write failures must not block verification responses.
-        }
-    }//end writeVerifiedAuditEntry()
 }//end class

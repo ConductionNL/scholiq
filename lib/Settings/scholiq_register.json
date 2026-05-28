@@ -1136,6 +1136,7 @@
                             "null"
                         ],
                         "description": "Server-trusted learner identifier stamped by the xAPI ingest controller after authenticating the sender. NEVER derived from payload.actor.*. XapiCompletionHandler reads ONLY this field to prevent credential forgery (C6).",
+                        "readOnly": true,
                         "x-openregister-index": true
                     },
                     "tenant_id": {

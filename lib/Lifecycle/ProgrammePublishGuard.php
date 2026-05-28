@@ -105,7 +105,7 @@ class ProgrammePublishGuard
         $plans = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'CurriculumPlan',
+                'schema'   => 'curriculum-plan',
                 'filters'  => $planFilters,
                 'limit'    => 1,
             ]

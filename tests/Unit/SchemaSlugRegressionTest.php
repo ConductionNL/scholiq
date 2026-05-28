@@ -47,15 +47,16 @@ class SchemaSlugRegressionTest extends TestCase
      * @var array<string,string>
      */
     private const FORBIDDEN_PASCAL_CASE = [
-        'Credential'     => 'credential',
-        'Course'         => 'course',
-        'Lesson'         => 'lesson',
-        'XapiStatement'  => 'xapi-statement',
-        'Enrolment'      => 'enrolment',
-        'Assessment'     => 'assessment',
+        'Credential'       => 'credential',
+        'Course'           => 'course',
+        'Lesson'           => 'lesson',
+        'XapiStatement'    => 'xapi-statement',
+        'Enrolment'        => 'enrolment',
+        'Assessment'       => 'assessment',
         'AssessmentResult' => 'assessment-result',
-        'Item'           => 'item',
-        'Assignment'     => 'assignment',
+        'Item'             => 'item',
+        'Assignment'       => 'assignment',
+        'CurriculumPlan'   => 'curriculum-plan',
     ];
 
     /**
@@ -90,6 +91,9 @@ class SchemaSlugRegressionTest extends TestCase
      *   'PascalName'  (surrounded by single quotes) to avoid false positives on
      *   class names, comments, or PHP type annotations.
      *
+     * @param string $forbidden The forbidden PascalCase schema slug.
+     * @param string $correct   The correct kebab/lowercase slug to use instead.
+     *
      * @return void
      *
      * @dataProvider forbiddenSchemaSlugProvider
@@ -109,15 +113,15 @@ class SchemaSlugRegressionTest extends TestCase
 
             // Match the PascalCase name as a single-quoted PHP string literal.
             // Pattern: (?<![A-Za-z\\]) to avoid matching inside namespaces or classnames.
-            $pattern = "/'" . preg_quote($forbidden, '/') . "'/";
+            $pattern = "/'".preg_quote($forbidden, '/')."'/";
             if (preg_match($pattern, $contents) === 1) {
                 $matches[] = str_replace($libDir.'/', '', $filePath);
             }
         }//end foreach
 
         $this->assertEmpty(
-            $matches,
-            sprintf(
+            value: $matches,
+            message: sprintf(
                 "PascalCase schema slug '%s' found in lib/ (correct slug: '%s'). "
                 ."Found in file(s): %s",
                 $forbidden,
@@ -143,5 +147,4 @@ class SchemaSlugRegressionTest extends TestCase
         return $cases;
 
     }//end forbiddenSchemaSlugProvider()
-
 }//end class
