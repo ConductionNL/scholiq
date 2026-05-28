@@ -113,7 +113,7 @@ class SubmissionWindowGuard
         $assignments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Assignment',
+                'schema'   => 'assignment',
                 'filters'  => $assignmentFilters,
                 'limit'    => 1,
             ]

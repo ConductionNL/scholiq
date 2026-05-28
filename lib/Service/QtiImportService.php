@@ -474,7 +474,7 @@ class QtiImportService
             'tenant_id'       => $tenantId,
         ];
 
-        $saved = $this->objectService->saveObject('scholiq', 'Item', $itemData);
+        $saved = $this->objectService->saveObject('scholiq', 'item', $itemData);
         if ($saved === null) {
             return null;
         }

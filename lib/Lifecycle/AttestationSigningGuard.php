@@ -198,7 +198,7 @@ class AttestationSigningGuard
             $results = $this->objectService->findAll(
                 [
                     'register' => 'scholiq',
-                    'schema'   => 'XapiStatement',
+                    'schema'   => 'xapi-statement',
                     'filters'  => $filters,
                     'limit'    => 1,
                 ]

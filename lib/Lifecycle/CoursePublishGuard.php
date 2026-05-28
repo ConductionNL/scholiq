@@ -99,7 +99,7 @@ class CoursePublishGuard
         $publishedLessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Lesson',
+                'schema'   => 'lesson',
                 'filters'  => $lessonFilters,
                 'limit'    => 1,
             ]

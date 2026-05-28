@@ -92,7 +92,7 @@ class CredentialVerifyController extends Controller
         $credentialObj = $this->objectService->find(
             id: $id,
             register: 'scholiq',
-            schema: 'Credential'
+            schema: 'credential'
         );
 
         if ($credentialObj === null) {
@@ -346,7 +346,7 @@ class CredentialVerifyController extends Controller
             // Append a verifiedAt timestamp to trigger OR's audit trail write.
             // OR records an audit entry for every saveObject call.
             $update = array_merge($data, ['lastVerifiedAt' => date('c')]);
-            $this->objectService->saveObject('scholiq', 'Credential', $update);
+            $this->objectService->saveObject('scholiq', 'credential', $update);
         } catch (\Throwable) {
             // Best-effort — audit write failures must not block verification responses.
         }
