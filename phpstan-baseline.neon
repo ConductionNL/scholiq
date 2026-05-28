@@ -31,18 +31,6 @@ parameters:
             count: 4
             path: lib/Service
 
-        # Pre-existing: QtiImportService uses the single-argument form of saveObject()
-        # (as the real OR ObjectService accepts) — the stub declares only the 3-arg form.
-        # Fixed properly in H4 fix (PR C). Tracked in: https://github.com/ConductionNL/scholiq/issues/135
-        -
-            message: "#^Method OCA\\\\OpenRegister\\\\Service\\\\ObjectService::saveObject\\(\\) invoked with 1 parameter, 3 required\\.$#"
-            count: 1
-            path: lib/Service/QtiImportService.php
-        -
-            message: '#^Parameter \#1 \$register of method OCA\\OpenRegister\\Service\\ObjectService::saveObject\(\) expects string, array<string, mixed> given\.$#'
-            count: 1
-            path: lib/Service/QtiImportService.php
-
         # Pre-existing: AttendanceFlagCreationHandler redundant null-coalesce after non-nullable getContext().
         # Tracked in: https://github.com/ConductionNL/scholiq/issues/135
         -
