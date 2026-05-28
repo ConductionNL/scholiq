@@ -25,6 +25,7 @@ use OCA\Scholiq\Lifecycle\RoleSelector;
 use OCP\IGroupManager;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests for the RoleSelector calculation helper used by the LearnerProfile schema.
@@ -43,7 +44,7 @@ class RoleSelectorTest extends TestCase
         $groupManager = $this->createMock(IGroupManager::class);
         $groupManager->method('isAdmin')->willReturn($isAdmin);
 
-        return new RoleSelector($groupManager);
+        return new RoleSelector($groupManager, $this->createMock(LoggerInterface::class));
     }//end makeSelector()
 
     /**
