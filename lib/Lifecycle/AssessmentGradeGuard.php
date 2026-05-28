@@ -109,7 +109,7 @@ class AssessmentGradeGuard
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Assessment',
+                'schema'   => 'assessment',
                 'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
@@ -151,7 +151,7 @@ class AssessmentGradeGuard
             $items = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
-                    'schema'   => 'Item',
+                    'schema'   => 'item',
                     'filters'  => $itemFilters,
                     'limit'    => 1,
                 ]

@@ -115,7 +115,7 @@ class AssessmentScoringHandler
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Assessment',
+                'schema'   => 'assessment',
                 'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
@@ -157,7 +157,7 @@ class AssessmentScoringHandler
             $items = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
-                    'schema'   => 'Item',
+                    'schema'   => 'item',
                     'filters'  => $itemFilters,
                     'limit'    => 1,
                 ]

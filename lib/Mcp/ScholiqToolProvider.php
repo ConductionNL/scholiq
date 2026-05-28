@@ -71,14 +71,14 @@ class ScholiqToolProvider implements IMcpToolProvider
      *
      * @var string
      */
-    private const SCHEMA_COURSE = 'Course';
+    private const SCHEMA_COURSE = 'course';
 
     /**
      * The Lesson (module) schema slug/name in the Scholiq register.
      *
      * @var string
      */
-    private const SCHEMA_LESSON = 'Lesson';
+    private const SCHEMA_LESSON = 'lesson';
 
     /**
      * Maximum number of items returned by a list tool.
