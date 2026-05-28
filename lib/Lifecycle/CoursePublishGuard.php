@@ -83,20 +83,24 @@ class CoursePublishGuard
     {
         $object   = $transitionContext['object'] ?? [];
         $courseId = $object['uuid'] ?? $object['id'] ?? null;
+        $tenantId = $object['tenant_id'] ?? '';
 
         if ($courseId === null) {
             $this->logger->warning('[CoursePublishGuard] No course ID in transition context; blocking publish.');
             return false;
         }
 
+        // H1: scope Lesson lookup to the same tenant.
+        $lessonFilters = ['courseId' => $courseId, 'lifecycle' => 'published'];
+        if ($tenantId !== '') {
+            $lessonFilters['tenant_id'] = $tenantId;
+        }
+
         $publishedLessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
-                'filters'  => [
-                    'courseId'  => $courseId,
-                    'lifecycle' => 'published',
-                ],
+                'filters'  => $lessonFilters,
                 'limit'    => 1,
             ]
         );

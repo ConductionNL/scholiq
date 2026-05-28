@@ -180,16 +180,17 @@ class DataExchangeRunHandler implements IEventListener
         }
 
         // 2. Query Scholiq source objects per scope (tenant-scoped — fixes #186).
-        $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
-
+        // M5: querySourceObjects throws RuntimeException when count >= QUERY_LIMIT.
         // 3. Build payload by applying fieldMappings.
         // #206: bsn-to-pseudonym throws \RuntimeException when eckId is absent — catch
         // here and fail the job fail-closed rather than shipping null pseudonym values.
+        // C3: buildPayload throws when mandatory-profile target has no profile.
         try {
-            $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile);
+            $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
+            $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile, target: $target);
         } catch (\RuntimeException $e) {
             $this->logger->error(
-                '[DataExchangeRunHandler] Job {id} aborted during payload build: {msg}',
+                '[DataExchangeRunHandler] Job {id} aborted during query/payload build: {msg}',
                 ['id' => $jobId, 'msg' => $e->getMessage()]
             );
             $this->saveJobFields(
@@ -345,11 +346,11 @@ class DataExchangeRunHandler implements IEventListener
             ]
         );
 
-        // #188: warn when we reach the limit ceiling so operators know to paginate.
+        // M5: fail hard when we hit the limit ceiling — silent truncation must not ship partial PII.
         if (count($results) >= self::QUERY_LIMIT) {
-            $this->logger->warning(
-                '[DataExchangeRunHandler] querySourceObjects hit QUERY_LIMIT ({limit}) for schema {schema}; results may be incomplete.',
-                ['limit' => self::QUERY_LIMIT, 'schema' => $schema]
+            throw new \RuntimeException(
+                "querySourceObjects hit QUERY_LIMIT (".self::QUERY_LIMIT.") for schema '{$schema}'; "
+                .'pagination required. Aborting to prevent incomplete data export.'
             );
         }
 
@@ -382,11 +383,34 @@ class DataExchangeRunHandler implements IEventListener
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
-    private function buildPayload(array $objects, ?array $profile): array
+    /**
+     * Per-target allowlist of mandatory profile slugs.
+     * When a target is listed here, a null profile (no data mapping) is a hard failure
+     * rather than pass-through, to prevent unredacted PII from being shipped (C3).
+     *
+     * @var string[]
+     */
+    private const MANDATORY_PROFILE_TARGETS = ['bron-rod', 'bron-vo', 'oso-transfer', 'edukoppeling'];
+
+    private function buildPayload(array $objects, ?array $profile, string $target=''): array
     {
+        // C3: for targets that require a mapping profile, null profile is a hard fail.
+        if ($profile === null && in_array($target, self::MANDATORY_PROFILE_TARGETS, strict: true) === true) {
+            throw new \RuntimeException(
+                "Data exchange target '{$target}' requires a DataMappingProfile but none is configured — "
+                .'aborting to prevent unredacted PII export.'
+            );
+        }
+
         if ($profile === null || empty($profile['fieldMappings']) === true) {
-            // No mapping: pass raw objects as-is (OpenConnector handles formatting).
-            return $objects;
+            // No mapping: pass raw objects but strip PII fields (C3 — explicit unset).
+            return array_map(
+                static function (array $obj): array {
+                    unset($obj['bsnEncrypted'], $obj['bsnHash'], $obj['email']);
+                    return $obj;
+                },
+                $objects
+            );
         }
 
         $fieldMappings = $profile['fieldMappings'];
@@ -413,6 +437,9 @@ class DataExchangeRunHandler implements IEventListener
 
                 $record[$targetField] = $value;
             }
+
+            // C3: always strip PII fields from the mapped record even when profile is present.
+            unset($record['bsnEncrypted'], $record['bsnHash'], $record['email']);
 
             $payload[] = $record;
         }//end foreach

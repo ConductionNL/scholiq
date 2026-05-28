@@ -91,6 +91,7 @@ class AssessmentPublishGuard
     public function check(array &$transitionContext): bool
     {
         $object   = $transitionContext['object'] ?? [];
+        $tenantId = $object['tenant_id'] ?? '';
         $itemRefs = $object['itemRefs'] ?? [];
 
         if (empty($itemRefs) === true) {
@@ -107,14 +108,17 @@ class AssessmentPublishGuard
         }
 
         if ($flagReviewMode === 'ai-assisted') {
+            // H1: scope AiFeature lookup to the same tenant.
+            $aiFilters = ['slug' => self::AI_PROCTOR_SLUG, 'lifecycle' => 'enabled'];
+            if ($tenantId !== '') {
+                $aiFilters['tenant_id'] = $tenantId;
+            }
+
             $aiFeatures = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
                     'schema'   => 'AiFeature',
-                    'filters'  => [
-                        'slug'      => self::AI_PROCTOR_SLUG,
-                        'lifecycle' => 'enabled',
-                    ],
+                    'filters'  => $aiFilters,
                     'limit'    => 1,
                 ]
             );

@@ -48,7 +48,6 @@ use OCA\Scholiq\Service\ActionAuthService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IConfig;
@@ -103,7 +102,6 @@ class AuditPackExportController extends Controller
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-1
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function export(
         string $regulationSlug='',
         string $dateFrom='',
