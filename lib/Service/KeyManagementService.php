@@ -65,6 +65,12 @@ class KeyManagementService
     private const ARCHIVED_KEYS_PREFIX = 'scholiq.credential.signing.archived_keys.';
 
     /**
+     * Maximum number of archived public keys retained per tenant.
+     * Keys beyond this cap are pruned oldest-first (L2).
+     */
+    private const MAX_ARCHIVED_KEYS = 32;
+
+    /**
      * Constructor.
      *
      * @param IAppConfig $appConfig Nextcloud application configuration.
@@ -245,6 +251,11 @@ class KeyManagementService
         // Avoid duplicates.
         if (in_array($current, $archived, strict: true) === false) {
             $archived[] = $current;
+        }
+
+        // L2: cap archive at MAX_ARCHIVED_KEYS — prune oldest entries first.
+        if (count($archived) > self::MAX_ARCHIVED_KEYS) {
+            $archived = array_slice($archived, count($archived) - self::MAX_ARCHIVED_KEYS);
         }
 
         $this->appConfig->setValueString(
