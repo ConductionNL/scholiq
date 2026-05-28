@@ -91,6 +91,7 @@ class AssessmentGradeGuard
         $result       = $transitionContext['object'] ?? [];
         $assessmentId = $result['assessmentId'] ?? null;
         $responses    = $result['responses'] ?? [];
+        $tenantId     = $result['tenant_id'] ?? '';
 
         if ($assessmentId === null) {
             $this->logger->info(
@@ -99,12 +100,17 @@ class AssessmentGradeGuard
             return false;
         }
 
-        // Fetch the parent Assessment to get itemRefs.
+        // H1: scope Assessment lookup to the same tenant.
+        $assessmentFilters = ['uuid' => $assessmentId];
+        if ($tenantId !== '') {
+            $assessmentFilters['tenant_id'] = $tenantId;
+        }
+
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Assessment',
-                'filters'  => ['uuid' => $assessmentId],
+                'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
         );
@@ -136,12 +142,17 @@ class AssessmentGradeGuard
                 continue;
             }
 
-            // Fetch the Item to determine needsManualScoring.
+            // H1: scope Item lookup to the same tenant.
+            $itemFilters = ['uuid' => $itemId];
+            if ($tenantId !== '') {
+                $itemFilters['tenant_id'] = $tenantId;
+            }
+
             $items = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
                     'schema'   => 'Item',
-                    'filters'  => ['uuid' => $itemId],
+                    'filters'  => $itemFilters,
                     'limit'    => 1,
                 ]
             );

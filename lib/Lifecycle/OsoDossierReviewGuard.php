@@ -91,8 +91,9 @@ class OsoDossierReviewGuard
      */
     public function check(array &$transitionContext): bool
     {
-        $actor  = $transitionContext['actor'] ?? '';
-        $object = $transitionContext['object'] ?? [];
+        $actor    = $transitionContext['actor'] ?? '';
+        $object   = $transitionContext['object'] ?? [];
+        $tenantId = $object['tenant_id'] ?? '';
 
         if ($actor === '') {
             $this->logger->warning('[OsoDossierReviewGuard] No actor in transitionContext — denying approveDossier.');
@@ -113,11 +114,17 @@ class OsoDossierReviewGuard
         }
 
         // Fetch the learner's LearnerProfile to read parentIds.
+        // H1: scope to the same tenant.
+        $profileFilters = ['ncUserId' => $learnerId];
+        if ($tenantId !== '') {
+            $profileFilters['tenant_id'] = $tenantId;
+        }
+
         $profiles = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => self::LEARNER_PROFILE_SCHEMA,
-                'filters'  => ['ncUserId' => $learnerId],
+                'filters'  => $profileFilters,
                 'limit'    => 1,
             ]
         );

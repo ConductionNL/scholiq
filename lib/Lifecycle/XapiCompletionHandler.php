@@ -117,7 +117,8 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        $payload = $objectEntity->jsonSerialize();
+        $payload  = $objectEntity->jsonSerialize();
+        $tenantId = $payload['tenant_id'] ?? '';
 
         // Guard 1: verb must be completed/passed.
         $verbId = $payload['verb']['id'] ?? '';
@@ -131,11 +132,17 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
+        // H1: scope Lesson lookup to the same tenant.
+        $lessonFilters = ['xapiObjectId' => $lessonId];
+        if ($tenantId !== '') {
+            $lessonFilters['tenant_id'] = $tenantId;
+        }
+
         $lessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
-                'filters'  => ['xapiObjectId' => $lessonId],
+                'filters'  => $lessonFilters,
                 'limit'    => 1,
             ]
         );
@@ -158,11 +165,17 @@ class XapiCompletionHandler implements IEventListener
 
         // Guard 4: lesson must be the final published lesson of the course.
         // #200: sort by `order` field (not insertion order) to find the true last lesson.
+        // H1: scope to the same tenant.
+        $publishedLessonFilters = ['courseId' => $courseId, 'lifecycle' => 'published'];
+        if ($tenantId !== '') {
+            $publishedLessonFilters['tenant_id'] = $tenantId;
+        }
+
         $publishedLessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Lesson',
-                'filters'  => ['courseId' => $courseId, 'lifecycle' => 'published'],
+                'filters'  => $publishedLessonFilters,
                 'sort'     => ['order' => 'ASC'],
             ]
         );
@@ -216,15 +229,17 @@ class XapiCompletionHandler implements IEventListener
         // enrolment. To fully prevent this the xAPI ingest endpoint must authenticate
         // the sender and set a `verified_actor_id` field; here we add the minimum
         // defence: scope to the exact learnerId in the active enrolment only.
+        // H1: scope Enrolment lookup to the same tenant.
+        $enrolmentFilters = ['learnerId' => $learnerId, 'courseId' => $courseId, 'lifecycle' => 'active'];
+        if ($tenantId !== '') {
+            $enrolmentFilters['tenant_id'] = $tenantId;
+        }
+
         $enrolments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Enrolment',
-                'filters'  => [
-                    'learnerId' => $learnerId,
-                    'courseId'  => $courseId,
-                    'lifecycle' => 'active',
-                ],
+                'filters'  => $enrolmentFilters,
                 'limit'    => 1,
             ]
         );

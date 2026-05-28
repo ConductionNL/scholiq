@@ -95,6 +95,7 @@ class SubmissionWindowGuard
     {
         $object       = $transitionContext['object'] ?? [];
         $assignmentId = $object['assignmentId'] ?? null;
+        $tenantId     = $object['tenant_id'] ?? '';
 
         if ($assignmentId === null) {
             $this->logger->info(
@@ -103,11 +104,17 @@ class SubmissionWindowGuard
             return false;
         }
 
+        // H1: scope Assignment lookup to the same tenant.
+        $assignmentFilters = ['uuid' => $assignmentId];
+        if ($tenantId !== '') {
+            $assignmentFilters['tenant_id'] = $tenantId;
+        }
+
         $assignments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Assignment',
-                'filters'  => ['uuid' => $assignmentId],
+                'filters'  => $assignmentFilters,
                 'limit'    => 1,
             ]
         );

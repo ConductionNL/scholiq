@@ -103,12 +103,20 @@ class AssessmentScoringHandler
             return true;
         }
 
+        $tenantId = $result['tenant_id'] ?? '';
+
+        // H1: scope Assessment lookup to the same tenant.
+        $assessmentFilters = ['uuid' => $assessmentId];
+        if ($tenantId !== '') {
+            $assessmentFilters['tenant_id'] = $tenantId;
+        }
+
         // Fetch the parent Assessment for itemRefs and their point overrides.
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'Assessment',
-                'filters'  => ['uuid' => $assessmentId],
+                'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
         );
@@ -140,11 +148,17 @@ class AssessmentScoringHandler
                 continue;
             }
 
+            // H1: scope Item lookup to the same tenant.
+            $itemFilters = ['uuid' => $itemId];
+            if ($tenantId !== '') {
+                $itemFilters['tenant_id'] = $tenantId;
+            }
+
             $items = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
                     'schema'   => 'Item',
-                    'filters'  => ['uuid' => $itemId],
+                    'filters'  => $itemFilters,
                     'limit'    => 1,
                 ]
             );
