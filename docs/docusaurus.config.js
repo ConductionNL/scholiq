@@ -66,7 +66,7 @@ const config = createConfig({
              plus the standard node_modules bucket. */
           exclude: ['**/node_modules/**', 'src/**'],
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/ConductionNL/scholiq/tree/development/docs/',
+          editUrl: 'https://codeberg.org/Conduction/scholiq/src/branch/development/docs/',
         },
         blog: false,
         theme: {
@@ -96,8 +96,8 @@ const config = createConfig({
         position: 'left',
       },
       {
-        href: 'https://github.com/ConductionNL/scholiq',
-        label: 'GitHub',
+        href: 'https://codeberg.org/Conduction/scholiq',
+        label: 'Codeberg',
         position: 'right',
       },
       { type: 'localeDropdown', position: 'right' },
