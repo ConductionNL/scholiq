@@ -62,17 +62,17 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Scholiq</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/nextcloud-scholiq</user>
-        <admin>https://github.com/ConductionNL/nextcloud-scholiq</admin>
-        <developer>https://github.com/ConductionNL/nextcloud-scholiq</developer>
+        <user>https://codeberg.org/Conduction/nextcloud-scholiq</user>
+        <admin>https://codeberg.org/Conduction/nextcloud-scholiq</admin>
+        <developer>https://codeberg.org/Conduction/nextcloud-scholiq</developer>
     </documentation>
     <category>tools</category>
-    <website>https://github.com/ConductionNL/nextcloud-scholiq</website>
-    <discussion>https://github.com/ConductionNL/nextcloud-scholiq/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/nextcloud-scholiq/issues</bugs>
-    <repository>https://github.com/ConductionNL/nextcloud-scholiq</repository>
+    <website>https://codeberg.org/Conduction/nextcloud-scholiq</website>
+    <discussion>https://codeberg.org/Conduction/nextcloud-scholiq/discussions</discussion>
+    <bugs>https://codeberg.org/Conduction/nextcloud-scholiq/issues</bugs>
+    <repository>https://codeberg.org/Conduction/nextcloud-scholiq</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/nextcloud-scholiq/main/img/app-store.svg</screenshot>
+    <screenshot>https://codeberg.org/Conduction/scholiq/raw/branch/main/img/app-store.svg</screenshot>
 
     <dependencies>
         <app>openregister</app>
