@@ -504,6 +504,15 @@
                         }
                     }
                 },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): credentials contain signed PII. Learner sees own record; admins see all. Teachers have no read access — only the credential-holder and admins. Write stays lifecycle-controlled.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
+                    }
+                },
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
@@ -1150,6 +1159,10 @@
                     "initial": "stored",
                     "transitions": {}
                 },
+                "x-openregister-authorization": {
+                    "create": ["admin"],
+                    "_comment": "SB1 (wave-12): xapi-statement creation is admin-only as a stopgap until a dedicated xAPI ingest controller stamps verified_actor_id server-side. Prevents any authenticated user from forging xAPI statements with attacker-controlled verified_actor_id values. Track: issue #TBD."
+                },
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
@@ -1486,6 +1499,16 @@
                             "nl": "Een verplichte cursus van een medewerker is over tijd",
                             "en": "An employee's mandatory course is overdue"
                         }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): enrolment records are per-student PII. Learner sees own record; managers see their reports; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}},
+                            {"match": {"field": "managerId", "operator": "eq", "value": "$userId"}}
+                        ]
                     }
                 },
                 "x-openregister-seed": [],
@@ -2131,6 +2154,15 @@
                         "materialise": true,
                         "description": "Highest-priority Scholiq role for this learner, resolved by RoleSelector (admin group override + static priority map).",
                         "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): learner-profile contains personal data (parentIds, department, etc.). Learner sees own profile; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
                     }
                 },
                 "x-openregister-seed": []
@@ -3535,6 +3567,15 @@
                             }
                         }
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): submissions contain learner responses and grades — academic PII. Learner sees own submissions; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
+                    }
                 }
             },
             "ItemBank": {
@@ -4309,6 +4350,15 @@
                             ]
                         }
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): assessment results contain responses and scores — student PII. Learner sees own results; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
+                    }
                 }
             },
             "ProctoringSession": {
@@ -4871,6 +4921,15 @@
                         "description": "Value multiplied by effectiveWeight — the raw contribution of this entry to the weighted sum.",
                         "expression": "@.value * @.effectiveWeight"
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): grade entries are sensitive academic PII. Learner sees own grades; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
+                    }
                 }
             },
             "FinalGrade": {
@@ -4999,6 +5058,15 @@
                     "calculatedChange": {
                         "description": "Recompute this FinalGrade whenever a GradeEntry for (learnerId, curriculumPlanId) publishes. Implemented via GradeRollupHandler listening on ObjectTransitionedEvent — NOT a TimedJob.",
                         "handler": "OCA\\Scholiq\\Listener\\GradeRollupHandler"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): final grades are academic PII. Learner sees own final grade; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {"role": "admin"},
+                            {"match": {"field": "learnerId", "operator": "eq", "value": "$userId"}}
+                        ]
                     }
                 }
             },
@@ -7012,6 +7080,81 @@
                         "subject": {
                             "nl": "Je data-uitwisseling is afgerond ({{lifecycle}})",
                             "en": "Your data exchange finished ({{lifecycle}})"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "GradeNotification": {
+                "slug": "grade-notification",
+                "icon": "BellOutline",
+                "version": "0.1.0",
+                "title": "GradeNotification",
+                "description": "Lightweight parent-notification record created by GradeRollupHandler when a GradeEntry publishes. Contains no grade values — only the fields needed to dispatch the notification to a parent. Records are append-only. The canonical GradeEntry is never modified during fan-out (fixes #183, wave-12 WF4).",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": false
+                },
+                "required": [
+                    "event",
+                    "recipient",
+                    "sourceId",
+                    "learnerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "enum": ["gradePublished"],
+                        "description": "Notification event type. Currently only 'gradePublished'."
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the notification recipient (parent)."
+                    },
+                    "sourceId": {
+                        "type": "string",
+                        "description": "UUID or id of the source GradeEntry that triggered this notification."
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner whose grade was published."
+                    },
+                    "courseId": {
+                        "type": ["string", "null"],
+                        "format": "uuid",
+                        "description": "UUID of the associated Course. Null when not applicable.",
+                        "default": null
+                    },
+                    "idempotencyKey": {
+                        "type": "string",
+                        "description": "Unique key for idempotent delivery (format: {sourceId}-parent-{recipient})."
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation."
+                    }
+                },
+                "x-openregister-notifications": {
+                    "gradePublished": {
+                        "trigger": {
+                            "type": "create"
+                        },
+                        "enabled": true,
+                        "channels": ["nc-notification"],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "recipient"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuw cijfer gepubliceerd voor {{learnerId}}",
+                            "en": "New grade published for {{learnerId}}"
                         }
                     }
                 },

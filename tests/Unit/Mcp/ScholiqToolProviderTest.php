@@ -244,7 +244,7 @@ class ScholiqToolProviderTest extends TestCase
 
         $this->objectService->method('findAll')->willReturnCallback(
             static function (array $config) use ($courseUuid): array {
-                if (($config['schema'] ?? null) === 'Course') {
+                if (($config['schema'] ?? null) === 'course') {
                     return [
                         [
                             'uuid'              => $courseUuid,
@@ -256,7 +256,7 @@ class ScholiqToolProviderTest extends TestCase
                     ];
                 }
 
-                if (($config['schema'] ?? null) === 'Lesson') {
+                if (($config['schema'] ?? null) === 'lesson') {
                     return [
                         ['uuid' => 'aaa', 'name' => 'Module 1', 'order' => 1, 'contentType' => 'cmi5'],
                         ['uuid' => 'bbb', 'name' => 'Module 2', 'order' => 2, 'contentType' => 'text'],

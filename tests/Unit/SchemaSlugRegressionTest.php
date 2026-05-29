@@ -120,8 +120,8 @@ class SchemaSlugRegressionTest extends TestCase
         }//end foreach
 
         $this->assertEmpty(
-            value: $matches,
-            message: sprintf(
+            $matches,
+            sprintf(
                 "PascalCase schema slug '%s' found in lib/ (correct slug: '%s'). "
                 ."Found in file(s): %s",
                 $forbidden,
