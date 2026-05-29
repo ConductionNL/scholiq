@@ -1,6 +1,6 @@
 # Tasks — Enrolment
 
-> Scope: a single JSON patch on `lib/Settings/scholiq_register.json` adding the `Enrolment` schema with full `x-openregister-lifecycle` / `-calculations` / `-notifications` / `-relations`. One PHP file (`XapiCompletionHandler`) lands as an ADR-031 legitimate exception. No `EnrolmentController`, no `EnrolmentService`, no `BulkEnrolmentService`, no `EnrolmentDueReminderJob`. **In-fleet references**: `decidesk/lib/Settings/decidesk_register.json` ActionItem schema for the `calculations` shape we use. `lifecycle` + `notifications` follow the contracts in [openregister#1470](https://github.com/ConductionNL/openregister/issues/1470) — no in-fleet working example yet.
+> Scope: a single JSON patch on `lib/Settings/scholiq_register.json` adding the `Enrolment` schema with full `x-openregister-lifecycle` / `-calculations` / `-notifications` / `-relations`. One PHP file (`XapiCompletionHandler`) lands as an ADR-031 legitimate exception. No `EnrolmentController`, no `EnrolmentService`, no `BulkEnrolmentService`, no `EnrolmentDueReminderJob`. **In-fleet references**: `decidesk/lib/Settings/decidesk_register.json` ActionItem schema for the `calculations` shape we use. `lifecycle` + `notifications` follow the contracts in [openregister#1470](https://codeberg.org/Conduction/openregister/issues/1470) — no in-fleet working example yet.
 
 ## Phase 1: Schema patch on `lib/Settings/scholiq_register.json`
 

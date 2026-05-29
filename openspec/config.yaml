@@ -4,7 +4,7 @@ app:
   slug: scholiq
   name: Scholiq
   description: Open-source education platform for Nextcloud — student tracking (leerlingvolgsysteem), course creation, eLearning, training management, and certification.
-  repository: https://github.com/ConductionNL/scholiq
+  repository: https://codeberg.org/Conduction/scholiq
   license: EUPL-1.2
   version: 0.1.0
   status: idea

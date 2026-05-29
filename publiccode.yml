@@ -1,7 +1,7 @@
 publiccodeYmlVersion: "0.4"
 
 name: Scholiq
-url: "https://github.com/ConductionNL/scholiq"
+url: "https://codeberg.org/Conduction/scholiq"
 softwareVersion: "0.1.2"
 releaseDate: "2026-05-26"
 developmentStatus: beta

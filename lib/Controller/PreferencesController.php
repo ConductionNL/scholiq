@@ -17,7 +17,7 @@
  *
  * @version GIT: <git_id>
  *
- * @link https://github.com/ConductionNL/scholiq
+ * @link https://codeberg.org/Conduction/scholiq
  */
 
 declare(strict_types=1);

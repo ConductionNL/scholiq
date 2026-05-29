@@ -98,7 +98,7 @@ class HealthController extends Controller
 
         // Audit-trail event count (last 24 h): placeholder query until OR provides
         // a dedicated instrumentation endpoint. Returns 0 in v0.1; tracked in
-        // https://github.com/ConductionNL/openregister/issues as future enhancement.
+        // https://codeberg.org/Conduction/openregister/issues as future enhancement.
         $auditTrailEvents24h = 0;
 
         // MyDash installation flag — resolved via NC IAppManager (no install-time dep).

@@ -35,7 +35,7 @@ If you are installing from source or a release archive:
 cd /var/www/html/custom_apps
 
 # Clone or unpack Scholiq
-git clone https://github.com/ConductionNL/scholiq.git scholiq
+git clone https://codeberg.org/Conduction/scholiq.git scholiq
 
 # Install PHP dependencies
 cd scholiq && composer install --no-dev

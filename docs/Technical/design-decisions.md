@@ -627,8 +627,8 @@ All icons from Material Symbols (rounded variant), same source as the blue hexag
 
 - architecture.md: [`docs/Technical/architecture.md`](./architecture.md)
 - features.md: [`docs/Features/features.md`](../Features/features.md)
-- Intelligence brief: [`https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md`](https://github.com/ConductionNL/market-intelligence/blob/development/briefs/scholiq-context.md)
-- Pipelinq design references (format inspiration): https://github.com/ConductionNL/pipelinq/blob/main/docs/DESIGN-REFERENCES.md
-- Procest design references: https://github.com/ConductionNL/procest/blob/main/docs/DESIGN-REFERENCES.md
-- nextcloud-vue component library: https://github.com/ConductionNL/nextcloud-vue
+- Intelligence brief: [`https://codeberg.org/Conduction/market-intelligence/src/branch/development/briefs/scholiq-context.md`](https://codeberg.org/Conduction/market-intelligence/src/branch/development/briefs/scholiq-context.md)
+- Pipelinq design references (format inspiration): https://codeberg.org/Conduction/pipelinq/src/branch/main/docs/DESIGN-REFERENCES.md
+- Procest design references: https://codeberg.org/Conduction/procest/src/branch/main/docs/DESIGN-REFERENCES.md
+- nextcloud-vue component library: https://codeberg.org/Conduction/nextcloud-vue
 - NL Design System: https://nldesignsystem.nl/

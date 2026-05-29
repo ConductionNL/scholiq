@@ -8,7 +8,7 @@ Scholiq is an open-source leerlingvolgsysteem (LVS) + leeromgeving (LMS) for Nex
 | **License** | EUPL-1.2 |
 | **Status** | Wave 2 applied (compliance-audit wedge) |
 | **Predecessors** | `learniq` (deprecated), `edudesk` (deprecated) |
-| **Repository** | https://github.com/ConductionNL/scholiq |
+| **Repository** | https://codeberg.org/Conduction/scholiq |
 
 ---
 
