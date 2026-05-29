@@ -67,7 +67,7 @@ Per ADR-024 §1–§9, the wedge ships `src/manifest.json` as the single source 
 
 ```jsonc
 {
-  "$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest.schema.json",
+  "$schema": "https://codeberg.org/Conduction/nextcloud-vue/raw/branch/main/src/schemas/app-manifest.schema.json",
   "version": "0.1.0",
   "dependencies": ["openregister", "openconnector"],
   "theme": {
