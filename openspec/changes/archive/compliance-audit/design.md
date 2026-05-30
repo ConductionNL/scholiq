@@ -236,7 +236,7 @@ If a future feature needs per-campaign metadata that can't be expressed on Enrol
 }
 ```
 
-The Compliance dashboard's widgets are `widget-ref` entries pointing at `Regulation.x-openregister-widgets`. **This is the canonical declarative-widget pattern**: the schema declares the widget definition once; every consumer (this dashboard, MyDash, the regulation detail page) reads the same definition.
+The Compliance dashboard's widgets are `widget-ref` entries pointing at `Regulation.x-openregister-widgets`. **This is the canonical declarative-widget pattern**: the schema declares the widget definition once; every consumer (this dashboard, LaunchPad, the regulation detail page) reads the same definition.
 
 ### 3.2 `AuditPackExportModal.vue`
 

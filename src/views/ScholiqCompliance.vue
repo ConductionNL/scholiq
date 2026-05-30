@@ -4,7 +4,7 @@
 <!--
  ScholiqCompliance — compliance dashboard page.
  Renders KPI tiles for regulations and signed attestations, plus a
- "View in MyDash" header action.
+ "View in LaunchPad" header action.
 
  @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
 -->
@@ -14,8 +14,8 @@
 		:widgets="widgets"
 		:layout="layout">
 		<template #header-actions>
-			<NcButton type="secondary" @click="viewInMydash">
-				{{ t('scholiq', 'View in MyDash') }}
+			<NcButton type="secondary" @click="viewInLaunchPad">
+				{{ t('scholiq', 'View in LaunchPad') }}
 			</NcButton>
 		</template>
 		<template #widget-kpi-regulations>
@@ -58,14 +58,14 @@ export default {
 
 	methods: {
 		/**
-		 * Open MyDash in a new tab for heavier compliance analytics.
+		 * Open LaunchPad in a new tab for heavier compliance analytics.
 		 *
 		 * @return {void}
 		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-12
 		 */
-		viewInMydash() {
-			// Open MyDash in a new tab — URL is installation-specific.
-			window.open('/apps/mydash', '_blank')
+		viewInLaunchPad() {
+			// Open LaunchPad in a new tab — URL is installation-specific.
+			window.open('/apps/launchpad', '_blank')
 		},
 	},
 }

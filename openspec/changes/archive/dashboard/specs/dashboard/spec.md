@@ -13,7 +13,7 @@ wedge_scope: Phase 1 — Compliance Officer and Learner views only; K-12 role vi
 
 ## Overview
 
-The dashboard is the default landing view for all authenticated Scholiq users. Role detection MUST be automatic: a compliance officer lands on the compliance KPI view; a learner lands on their mandatory training task list; an admin lands on the app health view. No manual role selection is required. All dashboard views consume existing API endpoints from prior specs; the dashboard spec introduces no new OpenRegister schemas. Cross-tenant or heavy-aggregation analytics are delegated to MyDash via deep-link per ARCHITECTURE.md §5.
+The dashboard is the default landing view for all authenticated Scholiq users. Role detection MUST be automatic: a compliance officer lands on the compliance KPI view; a learner lands on their mandatory training task list; an admin lands on the app health view. No manual role selection is required. All dashboard views consume existing API endpoints from prior specs; the dashboard spec introduces no new OpenRegister schemas. Cross-tenant or heavy-aggregation analytics are delegated to LaunchPad via deep-link per ARCHITECTURE.md §5.
 
 ---
 
@@ -140,23 +140,23 @@ THEN the router MUST navigate to /#/courses/:courseId/lessons/:firstLessonId
 
 ---
 
-### REQ-DA-006 — Delegation to MyDash for heavy analytics
+### REQ-DA-006 — Delegation to LaunchPad for heavy analytics
 
-The Compliance Officer dashboard MUST include a visible "View in MyDash" button that navigates to the MyDash app's Scholiq analytics surface. The dashboard MUST NOT re-implement analytics that MyDash provides.
+The Compliance Officer dashboard MUST include a visible "View in LaunchPad" button that navigates to the LaunchPad app's Scholiq analytics surface. The dashboard MUST NOT re-implement analytics that LaunchPad provides.
 
-#### Scenario DA-006-A: "View in MyDash" button navigates to MyDash
+#### Scenario DA-006-A: "View in LaunchPad" button navigates to LaunchPad
 ```
-GIVEN MyDash is installed and the user has MyDash access
-WHEN the compliance officer clicks "View in MyDash" on the Scholiq dashboard
-THEN the browser MUST navigate to /index.php/apps/mydash/#/scholiq-analytics
+GIVEN LaunchPad is installed and the user has LaunchPad access
+WHEN the compliance officer clicks "View in LaunchPad" on the Scholiq dashboard
+THEN the browser MUST navigate to /index.php/apps/launchpad/#/scholiq-analytics
   AND the NC session MUST be shared (no re-login required)
 ```
 
-#### Scenario DA-006-B: "View in MyDash" button hidden when MyDash not installed
+#### Scenario DA-006-B: "View in LaunchPad" button hidden when LaunchPad not installed
 ```
-GIVEN MyDash is NOT installed on this NC instance
+GIVEN LaunchPad is NOT installed on this NC instance
 WHEN the compliance officer views the dashboard
-THEN the "View in MyDash" button MUST NOT render
+THEN the "View in LaunchPad" button MUST NOT render
   AND no error MUST be thrown
 ```
 

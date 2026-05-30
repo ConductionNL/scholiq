@@ -5,7 +5,7 @@
  *
  * Thin observability endpoint for the AdminHealth dashboard page. Returns
  * five read-only diagnostic fields: OR connection status, schema count,
- * audit-trail event count (last 24 h), MyDash installation flag, and last
+ * audit-trail event count (last 24 h), LaunchPad installation flag, and last
  * audit-pack export timestamp.
  *
  * This is a legitimate ADR-031 §"External-system contract / observability"
@@ -49,7 +49,7 @@ use OCP\IRequest;
  *   "openregister_connected": bool,
  *   "schemas_registered":     int,
  *   "audit_trail_events_24h": int,
- *   "mydash_installed":       bool,
+ *   "launchpad_installed":       bool,
  *   "last_audit_pack_export": string|null   (ISO 8601 or null)
  * }
  */
@@ -101,8 +101,8 @@ class HealthController extends Controller
         // https://codeberg.org/Conduction/openregister/issues as future enhancement.
         $auditTrailEvents24h = 0;
 
-        // MyDash installation flag — resolved via NC IAppManager (no install-time dep).
-        $mydashInstalled = $this->appManager->isInstalled('mydash');
+        // LaunchPad installation flag — resolved via NC IAppManager (no install-time dep).
+        $launchpadInstalled = $this->appManager->isInstalled('launchpad');
 
         // Last audit-pack export timestamp: placeholder until OR audit-event query
         // API is available. Returns null in v0.1.
@@ -113,7 +113,7 @@ class HealthController extends Controller
                     'openregister_connected' => $orConnected,
                     'schemas_registered'     => $schemasRegistered,
                     'audit_trail_events_24h' => $auditTrailEvents24h,
-                    'mydash_installed'       => $mydashInstalled,
+                    'launchpad_installed'       => $launchpadInstalled,
                     'last_audit_pack_export' => $lastAuditPackExport,
                 ]
                 );
