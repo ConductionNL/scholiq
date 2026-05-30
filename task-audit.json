@@ -60,6 +60,12 @@
       "task": "Validate `lib/Settings/scholiq_register.json` parses as JSON",
       "file": "lib/Settings/scholiq_register.json",
       "ok": true
+    },
+    {
+      "task": "Confirm with engine owner whether `idempotencyKey`/`alsoDispatchLifecycle` de-dup is needed",
+      "file": "openspec/changes/scholiq-notifications/proposal.md",
+      "ok": true,
+      "note": "Confirmed and documented in Caveats: no verified-dialect equivalent exists. Engine owner must be consulted if de-dup is needed in future; the verified dialect's transition-based firing may already be once-per-transition but is unverified."
     }
   ],
   "stubs": [],
