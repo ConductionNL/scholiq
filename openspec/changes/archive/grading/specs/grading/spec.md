@@ -58,6 +58,6 @@ All in OpenRegister. New: `GradeScale`, `GradeEntry`, `FinalGrade`, (`Notificati
 ## Out of Scope
 
 - Centraal-Examen (CE) result import and the CE+SE→eindcijfer combination — that's a DUO/`data-exchange` concern.
-- Cross-school cohort analytics and benchmarking (handled by mydash via runtime GraphQL).
+- Cross-school cohort analytics and benchmarking (handled by launchpad via runtime GraphQL).
 - Transcript / diploma-supplement document generation (the `certification` spec issues the credential; DocuDesk does templating).
 - AI-assisted grading (would be an `AiFeature` registration; not in scope).

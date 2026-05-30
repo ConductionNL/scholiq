@@ -104,12 +104,12 @@ The frontend MUST initialise a generic Pinia object store at application boot, c
 - Fetch failures are caught, logged, and surface as an empty array — callers never see a rejected promise.
 
 ### Requirement: Serve a read-only admin health endpoint and the bundled app manifest
-The system MUST expose an admin-only health endpoint reporting OpenRegister connectivity, the count of registered schemas, a 24-hour audit-trail event count, whether MyDash is installed, and the last audit-pack export timestamp. The system MUST also serve the bundled `src/manifest.json` blob unchanged via a manifest endpoint (ADR-024 §4).
+The system MUST expose an admin-only health endpoint reporting OpenRegister connectivity, the count of registered schemas, a 24-hour audit-trail event count, whether LaunchPad is installed, and the last audit-pack export timestamp. The system MUST also serve the bundled `src/manifest.json` blob unchanged via a manifest endpoint (ADR-024 §4).
 
 #### Scenario: Reading health diagnostics
 @e2e exclude Admin-only backend API endpoint — returns JSON with no corresponding UI page that renders the health fields. Covered by PHPUnit/Newman API tests.
 - **WHEN** an admin requests the health endpoint
-- **THEN** the response contains `openregister_connected`, `schemas_registered`, `audit_trail_events_24h`, `mydash_installed`, and `last_audit_pack_export`
+- **THEN** the response contains `openregister_connected`, `schemas_registered`, `audit_trail_events_24h`, `launchpad_installed`, and `last_audit_pack_export`
 
 #### Scenario: Serving the manifest
 @e2e exclude Backend JSON-passthrough endpoint — returns the raw manifest blob with no UI rendering. The manifest content is exercised indirectly by all SPA navigation tests.

@@ -69,6 +69,6 @@ All in OpenRegister. New: `LearningPlan`, `LearningPlanEvaluation`, `Signature`,
 ## Out of Scope
 
 - The DigiD / eIDAS authentication handshake itself (openconnector / NC auth — see `data-exchange`).
-- Sector-wide OPP analytics (mydash).
+- Sector-wide OPP analytics (launchpad).
 - Auto-generation of goals from assessment results (would be an `AiFeature` registration).
 - The samenwerkingsverband (collaboration-network) funding flow that some OPPs trigger — out of scope; a follow-up if a buyer needs it.

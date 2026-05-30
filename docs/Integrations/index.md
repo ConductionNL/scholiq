@@ -11,7 +11,7 @@ Planned integrations include:
 
 - **OpenRegister**: data layer (required)
 - **OpenConnector**: BRON/ROD, UWLR, OSO, Edukoppeling, Studielink, Digikoppeling adapters (required)
-- **MyDash**: student and credential analytics surfaces (recommended)
+- **LaunchPad**: student and credential analytics surfaces (recommended)
 - **DocuDesk**: diploma and certificate document templating (optional)
 - **SURFconext**: SSO federation for higher education
 - **DUO BRON/ROD**: student registration exchange
