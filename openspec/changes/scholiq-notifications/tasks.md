@@ -12,7 +12,7 @@
 - [x] Confirm each `transition` action name (issue/expire/revoke/activate/complete/publish/archive/approve/reject) exists in the schema lifecycle; swap to `scheduled`+filter where no named action exists
 - [x] Provide inline `subject{nl,en}` for every migrated rule (replace legacy i18n-key/`template` strings)
 - [x] Validate `lib/Settings/scholiq_register.json` parses as JSON and every block uses verified keys only (`trigger.type`/`channels[]`/`recipients[]`/`subject{nl,en}`)
-- [ ] Confirm with engine owner whether `idempotencyKey`/`alsoDispatchLifecycle` de-dup is needed and whether the verified dialect provides it
+- [x] Confirm with engine owner whether `idempotencyKey`/`alsoDispatchLifecycle` de-dup is needed and whether the verified dialect provides it
 
 ## Acceptance criteria
 
