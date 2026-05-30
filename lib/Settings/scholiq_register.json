@@ -7142,7 +7142,7 @@
                 "x-openregister-notifications": {
                     "gradePublished": {
                         "trigger": {
-                            "type": "create"
+                            "type": "created"
                         },
                         "enabled": true,
                         "channels": ["nc-notification"],
