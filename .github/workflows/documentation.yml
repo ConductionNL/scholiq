@@ -11,6 +11,6 @@ jobs:
     # Reusable workflow defaults source-folder to `docs/` — the
     # Docusaurus site now lives there (journeydoc / ADR-030), replacing
     # the pre-ADR stand-alone `docusaurus/` folder.
-    uses: ConductionNL/.github/.github/workflows/documentation.yml@main
+    uses: Conduction/.github/.github/workflows/documentation.yml@main
     with:
       cname: scholiq.conduction.nl

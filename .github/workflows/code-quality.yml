@@ -9,7 +9,7 @@ on:
 
 jobs:
   quality:
-    uses: ConductionNL/.github/.github/workflows/quality.yml@main
+    uses: Conduction/.github/.github/workflows/quality.yml@main
     with:
       app-name: scholiq
       php-version: "8.3"
@@ -32,5 +32,5 @@ jobs:
       # and Application.php registers listeners for OR lifecycle events; OR's
       # `development` carries ObjectCreatedEvent/ObjectTransitionedEvent + the
       # IMcpToolProvider interface the ScholiqToolProvider tests need.
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true
