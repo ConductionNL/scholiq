@@ -119,7 +119,7 @@ class QtiImportController extends Controller
 
         // Resolve the caller's tenant — prevents cross-tenant ItemBank poisoning (wave-12 WF2).
         // Same pattern as AuditPackExportController::export().
-        $tenantId = $this->config->getSystemValue('instanceid', '');
+        $tenantId     = $this->config->getSystemValue('instanceid', '');
         $userTenantId = $this->config->getUserValue(
             userId: $user->getUID(),
             appName: 'scholiq',

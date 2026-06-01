@@ -1,0 +1,73 @@
+{
+  "spec": "openspec/changes/scholiq-notifications",
+  "verified": [
+    {
+      "task": "Migrate `x-openregister-notifications` on `Credential` to ve",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `Enrolment` (activ",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `ExcuseRequest` (a",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `DataExchangeJob` ",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `Regulation` (publ",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `AttendanceThresho",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `Course` (publishe",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Migrate `x-openregister-notifications` on `Lesson` (publishe",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Remove deferred `GradeEntry.gradePublished` and `LearningPla",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Confirm each `transition` action name (issue/expire/revoke/a",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Provide inline `subject{nl,en}` for every migrated rule (rep",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Validate `lib/Settings/scholiq_register.json` parses as JSON",
+      "file": "lib/Settings/scholiq_register.json",
+      "ok": true
+    },
+    {
+      "task": "Confirm with engine owner whether `idempotencyKey`/`alsoDispatchLifecycle` de-dup is needed",
+      "file": "openspec/changes/scholiq-notifications/proposal.md",
+      "ok": true,
+      "note": "Confirmed and documented in Caveats: no verified-dialect equivalent exists. Engine owner must be consulted if de-dup is needed in future; the verified dialect's transition-based firing may already be once-per-transition but is unverified."
+    }
+  ],
+  "stubs": [],
+  "missing_routes": []
+}
