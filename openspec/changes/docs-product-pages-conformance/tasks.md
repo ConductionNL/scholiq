@@ -27,4 +27,4 @@
 
 ## 6. Build verification
 
-- [ ] 6.1 `npm install --legacy-peer-deps && npm run build` in `docs/` exits 0; if NL locale breaks SSR, revert to `['en']` with `// TODO #74`
+- [x] 6.1 `npm install --legacy-peer-deps && npm run build` in `docs/` exits 0; if NL locale breaks SSR, revert to `['en']` with `// TODO #74`
