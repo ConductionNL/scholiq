@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "spec_slug": "docs-product-pages-conformance",
+  "repo": "https://codeberg.org/Conduction/scholiq",
+  "issue": 9,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-02T13:18:22Z",
+      "ended_at": null,
+      "outcome": "in-flight",
+      "outcome_reason": null,
+      "pattern_tags": [],
+      "stages": []
+    }
+  ]
+}
