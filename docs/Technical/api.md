@@ -168,7 +168,7 @@ Returns observability data for the AdminHealth dashboard widget.
   "openregisterConnected": true,
   "schemaCount": 9,
   "auditEventsLast24h": 142,
-  "mydashInstalled": false,
+  "launchpadInstalled": false,
   "lastAuditPackExport": "2026-05-10T08:30:00Z"
 }
 ```
