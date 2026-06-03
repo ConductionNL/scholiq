@@ -50,7 +50,7 @@ context: |
   Sister apps:
     - openregister (REQUIRED — data layer, multi-tenancy, audit trail, REST API)
     - openconnector (REQUIRED — BRON/ROD, UWLR, OSO, Edukoppeling, Studielink, Digikoppeling adapters)
-    - mydash (RECOMMENDED — student/credential analytics surfaces)
+    - launchpad (RECOMMENDED — student/credential analytics surfaces)
     - docudesk (OPTIONAL — diploma/certificate document templating)
   Shared specs: See ../openspec/specs/ for cross-project conventions
   Project guidelines: See ../project.md for workspace-wide standards
@@ -62,7 +62,7 @@ depends_on:
     - openregister
     - openconnector
   recommended:
-    - mydash
+    - launchpad
   optional:
     - docudesk
 

@@ -35,6 +35,6 @@ Learners with extra educational needs require an individualised plan: a structur
 ### Out of Scope
 
 - DigiD / eIDAS authentication handshake (openconnector / NC auth concern — see `data-exchange`).
-- Sector-wide OPP analytics (mydash).
+- Sector-wide OPP analytics (launchpad).
 - Auto-generation of goals from assessment results (AiFeature registration).
 - Samenwerkingsverband (collaboration-network) funding flow.

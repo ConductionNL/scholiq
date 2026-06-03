@@ -2,7 +2,7 @@
 
 > **Declarative-vs-imperative decision (per [hydra ADR-031 §"How to apply this rule"](../../../../hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md))** — every KPI / aggregation / RAG status / 12-month trend the dashboard surfaces comes from a `x-openregister-widgets` declaration on a Scholiq schema (declared in the compliance-audit change for Regulation, in this change for LearnerProfile). The compliance-officer / learner / admin page split is a `CnDashboardPage` instance per role, declared in `src/manifest.json`; role detection is a thin `RoleSelector` lifecycle guard (ADR-031 exception — "Domain rule engines that operate above schema metadata: select which template applies").
 >
-> **OR abstractions consumed (per [hydra ADR-022](../../../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md))** — schema-derived widgets, aggregations, calculations, MCP discovery (for MyDash deep links). No `ComplianceDashboardService`, no `RoleDetectionService` (the v1 one — replaced by a single-method selector), no app-local KPI computation.
+> **OR abstractions consumed (per [hydra ADR-022](../../../../hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md))** — schema-derived widgets, aggregations, calculations, MCP discovery (for LaunchPad deep links). No `ComplianceDashboardService`, no `RoleDetectionService` (the v1 one — replaced by a single-method selector), no app-local KPI computation.
 >
 > **Frontend (per [hydra ADR-024](../../../../hydra/openspec/architecture/adr-024-app-manifest.md))** — three dashboard pages (`Dashboard` / `LearnerHome` / `AdminHealth`) live in `src/manifest.json`. The `/` route uses `CnAppRoot`'s **role-aware page resolver** which maps `LearnerProfile.role` (computed by `RoleSelector`) to one of those pages. No `DashboardRouter.vue`, no custom `$router.replace()` glue.
 
@@ -101,7 +101,7 @@ The learner dashboard's "Mijn verplichte trainingen" is this widget — no Vue v
 | File | ADR-031 category | Why kept |
 |---|---|---|
 | `lib/Lifecycle/RoleSelector.php` | Domain rule selector | Single-method: `selectPrimaryRole(LearnerProfile $profile, IUser $user): string`. Returns the highest-priority role per the static priority map after checking `IGroupManager::isAdmin($user)`. Resolves `learnerProfile.primaryRole` for OR's `x-openregister-calculations.requires` extension. Legitimate per ADR-031 §"Domain rule engines that operate *above* schema metadata". |
-| `lib/Controller/HealthController.php` | External-system contract / observability | `GET /api/admin/health` — returns OR connection status, schema-registration count, audit-events-last-24h count via OR query, mydash installed flag. Single endpoint. The widget on the AdminHealth dashboard page consumes this response. Could in principle be expressed as schema widgets if OR-side instrumentation existed for these reads; in the meantime it's a thin observability endpoint. |
+| `lib/Controller/HealthController.php` | External-system contract / observability | `GET /api/admin/health` — returns OR connection status, schema-registration count, audit-events-last-24h count via OR query, launchpad installed flag. Single endpoint. The widget on the AdminHealth dashboard page consumes this response. Could in principle be expressed as schema widgets if OR-side instrumentation existed for these reads; in the meantime it's a thin observability endpoint. |
 
 **Explicitly NOT in this change** (ADR-031 anti-patterns):
 - `ComplianceDashboardService` (the original "KPI aggregation" service from v1) — its 17 fields were all reads off Regulation aggregations + calculations + widgets, already declared in the compliance-audit change.
@@ -165,16 +165,16 @@ Every dashboard surface in v0.1 is a `widget-ref` consuming a schema-declared wi
 
 If a widget shape genuinely doesn't fit a built-in type (the closed-enum types per ADR-024 §10), the right move is to land a new widget type in `@conduction/nextcloud-vue` via a library-side openspec change — not to write a custom Vue file in scholiq.
 
-### 3.3 MyDash deep link
+### 3.3 LaunchPad deep link
 
-Per `feedback_mydash-no-or-dependency.md`, MyDash is a BI surface that consumes OR data via runtime GraphQL only. The Compliance dashboard's "View in MyDash" link (when MyDash is installed) is a manifest-level action:
+Per `feedback_launchpad-no-or-dependency.md`, LaunchPad is a BI surface that consumes OR data via runtime GraphQL only. The Compliance dashboard's "View in LaunchPad" link (when LaunchPad is installed) is a manifest-level action:
 
 ```jsonc
 {
   "actions": [
-    { "id": "viewInMydash", "label": "scholiq.action.viewInMydash",
-      "visibleIf": { "appInstalled": "mydash" },
-      "href": "/index.php/apps/mydash/#/scholiq-analytics?tenant=@actor.tenantId" }
+    { "id": "viewInLaunchPad", "label": "scholiq.action.viewInLaunchPad",
+      "visibleIf": { "appInstalled": "launchpad" },
+      "href": "/index.php/apps/launchpad/#/scholiq-analytics?tenant=@actor.tenantId" }
   ]
 }
 ```
@@ -197,13 +197,13 @@ The `HealthController::index` endpoint does not emit audit events (read-only obs
 |---|---|---|
 | OpenRegister | Schemas + widgets + aggregations + calculations + audit-trail query | Every dashboard widget |
 | OCP\IGroupManager | `IGroupManager::isAdmin` | `RoleSelector` consults this for the admin override |
-| OCP\IAppManager | `IAppManager::isInstalled('mydash')` | `CnAppRoot` resolves the `appInstalled` visibility for the MyDash action |
+| OCP\IAppManager | `IAppManager::isInstalled('launchpad')` | `CnAppRoot` resolves the `appInstalled` visibility for the LaunchPad action |
 | Compliance-audit change | `Regulation.x-openregister-widgets` | Compliance officer dashboard widgets |
 | Enrolment change | `Enrolment.x-openregister-calculations` (ragStatus, daysRemaining) | Learner task-list widget data |
 | Course-management change | `Course` schema | Lesson-start action target |
 | Certification change | `Credential` schema | Future v1+ learner-view "My certificates" widget |
 | @conduction/nextcloud-vue | `CnAppRoot` + `CnDashboardPage` + role-aware page resolver | Frontend shell |
-| MyDash | Deep link via manifest action | Heavy analytics delegation |
+| LaunchPad | Deep link via manifest action | Heavy analytics delegation |
 
 ---
 
@@ -216,7 +216,7 @@ The `HealthController::index` endpoint does not emit audit events (read-only obs
 | RAG status per regulation | declarative | calculation |
 | Coverage % per regulation | declarative | calculation |
 | Role-aware page dispatch | declarative (manifest `roleAware`) | (consumed via ADR-024) |
-| MyDash visibility | declarative (manifest `visibleIf.appInstalled`) | (consumed via ADR-024) |
+| LaunchPad visibility | declarative (manifest `visibleIf.appInstalled`) | (consumed via ADR-024) |
 | Role selection (priority map + admin override) | imperative (PHP) | "Domain rule selector" exception |
 | App health observability | imperative (PHP) | "External-system contract / observability" exception |
 | 12-month coverage trend | out of scope v0.1 — pending OR-side aggregation-history extension | — |
@@ -234,5 +234,5 @@ The `HealthController::index` endpoint does not emit audit events (read-only obs
 | Pupil grade-impact view | learner (K-12) | Phase 2 |
 | Instructor cohort distribution + soft-publish queue | instructor | V1 |
 | AI Act post-market monitoring dashboard | compliance-officer | Enterprise + ADR-005 (declared as widgets on AiFeature) |
-| Cross-tenant benchmarking | compliance-officer | Enterprise + mydash |
+| Cross-tenant benchmarking | compliance-officer | Enterprise + launchpad |
 | 12-month coverage trend (historical) | all roles | OR-side feature request — open issue on openregister |

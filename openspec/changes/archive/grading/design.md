@@ -177,6 +177,6 @@ Read-only.
 ## 6. Out of scope
 
 - CE result import + CE+SE→eindcijfer combination (DUO/data-exchange concern).
-- Cross-school cohort analytics (mydash via runtime GraphQL).
+- Cross-school cohort analytics (launchpad via runtime GraphQL).
 - Transcript / diploma-supplement generation (certification spec + DocuDesk).
 - AI-assisted grading (AiFeature registration, not in scope).

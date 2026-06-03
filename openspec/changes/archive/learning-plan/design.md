@@ -172,6 +172,6 @@ The `quarterlyReviewReminder` notification is driven by OR's `calculatedChange` 
 ## 6. Out of scope
 
 - DigiD / eIDAS authentication handshake (openconnector concern).
-- Sector-wide OPP analytics (mydash).
+- Sector-wide OPP analytics (launchpad).
 - Auto-generation of goals from assessment results (AiFeature).
 - Samenwerkingsverband funding flow.

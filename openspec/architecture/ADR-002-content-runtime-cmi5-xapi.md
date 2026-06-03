@@ -84,7 +84,7 @@ Scholiq adopts **cmi5 + xAPI as the primary content launch protocol and learning
 
 ### Positive
 - Modern content authors (Articulate Storyline 360, Adobe Captivate 2025, iSpring Suite, H5P, Articulate Rise, Genially) emit xAPI/cmi5 out of the box → zero friction onboarding for corporate content libraries.
-- The xAPI statement stream is queryable in OpenRegister → directly feeds compliance evidence packs, AVG retention, AI Act audit trails (per ADR-008), mydash analytics.
+- The xAPI statement stream is queryable in OpenRegister → directly feeds compliance evidence packs, AVG retention, AI Act audit trails (per ADR-008), launchpad analytics.
 - Single learning-event format across all capabilities → grades, exam scores, attestations, lesson completions all become xAPI statements with different verbs. Uniform analytics surface.
 - Forward compatibility — xAPI captures off-platform learning (mobile apps, simulations, on-the-job assessment, AR/VR) without architectural changes.
 - Distinct from Moodle / ILIAS / Open edX's SCORM-first defaults → marketing differentiation.
