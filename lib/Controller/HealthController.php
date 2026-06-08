@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
+use OCA\Scholiq\Settings\AdminSettings;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -77,7 +78,7 @@ class HealthController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-5
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     #[NoCSRFRequired]
     public function index(): JSONResponse
     {
@@ -113,7 +114,7 @@ class HealthController extends Controller
                     'openregister_connected' => $orConnected,
                     'schemas_registered'     => $schemasRegistered,
                     'audit_trail_events_24h' => $auditTrailEvents24h,
-                    'launchpad_installed'       => $launchpadInstalled,
+                    'launchpad_installed'    => $launchpadInstalled,
                     'last_audit_pack_export' => $lastAuditPackExport,
                 ]
                 );

@@ -12,15 +12,6 @@
 
 parameters:
     ignoreErrors:
-        # AuthorizedAdminSetting accepts APP_ID string (not a class-string<IDelegatedSettings>)
-        # because NC's middleware resolves admin-gating by app ID at runtime, not by the
-        # IDelegatedSettings interface. This is the fleet-wide usage pattern.
-        # Tracked in: https://github.com/ConductionNL/scholiq/issues/135
-        -
-            message: "#^Parameter \\#1 \\$settings of attribute class OCP\\\\AppFramework\\\\Http\\\\Attribute\\\\AuthorizedAdminSetting constructor expects class-string<OCP\\\\Settings\\\\IDelegatedSettings>, string given\\.$#"
-            count: 8
-            path: lib/Controller
-
         # PHPDoc-driven false-positive: phpstan knows `$action` is string (array key) from the
         # @param type-hint, so `is_string($action) === false` is always false. The defensive check
         # is intentional — it guards against malformed data from IAppConfig JSON decode at runtime.
