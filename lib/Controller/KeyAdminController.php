@@ -32,6 +32,7 @@ namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
 use OCA\Scholiq\Service\KeyManagementService;
+use OCA\Scholiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -98,7 +99,7 @@ class KeyAdminController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function generateKey(): JSONResponse
     {
         $tenantId = $this->request->getParam('tenantId', '');
@@ -170,7 +171,7 @@ class KeyAdminController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function keyStatus(): JSONResponse
     {
         $tenantId = $this->request->getParam('tenantId', '');

@@ -38,8 +38,8 @@ use OCA\Scholiq\Service\QtiImportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -65,6 +65,7 @@ class QtiImportController extends Controller
      * @param QtiImportService  $qtiImportService QTI import service.
      * @param IUserSession      $userSession      Nextcloud user session.
      * @param ActionAuthService $actionAuth       ADR-023 action authorization service.
+     * @param IConfig           $config           Nextcloud config for tenant resolution.
      *
      * @return void
      */
@@ -73,12 +74,22 @@ class QtiImportController extends Controller
         private readonly QtiImportService $qtiImportService,
         private readonly IUserSession $userSession,
         private readonly ActionAuthService $actionAuth,
+        private readonly IConfig $config,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
 
     /**
      * Import a QTI 2.x / 3.0 or Common Cartridge ZIP package into an ItemBank.
+     *
+     * CSRF is required (mutating endpoint — wave-12 WF2). The caller must supply a
+     * valid Nextcloud CSRF token in the request; AJAX clients set this automatically
+     * via the `requesttoken` header or form field.
+     *
+     * The caller's tenant is resolved from the authenticated user's per-user tenant
+     * binding (same pattern as AuditPackExportController). Items are written scoped to
+     * that tenant so cross-tenant ItemBank poisoning is not possible even if an ItemBank
+     * UUID from another tenant is supplied.
      *
      * @param string $itemBankId UUID of the target ItemBank.
      *
@@ -87,7 +98,6 @@ class QtiImportController extends Controller
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
     #[NoAdminRequired]
-    #[NoCSRFRequired]
     public function import(string $itemBankId=''): JSONResponse
     {
         $user = $this->userSession->getUser();
@@ -105,6 +115,19 @@ class QtiImportController extends Controller
                 data: ['error' => 'itemBankId is required'],
                 statusCode: Http::STATUS_BAD_REQUEST
             );
+        }
+
+        // Resolve the caller's tenant — prevents cross-tenant ItemBank poisoning (wave-12 WF2).
+        // Same pattern as AuditPackExportController::export().
+        $tenantId     = $this->config->getSystemValue('instanceid', '');
+        $userTenantId = $this->config->getUserValue(
+            userId: $user->getUID(),
+            appName: 'scholiq',
+            key: 'tenant_id',
+            default: ''
+        );
+        if ($userTenantId !== '') {
+            $tenantId = $userTenantId;
         }
 
         $uploadedFile = $this->request->getUploadedFile('file');
@@ -136,6 +159,7 @@ class QtiImportController extends Controller
             $createdIds = $this->qtiImportService->import(
                 packagePath: $tmpPath,
                 itemBankId: $itemBankId,
+                tenantId: $tenantId,
             );
         } catch (\RuntimeException $e) {
             return new JSONResponse(

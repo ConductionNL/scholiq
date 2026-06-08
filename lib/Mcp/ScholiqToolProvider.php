@@ -518,7 +518,7 @@ class ScholiqToolProvider implements IMcpToolProvider
             'type'  => 'scholiq.course',
             'uuid'  => $courseUuid,
             'url'   => $this->buildDeepLink(type: 'course', uuid: $courseUuid),
-            'label' => (string) ($course['name'] ?? $course['code'] ?? 'Course'),
+            'label' => (string) ($course['name'] ?? $course['code'] ?? 'course'),
         ];
 
     }//end courseSource()
