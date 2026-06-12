@@ -6,96 +6,69 @@ status: draft
 
 ## Purpose
 
-Backs the App Store claim "Immutable audit trail backs … AVG record-of-processing" with a real AVG Art. 30 record of processing activities: a `ProcessingActivity` OpenRegister schema seeded with Scholiq's own processing, owned and activated by the school's privacy officer, audit-trail-versioned, cyclically reviewed, and exportable for the supervisory authority and the compliance audit pack.
+Backs the App Store claim "Immutable audit trail backs … AVG record-of-processing" as a THIN
+CONSUMER of the platform verwerkingsregister owned by OpenRegister
+(`openregister/processing-activity-register`, OR-PA-1..9; 2026-06-11 abstraction decision).
+Scholiq contributes its seed catalogue content, the Compliance UI surfacing of its register
+slice, and the audit-pack inclusion of the platform-generated Art. 30 export. The
+ProcessingActivity entity, validation, lifecycle, versioning, review-due notifications, export
+engine, and RBAC are OpenRegister requirements and are deliberately NOT restated here.
+BLOCKED_EXTERNAL on the OR change.
 
 ## ADDED Requirements
 
-### Requirement: ProcessingActivity objects MUST carry the AVG Art. 30(1) mandatory elements
+### Requirement: Scholiq MUST ship its processing catalogue as draft seed content
 
-The system MUST persist `ProcessingActivity` objects in OpenRegister with: name, purposes, role (`controller` | `processor`), categories of data subjects, categories of personal data, a `specialCategories` flag with an Art. 9 `specialCategoriesBasis` when set, `legalBasis` (enum: `consent` | `contract` | `legal-obligation` | `vital-interests` | `public-task` | `legitimate-interest`), recipients, third-country transfers with safeguards, retention period, and security measures (TOMs). Each activity MUST additionally carry `linkedSchemas[]`, `ownerUserId`, `reviewIntervalMonths`, `nextReviewAt`, `dpiaRequired`/`dpiaReference`, `tenant_id`, and an `x-openregister-lifecycle` of `draft → active → retired`.
+Scholiq SHALL declare its own processing activities via the `x-openregister-processing` dialect (OR-PA-2) in `lib/Settings/scholiq_register.json` — at minimum: learner administration (LearnerProfile incl. `bsnEncrypted`, `eckId`, `schoolId`), attendance and leerplicht reporting, grading and assessment, compliance training and signed attestations (incl. `actorIp`), credentialing, data exchange (DUO/OSO/municipality/HR), and AI features — each entry carrying the full Art. 30(1) field set keyed by `code`, plus `ownerUserId`/`reviewIntervalMonths`/`nextReviewAt` so the platform's review-due notification (OR-PA-1) fires. Seeds arrive as drafts; activation is the privacy officer's explicit decision in the platform lifecycle. No seed entry copies personal-data values, and scholiq ships no notification rule, schema definition, or validation code for this capability.
 
-#### Scenario: Privacy officer creates a processing activity
+#### Scenario: Fresh install seeds the register as drafts
 
-- **GIVEN** a user in the `privacy-officer` group
-- **WHEN** they create a ProcessingActivity "Leerlingadministratie" with `legalBasis: legal-obligation`, data subjects "leerlingen", personal-data categories including "BSN (encrypted)" and retention "tot 2 jaar na uitschrijving"
-- **THEN** the object persists in OpenRegister in lifecycle `draft`
-- **AND** all Art. 30(1) fields are present on the stored object
+- **GIVEN** a fresh scholiq install completing its register import
+- **WHEN** the privacy officer opens the verwerkingsregister
+- **THEN** the seeded entries are listed as drafts, including "Leerlingadministratie" naming BSN (encrypted), ECK iD, and SchoolID among the personal-data categories
+- **AND** no seeded entry is active until an explicit platform-lifecycle activation
 
-#### Scenario: Special-category data requires an Art. 9 basis
+#### Scenario: Review reminders come from the platform
 
-- **GIVEN** a ProcessingActivity being saved with `specialCategories: true` (e.g. health data in verzuim/excuse processing)
-- **WHEN** `specialCategoriesBasis` is empty
-- **THEN** schema validation MUST reject the save with a message naming the missing Art. 9 basis
+- **GIVEN** an activated entry whose `nextReviewAt` falls within the review window
+- **WHEN** OpenRegister's review-due evaluation runs (OR-PA-1)
+- **THEN** the entry's `ownerUserId` receives the notification
+- **AND** `scholiq_register.json` contains no notification rule for processing-activity reviews
 
-#### Scenario: Legitimate interest requires an assessment
+#### Scenario: Officer edits survive re-import
 
-- **GIVEN** a ProcessingActivity being saved with `legalBasis: legitimate-interest`
-- **WHEN** `legitimateInterestAssessment` is empty
-- **THEN** schema validation MUST reject the save
+- **GIVEN** the privacy officer amended an activated entry
+- **WHEN** scholiq's register configuration is re-imported
+- **THEN** the upsert-by-code semantics (OR-PA-2) MUST preserve the officer's edits rather than resetting the entry to the seed
 
-### Requirement: Scholiq MUST ship a seed catalogue of its own processing activities as drafts
+### Requirement: Scholiq MUST surface its register slice in declarative Compliance UI
 
-The register import MUST seed ProcessingActivity drafts describing Scholiq's own processing — at minimum: learner administration (LearnerProfile incl. `bsnEncrypted`, `eckId`, `schoolId`), attendance and leerplicht reporting, grading and assessment, compliance training and signed attestations (incl. `actorIp`), credentialing, data exchange (DUO/OSO/municipality/HR), and AI features. Seeds MUST be `draft`; activation MUST be an explicit transition by an authorised user. Seeds MUST reference covered schemas via `linkedSchemas[]` and MUST NOT copy any personal-data values.
+Scholiq SHALL provide manifest index and detail pages for its verwerkingsregister slice under a Compliance navigation entry, consuming the platform verwerkingsactiviteiten API with the scholiq register filter (OR-PA-8 scoping). No PHP CRUD controllers and no app-side authorization code; write access is the platform's admin-default plus privacy-officer delegation.
 
-#### Scenario: Fresh install seeds the register
+#### Scenario: Privacy officer browses scholiq's register slice
 
-- **GIVEN** a fresh Scholiq install completing its register import
-- **WHEN** the privacy officer opens the verwerkingsregister index
-- **THEN** the seeded draft entries are listed, including "Leerlingadministratie" with `linkedSchemas` containing `LearnerProfile` and personal-data categories naming BSN (encrypted), ECK iD, and SchoolID
-- **AND** no seeded entry is in lifecycle `active`
+- **GIVEN** a user holding the privacy-officer delegation in OpenRegister
+- **WHEN** they open the Compliance → Verwerkingsregister page in scholiq
+- **THEN** they see exactly the scholiq-slice activities (index + detail), served by manifest pages over the platform API
 
-#### Scenario: Activation is an explicit decision
+#### Scenario: Non-privileged user cannot edit
 
-- **GIVEN** a seeded draft entry
-- **WHEN** a privacy officer reviews and triggers the `activate` transition
-- **THEN** the entry moves to `active`
-- **AND** an OR audit-trail entry records who activated it and when
+- **GIVEN** an authenticated user without the privacy-officer or admin delegation
+- **WHEN** they attempt to update a processing activity via the platform API
+- **THEN** the request is rejected by OpenRegister's RBAC (OR-PA-8); scholiq enforces nothing itself
 
-### Requirement: Mutations of active entries MUST be audit-trail-backed with retrievable history
+### Requirement: The compliance audit pack MUST include the platform-generated Art. 30 export
 
-Every mutation of an `active` ProcessingActivity MUST emit an OpenRegister audit-trail entry (ADR-008 consumption — no app-local history store), and prior versions MUST remain retrievable.
-
-#### Scenario: Editing an active entry leaves a trail
-
-- **GIVEN** an `active` ProcessingActivity with retention "5 jaar"
-- **WHEN** an authorised user changes retention to "7 jaar"
-- **THEN** an OR audit-trail entry records the before/after values, actor, and timestamp
-- **AND** the previous version of the object is retrievable
-
-### Requirement: The register MUST be exportable per AVG Art. 30(4) and included in the audit pack
-
-The system MUST export the verwerkingsregister (all `active` entries, full Art. 30(1) column set) as CSV/JSON on demand, and the compliance audit-pack ZIP MUST include `verwerkingsregister.csv`. Styled PDF rendering is delegated to DocuDesk and out of scope.
-
-#### Scenario: Supervisory-authority export on demand
-
-- **GIVEN** at least one `active` ProcessingActivity
-- **WHEN** a privacy officer triggers the Art. 30 export from the index page
-- **THEN** a CSV is produced containing every active entry with the Art. 30(1) columns
-- **AND** an OR audit-trail entry records the export
+The compliance audit-pack ZIP SHALL include `verwerkingsregister.csv`, obtained from the platform's Art. 30 export (OR-PA-7) scoped to the scholiq register slice. Scholiq implements only the fetch-and-include artefact step — no export engine, serialisation, or column logic.
 
 #### Scenario: Audit pack includes the register
 
 - **GIVEN** a compliance audit-pack export for any regulation and date range
 - **WHEN** the ZIP is produced
-- **THEN** it contains `verwerkingsregister.csv`
+- **THEN** it contains `verwerkingsregister.csv` whose content equals the OR-PA-7 export for the scholiq slice at generation time
 
-### Requirement: Review reminders MUST use the verified notification dialect
+#### Scenario: Platform capability absent fails loudly
 
-A single `scheduled` notification rule on ProcessingActivity MUST notify `ownerUserId` when `nextReviewAt` falls within the review window, declared exclusively in the verified engine dialect (`trigger.type` / `channels[]` / `recipients[]` / inline `subject{nl,en}`) as established by the `scholiq-notifications` migration. No legacy-dialect keys are permitted.
-
-#### Scenario: Owner is reminded of a due review
-
-- **GIVEN** an `active` ProcessingActivity whose `nextReviewAt` is within 30 days
-- **WHEN** the daily scheduled rule evaluates
-- **THEN** the owner receives a Nextcloud notification with an nl/en subject
-- **AND** the rule block in `scholiq_register.json` contains only verified dialect keys
-
-### Requirement: UI MUST be declarative and access OR-delegated
-
-ProcessingActivity index and detail MUST be `src/manifest.json` pages over the OpenRegister objects API (no PHP CRUD controllers); write access MUST be restricted to the `privacy-officer` and `admin` groups via OR-delegated RBAC.
-
-#### Scenario: Non-privileged user cannot edit the register
-
-- **GIVEN** an authenticated user in neither `privacy-officer` nor `admin`
-- **WHEN** they attempt to update a ProcessingActivity via the objects API
-- **THEN** the request is rejected by OpenRegister's RBAC
+- **GIVEN** the deployed OpenRegister version lacks the processing-activity register
+- **WHEN** an audit-pack export is requested
+- **THEN** the pack generation MUST surface a clear "platform capability missing" warning for the verwerkingsregister artefact rather than silently omitting it
