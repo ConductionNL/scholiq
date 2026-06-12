@@ -110,7 +110,7 @@
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
-			"href": "https://docs.scholiq.nl",
+			"href": "https://scholiq.conduction.nl",
 			"section": "footer",
 			"order": 90
 		},
