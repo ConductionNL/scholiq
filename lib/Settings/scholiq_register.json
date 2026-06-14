@@ -2,13 +2,13 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application.",
-        "version": "0.1.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
+        "version": "0.2.0"
     },
     "x-openregister": {
         "type": "application",
         "app": "scholiq",
-        "openregister": "^v0.2.10",
+        "openregister": "^v0.2.14",
         "description": "Scholiq — open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
     },
     "paths": {},
@@ -115,6 +115,27 @@
         ],
         "schemas": {
             "Credential": {
+                "x-openregister-processing": {
+                    "code": "scholiq-credentialing",
+                    "naam": "Credentialing and certification",
+                    "doelbinding": "Issue, verify, and revoke verifiable credentials (EDCI / Open Badges 3.0) attesting completed courses and certifications for learners.",
+                    "rechtsgrond": "contract",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "courseId", "issuerDid", "signature"],
+                    "backend": "scholiq.credentialing",
+                    "retentionReference": "not declared (Credential carries no x-openregister-archival annotation; align with the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-credentialing"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "credential",
                 "icon": "CertificateOutline",
                 "version": "0.1.0",
@@ -614,6 +635,25 @@
                 "appendOnly": true
             },
             "AiFeature": {
+                "x-openregister-processing": {
+                    "code": "scholiq-ai-features",
+                    "naam": "AI-assisted learning features",
+                    "doelbinding": "Operate adaptive learning paths and AI-assisted item generation; record EU AI Act high-risk decision traces and DPO acknowledgements for transparency and accountability.",
+                    "rechtsgrond": "consent",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "riskCategory", "decisionTrace"],
+                    "backend": "scholiq.ai",
+                    "retentionReference": "not declared (AiFeature carries no x-openregister-archival annotation; align with the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-ai-features"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "AiFeature",
                 "icon": "RobotOutline",
                 "version": "0.1.0",
@@ -1827,6 +1867,27 @@
                 "x-openregister-seed": []
             },
             "Attestation": {
+                "x-openregister-processing": {
+                    "code": "scholiq-attestations",
+                    "naam": "Compliance training and signed attestations",
+                    "doelbinding": "Record that a learner completed mandatory compliance training (AVG / BIO / NIS2 / Cyberbeveiligingswet) and capture the signed attestation as legal evidence, including the actor's IP address for non-repudiation.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "employeeId", "actorIp", "signature"],
+                    "backend": "scholiq.attestations",
+                    "retentionReference": "not declared (Attestation carries no x-openregister-archival annotation; signed evidence is typically retained per the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-attestations"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "attestation",
                 "icon": "FileCertificateOutline",
                 "version": "0.1.0",
@@ -1947,6 +2008,29 @@
                 "appendOnly": true
             },
             "LearnerProfile": {
+                "x-openregister-processing": {
+                    "code": "scholiq-learner-administration",
+                    "naam": "Learner administration (leerlingadministratie)",
+                    "doelbinding": "Maintain the core learner record (identity, school enrolment, affiliation, guardians) required to deliver education, register results, and meet statutory reporting obligations. Includes the encrypted BSN, ECK iD, and SchoolID used for pseudonymised exchange.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["bsnEncrypted", "eckId", "schoolId", "givenName", "familyName", "birthDate", "eduPersonAffiliation", "parentIds"],
+                    "backend": "scholiq.learner-administration",
+                    "retentionReference": "not declared (LearnerProfile carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-learner-administration"
+                    },
+                    "subjectIdFields": {
+                        "ncUserId": "ncUserId",
+                        "bsnEncrypted": "bsnEncrypted",
+                        "eckId": "eckId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "learner-profile",
                 "icon": "AccountOutline",
                 "version": "0.1.0",
@@ -3679,6 +3763,25 @@
                 }
             },
             "Assessment": {
+                "x-openregister-processing": {
+                    "code": "scholiq-grading-assessment",
+                    "naam": "Grading and assessment",
+                    "doelbinding": "Administer assessments and record grades, results, and final marks to evaluate learner progress and award qualifications.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "score", "result", "gradeValue"],
+                    "backend": "scholiq.grading",
+                    "retentionReference": "not declared (Assessment carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-grading-assessment"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "assessment",
                 "icon": "ClipboardCheckOutline",
                 "version": "0.1.0",
@@ -5491,6 +5594,27 @@
                 }
             },
             "AttendanceRecord": {
+                "x-openregister-processing": {
+                    "code": "scholiq-attendance-leerplicht",
+                    "naam": "Attendance and leerplicht reporting",
+                    "doelbinding": "Register attendance and absences and report verzuim to the leerplichtambtenaar / DUO as required by the Leerplichtwet.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "status", "minutesAttended", "reason"],
+                    "backend": "scholiq.attendance",
+                    "retentionReference": "not declared (AttendanceRecord carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-attendance-leerplicht"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "attendance-record",
                 "icon": "ClipboardCheckOutline",
                 "version": "0.1.0",
@@ -6480,6 +6604,25 @@
                 ]
             },
             "DataExchangeJob": {
+                "x-openregister-processing": {
+                    "code": "scholiq-data-exchange",
+                    "naam": "Data exchange with external parties",
+                    "doelbinding": "Exchange learner and result data with external systems (DUO/BRON-ROD, OSO overstapdossier, municipality leerplicht, HR systems) over the agreed standards to meet statutory reporting and transfer obligations.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": ["learnerId", "target", "scope", "format"],
+                    "backend": "scholiq.data-exchange",
+                    "retentionReference": "not declared (DataExchangeJob carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-data-exchange"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "data-exchange-job",
                 "icon": "SwapHorizontal",
                 "version": "0.1.0",

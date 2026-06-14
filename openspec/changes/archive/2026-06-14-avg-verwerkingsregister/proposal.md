@@ -1,7 +1,9 @@
 ---
-status: BLOCKED_EXTERNAL
+status: in-progress
 depends_on: [openregister/processing-activity-register]
 ---
+
+> UNBLOCKED 2026-06-14: OpenRegister's per-access read-logging delta shipped (OR >= 0.2.14 — `x-openregister-processing` consumed by ProcessingLogService; `/api/avg/verwerkingen[/betrokkene]` + `/api/avg/verantwoording` exposed, FG/admin-gated). This change is now built as a thin consumer (mirrors docudesk PR #111). The aggregate Art. 30 register export (OR-PA-7) and the OR-side catalogue seeder remain OR-deferred — scholiq ships NO export engine (ADR-022).
 
 ## Why
 

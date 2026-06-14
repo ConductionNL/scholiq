@@ -50,8 +50,10 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use OCP\IUserSession;
 use ZipArchive;
 
@@ -66,6 +68,9 @@ use ZipArchive;
  *   - manifest.json       (tenant_id, period, regulation_slug, event_count,
  *                          signature_status, export_timestamp, key_fingerprint)
  *   - signature-verification.txt  (HMAC chain verification report)
+ *   - verwerkingsregister.csv     (OR-PA-7 Art. 30 register slice; loud warning if absent)
+ *
+ * @spec openspec/specs/avg-verwerkingsregister/spec.md
  */
 class AuditPackExportController extends Controller
 {
@@ -78,6 +83,8 @@ class AuditPackExportController extends Controller
      * @param IConfig           $config           Nextcloud system config for tenant ID lookup.
      * @param IUserSession      $userSession      Nextcloud user session.
      * @param ActionAuthService $actionAuth       ADR-023 action authorization service.
+     * @param IClientService    $clientService    NC HTTP client factory (OR read-log fetch).
+     * @param IURLGenerator     $urlGenerator     NC URL generator for the OR endpoint.
      */
     public function __construct(
         IRequest $request,
@@ -86,6 +93,8 @@ class AuditPackExportController extends Controller
         private readonly IConfig $config,
         private readonly IUserSession $userSession,
         private readonly ActionAuthService $actionAuth,
+        private readonly IClientService $clientService,
+        private readonly IURLGenerator $urlGenerator,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -222,6 +231,17 @@ class AuditPackExportController extends Controller
         );
         $verificationTxt = $this->buildVerificationTxt(verification: $verification);
 
+        // AVG Art. 30 verwerkingsregister artefact. The aggregate export is an
+        // OpenRegister capability (OR-PA-7); scholiq only fetches the platform
+        // output scoped to its register slice and includes it verbatim — no
+        // export engine, serialisation, or column logic here. When the platform
+        // capability is absent the artefact degrades loudly (warning content),
+        // it is never silently omitted.
+        $verwerkingsregisterCsv = $this->buildVerwerkingsregisterCsv(
+            dateFrom: $dateFrom,
+            dateTo: $dateTo,
+        );
+
         // Build ZIP in memory.
         $zipContent = $this->buildZip(
                 files: [
@@ -229,6 +249,7 @@ class AuditPackExportController extends Controller
                     'audit-trail.csv'            => $csv,
                     'manifest.json'              => $manifestJson,
                     'signature-verification.txt' => $verificationTxt,
+                    'verwerkingsregister.csv'    => $verwerkingsregisterCsv,
                 ]
                 );
 
@@ -245,6 +266,158 @@ class AuditPackExportController extends Controller
             contentType: 'application/zip'
         );
     }//end export()
+
+    /**
+     * Fetch the AVG Art. 30 verwerkingsregister for scholiq's slice from
+     * OpenRegister and return it as CSV for inclusion in the audit pack.
+     *
+     * Per ADR-022 scholiq ships NO export engine: it calls OpenRegister's
+     * per-access processing-log endpoint (`/api/avg/verwerkingen`, OR-PA-7/8)
+     * scoped to scholiq's register and includes the platform output. The
+     * aggregate Art. 30 register export to CSV/JSON/PDF is a forthcoming
+     * OpenRegister capability; until it lands this artefact carries the OR
+     * read-log query result. When OpenRegister lacks the capability entirely
+     * (endpoint 404 / not installed) the artefact contains a loud
+     * "platform capability missing" warning rather than being omitted.
+     *
+     * @param string $dateFrom ISO-8601 lower bound forwarded to the platform.
+     * @param string $dateTo   ISO-8601 upper bound forwarded to the platform.
+     *
+     * @return string CSV content, or a loud warning when the platform capability is absent.
+     *
+     * @spec openspec/specs/avg-verwerkingsregister/spec.md
+     */
+    private function buildVerwerkingsregisterCsv(string $dateFrom, string $dateTo): string
+    {
+        try {
+            $url = $this->urlGenerator->linkToRoute('openregister.processingLog.index');
+        } catch (\Throwable $e) {
+            return $this->verwerkingsregisterWarning(
+                reason: 'OpenRegister does not expose the AVG processing-log capability '
+                    .'(route openregister.processingLog.index is not registered). '
+                    .'The Art. 30 verwerkingsregister is provided by OpenRegister (OR-PA-7); '
+                    .'install or upgrade OpenRegister (>= 0.2.14) to include it.'
+            );
+        }
+
+        $absoluteUrl = $this->urlGenerator->getAbsoluteURL($url)
+            .'?register=scholiq&from='.rawurlencode($dateFrom).'&to='.rawurlencode($dateTo);
+
+        // Forward the caller's session so OpenRegister applies its own RBAC
+        // (OR-PA-8). Scholiq performs no access decision of its own here.
+        $cookieHeader = (string) $this->request->getHeader('Cookie');
+
+        try {
+            $client   = $this->clientService->newClient();
+            $response = $client->get(
+                $absoluteUrl,
+                [
+                    'headers'   => [
+                        'Accept'         => 'application/json',
+                        'Cookie'         => $cookieHeader,
+                        'OCS-APIRequest' => 'true',
+                        'requesttoken'   => (string) $this->request->getHeader('requesttoken'),
+                    ],
+                    'nextcloud' => ['allow_local_address' => true],
+                ]
+            );
+        } catch (\Throwable $e) {
+            return $this->verwerkingsregisterWarning(
+                reason: 'The OpenRegister AVG processing-log endpoint could not be reached ('.$e->getMessage().'). '
+                    .'The Art. 30 verwerkingsregister is provided by OpenRegister (OR-PA-7) and could not be included.'
+            );
+        }
+
+        $body    = (string) $response->getBody();
+        $decoded = json_decode($body, true);
+        if (is_array($decoded) === false || isset($decoded['results']) === false) {
+            return $this->verwerkingsregisterWarning(
+                reason: 'OpenRegister returned an unexpected response for the AVG processing log; '
+                    .'the Art. 30 verwerkingsregister could not be included.'
+            );
+        }
+
+        return $this->verwerkingsregisterCsvFromEntries(entries: (array) $decoded['results']);
+    }//end buildVerwerkingsregisterCsv()
+
+    /**
+     * Render the OpenRegister processing-log entries (platform output) as CSV.
+     *
+     * This is a flat passthrough of whatever fields OpenRegister returns; it
+     * applies no Art. 30 column semantics of its own (those are OR-PA-7's).
+     *
+     * @param array<int,array<string,mixed>> $entries Platform processing-log rows.
+     *
+     * @return string CSV content.
+     *
+     * @spec openspec/specs/avg-verwerkingsregister/spec.md
+     */
+    private function verwerkingsregisterCsvFromEntries(array $entries): string
+    {
+        $handle = fopen('php://memory', 'r+');
+        if ($handle === false) {
+            return '';
+        }
+
+        if (empty($entries) === true) {
+            fputcsv($handle, ['activity', 'register', 'schema', 'action', 'actor', 'subjectIdType', 'created']);
+            rewind($handle);
+            $csv = (string) stream_get_contents($handle);
+            fclose($handle);
+            return $csv;
+        }
+
+        // Header = the union of keys present on the first row (platform-defined).
+        $first   = (array) ($entries[0] ?? []);
+        $columns = array_keys($first);
+        fputcsv($handle, $columns);
+
+        foreach ($entries as $entry) {
+            $row   = (array) $entry;
+            $cells = [];
+            foreach ($columns as $column) {
+                $value = ($row[$column] ?? '');
+                if (is_array($value) === true) {
+                    $value = (string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+
+                $cells[] = $this->sanitizeCsvCell(value: (string) $value);
+            }
+
+            fputcsv($handle, $cells);
+        }
+
+        rewind($handle);
+        $csv = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        return $csv;
+    }//end verwerkingsregisterCsvFromEntries()
+
+    /**
+     * Build the loud "platform capability missing" warning artefact content.
+     *
+     * @param string $reason Human-readable reason the register could not be included.
+     *
+     * @return string Warning CSV content.
+     *
+     * @spec openspec/specs/avg-verwerkingsregister/spec.md
+     */
+    private function verwerkingsregisterWarning(string $reason): string
+    {
+        $handle = fopen('php://memory', 'r+');
+        if ($handle === false) {
+            return 'WARNING,'.$reason."\n";
+        }
+
+        fputcsv($handle, ['status', 'message']);
+        fputcsv($handle, ['PLATFORM CAPABILITY MISSING', $this->sanitizeCsvCell(value: $reason)]);
+        rewind($handle);
+        $csv = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        return $csv;
+    }//end verwerkingsregisterWarning()
 
     /**
      * Render events as newline-delimited JSON (one object per line).
