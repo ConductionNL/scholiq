@@ -32,6 +32,7 @@ return [
         // Controller: ExternalTrainingController (slug: externalTraining)
         ['name' => 'externalTraining#bulkRecord',      'url' => '/api/external-training/bulk',                  'verb' => 'POST'],
         ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
+        ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
 
         // App health observability — admin-only via #[AuthorizedAdminSetting] (ADR-031 exception).
         ['name' => 'health#index', 'url' => '/api/admin/health', 'verb' => 'GET'],

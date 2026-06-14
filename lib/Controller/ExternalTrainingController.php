@@ -204,4 +204,52 @@ class ExternalTrainingController extends Controller
 
         return new JSONResponse(data: ['credentialId' => $credentialId], statusCode: Http::STATUS_CREATED);
     }//end issueCredential()
+
+    /**
+     * Report whether a learner is covered for a regulation, and by which class.
+     *
+     * Powers the coverage view's per-learner evidence-class column: coverage
+     * holds when the learner has a signed Attestation, a valid Credential, or a
+     * verified unexpired ExternalTrainingRecord for the regulation. Authorized
+     * via the same officer/HR/admin action as bulk-record; a learner querying
+     * their own coverage is allowed because the action matrix admits their
+     * group, and the read itself is scoped to the (learnerId, regulationSlug)
+     * pair supplied — no arbitrary-object exposure beyond a boolean + class.
+     *
+     * @param string $learnerId      LearnerProfile UUID.
+     * @param string $regulationSlug Regulation slug.
+     *
+     * @return JSONResponse { covered: bool, evidenceClass: string|null }.
+     *
+     * @spec openspec/changes/external-training-recording/tasks.md
+     */
+    #[NoAdminRequired]
+    public function learnerCoverage(string $learnerId='', string $regulationSlug=''): JSONResponse
+    {
+        $user = $this->userSession->getUser();
+        if ($user === null) {
+            return new JSONResponse(data: ['error' => 'Not authenticated'], statusCode: Http::STATUS_UNAUTHORIZED);
+        }
+
+        $this->actionAuth->requireAction(user: $user, action: 'external-training.bulk-record');
+
+        if ($learnerId === '' || $regulationSlug === '') {
+            return new JSONResponse(
+                data: ['error' => 'learnerId and regulationSlug are required'],
+                statusCode: Http::STATUS_BAD_REQUEST
+            );
+        }
+
+        $evidenceClass = $this->trainingService->coveringEvidenceClass(
+            learnerId: $learnerId,
+            regulationSlug: $regulationSlug
+        );
+
+        return new JSONResponse(
+            data: [
+                'covered'       => $this->trainingService->isLearnerCovered(learnerId: $learnerId, regulationSlug: $regulationSlug),
+                'evidenceClass' => $evidenceClass,
+            ]
+        );
+    }//end learnerCoverage()
 }//end class
