@@ -1,10 +1,12 @@
 ---
 slug: dashboard
 title: Role-Aware Dashboards
-status: implemented
+status: in-progress
 feature_tier: must
-depends_on_adrs: [adr-001, adr-003, adr-012]   # TODO until ADRs land
+depends_on_adrs: [adr-001, adr-003, adr-012, adr-009]   # TODO until ADRs land
 created: 2026-05-11
+openspec_changes:
+  - fix-dashboards-settings-notifications
 ---
 
 # Role-Aware Dashboards

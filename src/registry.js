@@ -17,7 +17,7 @@ import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
-import ScholiqDashboard from './views/ScholiqDashboard.vue'
+import ScholiqDashboards from './views/ScholiqDashboards.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
@@ -45,7 +45,7 @@ export default {
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	ScholiqAdminHealth: page(ScholiqAdminHealth),
 	ScholiqCompliance: page(ScholiqCompliance),
-	ScholiqDashboard: page(ScholiqDashboard),
+	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),
 	ScholiqSettings: page(ScholiqSettings),
 	TakeAssessmentView: page(TakeAssessmentView),

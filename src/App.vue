@@ -7,9 +7,11 @@
  and renders a dependency-missing empty state for absent apps automatically
  (per ADR-024) — no app-local OpenRegisterGuard is needed.
 
- The #user-settings slot feeds ScholiqSettings into CnAppRoot's hosted
- NcAppSettingsDialog, which CnAppNav opens when the user clicks the
- manifest menu entry with action: "user-settings".
+ The #user-settings slot feeds ScholiqNotificationSettings into CnAppRoot's
+ hosted NcAppSettingsDialog, which CnAppNav opens when the user clicks the
+ manifest menu entry with action: "user-settings". Per-user settings are
+ about which notifications the user receives; instance-wide configuration
+ (register, AI features, credential signing) lives in the NC Admin panel.
 -->
 <template>
 	<CnAppRoot
@@ -19,7 +21,7 @@
 		app-id="scholiq"
 		:translate="translateForApp">
 		<template #user-settings>
-			<ScholiqSettings :in-dialog="true" />
+			<ScholiqNotificationSettings />
 		</template>
 	</CnAppRoot>
 </template>
@@ -27,14 +29,14 @@
 <script>
 import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import ScholiqSettings from './views/ScholiqSettings.vue'
+import ScholiqNotificationSettings from './views/ScholiqNotificationSettings.vue'
 
 export default {
 	name: 'App',
 
 	components: {
 		CnAppRoot,
-		ScholiqSettings,
+		ScholiqNotificationSettings,
 	},
 
 	props: {

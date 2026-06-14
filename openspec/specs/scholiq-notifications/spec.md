@@ -1,5 +1,9 @@
 # scholiq-notifications Specification
 
+**Status**: in-progress
+**OpenSpec changes**:
+- fix-dashboards-settings-notifications
+
 ## Purpose
 TBD - created by archiving change scholiq-notifications. Update Purpose after archive.
 ## Requirements

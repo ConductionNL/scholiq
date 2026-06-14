@@ -8,8 +8,8 @@
 	"menu": [
 		{
 			"id": "Dashboard",
-			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
+			"label": "Dashboards",
+			"icon": "icon-home",
 			"route": "Dashboard",
 			"order": 10
 		},
@@ -37,7 +37,7 @@
 		{
 			"id": "Curriculum",
 			"label": "Curriculum",
-			"icon": "icon-category-organization",
+			"icon": "icon-projects",
 			"route": "Programmes",
 			"order": 45
 		},
@@ -65,7 +65,7 @@
 		{
 			"id": "Compliance",
 			"label": "Compliance",
-			"icon": "icon-category-security",
+			"icon": "icon-password",
 			"route": "Compliance",
 			"order": 50,
 			"visibleIf": {
@@ -78,25 +78,9 @@
 			}
 		},
 		{
-			"id": "LearnerHomeMenu",
-			"label": "My learning",
-			"icon": "icon-home",
-			"route": "LearnerHome",
-			"order": 15,
-			"visibleIf": {
-				"user.primaryRole": {
-					"in": [
-						"learner",
-						"manager",
-						"instructor"
-					]
-				}
-			}
-		},
-		{
 			"id": "AdminHealthMenu",
 			"label": "App health",
-			"icon": "icon-category-monitoring",
+			"icon": "icon-toggle",
 			"route": "AdminHealth",
 			"section": "settings",
 			"order": 95,
@@ -125,7 +109,7 @@
 		{
 			"id": "LearningPlans",
 			"label": "Learning plans",
-			"icon": "icon-category-social",
+			"icon": "icon-files",
 			"route": "LearningPlans",
 			"order": 49
 		},
@@ -139,7 +123,7 @@
 		{
 			"id": "DataExchange",
 			"label": "Data exchange",
-			"icon": "icon-category-integration",
+			"icon": "icon-external",
 			"route": "DataExchangeJobs",
 			"order": 60
 		},
@@ -161,7 +145,7 @@
 		{
 			"id": "AiFeaturesMenu",
 			"label": "AI features",
-			"icon": "icon-category-tools",
+			"icon": "icon-settings",
 			"route": "AiFeatures",
 			"section": "settings",
 			"order": 94
@@ -179,30 +163,10 @@
 		{
 			"id": "Dashboard",
 			"route": "/",
-			"type": "dashboard",
-			"title": "Dashboard",
-			"config": {
-				"widgets": [
-					{
-						"id": "scholiqDashboard",
-						"title": "Dashboard",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "scholiqDashboard",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-scholiqDashboard": "ScholiqDashboard"
-			}
+			"type": "custom",
+			"title": "Dashboards",
+			"component": "ScholiqDashboards",
+			"_note": "Role-aware dashboard (ADR-009 §6): one component rendering exactly one CnDashboardPage, re-rendered per active role (admin/teacher/student) with an in-page switcher for multi-role users."
 		},
 		{
 			"id": "Courses",
@@ -493,7 +457,7 @@
 			"title": "Curriculum plans",
 			"config": {
 				"register": "scholiq",
-				"schema": "CurriculumPlan"
+				"schema": "curriculum-plan"
 			}
 		},
 		{
@@ -503,7 +467,7 @@
 			"title": "Curriculum plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "CurriculumPlan"
+				"schema": "curriculum-plan"
 			}
 		},
 		{
@@ -661,7 +625,7 @@
 			"title": "Item banks",
 			"config": {
 				"register": "scholiq",
-				"schema": "ItemBank"
+				"schema": "item-bank"
 			}
 		},
 		{
@@ -671,7 +635,7 @@
 			"title": "Item bank",
 			"config": {
 				"register": "scholiq",
-				"schema": "ItemBank"
+				"schema": "item-bank"
 			}
 		},
 		{
@@ -721,7 +685,7 @@
 			"title": "Assessment results",
 			"config": {
 				"register": "scholiq",
-				"schema": "AssessmentResult",
+				"schema": "assessment-result",
 				"filter": {
 					"assessmentId": "@route.assessmentId"
 				},
@@ -743,7 +707,7 @@
 			"title": "Assessment result",
 			"config": {
 				"register": "scholiq",
-				"schema": "AssessmentResult",
+				"schema": "assessment-result",
 				"readOnly": true
 			}
 		},
@@ -754,7 +718,7 @@
 			"title": "Proctoring sessions",
 			"config": {
 				"register": "scholiq",
-				"schema": "ProctoringSession",
+				"schema": "proctoring-session",
 				"readOnly": true
 			}
 		},
@@ -765,7 +729,7 @@
 			"title": "Proctoring session",
 			"config": {
 				"register": "scholiq",
-				"schema": "ProctoringSession",
+				"schema": "proctoring-session",
 				"readOnly": true
 			}
 		},
@@ -808,7 +772,7 @@
 			"title": "Grade scales",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeScale"
+				"schema": "grade-scale"
 			}
 		},
 		{
@@ -818,7 +782,7 @@
 			"title": "Grade scale",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeScale"
+				"schema": "grade-scale"
 			}
 		},
 		{
@@ -828,7 +792,7 @@
 			"title": "Grade entries",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeEntry"
+				"schema": "grade-entry"
 			}
 		},
 		{
@@ -838,7 +802,7 @@
 			"title": "Grade entry",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeEntry"
+				"schema": "grade-entry"
 			}
 		},
 		{
@@ -848,7 +812,7 @@
 			"title": "Final grades",
 			"config": {
 				"register": "scholiq",
-				"schema": "FinalGrade",
+				"schema": "final-grade",
 				"readOnly": true
 			}
 		},
@@ -859,7 +823,7 @@
 			"title": "Final grade",
 			"config": {
 				"register": "scholiq",
-				"schema": "FinalGrade",
+				"schema": "final-grade",
 				"readOnly": true
 			}
 		},
@@ -895,7 +859,7 @@
 			"title": "Learning plan templates",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanTemplate"
+				"schema": "learning-plan-template"
 			}
 		},
 		{
@@ -905,7 +869,7 @@
 			"title": "Learning plan template",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanTemplate"
+				"schema": "learning-plan-template"
 			}
 		},
 		{
@@ -915,7 +879,7 @@
 			"title": "Learning plans",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlan"
+				"schema": "learning-plan"
 			}
 		},
 		{
@@ -925,7 +889,7 @@
 			"title": "Learning plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlan"
+				"schema": "learning-plan"
 			}
 		},
 		{
@@ -935,7 +899,7 @@
 			"title": "Learning plan evaluations",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanEvaluation",
+				"schema": "learning-plan-evaluation",
 				"filter": {
 					"learningPlanId": "@route.planId"
 				},
@@ -957,7 +921,7 @@
 			"title": "Learning plan evaluation",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanEvaluation",
+				"schema": "learning-plan-evaluation",
 				"readOnly": true
 			}
 		},
@@ -1018,7 +982,7 @@
 			"title": "Attendance records",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceRecord"
+				"schema": "attendance-record"
 			}
 		},
 		{
@@ -1028,7 +992,7 @@
 			"title": "Attendance record",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceRecord"
+				"schema": "attendance-record"
 			}
 		},
 		{
@@ -1038,7 +1002,7 @@
 			"title": "Excuse requests",
 			"config": {
 				"register": "scholiq",
-				"schema": "ExcuseRequest"
+				"schema": "excuse-request"
 			}
 		},
 		{
@@ -1048,7 +1012,7 @@
 			"title": "Excuse request",
 			"config": {
 				"register": "scholiq",
-				"schema": "ExcuseRequest"
+				"schema": "excuse-request"
 			}
 		},
 		{
@@ -1058,7 +1022,7 @@
 			"title": "Attendance thresholds",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceThreshold"
+				"schema": "attendance-threshold"
 			}
 		},
 		{
@@ -1068,7 +1032,7 @@
 			"title": "Attendance threshold",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceThreshold"
+				"schema": "attendance-threshold"
 			}
 		},
 		{
@@ -1078,7 +1042,7 @@
 			"title": "Attendance flags",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceFlag",
+				"schema": "attendance-flag",
 				"readOnly": true
 			}
 		},
@@ -1089,7 +1053,7 @@
 			"title": "Attendance flag",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceFlag",
+				"schema": "attendance-flag",
 				"readOnly": true
 			}
 		},
@@ -1116,7 +1080,7 @@
 			"title": "Data mapping profiles",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataMappingProfile"
+				"schema": "data-mapping-profile"
 			}
 		},
 		{
@@ -1126,7 +1090,7 @@
 			"title": "Data mapping profile",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataMappingProfile"
+				"schema": "data-mapping-profile"
 			}
 		},
 		{
@@ -1136,7 +1100,7 @@
 			"title": "Data exchange jobs",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataExchangeJob"
+				"schema": "data-exchange-job"
 			}
 		},
 		{
@@ -1146,7 +1110,7 @@
 			"title": "Data exchange job",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataExchangeJob"
+				"schema": "data-exchange-job"
 			}
 		},
 		{
@@ -1172,7 +1136,7 @@
 			"title": "Learners",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearnerProfile"
+				"schema": "learner-profile"
 			}
 		},
 		{
@@ -1182,7 +1146,7 @@
 			"title": "Learner",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearnerProfile"
+				"schema": "learner-profile"
 			}
 		},
 		{
@@ -1192,7 +1156,7 @@
 			"title": "xAPI statements",
 			"config": {
 				"register": "scholiq",
-				"schema": "XapiStatement",
+				"schema": "xapi-statement",
 				"readOnly": true
 			}
 		},
@@ -1203,7 +1167,7 @@
 			"title": "xAPI statement",
 			"config": {
 				"register": "scholiq",
-				"schema": "XapiStatement",
+				"schema": "xapi-statement",
 				"readOnly": true
 			}
 		},

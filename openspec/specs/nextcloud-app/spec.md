@@ -1,8 +1,10 @@
 ---
 slug: nextcloud-app
 title: Nextcloud App Shell
-status: implemented
+status: in-progress
 feature_tier: must
+openspec_changes:
+  - fix-dashboards-settings-notifications
 depends_on_adrs: [adr-001, adr-003, adr-008, adr-011, adr-012]   # TODO until ADRs land
 created: 2026-05-11
 retrofit_extensions:

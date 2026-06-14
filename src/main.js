@@ -6,6 +6,7 @@ import VueRouter from 'vue-router'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
@@ -74,6 +75,19 @@ function routesFromManifest(manifest) {
 	// Catch-all redirect to dashboard, preserving prior router behaviour.
 	routes.push({ path: '*', redirect: '/' })
 	return routes
+}
+
+// Populate the manifest runtime context so menu `visibleIf` predicates
+// (e.g. `user.primaryRole`) and the role-aware Dashboards component resolve
+// against the signed-in user's role. Provided as initial state by
+// PageController; absent runtime would (by lib fail-safe) hide every
+// role-gated menu item. Defaults to the least-privileged role on miss.
+bundledManifest.runtime = {
+	...(bundledManifest.runtime || {}),
+	user: {
+		...(bundledManifest.runtime?.user || {}),
+		primaryRole: loadState('scholiq', 'primaryRole', 'learner'),
+	},
 }
 
 const router = new VueRouter({

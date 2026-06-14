@@ -57,7 +57,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** support@conduction.nl
     ]]></description>
-    <version>0.1.4</version>
+    <version>0.1.6</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Scholiq</namespace>
@@ -77,7 +77,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <dependencies>
         <app>openregister</app>
         <app>openconnector</app>
-        <nextcloud min-version="33" max-version="34"/>
+        <nextcloud min-version="32" max-version="34"/>
         <php min-version="8.3" max-version="8.4"/>
     </dependencies>
 
@@ -102,4 +102,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Scholiq\Repair\InitializeActions</step>
         </post-migration>
     </repair-steps>
+
+    <settings>
+        <admin>OCA\Scholiq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Scholiq\Sections\SettingsSection</admin-section>
+    </settings>
 </info>
