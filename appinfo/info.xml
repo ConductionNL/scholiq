@@ -57,7 +57,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** support@conduction.nl
     ]]></description>
-    <version>0.1.4</version>
+    <version>0.2.0</version>
     <licence>agpl</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Scholiq</namespace>
@@ -74,6 +74,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
     <screenshot>https://codeberg.org/Conduction/scholiq/raw/branch/main/img/app-store.svg</screenshot>
 
+    <!--
+        AVG Art. 30 verwerkingsregister consumes OpenRegister's per-access
+        read-logging capability (the x-openregister-processing dialect,
+        ProcessingLogService / ProcessingLogController, and the
+        /api/avg/verwerkingen[/betrokkene] endpoints). That capability ships
+        from OpenRegister >= 0.2.14. The minimum is also recorded as the
+        `openregister` constraint in lib/Settings/scholiq_register.json.
+    -->
     <dependencies>
         <app>openregister</app>
         <app>openconnector</app>
