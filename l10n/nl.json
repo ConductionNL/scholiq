@@ -477,7 +477,8 @@
 		"Approval failed. Are you listed as a parent for this learner?": "Goedkeuring mislukt. Bent u vermeld als ouder voor deze leerling?",
 		"Rejection failed. Please try again.": "Afwijzen mislukt. Probeer het opnieuw.",
 		"No job ID in URL.": "Geen taak-ID in de URL.",
-		"Failed to load job. Please try again.": "Taak laden mislukt. Probeer het opnieuw."
+		"Failed to load job. Please try again.": "Taak laden mislukt. Probeer het opnieuw.",
+		"External training": "Externe training"
 	},
 	"plurals": ""
 }

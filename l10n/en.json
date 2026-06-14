@@ -477,7 +477,8 @@
 		"Approval failed. Are you listed as a parent for this learner?": "Approval failed. Are you listed as a parent for this learner?",
 		"Rejection failed. Please try again.": "Rejection failed. Please try again.",
 		"No job ID in URL.": "No job ID in URL.",
-		"Failed to load job. Please try again.": "Failed to load job. Please try again."
+		"Failed to load job. Please try again.": "Failed to load job. Please try again.",
+		"External training": "External training"
 	},
 	"plurals": ""
 }

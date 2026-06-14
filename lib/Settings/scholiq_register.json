@@ -15,19 +15,31 @@
     "components": {
         "objects": [
             {
-                "@self": { "register": "scholiq", "schema": "programme", "slug": "prog-compliance-2026" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "programme",
+                    "slug": "prog-compliance-2026"
+                },
                 "name": "Compliance Training 2026",
                 "level": "corporate",
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "programme", "slug": "prog-onboarding" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "programme",
+                    "slug": "prog-onboarding"
+                },
                 "name": "Employee Onboarding",
                 "level": "corporate",
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "course", "slug": "course-avg-2026" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-avg-2026"
+                },
                 "code": "AVG-2026",
                 "name": "AVG / GDPR Refresher 2026",
                 "level": "corporate",
@@ -35,7 +47,11 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "course", "slug": "course-bio2-2026" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-bio2-2026"
+                },
                 "code": "BIO2-2026",
                 "name": "BIO2 Security Awareness",
                 "level": "corporate",
@@ -43,7 +59,11 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "course", "slug": "course-nis2-2026" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-nis2-2026"
+                },
                 "code": "NIS2-2026",
                 "name": "NIS2 Compliance Basics",
                 "level": "corporate",
@@ -51,38 +71,64 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "cohort", "slug": "cohort-employees-2026" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "cohort",
+                    "slug": "cohort-employees-2026"
+                },
                 "name": "All Employees 2026",
                 "period": "2026",
                 "academicYear": "2026",
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "learner-profile", "slug": "learner-anna" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-anna"
+                },
                 "ncUserId": "anna",
                 "givenName": "Anna",
                 "familyName": "de Vries",
-                "roles": ["learner"],
+                "roles": [
+                    "learner"
+                ],
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "learner-profile", "slug": "learner-bram" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-bram"
+                },
                 "ncUserId": "bram",
                 "givenName": "Bram",
                 "familyName": "Jansen",
-                "roles": ["learner"],
+                "roles": [
+                    "learner"
+                ],
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "learner-profile", "slug": "learner-admin" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-admin"
+                },
                 "ncUserId": "admin",
                 "givenName": "Admin",
                 "familyName": "User",
-                "roles": ["learner"],
+                "roles": [
+                    "learner"
+                ],
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "enrolment", "slug": "enrol-anna-avg" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-anna-avg"
+                },
                 "learnerId": "anna",
                 "courseId": "@ref:course-avg-2026",
                 "source": "bulk",
@@ -90,7 +136,11 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "enrolment", "slug": "enrol-bram-avg" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-bram-avg"
+                },
                 "learnerId": "bram",
                 "courseId": "@ref:course-avg-2026",
                 "source": "bulk",
@@ -98,7 +148,11 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "enrolment", "slug": "enrol-anna-bio2" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-anna-bio2"
+                },
                 "learnerId": "anna",
                 "courseId": "@ref:course-bio2-2026",
                 "source": "bulk",
@@ -106,7 +160,11 @@
                 "tenant_id": "00000000-0000-0000-0000-000000000001"
             },
             {
-                "@self": { "register": "scholiq", "schema": "regulation", "slug": "reg-avg" },
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "regulation",
+                    "slug": "reg-avg"
+                },
                 "slug": "AVG",
                 "name": "AVG / GDPR",
                 "audienceScope": "all-employees",
@@ -121,7 +179,12 @@
                     "doelbinding": "Issue, verify, and revoke verifiable credentials (EDCI / Open Badges 3.0) attesting completed courses and certifications for learners.",
                     "rechtsgrond": "contract",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "courseId", "issuerDid", "signature"],
+                    "dataCategories": [
+                        "learnerId",
+                        "courseId",
+                        "issuerDid",
+                        "signature"
+                    ],
                     "backend": "scholiq.credentialing",
                     "retentionReference": "not declared (Credential carries no x-openregister-archival annotation; align with the school's selectielijst)",
                     "lifecycle": "draft",
@@ -641,7 +704,11 @@
                     "doelbinding": "Operate adaptive learning paths and AI-assisted item generation; record EU AI Act high-risk decision traces and DPO acknowledgements for transparency and accountability.",
                     "rechtsgrond": "consent",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "riskCategory", "decisionTrace"],
+                    "dataCategories": [
+                        "learnerId",
+                        "riskCategory",
+                        "decisionTrace"
+                    ],
                     "backend": "scholiq.ai",
                     "retentionReference": "not declared (AiFeature carries no x-openregister-archival annotation; align with the school's selectielijst)",
                     "lifecycle": "draft",
@@ -1873,7 +1940,12 @@
                     "doelbinding": "Record that a learner completed mandatory compliance training (AVG / BIO / NIS2 / Cyberbeveiligingswet) and capture the signed attestation as legal evidence, including the actor's IP address for non-repudiation.",
                     "rechtsgrond": "legal-obligation",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "employeeId", "actorIp", "signature"],
+                    "dataCategories": [
+                        "learnerId",
+                        "employeeId",
+                        "actorIp",
+                        "signature"
+                    ],
                     "backend": "scholiq.attestations",
                     "retentionReference": "not declared (Attestation carries no x-openregister-archival annotation; signed evidence is typically retained per the school's selectielijst)",
                     "lifecycle": "draft",
@@ -2007,6 +2079,297 @@
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
+            "ExternalTrainingRecord": {
+                "x-openregister-processing": {
+                    "code": "scholiq-external-training",
+                    "naam": "Externally-completed training records",
+                    "doelbinding": "Record training a learner completed outside the LMS (classroom, third-party, conference) as first-class compliance evidence, with an officer verification gate and evidence file attachments, so that compliance coverage reflects real-world completions instead of forcing fake in-app enrolments.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "provider",
+                        "evidenceNote",
+                        "submittedBy",
+                        "verifiedBy"
+                    ],
+                    "backend": "scholiq.external-training",
+                    "retentionReference": "not declared (verified external-training records are compliance evidence, typically retained per the school selectielijst alongside attestations)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-external-training"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-15"
+                },
+                "slug": "external-training-record",
+                "icon": "SchoolOutline",
+                "version": "0.1.0",
+                "title": "ExternalTrainingRecord",
+                "description": "An externally-completed training (classroom, third-party e-learning, conference, on-the-job) recorded per learner with evidence file attachments and an officer verification gate. A verified, unexpired record counts as compliance evidence for a matching regulation.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false
+                },
+                "required": [
+                    "learnerId",
+                    "title",
+                    "provider",
+                    "kind",
+                    "completedAt",
+                    "submittedBy",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "UUID of the LearnerProfile this record belongs to."
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Human-readable training title, e.g. \"NIS2 board awareness session\"."
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "External trainer / provider name."
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "classroom",
+                            "external-elearning",
+                            "conference",
+                            "on-the-job",
+                            "other"
+                        ],
+                        "default": "classroom",
+                        "description": "Kind of external training."
+                    },
+                    "regulationSlug": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional Regulation.slug this training provides coverage for (links into compliance coverage). Null = no regulation link."
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional UUID of an in-app Course considered equivalent."
+                    },
+                    "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the training was completed."
+                    },
+                    "validUntil": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Optional expiry of the coverage this record provides. When set and in the past, the record no longer counts toward coverage."
+                    },
+                    "evidenceNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text note describing the evidence (e.g. \"signed attendance list attached\")."
+                    },
+                    "submittedBy": {
+                        "type": "string",
+                        "description": "NC user ID of the person who recorded the training."
+                    },
+                    "verifiedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "NC user ID of the officer/HR/admin who verified the record. Must differ from submittedBy when the learner self-submitted."
+                    },
+                    "verifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "When the record was verified."
+                    },
+                    "rejectionReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reason captured when the record is rejected."
+                    },
+                    "credentialId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional UUID of a manual Credential issued on verification (links external certificates into the certification expiry machinery)."
+                    },
+                    "batchId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Identifier shared by all records created together in one bulk classroom-session entry, so a batch can be verified and audited together."
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "submitted",
+                            "verified",
+                            "rejected"
+                        ],
+                        "default": "submitted",
+                        "description": "Verification lifecycle state."
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Owning tenant identifier."
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "submitted",
+                    "transitions": {
+                        "verify": {
+                            "from": "submitted",
+                            "to": "verified",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ExternalTrainingVerificationGuard"
+                        },
+                        "reject": {
+                            "from": "submitted",
+                            "to": "rejected"
+                        }
+                    }
+                },
+                "x-openregister-relations": {
+                    "learner": {
+                        "register": "scholiq",
+                        "schema": "LearnerProfile",
+                        "cardinality": "many-to-one",
+                        "joinOn": "learnerId"
+                    },
+                    "course": {
+                        "register": "scholiq",
+                        "schema": "Course",
+                        "cardinality": "many-to-one",
+                        "joinOn": "courseId"
+                    },
+                    "credential": {
+                        "register": "scholiq",
+                        "schema": "Credential",
+                        "cardinality": "many-to-one",
+                        "joinOn": "credentialId"
+                    }
+                },
+                "x-openregister-notifications": {
+                    "submittedForVerification": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "compliance-officer",
+                                    "hr"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuwe externe training '{{title}}' wacht op verificatie",
+                            "en": "New external training '{{title}}' awaits verification"
+                        }
+                    },
+                    "verified": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "verify"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je externe training '{{title}}' is geverifieerd",
+                            "en": "Your external training '{{title}}' was verified"
+                        }
+                    },
+                    "rejected": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "reject"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je externe training '{{title}}' is afgewezen",
+                            "en": "Your external training '{{title}}' was rejected"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "External-training records carry PII (provider, evidence). Learner sees own record; compliance-officer/hr/admin see all and perform verification. Write stays lifecycle-controlled.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "compliance-officer"
+                            },
+                            {
+                                "role": "hr"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            },
+                            {
+                                "match": {
+                                    "field": "submittedBy",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "learnerId": "learner-001",
+                        "title": "NIS2 board awareness session",
+                        "provider": "SecureBoard B.V.",
+                        "kind": "classroom",
+                        "regulationSlug": "NIS2",
+                        "completedAt": "2026-03-10T10:00:00Z",
+                        "validUntil": "2027-03-10T10:00:00Z",
+                        "evidenceNote": "Signed attendance list attached",
+                        "submittedBy": "admin",
+                        "verifiedBy": "admin",
+                        "verifiedAt": "2026-03-11T09:00:00Z",
+                        "lifecycle": "verified",
+                        "tenant_id": "default"
+                    }
+                ],
+                "appendOnly": false
+            },
             "LearnerProfile": {
                 "x-openregister-processing": {
                     "code": "scholiq-learner-administration",
@@ -2014,7 +2377,16 @@
                     "doelbinding": "Maintain the core learner record (identity, school enrolment, affiliation, guardians) required to deliver education, register results, and meet statutory reporting obligations. Includes the encrypted BSN, ECK iD, and SchoolID used for pseudonymised exchange.",
                     "rechtsgrond": "public-task",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["bsnEncrypted", "eckId", "schoolId", "givenName", "familyName", "birthDate", "eduPersonAffiliation", "parentIds"],
+                    "dataCategories": [
+                        "bsnEncrypted",
+                        "eckId",
+                        "schoolId",
+                        "givenName",
+                        "familyName",
+                        "birthDate",
+                        "eduPersonAffiliation",
+                        "parentIds"
+                    ],
                     "backend": "scholiq.learner-administration",
                     "retentionReference": "not declared (LearnerProfile carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
                     "lifecycle": "draft",
@@ -3769,7 +4141,12 @@
                     "doelbinding": "Administer assessments and record grades, results, and final marks to evaluate learner progress and award qualifications.",
                     "rechtsgrond": "public-task",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "score", "result", "gradeValue"],
+                    "dataCategories": [
+                        "learnerId",
+                        "score",
+                        "result",
+                        "gradeValue"
+                    ],
                     "backend": "scholiq.grading",
                     "retentionReference": "not declared (Assessment carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
                     "lifecycle": "draft",
@@ -5600,7 +5977,12 @@
                     "doelbinding": "Register attendance and absences and report verzuim to the leerplichtambtenaar / DUO as required by the Leerplichtwet.",
                     "rechtsgrond": "legal-obligation",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "status", "minutesAttended", "reason"],
+                    "dataCategories": [
+                        "learnerId",
+                        "status",
+                        "minutesAttended",
+                        "reason"
+                    ],
                     "backend": "scholiq.attendance",
                     "retentionReference": "not declared (AttendanceRecord carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
                     "lifecycle": "draft",
@@ -6610,7 +6992,12 @@
                     "doelbinding": "Exchange learner and result data with external systems (DUO/BRON-ROD, OSO overstapdossier, municipality leerplicht, HR systems) over the agreed standards to meet statutory reporting and transfer obligations.",
                     "rechtsgrond": "legal-obligation",
                     "grondslagSource": "Regulation.slug",
-                    "dataCategories": ["learnerId", "target", "scope", "format"],
+                    "dataCategories": [
+                        "learnerId",
+                        "target",
+                        "scope",
+                        "format"
+                    ],
                     "backend": "scholiq.data-exchange",
                     "retentionReference": "not declared (DataExchangeJob carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
                     "lifecycle": "draft",

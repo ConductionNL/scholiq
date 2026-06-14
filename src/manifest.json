@@ -157,6 +157,22 @@
 			"route": "Assistant",
 			"order": 92,
 			"section": "settings"
+		},
+		{
+			"id": "ExternalTraining",
+			"label": "External training",
+			"icon": "icon-add",
+			"route": "ExternalTrainingRecords",
+			"order": 52,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"compliance-officer",
+						"hr",
+						"admin"
+					]
+				}
+			}
 		}
 	],
 	"pages": [
@@ -1196,6 +1212,26 @@
 			"route": "/assistant",
 			"type": "chat",
 			"title": "Assistant"
+		},
+		{
+			"id": "ExternalTrainingRecords",
+			"route": "/compliance/external-training",
+			"type": "index",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
+		},
+		{
+			"id": "ExternalTrainingRecordDetail",
+			"route": "/compliance/external-training/:id",
+			"type": "detail",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
 		}
 	]
 }
