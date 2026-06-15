@@ -265,6 +265,10 @@ class AttendanceFlagCreationHandler implements IEventListener
         string $windowEnd,
         string $tenantId,
     ): ?string {
+        // #187: Create in `pending-review` (not `queued`) so a human reviewer must
+        // explicitly approve the job before it runs. The lifecycle engine will only
+        // transition to `queued`/`running` after a reviewer approves — satisfying the
+        // "human-in-the-loop" contract stated in the class docblock.
         $job = [
             'direction'   => 'export',
             'target'      => $target,
@@ -276,7 +280,7 @@ class AttendanceFlagCreationHandler implements IEventListener
             ],
             'requestedBy' => 'system',
             'requestedAt' => date('c'),
-            'lifecycle'   => 'queued',
+            'lifecycle'   => 'pending-review',
             'tenant_id'   => $tenantId,
         ];
 

@@ -135,6 +135,50 @@ class AssessmentGradeGuard
             }
         }
 
+        // #196: Collect all item IDs in one pass, then bulk-fetch in a single OR query
+        // rather than issuing one query per item (which causes N+1 under load).
+        $allItemIds = [];
+        foreach ($itemRefs as $itemRef) {
+            $itemId = $itemRef['itemId'] ?? null;
+            if ($itemId !== null) {
+                $allItemIds[] = $itemId;
+            }
+        }
+
+        if (empty($allItemIds) === true) {
+            return true;
+        }
+
+        // Single bulk query for all items referenced by this assessment.
+        // H1: scope the Item lookup to the same tenant.
+        $bulkFilters = ['uuid' => $allItemIds];
+        if ($tenantId !== '') {
+            $bulkFilters['tenant_id'] = $tenantId;
+        }
+
+        $fetchedItems = $this->objectService->findAll(
+            [
+                'register' => self::SCHOLIQ_REGISTER,
+                'schema'   => 'item',
+                'filters'  => $bulkFilters,
+                'limit'    => count($allItemIds) + 1,
+            ]
+        );
+
+        // Index fetched items by UUID for O(1) lookup.
+        $itemByUuid = [];
+        foreach ($fetchedItems as $rawItem) {
+            $itemArr = $rawItem;
+            if (is_array($rawItem) === false) {
+                $itemArr = $rawItem->jsonSerialize();
+            }
+
+            $uuid = $itemArr['uuid'] ?? ($itemArr['id'] ?? null);
+            if ($uuid !== null) {
+                $itemByUuid[$uuid] = $itemArr;
+            }
+        }
+
         // For each referenced item, check if it needs manual scoring.
         foreach ($itemRefs as $itemRef) {
             $itemId = $itemRef['itemId'] ?? null;
@@ -142,26 +186,12 @@ class AssessmentGradeGuard
                 continue;
             }
 
-            // H1: scope Item lookup to the same tenant.
-            $itemFilters = ['uuid' => $itemId];
-            if ($tenantId !== '') {
-                $itemFilters['tenant_id'] = $tenantId;
-            }
-
-            $items = $this->objectService->findAll(
-                [
-                    'register' => self::SCHOLIQ_REGISTER,
-                    'schema'   => 'item',
-                    'filters'  => $itemFilters,
-                    'limit'    => 1,
-                ]
-            );
-
-            if (empty($items) === true) {
+            // Bulk-fetched above (#196): O(1) lookup, tenant-scoped.
+            $item = $itemByUuid[$itemId] ?? null;
+            if ($item === null) {
                 continue;
             }
 
-            $item            = $items[0];
             $interactionType = $item['interactionType'] ?? '';
             $correctResponse = $item['correctResponse'] ?? null;
 
