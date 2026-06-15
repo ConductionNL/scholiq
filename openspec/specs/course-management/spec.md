@@ -35,11 +35,27 @@ Authoring of courses, modules, and lessons; cloning of templates; ordered learni
 ### Requirement: Course/Module/Lesson hierarchy in OpenRegister
 The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
 
+#### Scenario: Persist course hierarchy as OpenRegister objects
+- **GIVEN** an instructional designer authoring a course with modules and lessons
+- **WHEN** the course, its modules, and their lessons are saved
+- **THEN** the system persists the Course → Module → Lesson hierarchy as related OpenRegister objects
+
 ### Requirement: Publish course catalog via OOAPI 5.0
 The system MUST publish the course catalog via OOAPI 5.0 endpoints.
 
+#### Scenario: Serve the catalog over OOAPI 5.0
+- **GIVEN** a published course catalog
+- **WHEN** an authenticated client requests `/ooapi/v5/courses`
+- **THEN** the system returns an OOAPI 5.0-compliant response including ECTS, language, and level fields
+
 ### Requirement: Run cmi5 + xAPI natively with SCORM shim
 The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
+
+#### Scenario: Run cmi5/xAPI content with SCORM fallback
+- **GIVEN** a lesson backed by a content package
+- **WHEN** a learner launches the lesson
+- **THEN** the system runs cmi5 + xAPI content natively
+- **AND** it runs SCORM 1.2/2004 packages through the compatibility shim
 
 ## Standards
 SCORM, xAPI, cmi5, LTI 1.3, Common Cartridge, NL LOM, VDEX, OAI-PMH, OOAPI 5.0, Schema.org `Course` / `CourseInstance`, ECTS, Bologna.

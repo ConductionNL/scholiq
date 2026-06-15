@@ -46,17 +46,42 @@ An institution's data has to flow to and from external systems: a Dutch school's
 ### Requirement: Persist DataExchangeJob and DataMappingProfile in OpenRegister
 The system MUST persist `DataExchangeJob`, `DataMappingProfile` as OpenRegister objects with `x-openregister-lifecycle` (queued → running → succeeded | failed | partial; OSO adds pending-parent-review), `x-openregister-relations`, `x-openregister-notifications` (job-done alert), and audit-trail emission on every transition (ADR-008). `DataExchangeJob` artefacts MUST be OR file attachments.
 
+#### Scenario: Persist a job and emit audit on transition
+- **GIVEN** a `DataExchangeJob` request
+- **WHEN** the job is created and changes lifecycle state
+- **THEN** the system persists it as an OpenRegister object, emits an audit-trail entry on every transition, and attaches the produced artefact as an OR file attachment
+
 ### Requirement: Delegate wire protocols to OpenConnector
 Scholiq MUST NOT implement Edukoppeling, StUF, OSO-XML, OOAPI, or SAML/OAuth attribute-release wire protocols. Those MUST be OpenConnector source/target configurations referenced by the `target` field. (File the OpenConnector adapter issues: BRON/ROD, OSO PO→VO, leerplicht-Digikoppeling, SURFconext attributes, generic HR.)
 
+#### Scenario: Delegate the wire send to OpenConnector
+- **GIVEN** a `DataExchangeJob` with a `target` referencing an OpenConnector connection
+- **WHEN** the job runs
+- **THEN** Scholiq hands the payload to the OpenConnector source/target configuration and implements no wire protocol itself
+
 ### Requirement: Federated authentication is out of scope
-Federated authentication (DigiD / SURFconext / eduID) is OUT of this spec — it is a Nextcloud-auth-provider + OpenConnector concern; Scholiq only persists the pseudonymous identifiers on `LearnerProfile` (already does).
+Federated authentication (DigiD / SURFconext / eduID) is OUT of this spec — it MUST be handled by a Nextcloud-auth-provider + OpenConnector; Scholiq only persists the pseudonymous identifiers on `LearnerProfile` (already does).
+
+#### Scenario: Store only pseudonymous identifiers
+- **GIVEN** a learner authenticated via DigiD / SURFconext / eduID
+- **WHEN** the authentication completes outside this spec's scope
+- **THEN** Scholiq persists only the resulting pseudonymous identifiers on `LearnerProfile` and does not implement the federated authentication itself
 
 ### Requirement: OSO parent-review is a lifecycle gate
 The OSO parent-review gate MUST be a lifecycle state; the dossier MUST NOT leave the queue until parent approval is recorded.
 
+#### Scenario: Hold an OSO dossier until parent approval
+- **GIVEN** an OSO export job whose dossier has been composed
+- **WHEN** the job awaits review
+- **THEN** the job stays in `pending-parent-review` and does not leave the queue until parent approval is recorded
+
 ### Requirement: Frontend is declarative with named custom views
-Frontend declarative: `src/manifest.json` pages for DataExchangeJob/DataMappingProfile index+detail; a custom `RequestExportModal` and `OsoDossierReviewView` Vue component. No PHP CRUD controllers; the job execution is an OR-event-driven handler that calls OpenConnector (an ADR-031 "external-system bridge" exception, single method).
+The frontend MUST be declarative: `src/manifest.json` pages for DataExchangeJob/DataMappingProfile index+detail; a custom `RequestExportModal` and `OsoDossierReviewView` Vue component. There MUST be no PHP CRUD controllers; the job execution is an OR-event-driven handler that calls OpenConnector (an ADR-031 "external-system bridge" exception, single method).
+
+#### Scenario: Render the surface declaratively with named views
+- **GIVEN** the data-exchange frontend
+- **WHEN** it renders the DataExchangeJob/DataMappingProfile index and detail surfaces
+- **THEN** it is driven by `src/manifest.json` with the custom `RequestExportModal` and `OsoDossierReviewView` views and ships no PHP CRUD controllers
 
 ## Standards
 

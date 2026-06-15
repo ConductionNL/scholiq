@@ -46,17 +46,42 @@ Some learners need an individualised plan: a school pupil with extra ondersteuni
 ### Requirement: Persist LearningPlan domain objects in OpenRegister
 The system MUST persist `LearningPlan`, `LearningPlanEvaluation`, `Signature` as OpenRegister objects with `x-openregister-lifecycle` (LearningPlan: draft → active → under-evaluation → closed | superseded), `x-openregister-relations` (LearningPlan↔learner/template/cohort, Evaluation↔LearningPlan, Signature↔LearningPlan-version), `x-openregister-calculations` (LearningPlan `goalsMetCount`, `nextReviewDue`, `isFullySigned`), and `x-openregister-notifications` (`quarterlyReviewReminder`, `signatureRequested`, idempotency-keyed).
 
+#### Scenario: LearningPlan objects persisted in OpenRegister
+- **GIVEN** the learning-plan domain schemas are registered
+- **WHEN** a coordinator saves a `LearningPlan` with its evaluations and signatures
+- **THEN** `LearningPlan`, `LearningPlanEvaluation`, and `Signature` are stored as OpenRegister objects carrying the declared lifecycle, relations, calculations, and notification config
+
 ### Requirement: Review reminder is a declared notification
 The review-reminder MUST be a declared notification off the plan's period — not a PHP TimedJob.
+
+#### Scenario: Review reminder fires from a declared notification
+- **GIVEN** an active LearningPlan with a quarterly review cadence
+- **WHEN** the next-review date arrives
+- **THEN** a `quarterlyReviewReminder` notification fires to the coordinator via the declared notification mechanism, idempotency-keyed so a re-tick does not double-fire, with no PHP TimedJob
 
 ### Requirement: Append-on-version with immutable prior versions
 LearningPlan MUST be effectively append-on-version: a material change creates a new version requiring re-sign; prior versions and their signatures are immutable (`appendOnly: true` on the version records, or an OR versioning mechanism if available).
 
+#### Scenario: New version supersedes immutable prior version
+- **GIVEN** an active LearningPlan version with recorded signatures
+- **WHEN** a material change is made and the new version is co-signed
+- **THEN** a new version is created and activated while the prior version and its signatures remain immutable
+
 ### Requirement: Signing assurance level is declarative config
 Signing assurance-level capture MUST be declarative config; the actual DigiD/eIDAS handshake is an external auth concern (see `data-exchange` / openconnector), not implemented here.
 
+#### Scenario: Assurance level captured as declarative config
+- **GIVEN** a LearningPlan version requiring a DigiD-strength signature
+- **WHEN** a parent co-signs through the external auth flow
+- **THEN** the `Signature` records the assurance level from declarative config, and a signature below the required level does not satisfy the co-sign requirement
+
 ### Requirement: Frontend is declarative with named custom views
-Frontend declarative: `src/manifest.json` pages for LearningPlan index/detail (with a version-history + signature tab) and LearningPlanEvaluation; a custom `SignPlanModal` Vue component for the co-sign flow. No PHP CRUD controllers; the version-immutability is enforced by the schema's `appendOnly` / lifecycle.
+Frontend MUST be declarative: `src/manifest.json` pages for LearningPlan index/detail (with a version-history + signature tab) and LearningPlanEvaluation; a custom `SignPlanModal` Vue component for the co-sign flow. No PHP CRUD controllers; the version-immutability is enforced by the schema's `appendOnly` / lifecycle.
+
+#### Scenario: Pages and sign modal are manifest-declared
+- **GIVEN** the learning-plan frontend is configured
+- **WHEN** the app renders LearningPlan and LearningPlanEvaluation screens
+- **THEN** index/detail pages come from `src/manifest.json` and only `SignPlanModal` exists as a custom Vue component, with no PHP CRUD controllers
 
 ## Standards
 

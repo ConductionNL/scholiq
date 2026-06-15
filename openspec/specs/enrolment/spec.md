@@ -35,11 +35,26 @@ Manual and bulk enrolment of learners into courses, modules, and learning paths;
 ### Requirement: Bulk enrolment via cohort, role, department or CSV
 The system MUST support bulk enrolment via cohort, role, department, or CSV upload.
 
+#### Scenario: Bulk-enrol a selected group of learners
+- **GIVEN** a manager with a cohort, role, department, or CSV of learners and a target course
+- **WHEN** they trigger a bulk enrolment
+- **THEN** the system enrols every selected learner into the course with a single shared deadline
+
 ### Requirement: Validate prerequisites before persistence
 The system MUST validate prerequisites before enrolment is persisted.
 
+#### Scenario: Block enrolment when prerequisites are unmet
+- **GIVEN** a course with prerequisites the learner has not met
+- **WHEN** the learner attempts to enrol
+- **THEN** the system blocks the enrolment before persistence and names the failing prerequisite
+
 ### Requirement: Provision LMS account within 60 seconds via Studielink
 The system MUST provision an LMS account within 60 seconds of an HE enrolment via Studielink.
+
+#### Scenario: Provision an account on Studielink intake
+- **GIVEN** a Studielink enrolment received via the Edukoppeling adapter
+- **WHEN** it parses successfully
+- **THEN** the system creates the Learner and Enrolment objects and provisions an LMS account within 60 seconds
 
 ## Standards
 Studielink, Edukoppeling, OOAPI 5.0, IMS LIS (legacy), Schema.org `EducationEvent`, eduPersonAffiliation propagation.
