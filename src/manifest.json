@@ -7,88 +7,132 @@
 	],
 	"menu": [
 		{
-			"id": "Dashboard",
-			"label": "Dashboards",
-			"icon": "icon-home",
-			"route": "Dashboard",
-			"order": 10
-		},
-		{
-			"id": "Courses",
-			"label": "Courses",
+			"id": "GroupLearning",
+			"label": "Learning",
 			"icon": "icon-folder",
-			"route": "Courses",
-			"order": 20
+			"order": 10,
+			"children": [
+				{
+					"id": "Courses",
+					"label": "Courses",
+					"icon": "icon-folder",
+					"route": "Courses",
+					"order": 10
+				},
+				{
+					"id": "Curriculum",
+					"label": "Curriculum",
+					"icon": "icon-projects",
+					"route": "Programmes",
+					"order": 20
+				},
+				{
+					"id": "LearningPlans",
+					"label": "Learning plans",
+					"icon": "icon-files",
+					"route": "LearningPlans",
+					"order": 30
+				},
+				{
+					"id": "Assignments",
+					"label": "Assignments",
+					"icon": "icon-file-text",
+					"route": "Assignments",
+					"order": 40
+				},
+				{
+					"id": "Assessments",
+					"label": "Assessments",
+					"icon": "icon-clippy",
+					"route": "Assessments",
+					"order": 50
+				},
+				{
+					"id": "Grades",
+					"label": "Grades",
+					"icon": "icon-quota",
+					"route": "GradeEntries",
+					"order": 60
+				}
+			]
 		},
 		{
-			"id": "Enrolments",
-			"label": "Enrolments",
-			"icon": "icon-group",
-			"route": "Enrolments",
-			"order": 30
+			"id": "GroupPeople",
+			"label": "People",
+			"icon": "icon-contacts",
+			"order": 20,
+			"children": [
+				{
+					"id": "LearnerProfilesMenu",
+					"label": "Learners",
+					"icon": "icon-contacts",
+					"route": "LearnerProfiles",
+					"order": 10
+				},
+				{
+					"id": "Enrolments",
+					"label": "Enrolments",
+					"icon": "icon-group",
+					"route": "Enrolments",
+					"order": 20
+				},
+				{
+					"id": "Attendance",
+					"label": "Attendance",
+					"icon": "icon-calendar",
+					"route": "AttendanceRecords",
+					"order": 30
+				},
+				{
+					"id": "Credentials",
+					"label": "Credentials",
+					"icon": "icon-checkmark",
+					"route": "Credentials",
+					"order": 40
+				}
+			]
 		},
 		{
-			"id": "Credentials",
-			"label": "Credentials",
-			"icon": "icon-checkmark",
-			"route": "Credentials",
-			"order": 40
-		},
-		{
-			"id": "Curriculum",
-			"label": "Curriculum",
+			"id": "GroupInsight",
+			"label": "Insight",
 			"icon": "icon-projects",
-			"route": "Programmes",
-			"order": 45
-		},
-		{
-			"id": "Grades",
-			"label": "Grades",
-			"icon": "icon-quota",
-			"route": "GradeEntries",
-			"order": 46
-		},
-		{
-			"id": "Assignments",
-			"label": "Assignments",
-			"icon": "icon-file-text",
-			"route": "Assignments",
-			"order": 47
-		},
-		{
-			"id": "Assessments",
-			"label": "Assessments",
-			"icon": "icon-clippy",
-			"route": "Assessments",
-			"order": 48
-		},
-		{
-			"id": "Compliance",
-			"label": "Compliance",
-			"icon": "icon-password",
-			"route": "Compliance",
-			"order": 50,
-			"visibleIf": {
-				"user.primaryRole": {
-					"in": [
-						"compliance-officer",
-						"hr"
-					]
+			"order": 30,
+			"children": [
+				{
+					"id": "Dashboard",
+					"label": "Dashboards",
+					"icon": "icon-home",
+					"route": "Dashboard",
+					"order": 10
+				},
+				{
+					"id": "AdminHealthMenu",
+					"label": "App health",
+					"icon": "icon-toggle",
+					"route": "AdminHealth",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"eq": "admin"
+						}
+					}
+				},
+				{
+					"id": "Compliance",
+					"label": "Compliance",
+					"icon": "icon-password",
+					"route": "Compliance",
+					"order": 30,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": [
+								"compliance-officer",
+								"hr"
+							]
+						}
+					}
 				}
-			}
-		},
-		{
-			"id": "AdminHealthMenu",
-			"label": "App health",
-			"icon": "icon-toggle",
-			"route": "AdminHealth",
-			"section": "settings",
-			"order": 95,
-			"visibleIf": {
-				"user.primaryRole": {
-					"eq": "admin"
-				}
-			}
+			]
 		},
 		{
 			"id": "Documentation",
@@ -107,32 +151,11 @@
 			"order": 100
 		},
 		{
-			"id": "LearningPlans",
-			"label": "Learning plans",
-			"icon": "icon-files",
-			"route": "LearningPlans",
-			"order": 49
-		},
-		{
-			"id": "Attendance",
-			"label": "Attendance",
-			"icon": "icon-calendar",
-			"route": "AttendanceRecords",
-			"order": 55
-		},
-		{
 			"id": "DataExchange",
 			"label": "Data exchange",
 			"icon": "icon-external",
 			"route": "DataExchangeJobs",
 			"order": 60
-		},
-		{
-			"id": "LearnerProfilesMenu",
-			"label": "Learners",
-			"icon": "icon-contacts",
-			"route": "LearnerProfiles",
-			"order": 35
 		},
 		{
 			"id": "XapiStatementsMenu",
@@ -233,7 +256,8 @@
 			"route": "/compliance",
 			"type": "custom",
 			"title": "Compliance",
-			"component": "ScholiqCompliance"
+			"component": "ScholiqCompliance",
+			"_note": "Compliance overview surface (regulation coverage, attestations); officer/hr gated; no generic lib index/detail analogue."
 		},
 		{
 			"id": "CourseDetail",
@@ -388,14 +412,16 @@
 			"route": "/learner",
 			"type": "custom",
 			"title": "My learning",
-			"component": "ScholiqLearnerHome"
+			"component": "ScholiqLearnerHome",
+			"_note": "Learner-facing home surface (enrolled courses, progress, next activities); no generic lib index/detail analogue."
 		},
 		{
 			"id": "AdminHealth",
 			"route": "/admin/health",
 			"type": "custom",
 			"title": "App health",
-			"component": "ScholiqAdminHealth"
+			"component": "ScholiqAdminHealth",
+			"_note": "Admin observability surface (register/connector health, job status); no generic lib index/detail analogue."
 		},
 		{
 			"id": "Programmes",
