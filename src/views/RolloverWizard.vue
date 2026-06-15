@@ -121,6 +121,7 @@ export default {
 		 * Execution is only allowed once a non-blocked preview exists.
 		 *
 		 * @return {boolean} True when the plan may be executed.
+		 * @spec openspec/specs/school-year-rollover/spec.md#requirement-preview-must-be-side-effect-free-and-produce-a-complete-dry-run-report
 		 */
 		canExecute() {
 			return this.report !== null && this.report.blocked === false && this.planId !== ''
@@ -132,6 +133,7 @@ export default {
 		 * Fetch the default leerjaar-increment mapping for the from-year.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/school-year-rollover/spec.md#requirement-the-wizard-must-be-declarative-with-a-single-custom-view-exception-and-completion-must-notify-via-the-verified-dialect
 		 */
 		async propose() {
 			this.loading = true
@@ -152,6 +154,7 @@ export default {
 		 * Persist the plan (create or update) and run the side-effect-free preview.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/school-year-rollover/spec.md#requirement-preview-must-be-side-effect-free-and-produce-a-complete-dry-run-report
 		 */
 		async preview() {
 			this.loading = true
@@ -176,6 +179,7 @@ export default {
 		 * idempotent rollover.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/school-year-rollover/spec.md#requirement-execution-must-promote-by-creating-new-cohorts-and-archiving-old-ones
 		 */
 		async execute() {
 			if (!this.canExecute) {
@@ -198,6 +202,7 @@ export default {
 		 * Create or update the RolloverPlan object via the OR object API.
 		 *
 		 * @return {Promise<string>} The plan UUID, or '' on failure.
+		 * @spec openspec/specs/school-year-rollover/spec.md#requirement-rolloverplan-must-be-an-openregister-object-with-a-preview-gated-lifecycle
 		 */
 		async savePlan() {
 			try {
