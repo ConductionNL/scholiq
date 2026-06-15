@@ -43,6 +43,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenRegister\Db\AuditTrailMapper;
 use OCA\OpenRegister\Service\AuditHashService;
+use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\AppInfo\Application;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCP\AppFramework\Controller;
@@ -95,6 +96,7 @@ class AuditPackExportController extends Controller
         private readonly ActionAuthService $actionAuth,
         private readonly IClientService $clientService,
         private readonly IURLGenerator $urlGenerator,
+        private readonly ObjectService $objectService,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -242,6 +244,17 @@ class AuditPackExportController extends Controller
             dateTo: $dateTo,
         );
 
+        // external-training.csv: verified externally-completed training records
+        // for this regulation + date range. These are a SEPARATE, clearly-labelled
+        // evidence class — never synthesised attestations. The evidence files
+        // themselves are OR file attachments referenced per row.
+        $externalTrainingCsv = $this->buildExternalTrainingCsv(
+            regulationSlug: $regulationSlug,
+            dateFrom: $dateFrom,
+            dateTo: $dateTo,
+            tenantId: $tenantId,
+        );
+
         // Build ZIP in memory.
         $zipContent = $this->buildZip(
                 files: [
@@ -250,6 +263,7 @@ class AuditPackExportController extends Controller
                     'manifest.json'              => $manifestJson,
                     'signature-verification.txt' => $verificationTxt,
                     'verwerkingsregister.csv'    => $verwerkingsregisterCsv,
+                    'external-training.csv'      => $externalTrainingCsv,
                 ]
                 );
 
@@ -481,6 +495,114 @@ class AuditPackExportController extends Controller
 
         return $csv;
     }//end buildCsv()
+
+    /**
+     * Render verified external-training records for the regulation as CSV.
+     *
+     * This is a separately-labelled evidence class in the audit pack: training
+     * a learner completed OUTSIDE the LMS (classroom, third-party, conference)
+     * that an officer verified. Only `verified` records matching the regulation
+     * and whose `completedAt` falls inside the date range are included. The
+     * `evidence_files` column references the OR file attachments on each record;
+     * the bytes are exported by OR's attachment API, not duplicated here.
+     *
+     * @param string $regulationSlug Regulation slug to filter (matches the pack).
+     * @param string $dateFrom       ISO date lower bound (inclusive) on completedAt.
+     * @param string $dateTo         ISO date upper bound (inclusive) on completedAt.
+     * @param string $tenantId       Tenant scope so other tenants are never exported.
+     *
+     * @return string CSV string (header-only when there are no matching records).
+     *
+     * @spec openspec/changes/external-training-recording/tasks.md
+     */
+    private function buildExternalTrainingCsv(
+        string $regulationSlug,
+        string $dateFrom,
+        string $dateTo,
+        string $tenantId,
+    ): string {
+        $header = "learner_id,title,provider,kind,regulation_slug,completed_at,valid_until,verified_by,verified_at,credential_id,evidence_files\n";
+
+        $rows = $this->objectService->findAll(
+            [
+                'register' => 'scholiq',
+                'schema'   => 'external-training-record',
+                'filters'  => [
+                    'regulationSlug' => $regulationSlug,
+                    'lifecycle'      => 'verified',
+                    'tenant_id'      => $tenantId,
+                ],
+                'sort'     => ['completedAt' => 'ASC'],
+            ]
+        );
+
+        if (empty($rows) === true) {
+            return $header;
+        }
+
+        $handle = fopen('php://memory', 'r+');
+        if ($handle === false) {
+            return $header;
+        }
+
+        fputcsv(
+            $handle,
+            ['learner_id', 'title', 'provider', 'kind', 'regulation_slug', 'completed_at', 'valid_until', 'verified_by', 'verified_at', 'credential_id', 'evidence_files']
+        );
+
+        foreach ($rows as $row) {
+            $rec = $row;
+            if (is_array($rec) === false) {
+                $rec = (array) $row->jsonSerialize();
+            }
+
+            $completedAt = (string) ($rec['completedAt'] ?? '');
+            // Date-range filter on completedAt (lexical ISO-8601 compare is valid).
+            if ($completedAt !== '' && ($completedAt < $dateFrom || $completedAt > ($dateTo.'T23:59:59Z'))) {
+                continue;
+            }
+
+            $files     = ($rec['@self']['files'] ?? ($rec['files'] ?? []));
+            $fileNames = [];
+            if (is_array($files) === true) {
+                foreach ($files as $file) {
+                    if (is_array($file) === true) {
+                        $fileNames[] = (string) ($file['name'] ?? ($file['title'] ?? ($file['id'] ?? '')));
+                    } else {
+                        $fileNames[] = (string) $file;
+                    }
+                }
+            }
+
+            fputcsv(
+                $handle,
+                [
+                    $this->sanitizeCsvCell(value: (string) ($rec['learnerId'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['title'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['provider'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['kind'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['regulationSlug'] ?? '')),
+                    $this->sanitizeCsvCell(value: $completedAt),
+                    $this->sanitizeCsvCell(value: (string) ($rec['validUntil'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['verifiedBy'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['verifiedAt'] ?? '')),
+                    $this->sanitizeCsvCell(value: (string) ($rec['credentialId'] ?? '')),
+                    $this->sanitizeCsvCell(value: implode('; ', $fileNames)),
+                ]
+            );
+        }//end foreach
+
+        rewind($handle);
+        $csv = (string) stream_get_contents($handle);
+        fclose($handle);
+
+        // Header-only file when every row was filtered out by the date range.
+        if (trim($csv) === '' || str_starts_with($csv, 'learner_id') === false) {
+            return $header.$csv;
+        }
+
+        return $csv;
+    }//end buildExternalTrainingCsv()
 
     /**
      * Build the manifest.json content per ADR-008 §6.

@@ -1,5 +1,16 @@
 # Tasks: fix-dashboards-settings-notifications
 
+> Status: COMPLETE — implemented in commit ad66878 (role-aware dashboards, settings
+> split, notification prefs) and verified 2026-06-15. Design note: tasks 3–5 were
+> collapsed into a single role-aware `src/views/ScholiqDashboards.vue` (one
+> `CnDashboardPage`, in-component role switcher, server-resolved `primaryRole` via
+> `DashboardRoleService` injected into `manifest.runtime` and read by the shell's
+> `visibleIf` role gating) rather than a separate `DashboardDispatcher.vue` plus
+> `src/views/widgets/teacher/*.vue` files; the teacher view is rendered through the
+> dashboard slot templates over the shared OR stores. Behaviour matches every
+> acceptance criterion. The dashboard capability spec is `@e2e exclude` (no
+> `#### Scenario:` headings), so gate-19 has no scenario to back-reference.
+
 ## Implementation Tasks
 
 ### Task 1: Remove the dashboard-in-dashboard antipattern
@@ -8,16 +19,16 @@
 - **acceptance_criteria**:
   - GIVEN the dashboard route WHEN rendered THEN exactly one `CnDashboardPage` and one page heading appears (no triple "Dashboard")
   - GIVEN the manifest dashboard page WHEN read THEN KPI/manage tiles are declared directly in `config.widgets`/`layout`/`slots`, no single wrapper widget
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 2: Normalise navigation icons to monochrome icon-*
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-consistent-monochrome-navigation-icons`
 - **files**: `src/manifest.json`
 - **acceptance_criteria**:
   - GIVEN the manifest `menu` array WHEN inspected THEN every `icon` is a monochrome `icon-*` class and none is `icon-category-*`
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 3: Role-aware Dashboards component + single menu entry (ADR-009 §6)
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/dashboard/spec.md#requirement-per-resolved-role-default-dashboard`
@@ -26,16 +37,16 @@
   - GIVEN a learner WHEN opening Dashboards THEN the student view renders (no admin KPI grid)
   - GIVEN an instructor WHEN opening Dashboards THEN the teacher view renders
   - GIVEN a multi-role user WHEN using the in-component switcher THEN the same page re-renders the chosen role's view (no separate menu item per role)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 4: Teacher dashboard widgets
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/dashboard/spec.md#requirement-per-resolved-role-default-dashboard`
 - **files**: `src/views/widgets/teacher/*.vue`, `src/registry.js`
 - **acceptance_criteria**:
   - GIVEN the teacher view WHEN rendered THEN it shows my courses, assignments to grade, sessions to mark, and my cohorts, each reading OpenRegister via the shared stores
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 5: Root-route dispatcher by primaryRole
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/dashboard/spec.md#requirement-per-resolved-role-default-dashboard`
@@ -43,8 +54,8 @@
 - **acceptance_criteria**:
   - GIVEN any signed-in user WHEN opening the app root THEN they land on the dashboard view matching their resolved role
   - GIVEN an unresolved role WHEN opening the root THEN the student (least-privileged) view is shown
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 6: Move register/AI/credential-signing to the Admin panel
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers`
@@ -53,8 +64,8 @@
   - GIVEN an admin WHEN opening Settings → Administration → Scholiq THEN the register picker, AI-features table, and signing-key rotation are present and functional
   - GIVEN a non-admin WHEN opening the per-user dialog THEN none of those admin controls are present
   - GIVEN the mutating settings endpoints WHEN called THEN they are guarded admin-only
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 7: Per-user notification-preferences panel in user settings
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-per-user-notification-preferences-in-the-user-settings-dialog`
@@ -62,8 +73,8 @@
 - **acceptance_criteria**:
   - GIVEN the per-user settings dialog WHEN opened THEN it loads overrides via `GET /apps/openregister/api/notification-preferences` and renders a toggle per Scholiq notification type
   - GIVEN a user toggling a type off WHEN saving THEN a `PUT /apps/openregister/api/notification-preferences` records the override (no scholiq-local store)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ### Task 8: Verify/complete declarative notifications for the four core events
 - **spec_ref**: `openspec/changes/fix-dashboards-settings-notifications/specs/scholiq-notifications/spec.md#requirement-core-learner-events-must-emit-declarative-nc-notification-rules`
@@ -71,8 +82,8 @@
 - **acceptance_criteria**:
   - GIVEN grade-posted, credential-issued, attendance-flag, and completion events WHEN they fire THEN each delivers an `nc-notification` to the affected user via OpenRegister (verified dialect; no imperative `INotifier` in scholiq)
   - GIVEN a user who disabled a type WHEN the event fires THEN OpenRegister records `preference-off` and delivers nothing
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ## Quality checklist
 

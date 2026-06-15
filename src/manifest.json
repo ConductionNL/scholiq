@@ -171,6 +171,22 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "ExternalTraining",
+			"label": "External training",
+			"icon": "icon-add",
+			"route": "ExternalTrainingRecords",
+			"order": 52,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"compliance-officer",
+						"hr",
+						"admin"
+					]
+				}
+			}
 		}
 	],
 	"pages": [
@@ -1218,6 +1234,26 @@
 			"title": "School-year rollover",
 			"component": "RolloverWizard",
 			"_note": "Mapping editor for the jaarovergang (school-year-rollover): the \"custom view only where a manifest page cannot render it\" exception. Proposes a leerjaar-increment default mapping, runs the mandatory side-effect-free preview gate, and triggers the idempotent server-side execution (RolloverExecutionHandler) by transitioning the RolloverPlan to executing."
+		},
+		{
+			"id": "ExternalTrainingRecords",
+			"route": "/compliance/external-training",
+			"type": "index",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
+		},
+		{
+			"id": "ExternalTrainingRecordDetail",
+			"route": "/compliance/external-training/:id",
+			"type": "detail",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
 		}
 	]
 }

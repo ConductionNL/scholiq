@@ -497,7 +497,8 @@
 		"Graduate": "Graduate",
 		"Outflow": "Outflow",
 		"Enrolments to carry over": "Enrolments to carry over",
-		"Cohorts to create": "Cohorts to create"
+		"Cohorts to create": "Cohorts to create",
+		"External training": "External training"
 	},
 	"plurals": ""
 }

@@ -33,6 +33,13 @@ return [
         ['name' => 'rollover#proposeMapping', 'url' => '/api/rollover/propose', 'verb' => 'GET'],
         ['name' => 'rollover#preview',        'url' => '/api/rollover/{planId}/preview', 'verb' => 'POST'],
 
+        // External-training multi-object actions — authorized via the ADR-023
+        // action matrix (external-training.bulk-record / .issue-credential).
+        // Controller: ExternalTrainingController (slug: externalTraining)
+        ['name' => 'externalTraining#bulkRecord',      'url' => '/api/external-training/bulk',                  'verb' => 'POST'],
+        ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
+        ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
+
         // App health observability — admin-only via #[AuthorizedAdminSetting] (ADR-031 exception).
         ['name' => 'health#index', 'url' => '/api/admin/health', 'verb' => 'GET'],
 
