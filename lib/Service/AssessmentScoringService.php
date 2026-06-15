@@ -105,7 +105,7 @@ class AssessmentScoringService
         $results = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'AssessmentResult',
+                'schema'   => 'assessment-result',
                 'filters'  => ['uuid' => $assessmentResultId],
                 'limit'    => 1,
             ]

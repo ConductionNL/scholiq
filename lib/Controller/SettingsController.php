@@ -23,6 +23,7 @@ namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
 use OCA\Scholiq\Service\SettingsService;
+use OCA\Scholiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -55,7 +56,7 @@ class SettingsController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function index(): JSONResponse
     {
         return new JSONResponse(
@@ -70,7 +71,7 @@ class SettingsController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-1
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function create(): JSONResponse
     {
         $data   = $this->request->getParams();
@@ -94,7 +95,7 @@ class SettingsController extends Controller
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-26
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function load(): JSONResponse
     {
         $result = $this->settingsService->loadConfiguration(force: true);

@@ -278,7 +278,13 @@ class CredentialSigningService
             $kid = 'unknown';
         }
 
-        $canonicalised = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        // H6: RFC 8785 (JCS) — sort keys recursively before encoding so the
+        // signing input is deterministic regardless of PHP version or array
+        // construction order. Without this, re-assembling the same payload data
+        // in a different call path could produce a different byte string and
+        // fail signature verification.
+        $canonicalPayload = $this->canonicalisePayload(payload: $payload);
+        $canonicalised    = json_encode($canonicalPayload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if ($canonicalised === false) {
             return null;
         }
@@ -296,6 +302,56 @@ class CredentialSigningService
 
         return $header.'..'.rtrim(strtr(base64_encode($signature), '+/', '-_'), '=');
     }//end signPayload()
+
+    /**
+     * Build a privacy-safe credentialSubject.id from learnerId.
+     *
+     * If the learnerId is a valid UUID it is used verbatim as a URN (safe, opaque).
+     * Otherwise — to prevent embedding an email, NC UID, or BSN — the value is
+     * replaced with a deterministic SHA-256 pseudonym so no PII appears in the
+     * publicly shareable credential. Fixes #190.
+     *
+     * @param string $learnerId Raw learner identifier from the Credential record.
+     *
+     * @return string `urn:scholiq:learner:{uuid-or-pseudonym}`.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
+     */
+
+    /**
+     * Recursively sort an array's keys (RFC 8785 JCS) for deterministic JSON output.
+     *
+     * Guarantees that the signing input produced by signPayload() is identical to
+     * the input reconstructed by CredentialVerifyController::verifyJwsSignature(),
+     * regardless of the order in which PHP populates the payload array.
+     *
+     * Arrays with integer keys (JSON arrays) are NOT key-sorted — only associative
+     * maps (objects in JSON) are sorted.
+     *
+     * @param array<string,mixed> $payload The payload array to canonicalise.
+     *
+     * @return array<string,mixed> The same data with all object keys sorted.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-3
+     */
+    private function canonicalisePayload(array $payload): array
+    {
+        // Detect whether this level is a JSON object (string keys) or JSON array (int keys).
+        $isObject = count(array_filter(array_keys($payload), 'is_string')) > 0;
+
+        if ($isObject === true) {
+            ksort($payload, SORT_STRING);
+        }
+
+        foreach ($payload as $key => $value) {
+            if (is_array($value) === true) {
+                $payload[$key] = $this->canonicalisePayload(payload: $value);
+            }
+        }
+
+        return $payload;
+
+    }//end canonicalisePayload()
 
     /**
      * Build a privacy-safe credentialSubject.id from learnerId.

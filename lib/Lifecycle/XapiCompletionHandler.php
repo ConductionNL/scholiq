@@ -58,8 +58,10 @@ class XapiCompletionHandler implements IEventListener
 
     /**
      * OR schema slug for xAPI statement objects.
+     *
+     * C5 fix: use the real kebab-case slug from scholiq_register.json.
      */
-    private const XAPI_SCHEMA = 'XapiStatement';
+    private const XAPI_SCHEMA = 'xapi-statement';
 
     /**
      * XAPI verb IRIs that indicate successful completion.
@@ -117,7 +119,8 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        $payload = $objectEntity->jsonSerialize();
+        $payload  = $objectEntity->jsonSerialize();
+        $tenantId = $payload['tenant_id'] ?? '';
 
         // Guard 1: verb must be completed/passed.
         $verbId = $payload['verb']['id'] ?? '';
@@ -131,11 +134,17 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
+        // H1: scope Lesson lookup to the same tenant.
+        $lessonFilters = ['xapiObjectId' => $lessonId];
+        if ($tenantId !== '') {
+            $lessonFilters['tenant_id'] = $tenantId;
+        }
+
         $lessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Lesson',
-                'filters'  => ['xapiObjectId' => $lessonId],
+                'schema'   => 'lesson',
+                'filters'  => $lessonFilters,
                 'limit'    => 1,
             ]
         );
@@ -158,11 +167,17 @@ class XapiCompletionHandler implements IEventListener
 
         // Guard 4: lesson must be the final published lesson of the course.
         // #200: sort by `order` field (not insertion order) to find the true last lesson.
+        // H1: scope to the same tenant.
+        $publishedLessonFilters = ['courseId' => $courseId, 'lifecycle' => 'published'];
+        if ($tenantId !== '') {
+            $publishedLessonFilters['tenant_id'] = $tenantId;
+        }
+
         $publishedLessons = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Lesson',
-                'filters'  => ['courseId' => $courseId, 'lifecycle' => 'published'],
+                'schema'   => 'lesson',
+                'filters'  => $publishedLessonFilters,
                 'sort'     => ['order' => 'ASC'],
             ]
         );
@@ -198,33 +213,33 @@ class XapiCompletionHandler implements IEventListener
             return;
         }
 
-        // Resolve the learner ID from the xAPI actor.
-        $learnerId = $payload['actor']['account']['name'] ?? $payload['actor']['mbox'] ?? null;
+        // C6 fix: resolve learner identity ONLY from the server-trusted `verified_actor_id`
+        // field, which is stamped by the authenticated xAPI ingest controller before OR
+        // writes the statement. NEVER read from payload.actor.* — those values are
+        // user-controlled and allow credential forgery (attacker sets actor.account.name
+        // to victim UUID → handler fires → victim enrolment auto-completes → signed OB3
+        // credential minted under victim learnerId).
+        $learnerId = $payload['verified_actor_id'] ?? null;
 
-        if ($learnerId === null) {
-            $this->logger->warning('[XapiCompletionHandler] No actor identifier in xAPI statement; skipping.');
+        if ($learnerId === null || $learnerId === '') {
+            $this->logger->warning(
+                '[XapiCompletionHandler] xAPI statement missing verified_actor_id; skipping. '
+                .'Ensure the xAPI ingest controller stamps this field on authenticated saves.'
+            );
             return;
         }
 
-        // #179: verify the actor claim is authentic — the learnerId from the xAPI
-        // statement must match an active Enrolment whose learnerId field also matches
-        // the authenticated statement originator. We enforce this by scoping the
-        // Enrolment lookup strictly to learnerId + courseId + active, then verifying
-        // the found enrolment's learnerId equals what the xAPI actor claimed.
-        // An attacker forging a statement with a different actor.name would need the
-        // target's enrolment to be active — the worst-case outcome is completing that
-        // enrolment. To fully prevent this the xAPI ingest endpoint must authenticate
-        // the sender and set a `verified_actor_id` field; here we add the minimum
-        // defence: scope to the exact learnerId in the active enrolment only.
+        // H1: scope Enrolment lookup to the same tenant.
+        $enrolmentFilters = ['learnerId' => $learnerId, 'courseId' => $courseId, 'lifecycle' => 'active'];
+        if ($tenantId !== '') {
+            $enrolmentFilters['tenant_id'] = $tenantId;
+        }
+
         $enrolments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Enrolment',
-                'filters'  => [
-                    'learnerId' => $learnerId,
-                    'courseId'  => $courseId,
-                    'lifecycle' => 'active',
-                ],
+                'schema'   => 'enrolment',
+                'filters'  => $enrolmentFilters,
                 'limit'    => 1,
             ]
         );

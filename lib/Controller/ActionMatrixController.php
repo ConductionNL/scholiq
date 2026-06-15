@@ -29,6 +29,7 @@ namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
 use OCA\Scholiq\Service\ActionAuthService;
+use OCA\Scholiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -73,7 +74,7 @@ class ActionMatrixController extends Controller
      *
      * @spec openspec/architecture/adr-023-action-authorization.md
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function getMatrix(): JSONResponse
     {
         $matrix = $this->actionAuth->getMatrix();
@@ -112,7 +113,7 @@ class ActionMatrixController extends Controller
      *
      * @spec openspec/architecture/adr-023-action-authorization.md
      */
-    #[AuthorizedAdminSetting(Application::APP_ID)]
+    #[AuthorizedAdminSetting(AdminSettings::class)]
     public function setMatrix(): JSONResponse
     {
         $matrix = $this->request->getParam('matrix');

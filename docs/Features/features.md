@@ -535,7 +535,7 @@ Enterprise tier targets multi-board boards, HE consortia, and Rijksoverheid trai
 | EUPL-1.2 + no per-seat pricing | Sustainable for boards with 50 to 50,000 learners |
 | @conduction/nextcloud-vue + NL Design | Government-grade UX + WCAG 2.1 AA built-in |
 | OpenRegister-backed audit trail | Immutable compliance evidence for free |
-| OpenConnector adapters for BRON/UWLR/OSO | Reusable across docudesk, procest, mydash |
+| OpenConnector adapters for BRON/UWLR/OSO | Reusable across docudesk, procest, launchpad |
 
 ## 9. Risks
 
@@ -555,4 +555,4 @@ Enterprise tier targets multi-board boards, HE consortia, and Rijksoverheid trai
 | Multi-tenant boundary leaks (board A sees board B's learners) | Critical | ADR-007 OpenRegister tenant column with row-level enforcement; tested with multi-tenant fixtures |
 | Mobile PWA accessibility regression | Low | NL Design + nc-vue baseline; CI-enforced axe-core checks |
 | Per-seat corporate buyer expectation | Low | Bundle pricing; explicit "no per-seat" positioning |
-| Cross-app feature drift (analytics in mydash + scholiq) | Medium | Shared canonical-feature ownership in `app_feature_decisions` |
+| Cross-app feature drift (analytics in launchpad + scholiq) | Medium | Shared canonical-feature ownership in `app_feature_decisions` |

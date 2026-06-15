@@ -30,4 +30,8 @@ abstract class ObjectEntity implements JsonSerializable
      * @return array<string,mixed>
      */
     abstract public function jsonSerialize(): array;
+
+    abstract public function getRegister(): string;
+    abstract public function getSchema(): string;
+    abstract public function getUuid(): ?string;
 }//end class

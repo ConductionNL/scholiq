@@ -46,6 +46,7 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Listener;
 
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Lifecycle\TransitionEngine;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -89,16 +90,18 @@ class DataExchangeRunHandler implements IEventListener
     /**
      * Constructor.
      *
-     * @param ObjectService   $objectService OR object access service.
-     * @param IClientService  $clientService NC HTTP client factory.
-     * @param IURLGenerator   $urlGenerator  NC URL generator for internal requests.
-     * @param IAppConfig      $appConfig     NC app config for token lookup.
-     * @param LoggerInterface $logger        PSR logger.
+     * @param ObjectService    $objectService    OR object access service.
+     * @param TransitionEngine $transitionEngine OR lifecycle engine for job state transitions.
+     * @param IClientService   $clientService    NC HTTP client factory.
+     * @param IURLGenerator    $urlGenerator     NC URL generator for internal requests.
+     * @param IAppConfig       $appConfig        NC app config for token lookup.
+     * @param LoggerInterface  $logger           PSR logger.
      *
      * @return void
      */
     public function __construct(
         private readonly ObjectService $objectService,
+        private readonly TransitionEngine $transitionEngine,
         private readonly IClientService $clientService,
         private readonly IURLGenerator $urlGenerator,
         private readonly IAppConfig $appConfig,
@@ -180,26 +183,29 @@ class DataExchangeRunHandler implements IEventListener
         }
 
         // 2. Query Scholiq source objects per scope (tenant-scoped — fixes #186).
-        $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
-
+        // M5: querySourceObjects throws RuntimeException when count >= QUERY_LIMIT.
         // 3. Build payload by applying fieldMappings.
         // #206: bsn-to-pseudonym throws \RuntimeException when eckId is absent — catch
         // here and fail the job fail-closed rather than shipping null pseudonym values.
+        // C3: buildPayload throws when mandatory-profile target has no profile.
         try {
-            $payload = $this->buildPayload(objects: $sourceObjects, profile: $profile);
+            $sourceObjects = $this->querySourceObjects(scope: $scope, tenantId: $jobTenantId);
+            $payload       = $this->buildPayload(objects: $sourceObjects, profile: $profile, target: $target);
         } catch (\RuntimeException $e) {
             $this->logger->error(
-                '[DataExchangeRunHandler] Job {id} aborted during payload build: {msg}',
+                '[DataExchangeRunHandler] Job {id} aborted during query/payload build: {msg}',
                 ['id' => $jobId, 'msg' => $e->getMessage()]
             );
+            // C4 fix: persist result fields first, then drive lifecycle via transition engine
+            // so OR's audit-trail and declared transition guards run correctly.
             $this->saveJobFields(
                 jobId: $jobId,
                 fields: [
                     'finishedAt'   => date('c'),
                     'errorMessage' => $e->getMessage(),
-                    'lifecycle'    => 'failed',
                 ],
             );
+            $this->transitionEngine->transition($jobId, 'fail');
             return;
         }
 
@@ -214,14 +220,15 @@ class DataExchangeRunHandler implements IEventListener
                 $target,
                 $target
             );
+            // C4 fix: persist error fields first, then drive lifecycle via transition engine.
             $this->saveJobFields(
                 jobId: $jobId,
                 fields: [
                     'finishedAt'   => date('c'),
                     'errorMessage' => $errorMsg,
-                    'lifecycle'    => 'failed',
                 ],
             );
+            $this->transitionEngine->transition($jobId, 'fail');
             return;
         }
 
@@ -240,24 +247,26 @@ class DataExchangeRunHandler implements IEventListener
         $accepted       = $resultData['recordsAccepted'];
 
         // 6. Determine outcome state.
-        $nextState = 'succeeded';
+        $nextState = 'succeed';
         if ($rejected > 0 && $accepted > 0) {
             $nextState = 'partial';
         }
 
         if ($rejected > 0 && $accepted === 0 && $processed > 0) {
-            $nextState = 'failed';
+            $nextState = 'fail';
         }
 
+        // C4 fix: persist result fields first (no lifecycle), then drive lifecycle via
+        // the transition engine so OR's audit-trail and declared transition guards fire.
         $this->saveJobFields(
             jobId: $jobId,
             fields: [
                 'finishedAt'     => date('c'),
                 'result'         => $resultData,
                 'connectorRunId' => $connectorRunId,
-                'lifecycle'      => $nextState,
             ],
         );
+        $this->transitionEngine->transition($jobId, $nextState);
 
         $this->logger->info(
             '[DataExchangeRunHandler] Job {id} → {state}. target={t}, processed={p}, accepted={a}, rejected={r}.',
@@ -345,11 +354,11 @@ class DataExchangeRunHandler implements IEventListener
             ]
         );
 
-        // #188: warn when we reach the limit ceiling so operators know to paginate.
+        // M5: fail hard when we hit the limit ceiling — silent truncation must not ship partial PII.
         if (count($results) >= self::QUERY_LIMIT) {
-            $this->logger->warning(
-                '[DataExchangeRunHandler] querySourceObjects hit QUERY_LIMIT ({limit}) for schema {schema}; results may be incomplete.',
-                ['limit' => self::QUERY_LIMIT, 'schema' => $schema]
+            throw new \RuntimeException(
+                "querySourceObjects hit QUERY_LIMIT (".self::QUERY_LIMIT.") for schema '{$schema}'; "
+                .'pagination required. Aborting to prevent incomplete data export.'
             );
         }
 
@@ -382,11 +391,51 @@ class DataExchangeRunHandler implements IEventListener
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
      */
-    private function buildPayload(array $objects, ?array $profile): array
+    /**
+     * Per-target allowlist of mandatory profile slugs.
+     * When a target is listed here, a null profile (no data mapping) is a hard failure
+     * rather than pass-through, to prevent unredacted PII from being shipped (C3).
+     *
+     * @var string[]
+     */
+    private const MANDATORY_PROFILE_TARGETS = ['bron-rod', 'bron-vo', 'oso-transfer', 'edukoppeling'];
+
+    /**
+     * Build the payload array for OpenConnector from source objects and an optional mapping profile.
+     *
+     * Applies field mappings from the profile when present; falls back to a PII-stripped
+     * pass-through when the profile is absent. Targets in MANDATORY_PROFILE_TARGETS throw
+     * a RuntimeException when no profile is provided (C3 — prevents unredacted PII export).
+     *
+     * @param array<int,array<string,mixed>> $objects Source objects retrieved from OR.
+     * @param array<string,mixed>|null       $profile Loaded DataMappingProfile, or null for pass-through.
+     * @param string                         $target  Data-exchange target slug (e.g. 'bron-rod').
+     *
+     * @return array<int,array<string,mixed>> Mapped (and PII-stripped) payload ready for OpenConnector.
+     *
+     * @throws \RuntimeException When the target requires a profile but none is configured.
+     *
+     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+     */
+    private function buildPayload(array $objects, ?array $profile, string $target=''): array
     {
+        // C3: for targets that require a mapping profile, null profile is a hard fail.
+        if ($profile === null && in_array($target, self::MANDATORY_PROFILE_TARGETS, strict: true) === true) {
+            throw new \RuntimeException(
+                "Data exchange target '{$target}' requires a DataMappingProfile but none is configured — "
+                .'aborting to prevent unredacted PII export.'
+            );
+        }
+
         if ($profile === null || empty($profile['fieldMappings']) === true) {
-            // No mapping: pass raw objects as-is (OpenConnector handles formatting).
-            return $objects;
+            // No mapping: pass raw objects but strip PII fields (C3 — explicit unset).
+            return array_map(
+                static function (array $obj): array {
+                    unset($obj['bsnEncrypted'], $obj['bsnHash'], $obj['email']);
+                    return $obj;
+                },
+                $objects
+            );
         }
 
         $fieldMappings = $profile['fieldMappings'];
@@ -413,6 +462,9 @@ class DataExchangeRunHandler implements IEventListener
 
                 $record[$targetField] = $value;
             }
+
+            // C3: always strip PII fields from the mapped record even when profile is present.
+            unset($record['bsnEncrypted'], $record['bsnHash'], $record['email']);
 
             $payload[] = $record;
         }//end foreach

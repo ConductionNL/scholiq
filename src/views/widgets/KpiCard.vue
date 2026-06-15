@@ -127,4 +127,13 @@ export default {
 .kpi-card--linkable {
 	cursor: pointer;
 }
+
+/* Long KPI titles (e.g. "Active enrolments", "Open attendance flags") must
+   wrap to a second line rather than ellipsis-clip in the narrow stat tiles —
+   CnStatsBlock's title defaults to nowrap + ellipsis. */
+.kpi-card :deep(.cn-stats-block__header h4) {
+	white-space: normal;
+	overflow: visible;
+	line-height: 1.2;
+}
 </style>

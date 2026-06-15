@@ -29,6 +29,8 @@ use OCP\Settings\IIconSection;
 
 /**
  * Defines the Scholiq section in the Nextcloud admin settings.
+ *
+ * @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers
  */
 class SettingsSection implements IIconSection
 {
@@ -50,6 +52,8 @@ class SettingsSection implements IIconSection
      * Get the section identifier.
      *
      * @return string
+     *
+     * @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers
      */
     public function getID(): string
     {
@@ -60,6 +64,8 @@ class SettingsSection implements IIconSection
      * Get the display name of this section.
      *
      * @return string
+     *
+     * @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers
      */
     public function getName(): string
     {
@@ -70,6 +76,8 @@ class SettingsSection implements IIconSection
      * Get the priority for ordering this section.
      *
      * @return int
+     *
+     * @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers
      */
     public function getPriority(): int
     {
@@ -80,6 +88,8 @@ class SettingsSection implements IIconSection
      * Get the icon path for this section.
      *
      * @return string
+     *
+     * @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-configure-default-register-and-ai-features-via-openregister-backed-pickers
      */
     public function getIcon(): string
     {

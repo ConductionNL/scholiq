@@ -24,12 +24,14 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Controller;
 
 use OCA\Scholiq\AppInfo\Application;
+use OCA\Scholiq\Service\DashboardRoleService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -39,20 +41,26 @@ use OCP\IUserSession;
  * Per ADR-024 §4: the /api/manifest endpoint returns the bundled manifest
  * blob unchanged (v0.1). A partial-override hook from IAppConfig is deferred
  * to v0.2 — the frontend loader's silent-fallback path is exercised in v0.1.
+ *
+ * @spec exclude framework glue — SPA shell + manifest passthrough + role initial-state provider; no business behaviour
  */
 class PageController extends Controller
 {
     /**
      * Constructor.
      *
-     * @param IRequest     $request     The request object.
-     * @param IUserSession $userSession The user session.
+     * @param IRequest             $request          The request object.
+     * @param IUserSession         $userSession      The user session.
+     * @param IInitialState        $initialState     The initial-state service.
+     * @param DashboardRoleService $dashboardRoleSvc Resolves the user's role + dashboard views.
      *
      * @return void
      */
     public function __construct(
         IRequest $request,
         private readonly IUserSession $userSession,
+        private readonly IInitialState $initialState,
+        private readonly DashboardRoleService $dashboardRoleSvc,
     ) {
         parent::__construct(appName: Application::APP_ID, request: $request);
     }//end __construct()
@@ -60,15 +68,27 @@ class PageController extends Controller
     /**
      * Render the main SPA page.
      *
+     * Provides the resolved Scholiq role context as initial state so the
+     * manifest shell can populate `runtime.user.primaryRole` (menu visibleIf)
+     * and the role-aware Dashboards component can pick its default view and
+     * switcher set without a second round-trip.
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
      * @return TemplateResponse
      *
-     * @spec exclude framework glue — returns the static index TemplateResponse that boots the Vue SPA; no business behavior
+     * @spec exclude framework glue — returns the static index TemplateResponse that boots the Vue SPA; provides role initial state only
      */
     public function index(): TemplateResponse
     {
+        $user = $this->userSession->getUser();
+        if ($user !== null) {
+            $this->initialState->provideInitialState('primaryRole', $this->dashboardRoleSvc->resolvePrimaryRole($user));
+            $this->initialState->provideInitialState('dashboardRole', $this->dashboardRoleSvc->resolveDefaultView($user));
+            $this->initialState->provideInitialState('dashboardRoles', $this->dashboardRoleSvc->resolveViews($user));
+        }
+
         return new TemplateResponse(Application::APP_ID, 'index');
     }//end index()
 

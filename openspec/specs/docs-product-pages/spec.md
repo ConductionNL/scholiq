@@ -1,6 +1,12 @@
+# Docs Product Pages
+
 @e2e exclude All scenarios verify filesystem layout (docs/ folder existence, file presence) and build tool execution (npm run build exit code) — these are CI checks, not browser-observable behaviors. Covered by CI build pipeline.
 
-## ADDED Requirements
+## Purpose
+
+Define the canonical Docusaurus product-documentation layout for the Scholiq docs site (folder taxonomy, user-guide naming, installation guide, em-dash-free prose, Redocusaurus API route, Dutch locale scaffold, and a passing build) per ADR-030, so the published docs site matches the Conduction product-pages standard.
+
+## Requirements
 
 ### Requirement: Canonical folder taxonomy
 The docs site SHALL organise content into four canonical top-level folders: `Features/`, `UseCases/`, `Integrations/`, and `Technical/`, matching the Conduction product-pages spec (ADR-030). All legacy root-level Markdown files SHALL be moved into the appropriate canonical folder.

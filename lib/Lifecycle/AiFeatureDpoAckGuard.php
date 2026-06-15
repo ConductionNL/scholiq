@@ -83,15 +83,24 @@ class AiFeatureDpoAckGuard
      */
     public function check(array $transitionContext): bool
     {
-        $object = $transitionContext['object'] ?? [];
-        $slug   = $object['slug'] ?? ($object['id'] ?? '');
+        $object   = $transitionContext['object'] ?? [];
+        $slug     = $object['slug'] ?? ($object['id'] ?? '');
+        $tenantId = $object['tenant_id'] ?? '';
 
         if ($slug === '') {
             return false;
         }
 
-        $ackKey = self::ACK_KEY_PREFIX.$slug;
-        $ack    = $this->appConfig->getValueString(
+        // M1: scope DPO-ack key to the tenant so that acknowledging for tenant A
+        // does not inadvertently enable the feature for tenant B.
+        // Key format: dpo_ack.<tenantId>.<slug> (tenantId non-empty) or dpo_ack.<slug> (legacy/single-tenant).
+        if ($tenantId !== '') {
+            $ackKey = self::ACK_KEY_PREFIX.$tenantId.'.'.$slug;
+        } else {
+            $ackKey = self::ACK_KEY_PREFIX.$slug;
+        }
+
+        $ack = $this->appConfig->getValueString(
             app: 'scholiq',
             key: $ackKey,
             default: ''

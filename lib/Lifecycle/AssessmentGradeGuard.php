@@ -91,6 +91,7 @@ class AssessmentGradeGuard
         $result       = $transitionContext['object'] ?? [];
         $assessmentId = $result['assessmentId'] ?? null;
         $responses    = $result['responses'] ?? [];
+        $tenantId     = $result['tenant_id'] ?? '';
 
         if ($assessmentId === null) {
             $this->logger->info(
@@ -99,12 +100,17 @@ class AssessmentGradeGuard
             return false;
         }
 
-        // Fetch the parent Assessment to get itemRefs.
+        // H1: scope Assessment lookup to the same tenant.
+        $assessmentFilters = ['uuid' => $assessmentId];
+        if ($tenantId !== '') {
+            $assessmentFilters['tenant_id'] = $tenantId;
+        }
+
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Assessment',
-                'filters'  => ['uuid' => $assessmentId],
+                'schema'   => 'assessment',
+                'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
         );
@@ -144,11 +150,17 @@ class AssessmentGradeGuard
         }
 
         // Single bulk query for all items referenced by this assessment.
+        // H1: scope the Item lookup to the same tenant.
+        $bulkFilters = ['uuid' => $allItemIds];
+        if ($tenantId !== '') {
+            $bulkFilters['tenant_id'] = $tenantId;
+        }
+
         $fetchedItems = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Item',
-                'filters'  => ['uuid' => $allItemIds],
+                'schema'   => 'item',
+                'filters'  => $bulkFilters,
                 'limit'    => count($allItemIds) + 1,
             ]
         );
@@ -174,6 +186,7 @@ class AssessmentGradeGuard
                 continue;
             }
 
+            // Bulk-fetched above (#196): O(1) lookup, tenant-scoped.
             $item = $itemByUuid[$itemId] ?? null;
             if ($item === null) {
                 continue;

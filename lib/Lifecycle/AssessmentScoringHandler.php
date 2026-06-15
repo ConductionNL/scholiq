@@ -10,8 +10,10 @@
  *
  * This is a legitimate PHP exception per ADR-031 §"Calculation engine": auto-scoring
  * is a domain algorithm above what schema metadata can express. It runs as a `requires:`
- * guard on the `submit` transition — the return value is always true (it allows the
- * transition) because the scoring is a side-effect, not a gate.
+ * guard on the `submit` transition. It returns true when the parent Assessment is
+ * accessible and scoring is applied. It returns false (fail-closed) when the parent
+ * Assessment cannot be resolved — blocking the transition to prevent client-controlled
+ * autoScore values from persisting (wave-12 WF3).
  *
  * Referenced from the AssessmentResult schema's
  * x-openregister-lifecycle.transitions.submit.requires in scholiq_register.json.
@@ -47,7 +49,9 @@ use Psr\Log\LoggerInterface;
  *   response value to correctResponse and awards maxScore (or 0) accordingly.
  * - For extendedText or null correctResponse: leaves autoScore null (needs teacher).
  *
- * Always returns true — this handler is a side-effect executor, not a gate.
+ * Returns true when scoring succeeds or when the Assessment is not yet needed (no responses).
+ * Returns false (fail-closed) when the parent Assessment cannot be resolved — this blocks
+ * the submit transition to prevent client-controlled autoScore values from persisting.
  */
 class AssessmentScoringHandler
 {
@@ -89,7 +93,9 @@ class AssessmentScoringHandler
      *                                               - 'from'       : 'in-progress'
      *                                               - 'to'         : 'submitted'
      *
-     * @return bool Always true — scoring is a side-effect; never blocks the transition.
+     * @return bool True when scoring succeeds or when there are no responses to score.
+     *              False (fail-closed) when the parent Assessment cannot be resolved —
+     *              this blocks the submit transition to prevent attacker-controlled autoScore.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-8
      */
@@ -103,22 +109,34 @@ class AssessmentScoringHandler
             return true;
         }
 
+        $tenantId = $result['tenant_id'] ?? '';
+
+        // H1: scope Assessment lookup to the same tenant.
+        $assessmentFilters = ['uuid' => $assessmentId];
+        if ($tenantId !== '') {
+            $assessmentFilters['tenant_id'] = $tenantId;
+        }
+
         // Fetch the parent Assessment for itemRefs and their point overrides.
         $assessments = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'Assessment',
-                'filters'  => ['uuid' => $assessmentId],
+                'schema'   => 'assessment',
+                'filters'  => $assessmentFilters,
                 'limit'    => 1,
             ]
         );
 
         if (empty($assessments) === true) {
+            // Fail-CLOSED: if the parent Assessment is unreachable (different tenant,
+            // deleted, or attacker-supplied bogus assessmentId), block the submit
+            // transition rather than allowing client-controlled autoScore values through.
+            // See wave-12 WF3.
             $this->logger->warning(
-                '[AssessmentScoringHandler] Assessment {id} not found; skipping auto-scoring.',
+                '[AssessmentScoringHandler] Assessment {id} not found or out-of-tenant; blocking submit transition (fail-closed).',
                 ['id' => $assessmentId]
             );
-            return true;
+            return false;
         }
 
         $assessment = $assessments[0];
@@ -140,16 +158,25 @@ class AssessmentScoringHandler
                 continue;
             }
 
+            // H1: scope Item lookup to the same tenant.
+            $itemFilters = ['uuid' => $itemId];
+            if ($tenantId !== '') {
+                $itemFilters['tenant_id'] = $tenantId;
+            }
+
             $items = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
-                    'schema'   => 'Item',
-                    'filters'  => ['uuid' => $itemId],
+                    'schema'   => 'item',
+                    'filters'  => $itemFilters,
                     'limit'    => 1,
                 ]
             );
 
             if (empty($items) === true) {
+                // Item unreachable — zero out autoScore rather than leaving client value intact.
+                // Prevents out-of-tenant item references from carrying through attacker-supplied scores.
+                $response['autoScore'] = 0.0;
                 continue;
             }
 

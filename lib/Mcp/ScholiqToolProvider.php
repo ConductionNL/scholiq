@@ -71,14 +71,14 @@ class ScholiqToolProvider implements IMcpToolProvider
      *
      * @var string
      */
-    private const SCHEMA_COURSE = 'Course';
+    private const SCHEMA_COURSE = 'course';
 
     /**
      * The Lesson (module) schema slug/name in the Scholiq register.
      *
      * @var string
      */
-    private const SCHEMA_LESSON = 'Lesson';
+    private const SCHEMA_LESSON = 'lesson';
 
     /**
      * Maximum number of items returned by a list tool.
@@ -240,14 +240,35 @@ class ScholiqToolProvider implements IMcpToolProvider
             ];
         }
 
+        // M2: non-admin callers must only see published courses — they must not
+        // discover draft or archived courses via the MCP surface.
+        $callerIsAdmin = false;
+        $sessionUser   = $this->userSession->getUser();
+        if ($sessionUser !== null && $this->groupManager->isAdmin($sessionUser->getUID()) === true) {
+            $callerIsAdmin = true;
+        }
+
         // Hard cap at LIST_CAP regardless of the requested limit.
         $config = [
             'register' => self::REGISTER_SLUG,
             'schema'   => self::SCHEMA_COURSE,
             'limit'    => min((int) $validated['limit'], self::LIST_CAP),
         ];
+
         if ($validated['status'] !== null) {
+            // Respect the requested status filter, but non-admins can only request 'published'.
+            if ($callerIsAdmin === false && $validated['status'] !== 'published') {
+                return [
+                    'isError' => true,
+                    'error'   => 'forbidden',
+                    'message' => "Status filter '{$validated['status']}' is not available to non-admin users.",
+                ];
+            }
+
             $config['filters'] = ['lifecycle' => $validated['status']];
+        } else if ($callerIsAdmin === false) {
+            // No status requested by non-admin — restrict to published only.
+            $config['filters'] = ['lifecycle' => 'published'];
         }
 
         try {
@@ -497,7 +518,7 @@ class ScholiqToolProvider implements IMcpToolProvider
             'type'  => 'scholiq.course',
             'uuid'  => $courseUuid,
             'url'   => $this->buildDeepLink(type: 'course', uuid: $courseUuid),
-            'label' => (string) ($course['name'] ?? $course['code'] ?? 'Course'),
+            'label' => (string) ($course['name'] ?? $course['code'] ?? 'course'),
         ];
 
     }//end courseSource()

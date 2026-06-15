@@ -120,6 +120,7 @@ class LearningPlanSignatureGuard
         $kind         = $plan['kind'] ?? '';
         $supersedesId = $plan['supersedesId'] ?? null;
         $learnerId    = $plan['learnerId'] ?? '';
+        $tenantId     = $plan['tenant_id'] ?? '';
 
         if ($planId === '') {
             $this->logger->warning('[LearningPlanSignatureGuard] Plan has no id; blocking activation.');
@@ -127,7 +128,7 @@ class LearningPlanSignatureGuard
         }
 
         // Fetch required signer roles from the template (if any).
-        $requiredRoles = $this->fetchRequiredRoles(templateId: $templateId);
+        $requiredRoles = $this->fetchRequiredRoles(templateId: $templateId, tenantId: $tenantId);
 
         if (empty($requiredRoles) === true) {
             // No template or template has no requiredSignerRoles → no co-sign needed.
@@ -140,11 +141,11 @@ class LearningPlanSignatureGuard
         }
 
         // Fetch all Signatures for this plan + version.
-        $signatures = $this->fetchSignatures(planId: $planId, version: $version);
+        $signatures = $this->fetchSignatures(planId: $planId, version: $version, tenantId: $tenantId);
 
         // #180: filter 'parent' signatures to those whose signerId is in LearnerProfile.parentIds
         // so self-claimed parent roles cannot satisfy the co-sign gate.
-        $signatures = $this->filterVerifiedParentSignatures(signatures: $signatures, learnerId: $learnerId);
+        $signatures = $this->filterVerifiedParentSignatures(signatures: $signatures, learnerId: $learnerId, tenantId: $tenantId);
 
         // Index by signerRole (keep highest assurance per role).
         $sigsByRole = $this->indexByRole(signatures: $signatures);
@@ -188,22 +189,29 @@ class LearningPlanSignatureGuard
      * Fetch the requiredSignerRoles from the LearningPlanTemplate.
      *
      * @param string|null $templateId Template UUID or null.
+     * @param string      $tenantId   Tenant UUID for H1 scope filter.
      *
      * @return string[] Empty array when no template or no roles defined.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
-    private function fetchRequiredRoles(?string $templateId): array
+    private function fetchRequiredRoles(?string $templateId, string $tenantId=''): array
     {
         if ($templateId === null || $templateId === '') {
             return [];
+        }
+
+        // H1: scope template lookup to the same tenant.
+        $templateFilters = ['uuid' => $templateId];
+        if ($tenantId !== '') {
+            $templateFilters['tenant_id'] = $tenantId;
         }
 
         $templates = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'learning-plan-template',
-                'filters'  => ['uuid' => $templateId],
+                'filters'  => $templateFilters,
                 'limit'    => 1,
             ]
         );
@@ -224,23 +232,27 @@ class LearningPlanSignatureGuard
     /**
      * Fetch all Signature objects for the given plan and version.
      *
-     * @param string $planId  LearningPlan UUID.
-     * @param int    $version Plan version number.
+     * @param string $planId   LearningPlan UUID.
+     * @param int    $version  Plan version number.
+     * @param string $tenantId Tenant UUID for H1 scope filter.
      *
      * @return array<int,array<string,mixed>>
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
-    private function fetchSignatures(string $planId, int $version): array
+    private function fetchSignatures(string $planId, int $version, string $tenantId=''): array
     {
+        // H1: scope Signature lookup to the same tenant.
+        $sigFilters = ['subjectId' => $planId, 'subjectVersion' => $version];
+        if ($tenantId !== '') {
+            $sigFilters['tenant_id'] = $tenantId;
+        }
+
         $raw = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'signature',
-                'filters'  => [
-                    'subjectId'      => $planId,
-                    'subjectVersion' => $version,
-                ],
+                'filters'  => $sigFilters,
                 'limit'    => 200,
             ]
         );
@@ -269,23 +281,30 @@ class LearningPlanSignatureGuard
      *
      * @param array<int,array<string,mixed>> $signatures Raw signature objects.
      * @param string                         $learnerId  The learner's ID from the LearningPlan.
+     * @param string                         $tenantId   Tenant UUID for H1 scope filter.
      *
      * @return array<int,array<string,mixed>> Filtered signature objects.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-15
      */
-    private function filterVerifiedParentSignatures(array $signatures, string $learnerId): array
+    private function filterVerifiedParentSignatures(array $signatures, string $learnerId, string $tenantId=''): array
     {
         if ($learnerId === '' || empty($signatures) === true) {
             return $signatures;
         }
 
         // Load the LearnerProfile to resolve the authoritative parentIds.
+        // H1: scope to the same tenant.
+        $profileFilters = ['learnerId' => $learnerId];
+        if ($tenantId !== '') {
+            $profileFilters['tenant_id'] = $tenantId;
+        }
+
         $profiles = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
                 'schema'   => 'learner-profile',
-                'filters'  => ['learnerId' => $learnerId],
+                'filters'  => $profileFilters,
                 'limit'    => 1,
             ]
         );

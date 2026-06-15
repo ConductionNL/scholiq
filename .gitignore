@@ -8,8 +8,8 @@ docusaurus/.cache-loader/
 /docs/build/
 /docs/.docusaurus/
 /docs/.cache-loader/
-# Generated translation files — re-enable when a Dutch translation pass ships
-/docs/i18n/nl/
+# Generated translation files — scaffold committed; exclude generated build artefacts only
+/docs/i18n/nl/docusaurus-plugin-content-docs/current/.cache-loader/
 node_modules/
 .npm/
 
@@ -58,3 +58,4 @@ playwright-report/
 # Misc
 *.bak
 .cache/
+.phpunit.cache

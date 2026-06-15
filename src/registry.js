@@ -1,22 +1,14 @@
-// SPDX-License-Identifier: EUPL-1.2
-// Copyright (C) 2026 Conduction B.V.
-//
-// 5-kind component registry for v2 manifest (per hydra ADR-036).
-//
-// The existing inline customComponents map in main.js is preserved
-// alongside this file for backward-compat during the migration window.
-// CnAppRoot accepts both props; the v2 renderer emits a one-shot
-// deprecation warning when both are present and the manifest is v2.
-//
-// Naming convention: entries ending in "Modal" are kind:'modal'; views
-// and pages are kind:'page'. Future refinement: split the standalone
-// modal helpers out of the page-component flow once openspec deltas
-// land for modal kinds.
-//
-// References:
-//   - hydra ADR-036
-//   - nextcloud-app-template scaffold-v2 (#44)
-//   - procest #512 / mydash #206
+/**
+ * Scholiq v2 component registry (ADR-036).
+ *
+ * Kind-tagged map passed as the `registry` prop to CnAppRoot. CnPageRenderer
+ * resolves each manifest page's `component` string against entries whose
+ * `kind === "page"` (with precedence over the deprecated `customComponents`
+ * prop, which Scholiq no longer ships).
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ */
 
 import ItemAuthorView from './views/ItemAuthorView.vue'
 import GradeImpactDetail from './views/GradeImpactDetail.vue'
@@ -25,22 +17,38 @@ import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
-import ScholiqDashboard from './views/ScholiqDashboard.vue'
+import ScholiqDashboards from './views/ScholiqDashboards.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
+import RolloverWizard from './views/RolloverWizard.vue'
+
+/**
+ * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
+ * `registry` prop (`kind: "page"` is the discriminator CnPageRenderer keys
+ * page dispatch off — `kind: "widget"`/`"modal"`/`"form-field"`/
+ * `"cell-renderer"` entries with the same name are NOT used for page
+ * dispatch).
+ *
+ * @param {object} component Vue component options.
+ *
+ * @return {object} A `{ kind: "page", component }` registry entry.
+ */
+function page(component) {
+	return { kind: 'page', component }
+}
 
 export default {
-	// Pages (kind:'page' — full-screen custom views with no lib analogue)
-	GradeImpactDetail: { kind: 'page', component: GradeImpactDetail },
-	ItemAuthorView: { kind: 'page', component: ItemAuthorView },
-	LessonPlayer: { kind: 'page', component: LessonPlayer },
-	MarkSubmissionView: { kind: 'page', component: MarkSubmissionView },
-	ProctoringReviewQueue: { kind: 'page', component: ProctoringReviewQueue },
-	ScholiqAdminHealth: { kind: 'page', component: ScholiqAdminHealth },
-	ScholiqCompliance: { kind: 'page', component: ScholiqCompliance },
-	ScholiqDashboard: { kind: 'page', component: ScholiqDashboard },
-	ScholiqLearnerHome: { kind: 'page', component: ScholiqLearnerHome },
-	ScholiqSettings: { kind: 'page', component: ScholiqSettings },
-	TakeAssessmentView: { kind: 'page', component: TakeAssessmentView },
+	GradeImpactDetail: page(GradeImpactDetail),
+	ItemAuthorView: page(ItemAuthorView),
+	LessonPlayer: page(LessonPlayer),
+	MarkSubmissionView: page(MarkSubmissionView),
+	ProctoringReviewQueue: page(ProctoringReviewQueue),
+	RolloverWizard: page(RolloverWizard),
+	ScholiqAdminHealth: page(ScholiqAdminHealth),
+	ScholiqCompliance: page(ScholiqCompliance),
+	ScholiqDashboards: page(ScholiqDashboards),
+	ScholiqLearnerHome: page(ScholiqLearnerHome),
+	ScholiqSettings: page(ScholiqSettings),
+	TakeAssessmentView: page(TakeAssessmentView),
 }

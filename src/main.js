@@ -6,6 +6,7 @@ import VueRouter from 'vue-router'
 import { PiniaVuePlugin } from 'pinia'
 import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
 	defaultPageTypes,
@@ -15,7 +16,6 @@ import {
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
-import customComponents from './customComponents.js'
 import registry from './registry.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -77,6 +77,19 @@ function routesFromManifest(manifest) {
 	return routes
 }
 
+// Populate the manifest runtime context so menu `visibleIf` predicates
+// (e.g. `user.primaryRole`) and the role-aware Dashboards component resolve
+// against the signed-in user's role. Provided as initial state by
+// PageController; absent runtime would (by lib fail-safe) hide every
+// role-gated menu item. Defaults to the least-privileged role on miss.
+bundledManifest.runtime = {
+	...(bundledManifest.runtime || {}),
+	user: {
+		...(bundledManifest.runtime?.user || {}),
+		primaryRole: loadState('scholiq', 'primaryRole', 'learner'),
+	},
+}
+
 const router = new VueRouter({
 	mode: 'history',
 	base: generateUrl('/apps/scholiq'),
@@ -86,14 +99,13 @@ const router = new VueRouter({
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
-// `defaultPageTypes` (and consumers' `customComponents` / `registry`) as
-// frozen module objects in some bundle shapes — Vue 2's `Vue.extend()`
-// mutates component definitions to attach an internal `_Ctor` cache, which
-// throws "Cannot add property _Ctor, object is not extensible" against a
-// frozen source map. Cloning yields extensible objects without altering the
-// values the lib resolves at render time.
+// `defaultPageTypes` (and our `registry`) as frozen module objects in some
+// bundle shapes — Vue 2's `Vue.extend()` mutates component definitions to
+// attach an internal `_Ctor` cache, which throws "Cannot add property _Ctor,
+// object is not extensible" against a frozen source map. Cloning yields
+// extensible objects without altering the values the lib resolves at render
+// time.
 const pageTypesProp = { ...defaultPageTypes }
-const customComponentsProp = { ...customComponents }
 const registryProp = { ...registry }
 
 // Boot order: initializeStores() must resolve before mount so that any
@@ -106,7 +118,6 @@ const registryProp = { ...registry }
 		render: (h) => h(App, {
 			props: {
 				manifest: bundledManifest,
-				customComponents: customComponentsProp,
 				registry: registryProp,
 				pageTypes: pageTypesProp,
 			},

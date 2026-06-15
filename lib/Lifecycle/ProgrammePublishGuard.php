@@ -87,6 +87,7 @@ class ProgrammePublishGuard
     {
         $object           = $transitionContext['object'] ?? [];
         $curriculumPlanId = $object['curriculumPlanId'] ?? null;
+        $tenantId         = $object['tenant_id'] ?? '';
 
         if ($curriculumPlanId === null) {
             $this->logger->info(
@@ -95,14 +96,17 @@ class ProgrammePublishGuard
             return false;
         }
 
+        // H1: scope CurriculumPlan lookup to the same tenant.
+        $planFilters = ['uuid' => $curriculumPlanId, 'lifecycle' => 'published'];
+        if ($tenantId !== '') {
+            $planFilters['tenant_id'] = $tenantId;
+        }
+
         $plans = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
-                'schema'   => 'CurriculumPlan',
-                'filters'  => [
-                    'uuid'      => $curriculumPlanId,
-                    'lifecycle' => 'published',
-                ],
+                'schema'   => 'curriculum-plan',
+                'filters'  => $planFilters,
                 'limit'    => 1,
             ]
         );

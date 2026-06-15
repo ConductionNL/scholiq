@@ -3,24 +3,25 @@
 
 <!--
  Scholiq app shell. Mounts CnAppRoot with the bundled manifest and the
- customComponents registry. CnAppRoot reads manifest.dependencies and
- renders a dependency-missing empty state for absent apps automatically
+ v2 kind-tagged registry (ADR-036). CnAppRoot reads manifest.dependencies
+ and renders a dependency-missing empty state for absent apps automatically
  (per ADR-024) — no app-local OpenRegisterGuard is needed.
 
- The #user-settings slot feeds ScholiqSettings into CnAppRoot's hosted
- NcAppSettingsDialog, which CnAppNav opens when the user clicks the
- manifest menu entry with action: "user-settings".
+ The #user-settings slot feeds ScholiqNotificationSettings into CnAppRoot's
+ hosted NcAppSettingsDialog, which CnAppNav opens when the user clicks the
+ manifest menu entry with action: "user-settings". Per-user settings are
+ about which notifications the user receives; instance-wide configuration
+ (register, AI features, credential signing) lives in the NC Admin panel.
 -->
 <template>
 	<CnAppRoot
 		:manifest="manifest"
-		:custom-components="customComponents"
 		:registry="registry"
 		:page-types="pageTypes"
 		app-id="scholiq"
 		:translate="translateForApp">
 		<template #user-settings>
-			<ScholiqSettings :in-dialog="true" />
+			<ScholiqNotificationSettings />
 		</template>
 	</CnAppRoot>
 </template>
@@ -28,14 +29,14 @@
 <script>
 import { translate as ncT } from '@nextcloud/l10n'
 import { CnAppRoot } from '@conduction/nextcloud-vue'
-import ScholiqSettings from './views/ScholiqSettings.vue'
+import ScholiqNotificationSettings from './views/ScholiqNotificationSettings.vue'
 
 export default {
 	name: 'App',
 
 	components: {
 		CnAppRoot,
-		ScholiqSettings,
+		ScholiqNotificationSettings,
 	},
 
 	props: {
@@ -49,14 +50,11 @@ export default {
 			required: true,
 		},
 		/**
-		 * Registry of consumer-injected components used by `type: "custom"` pages.
-		 */
-		customComponents: {
-			type: Object,
-			default: () => ({}),
-		},
-		/**
-		 * 5-kind component registry (v2 manifest pattern per hydra ADR-036).
+		 * V2 kind-tagged registry (ADR-036) — each entry is
+		 * `{ kind: "page", component: ... }`. CnPageRenderer resolves
+		 * every `type:"custom"` page's `component` string against the
+		 * `kind: "page"` entries here. Replaces the deprecated
+		 * `customComponents` prop.
 		 */
 		registry: {
 			type: Object,

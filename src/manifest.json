@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"$schema": "https://codeberg.org/Conduction/nextcloud-vue/raw/branch/main/src/schemas/app-manifest-v2.schema.json",
 	"version": "0.1.0",
 	"dependencies": [
 		"openregister",
@@ -7,110 +7,138 @@
 	],
 	"menu": [
 		{
-			"id": "Dashboard",
-			"label": "Dashboard",
-			"icon": "icon-category-dashboard",
-			"route": "Dashboard",
-			"order": 10
-		},
-		{
-			"id": "Courses",
-			"label": "Courses",
+			"id": "GroupLearning",
+			"label": "Learning",
 			"icon": "icon-folder",
-			"route": "Courses",
-			"order": 20
-		},
-		{
-			"id": "Enrolments",
-			"label": "Enrolments",
-			"icon": "icon-group",
-			"route": "Enrolments",
-			"order": 30
-		},
-		{
-			"id": "Credentials",
-			"label": "Credentials",
-			"icon": "icon-checkmark",
-			"route": "Credentials",
-			"order": 40
-		},
-		{
-			"id": "Curriculum",
-			"label": "Curriculum",
-			"icon": "icon-category-organization",
-			"route": "Programmes",
-			"order": 45
-		},
-		{
-			"id": "Grades",
-			"label": "Grades",
-			"icon": "icon-quota",
-			"route": "GradeEntries",
-			"order": 46
-		},
-		{
-			"id": "Assignments",
-			"label": "Assignments",
-			"icon": "icon-file-text",
-			"route": "Assignments",
-			"order": 47
-		},
-		{
-			"id": "Assessments",
-			"label": "Assessments",
-			"icon": "icon-clippy",
-			"route": "Assessments",
-			"order": 48
-		},
-		{
-			"id": "Compliance",
-			"label": "Compliance",
-			"icon": "icon-category-security",
-			"route": "Compliance",
-			"order": 50,
-			"visibleIf": {
-				"user.primaryRole": {
-					"in": [
-						"compliance-officer",
-						"hr"
-					]
+			"order": 10,
+			"children": [
+				{
+					"id": "Courses",
+					"label": "Courses",
+					"icon": "icon-folder",
+					"route": "Courses",
+					"order": 10
+				},
+				{
+					"id": "Curriculum",
+					"label": "Curriculum",
+					"icon": "icon-projects",
+					"route": "Programmes",
+					"order": 20
+				},
+				{
+					"id": "LearningPlans",
+					"label": "Learning plans",
+					"icon": "icon-files",
+					"route": "LearningPlans",
+					"order": 30
+				},
+				{
+					"id": "Assignments",
+					"label": "Assignments",
+					"icon": "icon-file-text",
+					"route": "Assignments",
+					"order": 40
+				},
+				{
+					"id": "Assessments",
+					"label": "Assessments",
+					"icon": "icon-clippy",
+					"route": "Assessments",
+					"order": 50
+				},
+				{
+					"id": "Grades",
+					"label": "Grades",
+					"icon": "icon-quota",
+					"route": "GradeEntries",
+					"order": 60
 				}
-			}
+			]
 		},
 		{
-			"id": "LearnerHomeMenu",
-			"label": "My learning",
-			"icon": "icon-home",
-			"route": "LearnerHome",
-			"order": 15,
-			"visibleIf": {
-				"user.primaryRole": {
-					"in": [
-						"learner",
-						"manager",
-						"instructor"
-					]
+			"id": "GroupPeople",
+			"label": "People",
+			"icon": "icon-contacts",
+			"order": 20,
+			"children": [
+				{
+					"id": "LearnerProfilesMenu",
+					"label": "Learners",
+					"icon": "icon-contacts",
+					"route": "LearnerProfiles",
+					"order": 10
+				},
+				{
+					"id": "Enrolments",
+					"label": "Enrolments",
+					"icon": "icon-group",
+					"route": "Enrolments",
+					"order": 20
+				},
+				{
+					"id": "Attendance",
+					"label": "Attendance",
+					"icon": "icon-calendar",
+					"route": "AttendanceRecords",
+					"order": 30
+				},
+				{
+					"id": "Credentials",
+					"label": "Credentials",
+					"icon": "icon-checkmark",
+					"route": "Credentials",
+					"order": 40
 				}
-			}
+			]
 		},
 		{
-			"id": "AdminHealthMenu",
-			"label": "App health",
-			"icon": "icon-category-monitoring",
-			"route": "AdminHealth",
-			"section": "settings",
-			"order": 95,
-			"visibleIf": {
-				"user.primaryRole": {
-					"eq": "admin"
+			"id": "GroupInsight",
+			"label": "Insight",
+			"icon": "icon-projects",
+			"order": 30,
+			"children": [
+				{
+					"id": "Dashboard",
+					"label": "Dashboards",
+					"icon": "icon-home",
+					"route": "Dashboard",
+					"order": 10
+				},
+				{
+					"id": "AdminHealthMenu",
+					"label": "App health",
+					"icon": "icon-toggle",
+					"route": "AdminHealth",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"eq": "admin"
+						}
+					}
+				},
+				{
+					"id": "Compliance",
+					"label": "Compliance",
+					"icon": "icon-password",
+					"route": "Compliance",
+					"order": 30,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": [
+								"compliance-officer",
+								"hr"
+							]
+						}
+					}
 				}
-			}
+			]
 		},
 		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
-			"href": "https://docs.scholiq.nl",
+			"href": "https://scholiq.conduction.nl",
 			"section": "footer",
 			"order": 90
 		},
@@ -123,46 +151,18 @@
 			"order": 100
 		},
 		{
-			"id": "LearningPlans",
-			"label": "Learning plans",
-			"icon": "icon-category-social",
-			"route": "LearningPlans",
-			"order": 49
-		},
-		{
-			"id": "Attendance",
-			"label": "Attendance",
-			"icon": "icon-calendar",
-			"route": "AttendanceRecords",
-			"order": 55
-		},
-		{
 			"id": "DataExchange",
 			"label": "Data exchange",
-			"icon": "icon-category-integration",
+			"icon": "icon-external",
 			"route": "DataExchangeJobs",
-			"order": 60
-		},
-		{
-			"id": "LearnerProfilesMenu",
-			"label": "Learners",
-			"icon": "icon-contacts",
-			"route": "LearnerProfiles",
-			"order": 35
+			"section": "settings",
+			"order": 93
 		},
 		{
 			"id": "XapiStatementsMenu",
 			"label": "xAPI statements",
 			"icon": "icon-history",
 			"route": "XapiStatements",
-			"section": "settings",
-			"order": 93
-		},
-		{
-			"id": "AiFeaturesMenu",
-			"label": "AI features",
-			"icon": "icon-category-tools",
-			"route": "AiFeatures",
 			"section": "settings",
 			"order": 94
 		},
@@ -171,38 +171,47 @@
 			"label": "Assistant",
 			"icon": "icon-comment",
 			"route": "Assistant",
-			"order": 92,
-			"section": "settings"
+			"order": 92
+		},
+		{
+			"id": "Rollover",
+			"label": "School-year rollover",
+			"icon": "icon-history",
+			"route": "RolloverWizard",
+			"order": 46,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"admin"
+					]
+				}
+			}
+		},
+		{
+			"id": "ExternalTraining",
+			"label": "External training",
+			"icon": "icon-add",
+			"route": "ExternalTrainingRecords",
+			"order": 52,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"compliance-officer",
+						"hr",
+						"admin"
+					]
+				}
+			}
 		}
 	],
 	"pages": [
 		{
 			"id": "Dashboard",
 			"route": "/",
-			"type": "dashboard",
-			"title": "Dashboard",
-			"config": {
-				"widgets": [
-					{
-						"id": "scholiqDashboard",
-						"title": "Dashboard",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "scholiqDashboard",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-scholiqDashboard": "ScholiqDashboard"
-			}
+			"type": "custom",
+			"title": "Dashboards",
+			"component": "ScholiqDashboards",
+			"_note": "Role-aware dashboard (ADR-009 §6): one component rendering exactly one CnDashboardPage, re-rendered per active role (admin/teacher/student) with an in-page switcher for multi-role users."
 		},
 		{
 			"id": "Courses",
@@ -237,30 +246,10 @@
 		{
 			"id": "Compliance",
 			"route": "/compliance",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Compliance",
-			"config": {
-				"widgets": [
-					{
-						"id": "scholiqCompliance",
-						"title": "Compliance",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "scholiqCompliance",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-scholiqCompliance": "ScholiqCompliance"
-			}
+			"component": "ScholiqCompliance",
+			"_note": "Compliance overview surface (regulation coverage, attestations); officer/hr gated; no generic lib index/detail analogue."
 		},
 		{
 			"id": "CourseDetail",
@@ -413,58 +402,18 @@
 		{
 			"id": "LearnerHome",
 			"route": "/learner",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "My learning",
-			"config": {
-				"widgets": [
-					{
-						"id": "learnerHome",
-						"title": "My learning",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "learnerHome",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-learnerHome": "ScholiqLearnerHome"
-			}
+			"component": "ScholiqLearnerHome",
+			"_note": "Learner-facing home surface (enrolled courses, progress, next activities); no generic lib index/detail analogue."
 		},
 		{
 			"id": "AdminHealth",
 			"route": "/admin/health",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "App health",
-			"config": {
-				"widgets": [
-					{
-						"id": "adminHealth",
-						"title": "App health",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "adminHealth",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-adminHealth": "ScholiqAdminHealth"
-			}
+			"component": "ScholiqAdminHealth",
+			"_note": "Admin observability surface (register/connector health, job status); no generic lib index/detail analogue."
 		},
 		{
 			"id": "Programmes",
@@ -493,7 +442,7 @@
 			"title": "Curriculum plans",
 			"config": {
 				"register": "scholiq",
-				"schema": "CurriculumPlan"
+				"schema": "curriculum-plan"
 			}
 		},
 		{
@@ -503,7 +452,7 @@
 			"title": "Curriculum plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "CurriculumPlan"
+				"schema": "curriculum-plan"
 			}
 		},
 		{
@@ -661,7 +610,7 @@
 			"title": "Item banks",
 			"config": {
 				"register": "scholiq",
-				"schema": "ItemBank"
+				"schema": "item-bank"
 			}
 		},
 		{
@@ -671,7 +620,7 @@
 			"title": "Item bank",
 			"config": {
 				"register": "scholiq",
-				"schema": "ItemBank"
+				"schema": "item-bank"
 			}
 		},
 		{
@@ -721,7 +670,7 @@
 			"title": "Assessment results",
 			"config": {
 				"register": "scholiq",
-				"schema": "AssessmentResult",
+				"schema": "assessment-result",
 				"filter": {
 					"assessmentId": "@route.assessmentId"
 				},
@@ -743,7 +692,7 @@
 			"title": "Assessment result",
 			"config": {
 				"register": "scholiq",
-				"schema": "AssessmentResult",
+				"schema": "assessment-result",
 				"readOnly": true
 			}
 		},
@@ -754,7 +703,7 @@
 			"title": "Proctoring sessions",
 			"config": {
 				"register": "scholiq",
-				"schema": "ProctoringSession",
+				"schema": "proctoring-session",
 				"readOnly": true
 			}
 		},
@@ -765,7 +714,7 @@
 			"title": "Proctoring session",
 			"config": {
 				"register": "scholiq",
-				"schema": "ProctoringSession",
+				"schema": "proctoring-session",
 				"readOnly": true
 			}
 		},
@@ -808,7 +757,7 @@
 			"title": "Grade scales",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeScale"
+				"schema": "grade-scale"
 			}
 		},
 		{
@@ -818,7 +767,7 @@
 			"title": "Grade scale",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeScale"
+				"schema": "grade-scale"
 			}
 		},
 		{
@@ -828,7 +777,7 @@
 			"title": "Grade entries",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeEntry"
+				"schema": "grade-entry"
 			}
 		},
 		{
@@ -838,7 +787,7 @@
 			"title": "Grade entry",
 			"config": {
 				"register": "scholiq",
-				"schema": "GradeEntry"
+				"schema": "grade-entry"
 			}
 		},
 		{
@@ -848,7 +797,7 @@
 			"title": "Final grades",
 			"config": {
 				"register": "scholiq",
-				"schema": "FinalGrade",
+				"schema": "final-grade",
 				"readOnly": true
 			}
 		},
@@ -859,7 +808,7 @@
 			"title": "Final grade",
 			"config": {
 				"register": "scholiq",
-				"schema": "FinalGrade",
+				"schema": "final-grade",
 				"readOnly": true
 			}
 		},
@@ -895,7 +844,7 @@
 			"title": "Learning plan templates",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanTemplate"
+				"schema": "learning-plan-template"
 			}
 		},
 		{
@@ -905,7 +854,7 @@
 			"title": "Learning plan template",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanTemplate"
+				"schema": "learning-plan-template"
 			}
 		},
 		{
@@ -915,7 +864,7 @@
 			"title": "Learning plans",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlan"
+				"schema": "learning-plan"
 			}
 		},
 		{
@@ -925,7 +874,7 @@
 			"title": "Learning plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlan"
+				"schema": "learning-plan"
 			}
 		},
 		{
@@ -935,7 +884,7 @@
 			"title": "Learning plan evaluations",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanEvaluation",
+				"schema": "learning-plan-evaluation",
 				"filter": {
 					"learningPlanId": "@route.planId"
 				},
@@ -957,7 +906,7 @@
 			"title": "Learning plan evaluation",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearningPlanEvaluation",
+				"schema": "learning-plan-evaluation",
 				"readOnly": true
 			}
 		},
@@ -1018,7 +967,7 @@
 			"title": "Attendance records",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceRecord"
+				"schema": "attendance-record"
 			}
 		},
 		{
@@ -1028,7 +977,7 @@
 			"title": "Attendance record",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceRecord"
+				"schema": "attendance-record"
 			}
 		},
 		{
@@ -1038,7 +987,7 @@
 			"title": "Excuse requests",
 			"config": {
 				"register": "scholiq",
-				"schema": "ExcuseRequest"
+				"schema": "excuse-request"
 			}
 		},
 		{
@@ -1048,7 +997,7 @@
 			"title": "Excuse request",
 			"config": {
 				"register": "scholiq",
-				"schema": "ExcuseRequest"
+				"schema": "excuse-request"
 			}
 		},
 		{
@@ -1058,7 +1007,7 @@
 			"title": "Attendance thresholds",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceThreshold"
+				"schema": "attendance-threshold"
 			}
 		},
 		{
@@ -1068,7 +1017,7 @@
 			"title": "Attendance threshold",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceThreshold"
+				"schema": "attendance-threshold"
 			}
 		},
 		{
@@ -1078,7 +1027,7 @@
 			"title": "Attendance flags",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceFlag",
+				"schema": "attendance-flag",
 				"readOnly": true
 			}
 		},
@@ -1089,7 +1038,7 @@
 			"title": "Attendance flag",
 			"config": {
 				"register": "scholiq",
-				"schema": "AttendanceFlag",
+				"schema": "attendance-flag",
 				"readOnly": true
 			}
 		},
@@ -1116,7 +1065,7 @@
 			"title": "Data mapping profiles",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataMappingProfile"
+				"schema": "data-mapping-profile"
 			}
 		},
 		{
@@ -1126,7 +1075,7 @@
 			"title": "Data mapping profile",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataMappingProfile"
+				"schema": "data-mapping-profile"
 			}
 		},
 		{
@@ -1136,7 +1085,7 @@
 			"title": "Data exchange jobs",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataExchangeJob"
+				"schema": "data-exchange-job"
 			}
 		},
 		{
@@ -1146,7 +1095,7 @@
 			"title": "Data exchange job",
 			"config": {
 				"register": "scholiq",
-				"schema": "DataExchangeJob"
+				"schema": "data-exchange-job"
 			}
 		},
 		{
@@ -1172,7 +1121,7 @@
 			"title": "Learners",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearnerProfile"
+				"schema": "learner-profile"
 			}
 		},
 		{
@@ -1182,7 +1131,7 @@
 			"title": "Learner",
 			"config": {
 				"register": "scholiq",
-				"schema": "LearnerProfile"
+				"schema": "learner-profile"
 			}
 		},
 		{
@@ -1192,7 +1141,7 @@
 			"title": "xAPI statements",
 			"config": {
 				"register": "scholiq",
-				"schema": "XapiStatement",
+				"schema": "xapi-statement",
 				"readOnly": true
 			}
 		},
@@ -1203,7 +1152,7 @@
 			"title": "xAPI statement",
 			"config": {
 				"register": "scholiq",
-				"schema": "XapiStatement",
+				"schema": "xapi-statement",
 				"readOnly": true
 			}
 		},
@@ -1232,6 +1181,34 @@
 			"route": "/assistant",
 			"type": "chat",
 			"title": "Assistant"
+		},
+		{
+			"id": "RolloverWizard",
+			"route": "/structure/rollover",
+			"type": "custom",
+			"title": "School-year rollover",
+			"component": "RolloverWizard",
+			"_note": "Mapping editor for the jaarovergang (school-year-rollover): the \"custom view only where a manifest page cannot render it\" exception. Proposes a leerjaar-increment default mapping, runs the mandatory side-effect-free preview gate, and triggers the idempotent server-side execution (RolloverExecutionHandler) by transitioning the RolloverPlan to executing."
+		},
+		{
+			"id": "ExternalTrainingRecords",
+			"route": "/compliance/external-training",
+			"type": "index",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
+		},
+		{
+			"id": "ExternalTrainingRecordDetail",
+			"route": "/compliance/external-training/:id",
+			"type": "detail",
+			"title": "External training",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-training-record"
+			}
 		}
 	]
 }

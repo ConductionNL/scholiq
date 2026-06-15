@@ -8,25 +8,23 @@
 # they are for all apps." A baseline entry is acceptable only as a temporary
 # tracked-debt marker with a removal timeline.
 #
-# Tracked in: https://github.com/ConductionNL/scholiq/issues/135
+# Tracked in: https://codeberg.org/Conduction/scholiq/issues/135
 
 parameters:
     ignoreErrors:
-        # AuthorizedAdminSetting accepts APP_ID string (not a class-string<IDelegatedSettings>)
-        # because NC's middleware resolves admin-gating by app ID at runtime, not by the
-        # IDelegatedSettings interface. This is the fleet-wide usage pattern.
-        # Tracked in: https://github.com/ConductionNL/scholiq/issues/135
-        -
-            message: "#^Parameter \\#1 \\$settings of attribute class OCP\\\\AppFramework\\\\Http\\\\Attribute\\\\AuthorizedAdminSetting constructor expects class-string<OCP\\\\Settings\\\\IDelegatedSettings>, string given\\.$#"
-            count: 8
-            path: lib/Controller
-
         # PHPDoc-driven false-positive: phpstan knows `$action` is string (array key) from the
         # @param type-hint, so `is_string($action) === false` is always false. The defensive check
         # is intentional — it guards against malformed data from IAppConfig JSON decode at runtime.
         # treatPhpDocTypesAsCertain: false would suppress this globally; a targeted baseline is safer.
-        # Tracked in: https://github.com/ConductionNL/scholiq/issues/135
+        # Tracked in: https://codeberg.org/Conduction/scholiq/issues/135
         -
             message: "#^(Result of \\|\\| is always false|Strict comparison using === between true and false will always evaluate to false)\\.$#"
             count: 4
             path: lib/Service
+
+        # Pre-existing: AttendanceFlagCreationHandler redundant null-coalesce after non-nullable getContext().
+        # Tracked in: https://codeberg.org/Conduction/scholiq/issues/135
+        -
+            message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
+            count: 1
+            path: lib/Lifecycle/AttendanceFlagCreationHandler.php

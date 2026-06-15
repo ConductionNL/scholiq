@@ -2,19 +2,203 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application.",
-        "version": "0.1.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
+        "version": "0.2.0"
     },
     "x-openregister": {
         "type": "application",
         "app": "scholiq",
-        "openregister": "^v0.2.10",
+        "openregister": "^v0.2.14",
         "description": "Scholiq — open-source LVS + LMS for Nextcloud compliance training, certification, and learning management."
     },
     "paths": {},
     "components": {
+        "objects": [
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "programme",
+                    "slug": "prog-compliance-2026"
+                },
+                "name": "Compliance Training 2026",
+                "level": "corporate",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "programme",
+                    "slug": "prog-onboarding"
+                },
+                "name": "Employee Onboarding",
+                "level": "corporate",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-avg-2026"
+                },
+                "code": "AVG-2026",
+                "name": "AVG / GDPR Refresher 2026",
+                "level": "corporate",
+                "language": "nl",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-bio2-2026"
+                },
+                "code": "BIO2-2026",
+                "name": "BIO2 Security Awareness",
+                "level": "corporate",
+                "language": "nl",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "course",
+                    "slug": "course-nis2-2026"
+                },
+                "code": "NIS2-2026",
+                "name": "NIS2 Compliance Basics",
+                "level": "corporate",
+                "language": "en",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "cohort",
+                    "slug": "cohort-employees-2026"
+                },
+                "name": "All Employees 2026",
+                "period": "2026",
+                "academicYear": "2026",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-anna"
+                },
+                "ncUserId": "anna",
+                "givenName": "Anna",
+                "familyName": "de Vries",
+                "roles": [
+                    "learner"
+                ],
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-bram"
+                },
+                "ncUserId": "bram",
+                "givenName": "Bram",
+                "familyName": "Jansen",
+                "roles": [
+                    "learner"
+                ],
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "learner-profile",
+                    "slug": "learner-admin"
+                },
+                "ncUserId": "admin",
+                "givenName": "Admin",
+                "familyName": "User",
+                "roles": [
+                    "learner"
+                ],
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-anna-avg"
+                },
+                "learnerId": "anna",
+                "courseId": "@ref:course-avg-2026",
+                "source": "bulk",
+                "lifecycle": "active",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-bram-avg"
+                },
+                "learnerId": "bram",
+                "courseId": "@ref:course-avg-2026",
+                "source": "bulk",
+                "lifecycle": "active",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "enrolment",
+                    "slug": "enrol-anna-bio2"
+                },
+                "learnerId": "anna",
+                "courseId": "@ref:course-bio2-2026",
+                "source": "bulk",
+                "lifecycle": "active",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            },
+            {
+                "@self": {
+                    "register": "scholiq",
+                    "schema": "regulation",
+                    "slug": "reg-avg"
+                },
+                "slug": "AVG",
+                "name": "AVG / GDPR",
+                "audienceScope": "all-employees",
+                "tenant_id": "00000000-0000-0000-0000-000000000001"
+            }
+        ],
         "schemas": {
             "Credential": {
+                "x-openregister-processing": {
+                    "code": "scholiq-credentialing",
+                    "naam": "Credentialing and certification",
+                    "doelbinding": "Issue, verify, and revoke verifiable credentials (EDCI / Open Badges 3.0) attesting completed courses and certifications for learners.",
+                    "rechtsgrond": "contract",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "courseId",
+                        "issuerDid",
+                        "signature"
+                    ],
+                    "backend": "scholiq.credentialing",
+                    "retentionReference": "not declared (Credential carries no x-openregister-archival annotation; align with the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-credentialing"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "credential",
                 "icon": "CertificateOutline",
                 "version": "0.1.0",
@@ -41,10 +225,8 @@
                         "description": "Opaque learner UUID. Never BSN."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Course. Null for manually issued credentials."
                     },
@@ -64,10 +246,8 @@
                         "description": "ISO 8601 timestamp of issuance."
                     },
                     "expiresAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO 8601 expiry timestamp. Null = does not expire."
                     },
@@ -84,17 +264,13 @@
                         "description": "Full Open Badges 3.0 JSON-LD assertion."
                     },
                     "edciPayload": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "EDCI/Europass ELM payload. Phase 3."
                     },
                     "revocationReason": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Human-readable revocation reason. Set on revoke transition."
                     },
                     "issuedBy": {
@@ -111,17 +287,20 @@
                         "description": "How this credential was created."
                     },
                     "regulationSlug": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Regulation identifier (e.g. NIS2) inherited from the Course."
                     },
+                    "enrolmentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "description": "UUID of the originating Enrolment that triggered issuance. Used for idempotency (one credential per enrolment). Distinct from renewalEnrolmentId which records the renewal enrolment created on expiry.",
+                        "x-openregister-index": true
+                    },
                     "renewalEnrolmentId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the renewal Enrolment created on expiry. Written back by OR batch."
                     },
@@ -435,9 +614,12 @@
                         "trigger": {
                             "type": "calculatedChange",
                             "field": "daysUntilExpiry",
-                            "condition": "lte",
-                            "value": 30,
-                            "previously": "gt"
+                            "condition": {
+                                "lte": 30
+                            },
+                            "previously": {
+                                "gt": 30
+                            }
                         },
                         "enabled": true,
                         "channels": [
@@ -495,10 +677,50 @@
                         }
                     }
                 },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): credentials contain signed PII. Learner sees own record; admins see all. Teachers have no read access — only the credential-holder and admins. Write stays lifecycle-controlled.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
             "AiFeature": {
+                "x-openregister-processing": {
+                    "code": "scholiq-ai-features",
+                    "naam": "AI-assisted learning features",
+                    "doelbinding": "Operate adaptive learning paths and AI-assisted item generation; record EU AI Act high-risk decision traces and DPO acknowledgements for transparency and accountability.",
+                    "rechtsgrond": "consent",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "riskCategory",
+                        "decisionTrace"
+                    ],
+                    "backend": "scholiq.ai",
+                    "retentionReference": "not declared (AiFeature carries no x-openregister-archival annotation; align with the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-ai-features"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "AiFeature",
                 "icon": "RobotOutline",
                 "version": "0.1.0",
@@ -644,18 +866,14 @@
                         "example": "NIS2 Awareness Training"
                     },
                     "name_nl": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Dutch name",
                         "example": "NIS2 Bewustzijnstraining"
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Course description"
                     },
                     "level": {
@@ -690,25 +908,19 @@
                         "default": false
                     },
                     "regulationSlug": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Regulation identifier (e.g. NIS2, AVG, BIO)",
                         "example": "NIS2"
                     },
                     "renewalCourseSlug": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Slug of the renewal/refresher course for this training"
                     },
                     "certificateTemplate": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "nc:files path to PDF certificate template"
                     },
                     "lifecycle": {
@@ -723,18 +935,14 @@
                         "example": "draft"
                     },
                     "parentCourseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the parent Course. Makes Course recursive — a 'module' is a Course used as a container. Null for top-level courses."
                     },
                     "curriculumPlanId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the CurriculumPlan governing this course. Consumed by the grading spec."
                     },
@@ -945,10 +1153,8 @@
                         "example": "/Scholiq/tenant-uuid/course-uuid/cmi5/lesson-uuid/"
                     },
                     "durationMinutes": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
+                        "type": "integer",
+                        "nullable": true,
                         "description": "Estimated duration in minutes",
                         "example": 20
                     },
@@ -965,10 +1171,8 @@
                         "default": false
                     },
                     "regulationSlug": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Regulation identifier for mandatory-training compliance tracking (e.g. NIS2, AVG, BIO)",
                         "example": "NIS2"
                     },
@@ -1070,17 +1274,13 @@
                         "description": "xAPI Activity, Agent, SubStatement, or StatementRef"
                     },
                     "result": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "xAPI Result (score, success, completion, duration, extensions)"
                     },
                     "context": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "xAPI Context (registration, instructor, team, contextActivities, extensions)"
                     },
                     "timestamp": {
@@ -1094,10 +1294,8 @@
                         "description": "When the statement was received and stored by the LRS"
                     },
                     "authority": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "xAPI Authority (Agent attesting this statement)"
                     },
                     "version": {
@@ -1106,20 +1304,23 @@
                         "description": "xAPI specification version"
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course this statement relates to (Scholiq denormalisation)"
                     },
                     "lessonId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Lesson this statement relates to (Scholiq denormalisation)"
+                    },
+                    "verified_actor_id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Server-trusted learner identifier stamped by the xAPI ingest controller after authenticating the sender. NEVER derived from payload.actor.*. XapiCompletionHandler reads ONLY this field to prevent credential forgery (C6).",
+                        "readOnly": true,
+                        "x-openregister-index": true
                     },
                     "tenant_id": {
                         "type": "string",
@@ -1131,6 +1332,12 @@
                     "property": "lifecycle",
                     "initial": "stored",
                     "transitions": {}
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin"
+                    ],
+                    "_comment": "SB1 (wave-12): xapi-statement creation is admin-only as a stopgap until a dedicated xAPI ingest controller stamps verified_actor_id server-side. Prevents any authenticated user from forging xAPI statements with attacker-controlled verified_actor_id values. Track: issue #TBD."
                 },
                 "x-openregister-seed": [],
                 "appendOnly": true
@@ -1170,10 +1377,8 @@
                         "description": "When true this enrolment is a compliance-mandatory assignment."
                     },
                     "dueDate": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date",
                         "description": "ISO date by which the learner must complete the course. Null means no deadline."
                     },
@@ -1190,39 +1395,29 @@
                         "description": "Origin of the enrolment record."
                     },
                     "managerId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Nextcloud user ID of the learner's line manager. Used for overdue alerts and fallback notifications."
                     },
                     "bulkJobId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "Browser-generated UUID grouping all Enrolments created by a single bulk-enrol modal submission. Used for polling progress."
                     },
                     "reason": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Free-text reason captured on withdrawal or failure transitions."
                     },
                     "regulationSlug": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Machine-readable slug of the linked compliance regulation, e.g. 'avg-2018'. Used by compliance-audit to group evidence."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Cohort this enrolment is associated with. Null for individually enrolled learners not in a cohort."
                     },
@@ -1470,63 +1665,31 @@
                         }
                     }
                 },
-                "x-openregister-seed": [],
-                "x-openregister-widgets": {
-                    "myMandatoryTraining": {
-                        "type": "task-list",
-                        "title": "scholiq.widget.learner.mandatoryTraining",
-                        "description": "Learner's mandatory training list, filtered to their own enrolments, sorted by due date ascending.",
-                        "scope": "owned-by-actor",
-                        "filter": {
-                            "mandatory": true,
-                            "lifecycleIn": [
-                                "pending",
-                                "active"
-                            ],
-                            "learnerId": "@actor.id"
-                        },
-                        "sort": [
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): enrolment records are per-student PII. Learner sees own record; managers see their reports; admins see all.",
+                    "read": {
+                        "anyOf": [
                             {
-                                "field": "dueDate",
-                                "order": "asc"
-                            }
-                        ],
-                        "columns": [
-                            {
-                                "field": "course.name",
-                                "label": "scholiq.col.course"
+                                "role": "admin"
                             },
                             {
-                                "field": "regulationSlug",
-                                "label": "scholiq.col.regulation"
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
                             },
                             {
-                                "field": "lifecycle",
-                                "label": "scholiq.col.status"
-                            },
-                            {
-                                "field": "dueDate",
-                                "label": "scholiq.col.due"
-                            },
-                            {
-                                "field": "daysRemaining",
-                                "label": "scholiq.col.days"
-                            },
-                            {
-                                "field": "ragStatus",
-                                "label": "scholiq.col.rag"
-                            }
-                        ],
-                        "actions": [
-                            {
-                                "id": "start",
-                                "label": "scholiq.action.start",
-                                "manifestPage": "LessonPlayer",
-                                "presetField": "courseId"
+                                "match": {
+                                    "field": "managerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
                             }
                         ]
                     }
-                }
+                },
+                "x-openregister-seed": []
             },
             "Regulation": {
                 "slug": "regulation",
@@ -1556,17 +1719,13 @@
                         "description": "Human-readable regulation name."
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Plain-language description of the regulation and its applicability."
                     },
                     "applicabilityCriteria": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Free-text applicability criteria describing which roles or departments must comply."
                     },
                     "audienceScope": {
@@ -1772,73 +1931,35 @@
                         }
                     }
                 },
-                "x-openregister-widgets": {
-                    "coverageGrid": {
-                        "type": "regulation-coverage-grid",
-                        "title": "scholiq.widget.regulation.coverage",
-                        "props": {
-                            "metrics": [
-                                "coveragePercent",
-                                "mandatoryEnrolledCount",
-                                "mandatoryCompletedCount",
-                                "attestationCount"
-                            ],
-                            "rag": [
-                                "ragStatus"
-                            ],
-                            "actions": [
-                                {
-                                    "id": "campaign",
-                                    "manifestPage": "BulkEnrol",
-                                    "presetField": "regulationSlug"
-                                },
-                                {
-                                    "id": "exportPack",
-                                    "manifestPage": "AuditPackExport",
-                                    "presetField": "regulationSlug"
-                                }
-                            ]
-                        }
-                    },
-                    "boardProof": {
-                        "type": "stats-block",
-                        "title": "scholiq.widget.regulation.board",
-                        "filter": {
-                            "audienceScope": "board"
-                        },
-                        "props": {
-                            "primary": "coveragePercent",
-                            "secondary": "validCredentialCount"
-                        }
-                    },
-                    "attestationCount": {
-                        "type": "kpi-tile",
-                        "title": "scholiq.widget.compliance.attestationCount",
-                        "description": "Count of pending attestations per regulation for the compliance officer.",
-                        "scope": "tenant",
-                        "aggregation": {
-                            "schema": "Credential",
-                            "groupBy": "regulationSlug",
-                            "measure": "count",
-                            "filter": {
-                                "lifecycleIn": [
-                                    "pending-attestation"
-                                ]
-                            }
-                        },
-                        "presentation": {
-                            "format": "integer",
-                            "icon": "ClipboardCheckOutline",
-                            "ragThresholds": {
-                                "red": 10,
-                                "amber": 5
-                            }
-                        }
-                    }
-                },
                 "x-openregister-seed": []
             },
             "Attestation": {
+                "x-openregister-processing": {
+                    "code": "scholiq-attestations",
+                    "naam": "Compliance training and signed attestations",
+                    "doelbinding": "Record that a learner completed mandatory compliance training (AVG / BIO / NIS2 / Cyberbeveiligingswet) and capture the signed attestation as legal evidence, including the actor's IP address for non-repudiation.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "employeeId",
+                        "actorIp",
+                        "signature"
+                    ],
+                    "backend": "scholiq.attestations",
+                    "retentionReference": "not declared (Attestation carries no x-openregister-archival annotation; signed evidence is typically retained per the school's selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-attestations"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "attestation",
                 "icon": "FileCertificateOutline",
                 "version": "0.1.0",
@@ -1876,31 +1997,23 @@
                         "description": "Slug of the Regulation this attestation is captured for."
                     },
                     "actorIp": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "IP address of the learner at time of attestation, for audit purposes."
                     },
                     "employeeId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "HR system employee identifier, if available."
                     },
                     "score": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Assessment score at time of attestation, if applicable."
                     },
                     "xapiStatementId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "ID of the cmi5.completed XapiStatement that triggered this attestation."
                     },
@@ -1966,7 +2079,330 @@
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
+            "ExternalTrainingRecord": {
+                "x-openregister-processing": {
+                    "code": "scholiq-external-training",
+                    "naam": "Externally-completed training records",
+                    "doelbinding": "Record training a learner completed outside the LMS (classroom, third-party, conference) as first-class compliance evidence, with an officer verification gate and evidence file attachments, so that compliance coverage reflects real-world completions instead of forcing fake in-app enrolments.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "provider",
+                        "evidenceNote",
+                        "submittedBy",
+                        "verifiedBy"
+                    ],
+                    "backend": "scholiq.external-training",
+                    "retentionReference": "not declared (verified external-training records are compliance evidence, typically retained per the school selectielijst alongside attestations)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-external-training"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-15"
+                },
+                "slug": "external-training-record",
+                "icon": "SchoolOutline",
+                "version": "0.1.0",
+                "title": "ExternalTrainingRecord",
+                "description": "An externally-completed training (classroom, third-party e-learning, conference, on-the-job) recorded per learner with evidence file attachments and an officer verification gate. A verified, unexpired record counts as compliance evidence for a matching regulation.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false
+                },
+                "required": [
+                    "learnerId",
+                    "title",
+                    "provider",
+                    "kind",
+                    "completedAt",
+                    "submittedBy",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "UUID of the LearnerProfile this record belongs to."
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Human-readable training title, e.g. \"NIS2 board awareness session\"."
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "External trainer / provider name."
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "classroom",
+                            "external-elearning",
+                            "conference",
+                            "on-the-job",
+                            "other"
+                        ],
+                        "default": "classroom",
+                        "description": "Kind of external training."
+                    },
+                    "regulationSlug": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional Regulation.slug this training provides coverage for (links into compliance coverage). Null = no regulation link."
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional UUID of an in-app Course considered equivalent."
+                    },
+                    "completedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the training was completed."
+                    },
+                    "validUntil": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Optional expiry of the coverage this record provides. When set and in the past, the record no longer counts toward coverage."
+                    },
+                    "evidenceNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text note describing the evidence (e.g. \"signed attendance list attached\")."
+                    },
+                    "submittedBy": {
+                        "type": "string",
+                        "description": "NC user ID of the person who recorded the training."
+                    },
+                    "verifiedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "NC user ID of the officer/HR/admin who verified the record. Must differ from submittedBy when the learner self-submitted."
+                    },
+                    "verifiedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "When the record was verified."
+                    },
+                    "rejectionReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reason captured when the record is rejected."
+                    },
+                    "credentialId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional UUID of a manual Credential issued on verification (links external certificates into the certification expiry machinery)."
+                    },
+                    "batchId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Identifier shared by all records created together in one bulk classroom-session entry, so a batch can be verified and audited together."
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "submitted",
+                            "verified",
+                            "rejected"
+                        ],
+                        "default": "submitted",
+                        "description": "Verification lifecycle state."
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Owning tenant identifier."
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "submitted",
+                    "transitions": {
+                        "verify": {
+                            "from": "submitted",
+                            "to": "verified",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ExternalTrainingVerificationGuard"
+                        },
+                        "reject": {
+                            "from": "submitted",
+                            "to": "rejected"
+                        }
+                    }
+                },
+                "x-openregister-relations": {
+                    "learner": {
+                        "register": "scholiq",
+                        "schema": "LearnerProfile",
+                        "cardinality": "many-to-one",
+                        "joinOn": "learnerId"
+                    },
+                    "course": {
+                        "register": "scholiq",
+                        "schema": "Course",
+                        "cardinality": "many-to-one",
+                        "joinOn": "courseId"
+                    },
+                    "credential": {
+                        "register": "scholiq",
+                        "schema": "Credential",
+                        "cardinality": "many-to-one",
+                        "joinOn": "credentialId"
+                    }
+                },
+                "x-openregister-notifications": {
+                    "submittedForVerification": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "compliance-officer",
+                                    "hr"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuwe externe training '{{title}}' wacht op verificatie",
+                            "en": "New external training '{{title}}' awaits verification"
+                        }
+                    },
+                    "verified": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "verify"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je externe training '{{title}}' is geverifieerd",
+                            "en": "Your external training '{{title}}' was verified"
+                        }
+                    },
+                    "rejected": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "reject"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "submittedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je externe training '{{title}}' is afgewezen",
+                            "en": "Your external training '{{title}}' was rejected"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "External-training records carry PII (provider, evidence). Learner sees own record; compliance-officer/hr/admin see all and perform verification. Write stays lifecycle-controlled.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "compliance-officer"
+                            },
+                            {
+                                "role": "hr"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            },
+                            {
+                                "match": {
+                                    "field": "submittedBy",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "learnerId": "learner-001",
+                        "title": "NIS2 board awareness session",
+                        "provider": "SecureBoard B.V.",
+                        "kind": "classroom",
+                        "regulationSlug": "NIS2",
+                        "completedAt": "2026-03-10T10:00:00Z",
+                        "validUntil": "2027-03-10T10:00:00Z",
+                        "evidenceNote": "Signed attendance list attached",
+                        "submittedBy": "admin",
+                        "verifiedBy": "admin",
+                        "verifiedAt": "2026-03-11T09:00:00Z",
+                        "lifecycle": "verified",
+                        "tenant_id": "default"
+                    }
+                ],
+                "appendOnly": false
+            },
             "LearnerProfile": {
+                "x-openregister-processing": {
+                    "code": "scholiq-learner-administration",
+                    "naam": "Learner administration (leerlingadministratie)",
+                    "doelbinding": "Maintain the core learner record (identity, school enrolment, affiliation, guardians) required to deliver education, register results, and meet statutory reporting obligations. Includes the encrypted BSN, ECK iD, and SchoolID used for pseudonymised exchange.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "bsnEncrypted",
+                        "eckId",
+                        "schoolId",
+                        "givenName",
+                        "familyName",
+                        "birthDate",
+                        "eduPersonAffiliation",
+                        "parentIds"
+                    ],
+                    "backend": "scholiq.learner-administration",
+                    "retentionReference": "not declared (LearnerProfile carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-learner-administration"
+                    },
+                    "subjectIdFields": {
+                        "ncUserId": "ncUserId",
+                        "bsnEncrypted": "bsnEncrypted",
+                        "eckId": "eckId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "learner-profile",
                 "icon": "AccountOutline",
                 "version": "0.1.0",
@@ -1991,34 +2427,26 @@
                         "description": "Last name."
                     },
                     "birthDate": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date",
                         "description": "Date of birth (AVG-classified)."
                     },
                     "bsnEncrypted": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Encrypted BSN — only populated for K-12 or government tenants. MUST be the base64-encoded ICrypto ciphertext; raw/plaintext BSNs are rejected by the minLength + pattern constraints below.",
                         "minLength": 20,
                         "pattern": "^[A-Za-z0-9+/=]+$"
                     },
                     "schoolId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "School or organisation identifier."
                     },
                     "eckId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "ECK iD for Dutch education identity federation."
                     },
                     "eduPersonAffiliation": {
@@ -2055,17 +2483,13 @@
                         "description": "Nextcloud user IDs of linked parent/guardian accounts."
                     },
                     "managerId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Nextcloud user ID of the learner's line manager."
                     },
                     "department": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Organisational department for grouping and reporting."
                     },
                     "tenant_id": {
@@ -2115,6 +2539,23 @@
                         "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
                     }
                 },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): learner-profile contains personal data (parentIds, department, etc.). Learner sees own profile; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
                 "x-openregister-seed": []
             },
             "Programme": {
@@ -2141,10 +2582,8 @@
                         "example": "NIS2 Board Certification Programme"
                     },
                     "code": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Institution-assigned programme code.",
                         "example": "NIS2-BOARD-2026"
                     },
@@ -2162,17 +2601,13 @@
                         "example": "corporate"
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Plain-language description of the programme."
                     },
                     "curriculumPlanId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the governing CurriculumPlan. Null until a plan is assigned."
                     },
@@ -2185,10 +2620,8 @@
                         }
                     },
                     "credentialTemplateId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Credential template to issue on programme completion. Null = no auto-issuance."
                     },
@@ -2373,10 +2806,8 @@
                         "example": "weighted-average"
                     },
                     "gradeScaleId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the GradeScale object (grading spec). Null = default 1-10 Dutch scale."
                     },
@@ -2390,10 +2821,8 @@
                             ],
                             "properties": {
                                 "componentId": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "description": "If set: applies to that specific component. If null: applies to the final grade."
                                 },
                                 "minValue": {
@@ -2499,18 +2928,14 @@
                         "example": "NIS2 Batch A — Q1 2026"
                     },
                     "programmeId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Programme this cohort runs. Null for standalone course cohorts."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the specific Course this cohort runs (for standalone course cohorts)."
                     },
@@ -2529,10 +2954,8 @@
                         }
                     },
                     "ncGroupId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Backing Nextcloud group ID used for file sharing and permissioning. Null until the cohort is activated."
                     },
                     "period": {
@@ -2613,6 +3036,239 @@
                 },
                 "x-openregister-seed": []
             },
+            "RolloverPlan": {
+                "x-openregister-processing": {
+                    "code": "scholiq-rollover",
+                    "naam": "School-year rollover plans",
+                    "doelbinding": "Plan, preview, and execute the annual jaarovergang: promote/retain/graduate/outflow learners across cohorts, carry over mandatory enrolments, sync NC groups, and archive last year — recorded as an auditable, resumable plan object.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "school administration",
+                    "dataCategories": [
+                        "mappings",
+                        "learnerOverrides",
+                        "executedBy"
+                    ],
+                    "backend": "scholiq.rollover",
+                    "retentionReference": "not declared (rollover plans are administrative records; retained per the school selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": false,
+                    "attribution": {
+                        "default": "scholiq-rollover"
+                    },
+                    "ownerUserId": "admin"
+                },
+                "slug": "rollover-plan",
+                "icon": "CalendarSyncOutline",
+                "version": "0.1.0",
+                "title": "RolloverPlan",
+                "description": "A school-year rollover (jaarovergang) plan: per-cohort mappings and per-learner overrides, a side-effect-free dry-run report, and a resumable execution that promotes/retains/graduates/outflows learners, carries over mandatory enrolments, syncs NC groups, and archives the from-year cohorts.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false
+                },
+                "required": [
+                    "fromAcademicYear",
+                    "toAcademicYear",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "fromAcademicYear": {
+                        "type": "string",
+                        "description": "Academic year being rolled out of, e.g. \"2025/2026\"."
+                    },
+                    "toAcademicYear": {
+                        "type": "string",
+                        "description": "Academic year being rolled into, e.g. \"2026/2027\"."
+                    },
+                    "mappings": {
+                        "type": "array",
+                        "description": "Per-cohort rollover mappings.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "fromCohortId": {
+                                    "type": "string",
+                                    "description": "UUID of the from-year cohort."
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "enum": [
+                                        "promote",
+                                        "graduate",
+                                        "dissolve"
+                                    ],
+                                    "nullable": true,
+                                    "description": "Cohort-level action; null blocks preview until resolved."
+                                },
+                                "toCohortName": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Name of the to-year cohort to create (for promote)."
+                                },
+                                "toProgrammeId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Optional Programme for the to-year cohort."
+                                },
+                                "toCourseId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Optional Course for the to-year cohort."
+                                },
+                                "carryNonMandatory": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Per-mapping opt-in to also carry over non-mandatory enrolments."
+                                }
+                            }
+                        }
+                    },
+                    "learnerOverrides": {
+                        "type": "array",
+                        "description": "Per-learner overrides of the cohort-level action.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "learnerId": {
+                                    "type": "string"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "enum": [
+                                        "promote",
+                                        "retain",
+                                        "graduate",
+                                        "outflow"
+                                    ]
+                                },
+                                "note": {
+                                    "type": "string",
+                                    "nullable": true
+                                }
+                            }
+                        }
+                    },
+                    "dryRunReport": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "The most recent side-effect-free preview output (per-cohort counts, cohorts to create, enrolments to carry over, NC groups to sync). Null until previewed; cleared when mappings change."
+                    },
+                    "perMappingProgress": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Map of fromCohortId -> \"done\" recording per-mapping completion so a failed run resumes without duplicating work."
+                    },
+                    "executedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "NC user ID who executed the plan."
+                    },
+                    "executedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "failureReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Captured when the plan transitions to failed."
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "previewed",
+                            "executing",
+                            "completed",
+                            "failed"
+                        ],
+                        "default": "draft"
+                    },
+                    "tenant_id": {
+                        "type": "string"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "draft",
+                    "transitions": {
+                        "preview": {
+                            "from": "draft",
+                            "to": "previewed"
+                        },
+                        "execute": {
+                            "from": "previewed",
+                            "to": "executing"
+                        },
+                        "complete": {
+                            "from": "executing",
+                            "to": "completed"
+                        },
+                        "fail": {
+                            "from": "executing",
+                            "to": "failed"
+                        },
+                        "retry": {
+                            "from": "failed",
+                            "to": "executing"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "rolloverCompleted": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "complete"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "executedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Jaarovergang {{toAcademicYear}} is voltooid",
+                            "en": "School-year rollover {{toAcademicYear}} completed"
+                        }
+                    },
+                    "rolloverFailed": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "fail"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "executedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Jaarovergang {{toAcademicYear}} is mislukt",
+                            "en": "School-year rollover {{toAcademicYear}} failed"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Rollover plans are admin/coordinator-only: they move hundreds of learners. Read + write restricted to admin (broaden to a coordinator group via the action matrix).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            }
+                        ]
+                    }
+                },
+                "appendOnly": false
+            },
             "Session": {
                 "slug": "session",
                 "icon": "CalendarClockOutline",
@@ -2639,18 +3295,14 @@
                         "description": "UUID of the Cohort this session belongs to."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course covered in this session. Null for administrative / non-content sessions."
                     },
                     "lessonId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Lesson covered in this session. Null when not tied to a specific lesson."
                     },
@@ -2670,10 +3322,8 @@
                         "description": "ISO 8601 end timestamp of the session."
                     },
                     "location": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Room code or online URL (MS Teams, Zoom, etc.).",
                         "example": "Lokaal A-203"
                     },
@@ -2834,18 +3484,14 @@
                         "example": "/Scholiq/tenant-uuid/materials/slides-nis2.pptx"
                     },
                     "url": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uri",
                         "description": "External URL for kind='link' materials. Null for file-backed materials."
                     },
                     "license": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "SPDX license identifier or rights statement.",
                         "example": "CC-BY-4.0"
                     },
@@ -2863,26 +3509,20 @@
                         "example": 1
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course this material is attached to. Null if attached at Lesson or Session level."
                     },
                     "lessonId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Lesson this material is attached to. Null if attached at Course or Session level."
                     },
                     "sessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Session this material is attached to. Null if attached at Course or Lesson level."
                     },
@@ -2938,10 +3578,8 @@
                         "example": "HBO Werkstuk — beoordelingsrubric"
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional explanation of the rubric's purpose and use."
                     },
                     "criteria": {
@@ -2999,10 +3637,8 @@
                         }
                     },
                     "maxPoints": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Declared maximum possible score (sum of the top level across all criteria). Derived field; prefer x-openregister-calculations.computedMaxPoints.",
                         "example": 100
                     },
@@ -3089,41 +3725,31 @@
                         "example": "Werkstuk: NIS2 risicoanalyse"
                     },
                     "instructions": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Rich-text instructions for the learner. Stored as HTML or Markdown."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course this assignment belongs to. Null when only attached to a Session."
                     },
                     "sessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Session this assignment belongs to. Null when only attached at Course level."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Cohort this assignment targets. Null for course-wide assignments."
                     },
                     "curriculumPlanComponentId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Stable componentId from the parent CurriculumPlan.components array that this assignment scores. Used by the grading spec to map submissions to grade columns."
                     },
                     "briefingMaterialIds": {
@@ -3135,10 +3761,8 @@
                         }
                     },
                     "dueAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "Submission deadline. Null for open-ended assignments."
                     },
@@ -3160,10 +3784,8 @@
                         "maximum": 100
                     },
                     "rubricId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Rubric used to grade submissions. Null for unstructured/holistic grading."
                     },
@@ -3173,26 +3795,20 @@
                         "default": false
                     },
                     "visibleFrom": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "Earliest datetime at which the assignment is visible to learners. Null = immediately visible."
                     },
                     "visibleUntil": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "Latest datetime at which the assignment is visible to learners. Null = always visible after publication."
                     },
                     "plagiarismProvider": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Pluggable plagiarism-check provider identifier (e.g. 'turnitin', 'ouriginal'). Resolved to OCA\\Scholiq\\Plagiarism\\ProvidesPlagiarismCheck at runtime. No built-in provider — hook only.",
                         "example": "turnitin"
                     },
@@ -3356,25 +3972,19 @@
                         }
                     },
                     "submittedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "Timestamp when the learner dispatched the `submit` transition. Null while in draft."
                     },
                     "feedbackText": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Free-text teacher feedback returned to the learner when the Submission is returned."
                     },
                     "gradeEntryId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the GradeEntry created/updated by the grading spec when the teacher marks this submission. Set by the grading spec; read-only from this spec's perspective."
                     },
@@ -3405,10 +4015,8 @@
                         }
                     },
                     "proposedGrade": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Sum of rubricScores[].points as entered by the teacher. Null before marking. Reduced by Assignment.latePenaltyPercent when isLate is true to yield effectiveGrade."
                     },
                     "lifecycle": {
@@ -3475,10 +4083,8 @@
                         }
                     },
                     "effectiveGrade": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "materialise": true,
                         "description": "proposedGrade reduced by Assignment.latePenaltyPercent when isLate is true. Null before marking.",
                         "expression": {
@@ -3517,6 +4123,23 @@
                             }
                         }
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): submissions contain learner responses and grades — academic PII. Learner sees own submissions; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
                 }
             },
             "ItemBank": {
@@ -3541,17 +4164,13 @@
                         "description": "Display name of this item bank."
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional description of the item bank."
                     },
                     "subject": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Subject or topic area (e.g. 'Mathematics'). Null = cross-subject."
                     },
                     "itemIds": {
@@ -3629,10 +4248,8 @@
                 ],
                 "properties": {
                     "itemBankId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the owning ItemBank. Null for standalone items."
                     },
@@ -3659,10 +4276,8 @@
                         "description": "QTI 3.0 item body XML/JSON. Canonical stored form."
                     },
                     "correctResponse": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "Correct response declaration. Null for extendedText/essay items which require manual scoring."
                     },
                     "maxScore": {
@@ -3678,10 +4293,8 @@
                         "description": "Subject or topic tags for cross-bank searching."
                     },
                     "difficulty": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "minimum": 0,
                         "maximum": 1,
                         "description": "IRT difficulty parameter in range 0..1. Null = not calibrated."
@@ -3755,6 +4368,30 @@
                 }
             },
             "Assessment": {
+                "x-openregister-processing": {
+                    "code": "scholiq-grading-assessment",
+                    "naam": "Grading and assessment",
+                    "doelbinding": "Administer assessments and record grades, results, and final marks to evaluate learner progress and award qualifications.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "score",
+                        "result",
+                        "gradeValue"
+                    ],
+                    "backend": "scholiq.grading",
+                    "retentionReference": "not declared (Assessment carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-grading-assessment"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "assessment",
                 "icon": "ClipboardCheckOutline",
                 "version": "0.1.0",
@@ -3776,41 +4413,31 @@
                         "description": "Display title of this assessment."
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional description or instructions for the assessment."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Course. Null if scoped to session or cohort only."
                     },
                     "sessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Session. Null if scoped to course or cohort only."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Cohort. Null if scoped to course or session only."
                     },
                     "curriculumPlanComponentId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "CurriculumPlan.components[].componentId this assessment scores."
                     },
                     "itemRefs": {
@@ -3846,17 +4473,13 @@
                         "description": "Scoring scheme: points (raw total), passMark (threshold), or IRT."
                     },
                     "passMark": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Minimum score to pass. Required when scoringScheme is passMark."
                     },
                     "timeLimitMinutes": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Time limit in minutes. Null = untimed."
                     },
                     "maxAttempts": {
@@ -3875,26 +4498,20 @@
                         "description": "Which attempt score to use when maxAttempts > 1."
                     },
                     "availableFrom": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO-8601 datetime from which the assessment is available to learners."
                     },
                     "availableUntil": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO-8601 datetime after which the assessment is no longer available."
                     },
                     "proctoring": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "Optional proctoring configuration. Null = unproctored.",
                         "properties": {
                             "provider": {
@@ -3923,10 +4540,8 @@
                         }
                     },
                     "gradeEntryComponentId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "CurriculumPlan componentId for the GradeEntry feed (grading spec, forward-ref)."
                     },
                     "tenant_id": {
@@ -4127,17 +4742,13 @@
                                     "description": "Learner's response data (type depends on interactionType)."
                                 },
                                 "autoScore": {
-                                    "type": [
-                                        "number",
-                                        "null"
-                                    ],
+                                    "type": "number",
+                                    "nullable": true,
                                     "description": "Score assigned by auto-scoring. Null if not yet scored or needsManualScoring."
                                 },
                                 "manualScore": {
-                                    "type": [
-                                        "number",
-                                        "null"
-                                    ],
+                                    "type": "number",
+                                    "nullable": true,
                                     "description": "Score assigned by a teacher. Required for extendedText items before grading."
                                 }
                             }
@@ -4151,26 +4762,20 @@
                         "description": "ISO-8601 timestamp when the attempt was started."
                     },
                     "submittedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO-8601 timestamp when the attempt was submitted. Null while in-progress."
                     },
                     "proctoringSessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated ProctoringSession. Null for unproctored attempts."
                     },
                     "gradeEntryId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the GradeEntry created for this result (grading spec, forward-ref)."
                     },
@@ -4262,10 +4867,8 @@
                         }
                     },
                     "passed": {
-                        "type": [
-                            "boolean",
-                            "null"
-                        ],
+                        "type": "boolean",
+                        "nullable": true,
                         "description": "True when totalScore >= Assessment.passMark and scoringScheme is passMark. Null when not applicable.",
                         "expression": {
                             "if": [
@@ -4290,6 +4893,23 @@
                                 null
                             ]
                         }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): assessment results contain responses and scores — student PII. Learner sees own results; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
                     }
                 }
             },
@@ -4327,10 +4947,8 @@
                         "description": "Proctoring adapter identifier; resolves to ProvidesProctoring implementation."
                     },
                     "providerSessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Provider-side session identifier. Null until the provider confirms creation."
                     },
                     "status": {
@@ -4396,17 +5014,13 @@
                                     "description": "Invigilator decision. Changed ONLY by a human invigilator — never by automated logic (EU AI Act Art. 14)."
                                 },
                                 "reviewedBy": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "description": "Nextcloud user ID of the invigilator who reviewed this flag."
                                 },
                                 "reviewedAt": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "format": "date-time",
                                     "description": "ISO-8601 timestamp of the review decision."
                                 }
@@ -4583,26 +5197,20 @@
                         }
                     },
                     "min": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Minimum possible value (for numeric/percentage kinds). Null for band-based scales.",
                         "example": 1.0
                     },
                     "max": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Maximum possible value (for numeric/percentage kinds). Null for band-based scales.",
                         "example": 10.0
                     },
                     "passThreshold": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Minimum value required to pass (for numeric/percentage kinds). Values below this threshold yield passed=false.",
                         "example": 5.5
                     },
@@ -4690,18 +5298,14 @@
                         "description": "The CurriculumPlan.components[].componentId this mark scores."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Course. Null when scope is set via cohort only."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the associated Cohort."
                     },
@@ -4716,26 +5320,20 @@
                         ]
                     },
                     "submissionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Submission that originated this mark (set when sourceKind=assignment-submission)."
                     },
                     "assessmentResultId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the AssessmentResult that originated this mark (set when sourceKind=assessment-result)."
                     },
                     "sessionId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Session that originated this mark (set when sourceKind=participation)."
                     },
@@ -4749,10 +5347,8 @@
                         "description": "UUID of the GradeScale used to interpret and display this value."
                     },
                     "weight": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Per-entry weight override. Null means fall back to the matching CurriculumPlan.components[].weight."
                     },
                     "period": {
@@ -4770,10 +5366,8 @@
                         "description": "ISO-8601 timestamp when the grade was entered."
                     },
                     "comment": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional free-text feedback or annotation from the grader."
                     },
                     "tenant_id": {
@@ -4853,6 +5447,23 @@
                         "description": "Value multiplied by effectiveWeight — the raw contribution of this entry to the weighted sum.",
                         "expression": "@.value * @.effectiveWeight"
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): grade entries are sensitive academic PII. Learner sees own grades; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
                 }
             },
             "FinalGrade": {
@@ -4880,18 +5491,14 @@
                         "description": "Nextcloud user ID of the learner this grade belongs to."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course this final grade applies to. Null for programme-level grades."
                     },
                     "programmeId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Programme this final grade applies to. Null for course-level grades."
                     },
@@ -4906,24 +5513,18 @@
                         "description": "UUID of the GradeScale used to interpret the computed value."
                     },
                     "value": {
-                        "type": [
-                            "number",
-                            "null"
-                        ],
+                        "type": "number",
+                        "nullable": true,
                         "description": "Computed final grade value. Null before any GradeEntry has published. Derived — do not set manually."
                     },
                     "passed": {
-                        "type": [
-                            "boolean",
-                            "null"
-                        ],
+                        "type": "boolean",
+                        "nullable": true,
                         "description": "Whether the learner has passed, per the formula + passRules + GradeScale.passThreshold. Null before enough entries have published."
                     },
                     "breakdown": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "Per-period averages and per-component contributions as a JSON object. Derived — do not set manually.",
                         "example": {
                             "periods": {
@@ -4940,10 +5541,8 @@
                         }
                     },
                     "lastRecomputedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO-8601 timestamp of the last recompute triggered by a GradeEntry publish."
                     },
@@ -4982,6 +5581,23 @@
                         "description": "Recompute this FinalGrade whenever a GradeEntry for (learnerId, curriculumPlanId) publishes. Implemented via GradeRollupHandler listening on ObjectTransitionedEvent — NOT a TimedJob.",
                         "handler": "OCA\\Scholiq\\Listener\\GradeRollupHandler"
                     }
+                },
+                "x-property-rbac": {
+                    "_comment": "WF1 (wave-12): final grades are academic PII. Learner sees own final grade; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
                 }
             },
             "LearningPlanTemplate": {
@@ -5019,10 +5635,8 @@
                         "description": "Plan profile this template applies to."
                     },
                     "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional longer description of the template."
                     },
                     "sections": {
@@ -5046,10 +5660,8 @@
                                     "type": "integer"
                                 },
                                 "helpText": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 }
                             }
                         }
@@ -5148,26 +5760,20 @@
                         "description": "Plan profile / kind."
                     },
                     "templateId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the LearningPlanTemplate that pre-structures this plan. Null for free-form plans."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Cohort the learner belongs to (optional context)."
                     },
                     "courseId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Course this plan is associated with (optional)."
                     },
@@ -5192,28 +5798,20 @@
                                     "type": "string"
                                 },
                                 "domain": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 },
                                 "baseline": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 },
                                 "target": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 },
                                 "targetDate": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "format": "date"
                                 },
                                 "status": {
@@ -5253,33 +5851,25 @@
                                     "type": "string"
                                 },
                                 "responsibleId": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 },
                                 "startDate": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "format": "date"
                                 },
                                 "endDate": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "format": "date"
                                 }
                             }
                         }
                     },
                     "period": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Plan period identifier, e.g. '2025-2026'."
                     },
                     "reviewCadenceMonths": {
@@ -5288,10 +5878,8 @@
                         "description": "How often (in months) this plan should be reviewed."
                     },
                     "nextReviewAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date",
                         "description": "Date of next scheduled review. Null until set after initial activation."
                     },
@@ -5301,10 +5889,8 @@
                         "description": "Version counter. Each material revision that requires re-signing increments this."
                     },
                     "supersedesId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the prior LearningPlan version this version supersedes."
                     },
@@ -5466,19 +6052,15 @@
                                     ]
                                 },
                                 "note": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
+                                    "type": "string",
+                                    "nullable": true
                                 }
                             }
                         }
                     },
                     "narrative": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Free-text evaluation narrative / meeting notes."
                     },
                     "attendeeIds": {
@@ -5489,10 +6071,8 @@
                         }
                     },
                     "nextReviewAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date",
                         "description": "Next review date as agreed in this evaluation. Written back to LearningPlan.nextReviewAt by LearningPlanEvaluationHandler."
                     },
@@ -5606,10 +6186,8 @@
                         "description": "Signing method identifier, e.g. 'digid', 'click-to-confirm', 'wet-handtekening-scan'."
                     },
                     "evidenceRef": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional reference to signing evidence (e.g. redirect log, scan URL)."
                     },
                     "tenant_id": {
@@ -5626,6 +6204,32 @@
                 }
             },
             "AttendanceRecord": {
+                "x-openregister-processing": {
+                    "code": "scholiq-attendance-leerplicht",
+                    "naam": "Attendance and leerplicht reporting",
+                    "doelbinding": "Register attendance and absences and report verzuim to the leerplichtambtenaar / DUO as required by the Leerplichtwet.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "status",
+                        "minutesAttended",
+                        "reason"
+                    ],
+                    "backend": "scholiq.attendance",
+                    "retentionReference": "not declared (AttendanceRecord carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-attendance-leerplicht"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "attendance-record",
                 "icon": "ClipboardCheckOutline",
                 "version": "0.1.0",
@@ -5656,10 +6260,8 @@
                         "description": "Nextcloud user ID of the learner."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "Denormalised Cohort UUID for filtering. Derived from the Session."
                     },
@@ -5675,10 +6277,8 @@
                         "description": "Attendance status for this Session."
                     },
                     "minutesAttended": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ],
+                        "type": "integer",
+                        "nullable": true,
                         "description": "Actual minutes the learner was present. Null when fully absent."
                     },
                     "markedBy": {
@@ -5691,17 +6291,13 @@
                         "description": "ISO 8601 timestamp of when attendance was marked."
                     },
                     "reason": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional free-text reason note from the teacher."
                     },
                     "excuseRequestId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the ExcuseRequest that flipped this record to absent-excused."
                     },
@@ -5843,10 +6439,8 @@
                         "description": "Structured reason category for reporting purposes."
                     },
                     "attachmentRef": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional reference to a supporting document (doctor's note, etc.)."
                     },
                     "submittedAuthLevel": {
@@ -5861,25 +6455,19 @@
                         "default": "basic"
                     },
                     "decidedBy": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Nextcloud user ID of the coordinator who approved or rejected."
                     },
                     "decidedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO 8601 timestamp of the decision."
                     },
                     "decisionNote": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Optional note from the coordinator explaining the decision."
                     },
                     "lifecycle": {
@@ -6010,10 +6598,8 @@
                         "default": "per-learner"
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Cohort this threshold applies to. Null = applies to all cohorts in the tenant."
                     },
@@ -6030,17 +6616,13 @@
                                 "description": "Window type."
                             },
                             "weeks": {
-                                "type": [
-                                    "integer",
-                                    "null"
-                                ],
+                                "type": "integer",
+                                "nullable": true,
                                 "description": "Number of rolling weeks (when type is rolling-weeks). E.g. 4 for the leerplicht 4-week window."
                             },
                             "termId": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
+                                "type": "string",
+                                "nullable": true,
                                 "description": "Term identifier (when type is fixed-term)."
                             }
                         },
@@ -6093,10 +6675,8 @@
                                 "description": "Whether to create an AttendanceFlag on crossing."
                             },
                             "dataExchangeTarget": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
+                                "type": "string",
+                                "nullable": true,
                                 "description": "If set, a DataExchangeJob is queued to this target (e.g. 'leerplicht'). Requires the data-exchange spec. TODO(data-exchange spec)."
                             }
                         },
@@ -6201,9 +6781,12 @@
                         "trigger": {
                             "type": "calculatedChange",
                             "field": "unexcusedLesuren",
-                            "condition": "gte",
-                            "value": 16,
-                            "previously": "lt"
+                            "condition": {
+                                "gte": 16
+                            },
+                            "previously": {
+                                "lt": 16
+                            }
                         },
                         "enabled": true,
                         "channels": [
@@ -6223,30 +6806,6 @@
                         }
                     }
                 },
-                "x-openregister-widgets": {
-                    "cohortAttendanceGrid": {
-                        "type": "cohort-attendance-grid",
-                        "title": "scholiq.widget.attendance.cohort",
-                        "description": "Shows learners in a cohort sorted by proximity to each applicable threshold.",
-                        "props": {
-                            "metrics": [
-                                "unexcusedLesuren",
-                                "isThresholdCrossed"
-                            ],
-                            "actions": [
-                                {
-                                    "id": "markAttendance",
-                                    "manifestPage": "MarkAttendanceView",
-                                    "presetField": "cohortId"
-                                },
-                                {
-                                    "id": "viewFlags",
-                                    "manifestPage": "AttendanceFlags"
-                                }
-                            ]
-                        }
-                    }
-                },
                 "x-openregister-seed": []
             },
             "AttendanceFlag": {
@@ -6261,6 +6820,31 @@
                     "active": true,
                     "hardDelete": false,
                     "searchable": true
+                },
+                "x-openregister-notifications": {
+                    "flagRaised": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            },
+                            {
+                                "kind": "field",
+                                "field": "mentorId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Er is een aanwezigheidsmelding voor je aangemaakt",
+                            "en": "An attendance flag was raised for you"
+                        }
+                    }
                 },
                 "required": [
                     "learnerId",
@@ -6281,10 +6865,8 @@
                         "description": "UUID of the AttendanceThreshold that was crossed."
                     },
                     "cohortId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the Cohort in context when the threshold was crossed."
                     },
@@ -6312,18 +6894,14 @@
                         "default": []
                     },
                     "dataExchangeJobId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the DataExchangeJob queued to the configured target (e.g. leerplichtambtenaar). Null until the job is created. TODO(data-exchange spec)."
                     },
                     "mentorId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Nextcloud user ID of the learner's mentor, resolved from LearnerProfile.managerId at flag creation."
                     },
                     "lifecycle": {
@@ -6464,10 +7042,8 @@
                                     "description": "Property path in the external target schema."
                                 },
                                 "transform": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ],
+                                    "type": "string",
+                                    "nullable": true,
                                     "description": "Named transform to apply: 'bsn-to-pseudonym' (use eckId, never bsnEncrypted), 'date-iso8601', 'cohort-to-brin', or null for passthrough.",
                                     "enum": [
                                         "bsn-to-pseudonym",
@@ -6481,10 +7057,8 @@
                         "default": []
                     },
                     "validationProfile": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Named external-schema validation profile to run before the job leaves the queue. Null = no pre-flight validation.",
                         "default": null
                     },
@@ -6645,6 +7219,30 @@
                 ]
             },
             "DataExchangeJob": {
+                "x-openregister-processing": {
+                    "code": "scholiq-data-exchange",
+                    "naam": "Data exchange with external parties",
+                    "doelbinding": "Exchange learner and result data with external systems (DUO/BRON-ROD, OSO overstapdossier, municipality leerplicht, HR systems) over the agreed standards to meet statutory reporting and transfer obligations.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "target",
+                        "scope",
+                        "format"
+                    ],
+                    "backend": "scholiq.data-exchange",
+                    "retentionReference": "not declared (DataExchangeJob carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-data-exchange"
+                    },
+                    "subjectIdFields": {},
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
                 "slug": "data-exchange-job",
                 "icon": "SwapHorizontal",
                 "version": "0.1.0",
@@ -6679,10 +7277,8 @@
                         "description": "Named OpenConnector connection (e.g. 'bron-rod', 'oso', 'leerplicht', 'surfconext', 'hr'). Scholiq implements no Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML wire code — all protocol logic lives in OpenConnector."
                     },
                     "mappingProfileId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of the DataMappingProfile to use for field transformation. Null = use raw Scholiq object.",
                         "default": null
@@ -6705,29 +7301,23 @@
                                 "default": {}
                             },
                             "cohortId": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
+                                "type": "string",
+                                "nullable": true,
                                 "format": "uuid",
                                 "description": "Limit scope to a specific cohort. Null = all cohorts.",
                                 "default": null
                             },
                             "period": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
+                                "type": "string",
+                                "nullable": true,
                                 "description": "ISO 8601 period or term identifier (e.g. '2025-2026/1'). Null = no period filter.",
                                 "default": null
                             }
                         }
                     },
                     "format": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Output format hint (e.g. 'stuf-ebb', 'oso-xml'). Resolved by the OpenConnector target; Scholiq does not produce this format.",
                         "default": null
                     },
@@ -6741,28 +7331,22 @@
                         "description": "ISO 8601 datetime when the job was requested."
                     },
                     "startedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO 8601 datetime when the job started executing. Null until running.",
                         "default": null
                     },
                     "finishedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "date-time",
                         "description": "ISO 8601 datetime when the job finished. Null until completed.",
                         "default": null
                     },
                     "result": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
+                        "type": "object",
+                        "nullable": true,
                         "description": "Job execution result, populated when the job finishes.",
                         "default": null,
                         "properties": {
@@ -6787,36 +7371,28 @@
                                 "default": []
                             },
                             "artefactRef": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ],
+                                "type": "string",
+                                "nullable": true,
                                 "description": "Reference to the produced XML/report stored as an OR file attachment (legally required retention). Null if no artefact was produced.",
                                 "default": null
                             }
                         }
                     },
                     "connectorRunId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "The OpenConnector run/execution ID returned by the connector after the job is dispatched. Used for status polling and audit.",
                         "default": null
                     },
                     "errorMessage": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "description": "Human-readable error message when the job fails (e.g. 'OpenConnector connection bron-rod not found').",
                         "default": null
                     },
                     "originFlagId": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
+                        "nullable": true,
                         "format": "uuid",
                         "description": "UUID of an AttendanceFlag that auto-queued this job (e.g. a leerplicht threshold crossing). Null for manually-requested jobs.",
                         "default": null
@@ -6994,6 +7570,86 @@
                         "subject": {
                             "nl": "Je data-uitwisseling is afgerond ({{lifecycle}})",
                             "en": "Your data exchange finished ({{lifecycle}})"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "GradeNotification": {
+                "slug": "grade-notification",
+                "icon": "BellOutline",
+                "version": "0.1.0",
+                "title": "GradeNotification",
+                "description": "Lightweight parent-notification record created by GradeRollupHandler when a GradeEntry publishes. Contains no grade values — only the fields needed to dispatch the notification to a parent. Records are append-only. The canonical GradeEntry is never modified during fan-out (fixes #183, wave-12 WF4).",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": false
+                },
+                "required": [
+                    "event",
+                    "recipient",
+                    "sourceId",
+                    "learnerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "enum": [
+                            "gradePublished"
+                        ],
+                        "description": "Notification event type. Currently only 'gradePublished'."
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the notification recipient (parent)."
+                    },
+                    "sourceId": {
+                        "type": "string",
+                        "description": "UUID or id of the source GradeEntry that triggered this notification."
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner whose grade was published."
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "description": "UUID of the associated Course. Null when not applicable.",
+                        "default": null
+                    },
+                    "idempotencyKey": {
+                        "type": "string",
+                        "description": "Unique key for idempotent delivery (format: {sourceId}-parent-{recipient})."
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation."
+                    }
+                },
+                "x-openregister-notifications": {
+                    "gradePublished": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "recipient"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuw cijfer gepubliceerd voor {{learnerId}}",
+                            "en": "New grade published for {{learnerId}}"
                         }
                     }
                 },

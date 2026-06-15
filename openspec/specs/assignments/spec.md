@@ -13,7 +13,7 @@ profiles: [opdracht-vo, opdracht-he, werkstuk, portfolio-item]
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, lifecycle guards (late-submission enforcement), and a pluggable plagiarism PHP interface — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 
 Learners hand work in; teachers grade it. That loop is universal — a vmbo `opdracht`, an HBO `werkstuk`, a university `portfolio-item`, a corporate `case study`. Scholiq can hold courses and lessons but has nowhere for a learner to *submit* anything and nowhere for a teacher to mark it against criteria. This spec adds the deliverable side of assessment (the structured-test side is the `assessment` spec): an `Assignment` belongs to a Course or Session, has a due date and a `Rubric`; a learner files a `Submission` (one or more attachments) which moves through draft → submitted → returned; the grade a teacher gives a Submission becomes a `GradeEntry` (see `grading`) so it can roll up into a final grade per the CurriculumPlan.
 
@@ -44,17 +44,42 @@ Learners hand work in; teachers grade it. That loop is universal — a vmbo `opd
 ### Requirement: Persist Assignment domain objects in OpenRegister
 The system MUST persist `Assignment`, `Submission`, `Rubric` as OpenRegister objects with `x-openregister-lifecycle` (Submission: draft → submitted → late → returned), `x-openregister-relations` (Assignment↔Course/Session/Rubric, Submission↔Assignment/learner), and `x-openregister-calculations` (Submission `isLate`, `effectiveGrade`).
 
+#### Scenario: Assignment objects persist in OpenRegister
+- **GIVEN** the assignment schemas are registered in OpenRegister
+- **WHEN** an `Assignment`, `Submission`, or `Rubric` is created
+- **THEN** it is stored as an OpenRegister object carrying its `x-openregister-lifecycle` (Submission: draft → submitted → late → returned), `x-openregister-relations`, and `x-openregister-calculations` (Submission `isLate`, `effectiveGrade`) metadata
+
 ### Requirement: Submission attachments use OpenRegister file attachments
 Submission attachments MUST use OpenRegister file attachments; no app-local file storage.
+
+#### Scenario: Submission attachments stored as OpenRegister attachments
+- **GIVEN** a learner filing a Submission with one or more files
+- **WHEN** the files are uploaded
+- **THEN** they are stored as OpenRegister file attachments and no app-local file storage is used
 
 ### Requirement: Marking a Submission emits a GradeEntry
 Marking a Submission MUST emit (or update) a `GradeEntry` consumed by the `grading` spec; this spec MUST NOT compute final grades itself.
 
+#### Scenario: Marking a Submission emits a GradeEntry
+- **GIVEN** a teacher marking a Submission against its Rubric
+- **WHEN** the marking is saved
+- **THEN** a `GradeEntry` is emitted or updated for the `grading` spec, and this spec does not compute the final grade itself
+
 ### Requirement: Plagiarism check is a pluggable provider
 The plagiarism-check hook MUST be a declared `x-plagiarism.provider` config on `Assignment` resolving to a pluggable PHP interface (no bundled provider) — analogous to proctoring providers in the `assessment` spec.
 
+#### Scenario: Plagiarism check resolves to a pluggable provider
+- **GIVEN** an Assignment with an `x-plagiarism.provider` config and no bundled checker
+- **WHEN** the plagiarism-check hook fires
+- **THEN** the configured provider is resolved through the pluggable PHP interface, analogous to proctoring providers in the `assessment` spec
+
 ### Requirement: Frontend is declarative with named custom views
-Frontend declarative: `src/manifest.json` pages for Assignment index/detail and a custom `SubmitWorkModal` + `MarkSubmissionView` Vue component (genuine UI that a manifest index/detail page can't express). No PHP CRUD controllers; the late-window enforcement is an `x-openregister-lifecycle` guard.
+The frontend MUST be declarative: `src/manifest.json` pages for Assignment index/detail and a custom `SubmitWorkModal` + `MarkSubmissionView` Vue component (genuine UI that a manifest index/detail page can't express). No PHP CRUD controllers; the late-window enforcement is an `x-openregister-lifecycle` guard.
+
+#### Scenario: Frontend is declarative with named custom views
+- **GIVEN** the assignments app frontend
+- **WHEN** the UI is composed
+- **THEN** Assignment index/detail are declarative `src/manifest.json` pages, the only custom Vue components are `SubmitWorkModal` and `MarkSubmissionView`, there are no PHP CRUD controllers, and late-window enforcement is an `x-openregister-lifecycle` guard
 
 ## Standards
 

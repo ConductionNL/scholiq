@@ -99,6 +99,7 @@ class QtiImportService
      *
      * @param string $packagePath Absolute path to the .zip package file.
      * @param string $itemBankId  UUID of the target ItemBank.
+     * @param string $tenantId    Optional tenant UUID; defaults to single-tenant mode when empty.
      *
      * @return string[] Array of created Item UUIDs.
      *
@@ -106,7 +107,7 @@ class QtiImportService
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
-    public function import(string $packagePath, string $itemBankId): array
+    public function import(string $packagePath, string $itemBankId, string $tenantId=''): array
     {
         $tmpDir = sys_get_temp_dir().'/scholiq_qti_'.bin2hex(random_bytes(8));
         mkdir($tmpDir, 0700, true);
@@ -118,7 +119,7 @@ class QtiImportService
 
             $createdUuids = [];
             foreach ($itemXmlPaths as $xmlPath) {
-                $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId);
+                $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId, tenantId: $tenantId);
                 if ($uuid !== null) {
                     $createdUuids[] = $uuid;
                 }
@@ -351,8 +352,17 @@ class QtiImportService
 
             if ($href !== '') {
                 $fullPath = $dir.'/'.$href;
-                if (file_exists($fullPath) === true) {
-                    $paths[] = $fullPath;
+                // H3: prevent path traversal via crafted manifest href values.
+                // Resolve symlinks and '..' segments, then verify the canonical
+                // path is still inside the extraction directory.
+                $realFull = realpath($fullPath);
+                $realDir  = realpath($dir);
+                if ($realFull !== false
+                    && $realDir !== false
+                    && str_starts_with($realFull, $realDir.DIRECTORY_SEPARATOR) === true
+                    && file_exists($realFull) === true
+                ) {
+                    $paths[] = $realFull;
                 }
             }
         }//end foreach
@@ -389,12 +399,13 @@ class QtiImportService
      *
      * @param string $xmlPath    Absolute path to the item XML file.
      * @param string $itemBankId UUID of the target ItemBank.
+     * @param string $tenantId   Tenant UUID to stamp on the created Item (H4).
      *
      * @return string|null Created Item UUID, or null on parse failure.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
      */
-    private function importSingleItem(string $xmlPath, string $itemBankId): ?string
+    private function importSingleItem(string $xmlPath, string $itemBankId, string $tenantId=''): ?string
     {
         $xml = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -459,10 +470,12 @@ class QtiImportService
             'subjectTags'     => [],
             'difficulty'      => null,
             'lifecycle'       => 'draft',
-            'tenant_id'       => '',
+            // H4: stamp the caller's tenant_id so cross-tenant Item lookups
+            // (e.g. AssessmentScoringHandler) scope correctly to this tenant.
+            'tenant_id'       => $tenantId,
         ];
 
-        $saved = $this->objectService->saveObject($itemData);
+        $saved = $this->objectService->saveObject('scholiq', 'item', $itemData);
         if ($saved === null) {
             return null;
         }

@@ -8,7 +8,7 @@
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/scholiq",
+  "repository": "https://codeberg.org/Conduction/scholiq",
   "dependencies": {
     "requiresOpenRegister": true,
     "additionalCiApps": [

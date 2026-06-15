@@ -11,7 +11,7 @@
 ## Phase 2: PHP — ADR-031 legitimate exceptions only
 
 - [ ] Create `lib/Lifecycle/RoleSelector.php`: single method `selectPrimaryRole(LearnerProfile $profile, IUser $user): string`. Logic: if `IGroupManager::isAdmin($user)` → return `admin`. Otherwise pick highest-priority role from `$profile->roles` using static priority map `[compliance-officer=5, hr=4, admin=3, manager=3, instructor=2, learner=1]`. Default `learner` if none. Legitimate per ADR-031 §"Domain rule engines that operate *above* schema metadata". Unit tests: mock each role scenario (admin override, multi-role priority, empty roles → learner fallback).
-- [ ] Create `lib/Controller/HealthController.php`: `GET /api/admin/health` admin-only — returns `{ openregister_connected, schemas_registered, audit_trail_events_24h, mydash_installed, last_audit_pack_export }`. The audit-trail events count is a single OR query (`count(audit_event where created_at >= now-24h)`). The last-export timestamp is a single OR query (`max(created_at) where event_type = compliance.audit_pack.exported`). Integration test: assert all 5 fields populated.
+- [ ] Create `lib/Controller/HealthController.php`: `GET /api/admin/health` admin-only — returns `{ openregister_connected, schemas_registered, audit_trail_events_24h, launchpad_installed, last_audit_pack_export }`. The audit-trail events count is a single OR query (`count(audit_event where created_at >= now-24h)`). The last-export timestamp is a single OR query (`max(created_at) where event_type = compliance.audit_pack.exported`). Integration test: assert all 5 fields populated.
 - [ ] Register the route in `appinfo/routes.php`.
 
 ## Phase 3: Frontend — manifest extension
@@ -28,7 +28,7 @@
 
 ## Phase 4: i18n keys
 
-- [ ] Add translation keys for the new manifest labels + widget column labels: `scholiq.page.dashboard.title`, `scholiq.page.learner.title`, `scholiq.page.admin.health.title`, `scholiq.widget.learner.mandatoryTraining`, `scholiq.col.{course,regulation,status,due,days,rag}`, `scholiq.action.viewInMydash`. Land in both `l10n/nl.json` and `l10n/en.json`.
+- [ ] Add translation keys for the new manifest labels + widget column labels: `scholiq.page.dashboard.title`, `scholiq.page.learner.title`, `scholiq.page.admin.health.title`, `scholiq.widget.learner.mandatoryTraining`, `scholiq.col.{course,regulation,status,due,days,rag}`, `scholiq.action.viewInLaunchPad`. Land in both `l10n/nl.json` and `l10n/en.json`.
 
 ## Phase 5: Quality gate
 
