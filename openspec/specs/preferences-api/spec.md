@@ -9,6 +9,8 @@ updated: 2026-05-31
 
 # Preferences API
 
+@e2e exclude Pure backend HTTP-contract spec. All scenarios assert PreferencesController endpoint behaviour (401 on unauthenticated read, key sanitisation within the `pref_` namespace, empty-value clears the stored preference) — there is no scholiq DOM surface that exercises these endpoints directly. Covered by PHPUnit controller tests.
+
 ## Purpose
 
 This app exposes a generic per-user preferences endpoint (read/write a small key/value flag, backed by Nextcloud `IConfig` user values) consumed by shared `@conduction/nextcloud-vue` widgets that need to persist a cross-device UI flag without a bespoke endpoint per feature. This capability spec retroactively documents the observable contract of that endpoint.
