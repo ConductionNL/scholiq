@@ -27,6 +27,12 @@ return [
         // Controller: QtiImportController (slug: qtiImport)
         ['name' => 'qtiImport#import', 'url' => '/api/assessment/qti-import', 'verb' => 'POST'],
 
+        // School-year rollover wizard — proposal + side-effect-free preview,
+        // authorized via the ADR-023 action matrix (rollover.plan).
+        // Controller: RolloverController (slug: rollover)
+        ['name' => 'rollover#proposeMapping', 'url' => '/api/rollover/propose', 'verb' => 'GET'],
+        ['name' => 'rollover#preview',        'url' => '/api/rollover/{planId}/preview', 'verb' => 'POST'],
+
         // External-training multi-object actions — authorized via the ADR-023
         // action matrix (external-training.bulk-record / .issue-credential).
         // Controller: ExternalTrainingController (slug: externalTraining)

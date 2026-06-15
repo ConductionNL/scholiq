@@ -3036,6 +3036,239 @@
                 },
                 "x-openregister-seed": []
             },
+            "RolloverPlan": {
+                "x-openregister-processing": {
+                    "code": "scholiq-rollover",
+                    "naam": "School-year rollover plans",
+                    "doelbinding": "Plan, preview, and execute the annual jaarovergang: promote/retain/graduate/outflow learners across cohorts, carry over mandatory enrolments, sync NC groups, and archive last year — recorded as an auditable, resumable plan object.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "school administration",
+                    "dataCategories": [
+                        "mappings",
+                        "learnerOverrides",
+                        "executedBy"
+                    ],
+                    "backend": "scholiq.rollover",
+                    "retentionReference": "not declared (rollover plans are administrative records; retained per the school selectielijst)",
+                    "lifecycle": "draft",
+                    "logReads": false,
+                    "attribution": {
+                        "default": "scholiq-rollover"
+                    },
+                    "ownerUserId": "admin"
+                },
+                "slug": "rollover-plan",
+                "icon": "CalendarSyncOutline",
+                "version": "0.1.0",
+                "title": "RolloverPlan",
+                "description": "A school-year rollover (jaarovergang) plan: per-cohort mappings and per-learner overrides, a side-effect-free dry-run report, and a resumable execution that promotes/retains/graduates/outflows learners, carries over mandatory enrolments, syncs NC groups, and archives the from-year cohorts.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false
+                },
+                "required": [
+                    "fromAcademicYear",
+                    "toAcademicYear",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "fromAcademicYear": {
+                        "type": "string",
+                        "description": "Academic year being rolled out of, e.g. \"2025/2026\"."
+                    },
+                    "toAcademicYear": {
+                        "type": "string",
+                        "description": "Academic year being rolled into, e.g. \"2026/2027\"."
+                    },
+                    "mappings": {
+                        "type": "array",
+                        "description": "Per-cohort rollover mappings.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "fromCohortId": {
+                                    "type": "string",
+                                    "description": "UUID of the from-year cohort."
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "enum": [
+                                        "promote",
+                                        "graduate",
+                                        "dissolve"
+                                    ],
+                                    "nullable": true,
+                                    "description": "Cohort-level action; null blocks preview until resolved."
+                                },
+                                "toCohortName": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Name of the to-year cohort to create (for promote)."
+                                },
+                                "toProgrammeId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Optional Programme for the to-year cohort."
+                                },
+                                "toCourseId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Optional Course for the to-year cohort."
+                                },
+                                "carryNonMandatory": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Per-mapping opt-in to also carry over non-mandatory enrolments."
+                                }
+                            }
+                        }
+                    },
+                    "learnerOverrides": {
+                        "type": "array",
+                        "description": "Per-learner overrides of the cohort-level action.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "learnerId": {
+                                    "type": "string"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "enum": [
+                                        "promote",
+                                        "retain",
+                                        "graduate",
+                                        "outflow"
+                                    ]
+                                },
+                                "note": {
+                                    "type": "string",
+                                    "nullable": true
+                                }
+                            }
+                        }
+                    },
+                    "dryRunReport": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "The most recent side-effect-free preview output (per-cohort counts, cohorts to create, enrolments to carry over, NC groups to sync). Null until previewed; cleared when mappings change."
+                    },
+                    "perMappingProgress": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Map of fromCohortId -> \"done\" recording per-mapping completion so a failed run resumes without duplicating work."
+                    },
+                    "executedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "NC user ID who executed the plan."
+                    },
+                    "executedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "failureReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Captured when the plan transitions to failed."
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "previewed",
+                            "executing",
+                            "completed",
+                            "failed"
+                        ],
+                        "default": "draft"
+                    },
+                    "tenant_id": {
+                        "type": "string"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "draft",
+                    "transitions": {
+                        "preview": {
+                            "from": "draft",
+                            "to": "previewed"
+                        },
+                        "execute": {
+                            "from": "previewed",
+                            "to": "executing"
+                        },
+                        "complete": {
+                            "from": "executing",
+                            "to": "completed"
+                        },
+                        "fail": {
+                            "from": "executing",
+                            "to": "failed"
+                        },
+                        "retry": {
+                            "from": "failed",
+                            "to": "executing"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "rolloverCompleted": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "complete"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "executedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Jaarovergang {{toAcademicYear}} is voltooid",
+                            "en": "School-year rollover {{toAcademicYear}} completed"
+                        }
+                    },
+                    "rolloverFailed": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "fail"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "executedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Jaarovergang {{toAcademicYear}} is mislukt",
+                            "en": "School-year rollover {{toAcademicYear}} failed"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Rollover plans are admin/coordinator-only: they move hundreds of learners. Read + write restricted to admin (broaden to a coordinator group via the action matrix).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            }
+                        ]
+                    }
+                },
+                "appendOnly": false
+            },
             "Session": {
                 "slug": "session",
                 "icon": "CalendarClockOutline",

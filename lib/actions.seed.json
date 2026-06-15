@@ -3,6 +3,7 @@
   "actions": {
     "audit-pack.export": ["admin"],
     "qti.import": ["admin"],
+    "rollover.plan": ["admin"],
     "external-training.bulk-record": ["admin", "compliance-officer", "hr"],
     "external-training.issue-credential": ["admin", "compliance-officer", "hr"]
   }

@@ -25,6 +25,7 @@ namespace OCA\Scholiq\AppInfo;
 
 use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
+use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
@@ -164,6 +165,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: DataExchangeRunHandler::class
+        );
+
+        // ADR-031 legitimate exception: RolloverPlan `previewed → executing`
+        // (and `failed → executing` retry) → run the chunked, idempotent
+        // jaarovergang via RolloverService, then drive the plan to
+        // completed/failed. Event-driven (NOT IRegistrationContext::registerJob,
+        // per the fleet jobs-never-ran bug); execution is resumable so a failed
+        // plan retries without duplicating created cohorts or carried enrolments.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: RolloverExecutionHandler::class
         );
 
     }//end register()

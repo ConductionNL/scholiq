@@ -21,6 +21,7 @@ import ScholiqDashboards from './views/ScholiqDashboards.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
+import RolloverWizard from './views/RolloverWizard.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -43,6 +44,7 @@ export default {
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
+	RolloverWizard: page(RolloverWizard),
 	ScholiqAdminHealth: page(ScholiqAdminHealth),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),
