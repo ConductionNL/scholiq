@@ -155,7 +155,8 @@
 			"label": "Data exchange",
 			"icon": "icon-external",
 			"route": "DataExchangeJobs",
-			"order": 60
+			"section": "settings",
+			"order": 93
 		},
 		{
 			"id": "XapiStatementsMenu",
@@ -163,7 +164,7 @@
 			"icon": "icon-history",
 			"route": "XapiStatements",
 			"section": "settings",
-			"order": 93
+			"order": 94
 		},
 		{
 			"id": "AssistantMenu",
