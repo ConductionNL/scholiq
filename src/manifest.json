@@ -157,6 +157,20 @@
 			"route": "Assistant",
 			"order": 92,
 			"section": "settings"
+		},
+		{
+			"id": "Rollover",
+			"label": "School-year rollover",
+			"icon": "icon-history",
+			"route": "RolloverWizard",
+			"order": 46,
+			"visibleIf": {
+				"user.primaryRole": {
+					"in": [
+						"admin"
+					]
+				}
+			}
 		}
 	],
 	"pages": [
@@ -1196,6 +1210,14 @@
 			"route": "/assistant",
 			"type": "chat",
 			"title": "Assistant"
+		},
+		{
+			"id": "RolloverWizard",
+			"route": "/structure/rollover",
+			"type": "custom",
+			"title": "School-year rollover",
+			"component": "RolloverWizard",
+			"_note": "Mapping editor for the jaarovergang (school-year-rollover): the \"custom view only where a manifest page cannot render it\" exception. Proposes a leerjaar-increment default mapping, runs the mandatory side-effect-free preview gate, and triggers the idempotent server-side execution (RolloverExecutionHandler) by transitioning the RolloverPlan to executing."
 		}
 	]
 }

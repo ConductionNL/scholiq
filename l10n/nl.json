@@ -477,7 +477,27 @@
 		"Approval failed. Are you listed as a parent for this learner?": "Goedkeuring mislukt. Bent u vermeld als ouder voor deze leerling?",
 		"Rejection failed. Please try again.": "Afwijzen mislukt. Probeer het opnieuw.",
 		"No job ID in URL.": "Geen taak-ID in de URL.",
-		"Failed to load job. Please try again.": "Taak laden mislukt. Probeer het opnieuw."
+		"Failed to load job. Please try again.": "Taak laden mislukt. Probeer het opnieuw.",
+		"School-year rollover": "Jaarovergang",
+		"From academic year": "Van schooljaar",
+		"To academic year": "Naar schooljaar",
+		"Propose mapping": "Voorstel maken",
+		"From cohort": "Van klas",
+		"Action": "Actie",
+		"To cohort": "Naar klas",
+		"New cohort name": "Nieuwe klasnaam",
+		"No cohorts to roll over": "Geen klassen om over te zetten",
+		"Enter a from-year and propose a mapping to begin.": "Voer een vorig schooljaar in en maak een voorstel om te beginnen.",
+		"Preview": "Voorbeeld",
+		"Execute rollover": "Jaarovergang uitvoeren",
+		"Dry-run report": "Proefdraai-rapport",
+		"Preview blocked: resolve every cohort action before executing.": "Voorbeeld geblokkeerd: los elke klasactie op voordat je uitvoert.",
+		"Promote": "Bevorderen",
+		"Retain": "Doubleren",
+		"Graduate": "Diplomeren",
+		"Outflow": "Uitstroom",
+		"Enrolments to carry over": "Over te zetten inschrijvingen",
+		"Cohorts to create": "Aan te maken klassen"
 	},
 	"plurals": ""
 }
