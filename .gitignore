@@ -58,3 +58,4 @@ playwright-report/
 # Misc
 *.bak
 .cache/
+.phpunit.cache
