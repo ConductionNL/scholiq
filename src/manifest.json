@@ -231,30 +231,9 @@
 		{
 			"id": "Compliance",
 			"route": "/compliance",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "Compliance",
-			"config": {
-				"widgets": [
-					{
-						"id": "scholiqCompliance",
-						"title": "Compliance",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "scholiqCompliance",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-scholiqCompliance": "ScholiqCompliance"
-			}
+			"component": "ScholiqCompliance"
 		},
 		{
 			"id": "CourseDetail",
@@ -407,58 +386,16 @@
 		{
 			"id": "LearnerHome",
 			"route": "/learner",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "My learning",
-			"config": {
-				"widgets": [
-					{
-						"id": "learnerHome",
-						"title": "My learning",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "learnerHome",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-learnerHome": "ScholiqLearnerHome"
-			}
+			"component": "ScholiqLearnerHome"
 		},
 		{
 			"id": "AdminHealth",
 			"route": "/admin/health",
-			"type": "dashboard",
+			"type": "custom",
 			"title": "App health",
-			"config": {
-				"widgets": [
-					{
-						"id": "adminHealth",
-						"title": "App health",
-						"type": "custom"
-					}
-				],
-				"layout": [
-					{
-						"id": 1,
-						"widgetId": "adminHealth",
-						"gridX": 0,
-						"gridY": 0,
-						"gridWidth": 12,
-						"gridHeight": 12
-					}
-				]
-			},
-			"slots": {
-				"widget-adminHealth": "ScholiqAdminHealth"
-			}
+			"component": "ScholiqAdminHealth"
 		},
 		{
 			"id": "Programmes",
