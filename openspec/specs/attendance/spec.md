@@ -14,7 +14,7 @@ replaces: [absence-leerplicht]
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, declarative calculation triggers, and notification config — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 
 Institutions record who was present, and some are obliged to act when absence crosses a threshold. The Dutch **Leerplichtwet** art. 21a obliges every school to report `ongeoorloofd verzuim` of 16 lesuren in 4 weeks to the `leerplichtambtenaar`; HE programmes track `college-aanwezigheid` for attendance-based credit; corporate compliance training needs presence proof for an audit; some certifications require N hours of attended instruction. The structure is the same: an `AttendanceRecord` per (Session, learner) with a status, and an `AttendanceThreshold` rule that watches a learner's records over a window and fires a trigger when crossed. This generalises the Dutch `absence-leerplicht` stub: the 16-uur leerplicht rule is one `AttendanceThreshold` profile; the *report to the leerplichtambtenaar* is a `data-exchange` adapter (Digikoppeling), not part of this spec.
 
@@ -47,17 +47,42 @@ Institutions record who was present, and some are obliged to act when absence cr
 ### Requirement: Persist Attendance domain objects in OpenRegister
 The system MUST persist `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, `AttendanceFlag` as OpenRegister objects with `x-openregister-lifecycle` (ExcuseRequest: submitted → approved | rejected; AttendanceFlag: open → in-handling → reported → resolved), `x-openregister-relations` (AttendanceRecord↔Session/learner, Flag↔learner/threshold), `x-openregister-calculations` (per-learner rolling counts vs each threshold), and `x-openregister-notifications` (`onCross` mentor/coordinator alert, idempotency-keyed). `AttendanceFlag` MUST be `appendOnly: true` (audit per ADR-008).
 
+#### Scenario: Attendance objects persist in OpenRegister
+- **GIVEN** the attendance schemas are registered in OpenRegister
+- **WHEN** an `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, or `AttendanceFlag` is created
+- **THEN** it is stored as an OpenRegister object with its lifecycle, relations, calculations, and notifications metadata, and `AttendanceFlag` is `appendOnly: true` for audit (ADR-008)
+
 ### Requirement: Threshold crossing is a declared calculation trigger
 The threshold-crossing detection MUST be a declared calculation + `calculatedChange` trigger — NOT a PHP TimedJob. It MUST reuse the same threshold machinery as compliance-`Regulation` coverage thresholds (no parallel mechanism — ADR-022).
+
+#### Scenario: Threshold crossing fires via declared calculation trigger
+- **GIVEN** an `AttendanceThreshold` rule expressed as a declared calculation
+- **WHEN** a learner's rolling count crosses the limit
+- **THEN** detection fires through a `calculatedChange` trigger (not a PHP TimedJob), reusing the same threshold machinery as compliance-`Regulation` coverage thresholds (ADR-022)
 
 ### Requirement: Sick-reporting auth strength is declarative config
 The external authenticated sick-reporting flow's auth strength MUST be declarative config; the DigiD handshake itself is a `data-exchange`/openconnector concern.
 
+#### Scenario: Sick-reporting auth strength is declarative config
+- **GIVEN** an external authenticated sick-reporting flow
+- **WHEN** its required auth strength is set
+- **THEN** the auth strength is declarative config while the DigiD handshake remains a `data-exchange`/openconnector concern
+
 ### Requirement: External authority reporting via DataExchangeJob
 The report to an external authority (leerplichtambtenaar via Digikoppeling, etc.) MUST be a `DataExchangeJob` (see `data-exchange`), not implemented inline here.
 
+#### Scenario: External authority report runs as a DataExchangeJob
+- **GIVEN** a crossed threshold whose `onCross` includes an external-authority target
+- **WHEN** the report to the authority (e.g. leerplichtambtenaar via Digikoppeling) is dispatched
+- **THEN** it runs as a `DataExchangeJob` (see `data-exchange`) and is not implemented inline in this spec
+
 ### Requirement: Frontend is declarative with named custom views
-Frontend declarative: `src/manifest.json` pages for AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail; a custom `MarkAttendanceView` (the Session roster grid — genuine UI), `SubmitExcuseModal`, and a `cohort-attendance` dashboard widget. No PHP CRUD controllers.
+The frontend MUST be declarative: `src/manifest.json` pages for AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail; a custom `MarkAttendanceView` (the Session roster grid — genuine UI), `SubmitExcuseModal`, and a `cohort-attendance` dashboard widget. No PHP CRUD controllers.
+
+#### Scenario: Frontend is declarative with named custom views
+- **GIVEN** the attendance app frontend
+- **WHEN** the UI is composed
+- **THEN** AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail are declarative `src/manifest.json` pages, the only custom views are `MarkAttendanceView`, `SubmitExcuseModal`, and the `cohort-attendance` dashboard widget, and there are no PHP CRUD controllers
 
 ## Standards
 

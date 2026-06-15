@@ -13,7 +13,7 @@ profiles: [pta-vo, oer-he, opleidingsplan-mbo, training-curriculum]
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, recursive Course schema, and material attachment config — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 
 Every educational institution — a school, a university faculty, or a corporate training department — runs the same backbone: a **programme** (a degree / diploma / certification track) is described by a **governing plan** (which courses are required, what the assessment components are, how component grades roll up to a final grade, what the period structure is), learners take courses inside **cohorts** (a klas, a werkgroep, a training group), and a cohort meets in scheduled **sessions** (a les, a hoorcollege, a workshop) that carry materials and assignments. Scholiq's built register has `Course` + `Lesson` but no programme, no governing plan, no cohort, no session — so it can hold *content* but cannot model how a real institution *runs*. This spec adds that backbone in a jurisdiction-neutral way: the Dutch **PTA** (Programma van Toetsing en Afsluiting) is one profile of `CurriculumPlan`; an HE **OER/studiegids**, an MBO **opleidingsplan**, and a corporate **training curriculum** are others.
 
@@ -46,17 +46,42 @@ Every educational institution — a school, a university faculty, or a corporate
 ### Requirement: Persist school-structure domain objects in OpenRegister
 The system MUST persist `Programme`, `CurriculumPlan`, `Cohort`, `Session`, `Material` as OpenRegister objects with `x-openregister-lifecycle` (draft → published → archived for Programme/Course; scheduled → in-progress → completed | cancelled for Session) and `x-openregister-relations` (Cohort↔Programme/Course, Session↔Cohort/Course, Material↔Course/Lesson/Session).
 
+#### Scenario: School-structure objects persisted in OpenRegister
+- **GIVEN** the school-structure domain schemas are registered
+- **WHEN** a coordinator creates a Programme, CurriculumPlan, Cohort, Session, and Material
+- **THEN** each is stored as an OpenRegister object carrying the declared lifecycle states and relations
+
 ### Requirement: Course schema is recursive with curriculumPlanId + programmeIds
 The `Course` schema MUST be recursive (`parentCourseId` self-reference) and MUST carry `curriculumPlanId` + `programmeIds`.
+
+#### Scenario: Course nests sub-courses and references plan and programmes
+- **GIVEN** the `Course` schema
+- **WHEN** a Course is created as a container with sub-Courses and linked to a plan and programmes
+- **THEN** it stores the `parentCourseId` self-reference plus `curriculumPlanId` and `programmeIds`
 
 ### Requirement: CurriculumPlan carries component list and roll-up formula
 The `CurriculumPlan` MUST carry a structured component list `{ componentId, label, weight, period, kind: assignment|assessment|participation }[]` and a roll-up `formula` (named: `weighted-average` | `last-attempt` | `best-of-n` | `all-must-pass`).
 
+#### Scenario: CurriculumPlan declares weighted components and formula
+- **GIVEN** a `CurriculumPlan` expressing a PTA
+- **WHEN** a kolom is defined with a weegfactor and a named roll-up formula
+- **THEN** the plan carries the structured component list (with weight, period, kind) and the named `formula` that the `grading` spec consumes
+
 ### Requirement: Materials reference OpenRegister file attachments
 Materials MUST reference OpenRegister file attachments; this app MUST NOT store file bytes itself.
 
+#### Scenario: Material points at an OpenRegister file attachment
+- **GIVEN** a teacher attaches a file to a Session
+- **WHEN** the Material is saved
+- **THEN** it references the OpenRegister file attachment and this app stores no file bytes of its own
+
 ### Requirement: Frontend is declarative with cohort-timetable exception
 Frontend MUST be declarative: `src/manifest.json` pages for Programme/CurriculumPlan/Cohort/Session index+detail; a custom Vue view only for the cohort timetable if a manifest page can't render it. No PHP CRUD controllers.
+
+#### Scenario: Pages are manifest-declared with timetable exception
+- **GIVEN** the school-structure frontend is configured
+- **WHEN** the app renders Programme, CurriculumPlan, Cohort, and Session screens
+- **THEN** index/detail pages come from `src/manifest.json` and the only custom Vue view is the cohort timetable (when a manifest page cannot render it), with no PHP CRUD controllers
 
 ## Standards
 

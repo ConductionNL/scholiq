@@ -14,7 +14,7 @@ replaces: [grading-pta]
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, declarative calculation triggers, and notification dispatch rules — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 
 Component grades have to roll up into a final grade, and the roll-up rule belongs to the governing plan, not the gradebook. Dutch VO does this with the **PTA**: each `kolom` has a `weegfactor`, kolommen group by `periode`, and the weighted average across periods is the **SE-gemiddelde** which (with the CE) gives the **eindcijfer**. An HE module does the same with `deeltoetsen → eindcijfer`. A certification track does it with `all-must-pass`. Magister/SOMtoday own the Dutch VO workflow today but draw systemic UX backlash (instant per-grade pings, no concept state, opaque impact). This spec generalises it: a `GradeEntry` is one mark on one component for one learner; a `FinalGrade` is computed from a learner's GradeEntries using the `CurriculumPlan`'s declared `formula` and `component weights` (from `school-structure`); soft-publish lets a teacher review the cohort distribution before any parent/learner notification fires; the learner sees each grade's weight and its impact on the running average.
 
@@ -47,14 +47,34 @@ Component grades have to roll up into a final grade, and the roll-up rule belong
 ### Requirement: Persist grading domain objects in OpenRegister
 The system MUST persist `GradeScale`, `GradeEntry`, `FinalGrade` as OpenRegister objects. `GradeEntry` has `x-openregister-lifecycle` (concept → published → revised) and `x-openregister-notifications` keyed so a re-publish/backfill doesn't double-notify. `FinalGrade` is computed via `x-openregister-calculations` + cross-schema aggregation over the learner's published `GradeEntry`s, parameterised by the `CurriculumPlan.formula` + component weights.
 
+#### Scenario: Grading objects persisted in OpenRegister
+- **GIVEN** the grading domain schemas are registered
+- **WHEN** a `GradeEntry` is published for a learner
+- **THEN** `GradeScale`, `GradeEntry`, and `FinalGrade` are stored as OpenRegister objects and the `FinalGrade` is computed via `x-openregister-calculations` over the learner's published entries
+
 ### Requirement: Notification dispatch honours per-parent/per-18+-learner preference
 Notification dispatch MUST honour per-parent / per-18+-learner preference (instant vs daily digest), backed by a `NotificationPreference` schema or the existing OR notification-preference mechanism (whichever OR exposes).
+
+#### Scenario: Dispatch respects recipient preference
+- **GIVEN** a parent has set "daily digest" and an 18+ learner has set "instant"
+- **WHEN** grades publish for that learner
+- **THEN** the parent receives one batched digest notification and the learner receives an instant notification, each according to their own preference
 
 ### Requirement: Roll-up is a declared calculation, not a TimedJob
 The roll-up MUST NOT be a PHP TimedJob — it MUST be a declared calculation that re-fires on `GradeEntry` publish (the `calculatedChange` trigger feature). The only PHP exception allowed: a stateless `GradeFormulaEvaluator` invoked by the calculation engine if a formula can't be expressed in JSON-logic (ADR-031 "calculation engine above schema metadata").
 
+#### Scenario: Roll-up re-fires on publish without a TimedJob
+- **GIVEN** a learner's `FinalGrade` is derived from a declared calculation
+- **WHEN** a `GradeEntry` for that learner transitions to `published`
+- **THEN** the `FinalGrade` recomputes via the `calculatedChange` trigger with no PHP TimedJob involved
+
 ### Requirement: Frontend is declarative with named custom views
-Frontend declarative: `src/manifest.json` pages for GradeEntry/FinalGrade index+detail per cohort; a custom `GradebookView` (the cohort grid with concept→publish — genuine UI) and `GradeImpactDetail` Vue component. No PHP CRUD controllers.
+Frontend MUST be declarative: `src/manifest.json` pages for GradeEntry/FinalGrade index+detail per cohort; a custom `GradebookView` (the cohort grid with concept→publish — genuine UI) and `GradeImpactDetail` Vue component. No PHP CRUD controllers.
+
+#### Scenario: Pages and custom views are manifest-declared
+- **GIVEN** the grading frontend is configured
+- **WHEN** the app renders GradeEntry and FinalGrade screens
+- **THEN** index/detail pages come from `src/manifest.json` and only `GradebookView` and `GradeImpactDetail` exist as custom Vue components, with no PHP CRUD controllers
 
 ## Standards
 
