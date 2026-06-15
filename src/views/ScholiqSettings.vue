@@ -68,6 +68,14 @@
 					</tr>
 				</tbody>
 			</table>
+			<div class="scholiq-settings__field">
+				<NcButton type="secondary" @click="manageAiFeatures">
+					<template #icon>
+						<CogOutline :size="20" />
+					</template>
+					{{ t('scholiq', 'Manage AI features') }}
+				</NcButton>
+			</div>
 		</NcSettingsSection>
 
 		<!-- Section 3: Credential signing key -->
@@ -169,6 +177,7 @@ import { NcButton, NcLoadingIcon, NcNoteCard, NcSelect, NcSettingsSection } from
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
 import AccountSearchOutline from 'vue-material-design-icons/AccountSearchOutline.vue'
+import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 
 export default {
 	name: 'ScholiqSettings',
@@ -182,6 +191,7 @@ export default {
 		OpenInNew,
 		FileExportOutline,
 		AccountSearchOutline,
+		CogOutline,
 	},
 
 	props: {
@@ -381,6 +391,25 @@ export default {
 				this.signingKeyMessage = this.t('scholiq', 'An error occurred while rotating the signing key.')
 			} finally {
 				this.signingKeyLoading = false
+			}
+		},
+
+		/**
+		 * Open the EU AI Act AiFeature governance register. Now that the
+		 * standalone "AI features" menu entry is removed, this Settings
+		 * affordance is the discoverable entry point to the still-routable
+		 * `/ai-features` register view. Uses the in-app router when Settings is
+		 * rendered as a page; falls back to a full navigation when rendered in
+		 * the admin settings dialog (no router context).
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/scholiq-merge-ai-surfaces/specs/ai-surface/spec.md
+		 */
+		manageAiFeatures() {
+			if (this.$router) {
+				this.$router.push('/ai-features').catch(() => {})
+			} else {
+				window.location.href = generateUrl('/apps/scholiq') + '/ai-features'
 			}
 		},
 

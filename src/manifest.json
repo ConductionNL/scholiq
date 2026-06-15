@@ -166,20 +166,11 @@
 			"order": 93
 		},
 		{
-			"id": "AiFeaturesMenu",
-			"label": "AI features",
-			"icon": "icon-settings",
-			"route": "AiFeatures",
-			"section": "settings",
-			"order": 94
-		},
-		{
 			"id": "AssistantMenu",
 			"label": "Assistant",
 			"icon": "icon-comment",
 			"route": "Assistant",
-			"order": 92,
-			"section": "settings"
+			"order": 92
 		},
 		{
 			"id": "Rollover",

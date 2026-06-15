@@ -10,17 +10,17 @@
 
 ## Phase 1: Consolidate the AI nav into one interactive entry
 
-- [ ] In `src/manifest.json`, REMOVE the `menu[]` entry `AiFeaturesMenu` (label "AI features", route `AiFeatures`, section `settings`, order 94).
-- [ ] In `src/manifest.json`, MODIFY the `menu[]` entry `AssistantMenu`: drop `"section": "settings"` so Assistant becomes a primary nav entry; keep `id`, `label` ("Assistant"), `icon` (`icon-comment`), `route` (`Assistant`).
-- [ ] Verify the menu now shows exactly ONE AI-labelled entry ("Assistant") and no "AI features" top-level item.
+- [x] In `src/manifest.json`, REMOVE the `menu[]` entry `AiFeaturesMenu` (label "AI features", route `AiFeatures`, section `settings`, order 94).
+- [x] In `src/manifest.json`, MODIFY the `menu[]` entry `AssistantMenu`: drop `"section": "settings"` so Assistant becomes a primary nav entry; keep `id`, `label` ("Assistant"), `icon` (`icon-comment`), `route` (`Assistant`).
+- [x] Verify the menu now shows exactly ONE AI-labelled entry ("Assistant") and no "AI features" top-level item.
 
 ## Phase 2: Keep the AI features register reachable from Settings
 
-- [ ] Confirm `pages[]` entries `AiFeatures` (`/ai-features`), `AiFeatureDetail` (`/ai-features/:id`), and `Assistant` (`/assistant`) are UNCHANGED and remain routable.
-- [ ] In `src/views/ScholiqSettings.vue`, add a "Manage AI features" sub-section / link under the `section-scholiq` content that deep-links to `/ai-features` (the register already loaded by `fetchAiFeatures()`), so the EU AI Act feature register is discoverable from Settings now that its top-level menu item is gone.
-- [ ] Confirm `KpiSchemasWidget`'s `link="/ai-features"` still resolves (route retained).
+- [x] Confirm `pages[]` entries `AiFeatures` (`/ai-features`), `AiFeatureDetail` (`/ai-features/:id`), and `Assistant` (`/assistant`) are UNCHANGED and remain routable.
+- [x] In `src/views/ScholiqSettings.vue`, add a "Manage AI features" sub-section / link under the `section-scholiq` content that deep-links to `/ai-features` (the register already loaded by `fetchAiFeatures()`), so the EU AI Act feature register is discoverable from Settings now that its top-level menu item is gone.
+- [x] Confirm `KpiSchemasWidget`'s `link="/ai-features"` still resolves (route retained).
 
 ## Phase 3: Verify
 
-- [ ] `cd scholiq && openspec validate scholiq-merge-ai-surfaces --strict` passes.
-- [ ] Manually verify: one "Assistant" nav entry, no "AI features" nav entry; `/assistant`, `/ai-features`, `/ai-features/:id` all load; Settings shows the AI features affordance.
+- [x] `cd scholiq && openspec validate scholiq-merge-ai-surfaces --strict` passes.
+- [x] Manually verify: one "Assistant" nav entry, no "AI features" nav entry; `/assistant`, `/ai-features`, `/ai-features/:id` all load; Settings shows the AI features affordance.

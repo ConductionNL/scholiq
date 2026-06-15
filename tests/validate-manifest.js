@@ -112,7 +112,12 @@ function structuralLint(manifest) {
 	}
 	if (!Array.isArray(manifest.menu)) errors.push('top-level: menu (array) is required')
 	if (!Array.isArray(manifest.pages)) errors.push('top-level: pages (array) is required')
-	const allowedTypes = new Set(['index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files', 'custom'])
+	// Mirror the canonical @conduction/nextcloud-vue renderer's supported page
+	// types (render_check.js: dashboard|index|settings|logs|wiki|map|roadmap|
+	// files|chat|form), plus detail + custom. The structural-lint set was
+	// previously missing wiki/map/roadmap/form, falsely flagging the
+	// legitimate "Features & roadmap" page (type: "roadmap").
+	const allowedTypes = new Set(['index', 'detail', 'dashboard', 'logs', 'settings', 'chat', 'files', 'custom', 'wiki', 'map', 'roadmap', 'form'])
 	const seenIds = new Set()
 	for (let i = 0; i < (manifest.pages || []).length; i++) {
 		const page = manifest.pages[i]
