@@ -11,7 +11,7 @@ created: 2026-05-11
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes and scheduled expiry jobs — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 "Certification management" and "Credential management" are both top-10 canonical features (153 demand). Insight #10: "EDCI / Europass digital credentials open the diploma + microcredential market." Insight #11: "Dutch government spends €250M+ annually on employee training" — every euro requires a defensible record. Five `compliance-training` and `government-training` stories pivot on issuing, expiring, and renewing credentials.
 
 ## What

@@ -9,7 +9,7 @@ updated: 2026-05-31
 
 # Preferences API
 
-## Why
+## Purpose
 
 This app exposes a generic per-user preferences endpoint (read/write a small key/value flag, backed by Nextcloud `IConfig` user values) consumed by shared `@conduction/nextcloud-vue` widgets that need to persist a cross-device UI flag without a bespoke endpoint per feature. This capability spec retroactively documents the observable contract of that endpoint.
 

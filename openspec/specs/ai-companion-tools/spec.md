@@ -14,7 +14,7 @@ profiles: [ai-chat-companion]
 
 @e2e exclude All scenarios test internal PHP MCP provider logic (getTools(), invokeTool(), PHP method dispatch, toArray() normalization) — there is no UI surface that exposes these MCP tool calls to a browser. Covered by PHPUnit tests.
 
-## Why
+## Purpose
 
 The hydra AI Chat Companion (ADR-034 + ADR-035) wires a per-app `IMcpToolProvider` (openregister PR #1466) so an LLM can call back into a Conduction app for live data. Scholiq holds course catalogues alongside privacy-sensitive learner records, so its MVP provider deliberately exposes only the two least-sensitive read-only tools (`scholiq.listCourses`, `scholiq.getCourseDetails`). This capability spec retroactively documents the observable contract of that provider so future changes (adding tools, tightening auth, adopting an MCP-wide registry) extend an explicit baseline rather than relying on code-archaeology.
 

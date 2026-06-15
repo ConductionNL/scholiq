@@ -13,7 +13,7 @@ profiles: [pta-vo, oer-he, opleidingsplan-mbo, training-curriculum]
 
 @e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, recursive Course schema, and material attachment config — no `#### Scenario:` headings exist in this spec.
 
-## Why
+## Purpose
 
 Every educational institution — a school, a university faculty, or a corporate training department — runs the same backbone: a **programme** (a degree / diploma / certification track) is described by a **governing plan** (which courses are required, what the assessment components are, how component grades roll up to a final grade, what the period structure is), learners take courses inside **cohorts** (a klas, a werkgroep, a training group), and a cohort meets in scheduled **sessions** (a les, a hoorcollege, a workshop) that carry materials and assignments. Scholiq's built register has `Course` + `Lesson` but no programme, no governing plan, no cohort, no session — so it can hold *content* but cannot model how a real institution *runs*. This spec adds that backbone in a jurisdiction-neutral way: the Dutch **PTA** (Programma van Toetsing en Afsluiting) is one profile of `CurriculumPlan`; an HE **OER/studiegids**, an MBO **opleidingsplan**, and a corporate **training curriculum** are others.
 
