@@ -5,6 +5,62 @@
 		"openregister",
 		"openconnector"
 	],
+	"observability": {
+		"health": {
+			"statusCodePolicy": "adr006",
+			"checks": [
+				{ "id": "database", "type": "database", "severity": "critical" },
+				{ "id": "or", "type": "orAvailable", "severity": "critical" },
+				{ "id": "launchpad", "type": "appEnabled", "app": "launchpad", "severity": "degraded" }
+			]
+		},
+		"metrics": [
+			{
+				"name": "scholiq_courses_total",
+				"type": "gauge",
+				"help": "Number of Course objects in the Scholiq register.",
+				"source": { "kind": "objectCount", "register": "scholiq", "schema": "course" }
+			},
+			{
+				"name": "scholiq_enrolments_total",
+				"type": "gauge",
+				"help": "Number of Enrolment objects in the Scholiq register.",
+				"source": { "kind": "objectCount", "register": "scholiq", "schema": "enrolment" }
+			},
+			{
+				"name": "scholiq_learner_profiles_total",
+				"type": "gauge",
+				"help": "Number of LearnerProfile objects in the Scholiq register.",
+				"source": { "kind": "objectCount", "register": "scholiq", "schema": "learner-profile" }
+			}
+		]
+	},
+	"deepLinks": [
+		{
+			"registerSlug": "scholiq",
+			"schemaSlug": "course",
+			"urlTemplate": "/apps/scholiq/#/courses/{uuid}",
+			"displayName": "Course"
+		},
+		{
+			"registerSlug": "scholiq",
+			"schemaSlug": "enrolment",
+			"urlTemplate": "/apps/scholiq/#/enrolments/{uuid}",
+			"displayName": "Enrolment"
+		},
+		{
+			"registerSlug": "scholiq",
+			"schemaSlug": "learner-profile",
+			"urlTemplate": "/apps/scholiq/#/learners/{uuid}",
+			"displayName": "Learner"
+		},
+		{
+			"registerSlug": "scholiq",
+			"schemaSlug": "credential",
+			"urlTemplate": "/apps/scholiq/#/credentials/{uuid}",
+			"displayName": "Credential"
+		}
+	],
 	"menu": [
 		{
 			"id": "GroupLearning",
