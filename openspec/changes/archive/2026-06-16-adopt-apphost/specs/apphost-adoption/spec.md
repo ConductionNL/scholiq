@@ -12,7 +12,7 @@ Scholiq's observability and app-plumbing run on the OpenRegister AppHost: a stan
 
 ---
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Standard Public Health Endpoint
 
@@ -41,13 +41,13 @@ Scholiq SHALL serve `GET /apps/scholiq/api/health` publicly (no authentication, 
 
 ### Requirement: Admin Metrics Endpoint
 
-Scholiq SHALL serve `GET /apps/scholiq/api/metrics` admin-only through the AppHost GenericMetricsController in Prometheus text exposition format 0.0.4, emitting the implicit `scholiq_info` (version, php_version, nextcloud_version labels) and `scholiq_up` metrics. No app-specific metric descriptors are declared in this change.
+Scholiq SHALL serve `GET /apps/scholiq/api/metrics` admin-only through the AppHost GenericMetricsController in Prometheus text exposition format 0.0.4, emitting the implicit `scholiq_info` and `scholiq_up` metrics plus three additive `objectCount` gauges declared in the manifest `observability.metrics` block: `scholiq_courses_total`, `scholiq_enrolments_total`, and `scholiq_learner_profiles_total` (over the `course`, `enrolment`, and `learner-profile` register slugs). Scholiq had no metrics endpoint before; these gauges replace the deleted health endpoint's hardcoded placeholder counters with live values.
 
 #### Scenario: Admin scrape
 
 - **GIVEN** a running instance
 - **WHEN** `GET /apps/scholiq/api/metrics` is called by an admin
-- **THEN** the response MUST be Prometheus text containing `scholiq_info` and `scholiq_up 1` with `# HELP` / `# TYPE` lines
+- **THEN** the response MUST be Prometheus text containing `scholiq_info`, `scholiq_up 1`, and the three `scholiq_*_total` gauges, each with `# HELP` / `# TYPE` lines
 - @e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection
 
 #### Scenario: Non-admin rejected
@@ -70,7 +70,7 @@ Scholiq SHALL delete `lib/Controller/HealthController.php` and the `GET /api/adm
 
 ### Requirement: Boilerplate Served by AppHost Generics with Parity
 
-Scholiq SHALL serve its SPA page + deep-link catch-all, per-user preferences, settings index/create/load, action authorization, repair-step initialisation, admin settings section, and deep-link registration through the AppHost generic classes (via Bootstrap aliases, `Routes::standard($extra)`, and one-line subclass stubs only where NC requires app-namespace classes), preserving today's route names (`page#index`, `page#catchAll`, `settings#*`, `preferences#*`), URLs, response shapes, and `pref_`-namespaced preference keys. Domain controllers (credentialVerify, keyAdmin, auditPackExport, qtiImport, actionMatrix) and the ADR-031 domain event listeners SHALL remain untouched, and the `AdminSettings` class name SHALL keep resolving for their `#[AuthorizedAdminSetting(AdminSettings::class)]` gates.
+Scholiq SHALL serve its per-user preferences, action authorization, repair-step initialisation, admin settings panel, admin settings section, and deep-link registration through the AppHost generic classes (via `Bootstrap::register()` aliases and one-line subclass stubs where NC requires app-namespace classes), preserving today's route names (`page#index`, `page#catchAll`, `settings#*`, `preferences#*`), URLs, response shapes, and preference key namespace. Two boilerplate units SHALL remain physical and bespoke: the SPA `PageController` (it supplies role-aware dashboard initial state — `primaryRole`/`dashboardRole`/`dashboardRoles` — the generic dashboard controller does not), and `SettingsController`/`SettingsService` (the register-import path calls OpenRegister `ConfigurationService::importFromApp(appId, data, version, force)`, a signature the generic settings service does not drive; these are re-pointed at the bespoke classes after `Bootstrap::register()`). The bespoke routes array is kept rather than `Routes::standard($extra)` so these two units stay wired. Domain controllers (credentialVerify, keyAdmin, auditPackExport, qtiImport, actionMatrix) and the ADR-031 domain event listeners SHALL remain untouched, and the `AdminSettings` class name SHALL keep resolving for their `#[AuthorizedAdminSetting(AdminSettings::class)]` gates.
 
 #### Scenario: SPA shell and deep links still render
 

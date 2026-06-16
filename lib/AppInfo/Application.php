@@ -23,23 +23,27 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\AppInfo;
 
+use OCA\Scholiq\Controller\SettingsController;
 use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
-use OCA\Scholiq\Listener\DeepLinkRegistrationListener;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
-use OCA\OpenRegister\Event\DeepLinkRegistrationEvent;
+use OCA\Scholiq\Repair\InitializeSettings;
+use OCA\Scholiq\Service\ActionAuthService;
+use OCA\Scholiq\Service\SettingsService;
+use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use Psr\Container\ContainerInterface;
 
 /**
  * Main application class for the Scholiq Nextcloud app.
@@ -82,11 +86,88 @@ class Application extends App implements IBootstrap
      */
     public function register(IRegistrationContext $context): void
     {
-        // Register deep link patterns with OpenRegister's unified search provider.
-        // Only fires when OpenRegister is installed and dispatches the event.
-        $context->registerEventListener(
-            event: DeepLinkRegistrationEvent::class,
-            listener: DeepLinkRegistrationListener::class
+        // ADR-040: adopt the OpenRegister AppHost. One call wires the generic
+        // SPA/settings/preferences/health/metrics controllers, the settings +
+        // action-auth services, the install repair steps, the admin settings
+        // panel + section, the manifest-driven deep-link listener, and the
+        // observability aliases — every closure is lazy, so a disabled
+        // OpenRegister never fatals Nextcloud bootstrap.
+        //
+        // The MCP provider alias (formerly hand-written here) and the deep-link
+        // listener (formerly bespoke PHP patterns) are handled by Bootstrap from
+        // the `mcpProvider` option + the manifest `deepLinks` block.
+        Bootstrap::register(
+            $context,
+            self::APP_ID,
+            [
+                'namespace'   => 'OCA\\Scholiq',
+                'sectionName' => 'Scholiq',
+                'mcpProvider' => ScholiqToolProvider::class,
+            ]
+        );
+
+        // Override cookbook (ADR-040): re-point the settings controller + service
+        // at Scholiq's bespoke implementations AFTER Bootstrap, so they win over
+        // the generic aliases. Scholiq keeps the bespoke SettingsService because
+        // its register-import path passes the full payload to OpenRegister's
+        // ConfigurationService::importFromApp(appId, data, version, force); the
+        // generic AppHostSettingsService::loadConfiguration() invokes the 2-arg
+        // importFromApp(appId, force) shape, which is incompatible with the
+        // ConfigurationService signature on OpenRegister `development`. Aliasing
+        // settings to the generic would break /api/settings/load and the
+        // InitializeSettings repair step. Tracked as an upstream AppHost fix.
+        $context->registerService(
+            SettingsService::class,
+            static function (ContainerInterface $c) {
+                return new SettingsService(
+                    appConfig: $c->get('OCP\\IAppConfig'),
+                    appManager: $c->get('OCP\\App\\IAppManager'),
+                    container: $c,
+                    groupManager: $c->get('OCP\\IGroupManager'),
+                    userSession: $c->get('OCP\\IUserSession'),
+                    logger: $c->get('Psr\\Log\\LoggerInterface')
+                );
+            }
+        );
+        $context->registerService(
+            SettingsController::class,
+            static function (ContainerInterface $c) {
+                return new SettingsController(
+                    request: $c->get('OCP\\IRequest'),
+                    settingsService: $c->get(SettingsService::class)
+                );
+            }
+        );
+
+        // Bind Scholiq's ActionAuthService class name to a concrete instance of
+        // the local stub (extends GenericActionAuthService). Bootstrap registered
+        // the generic class under this name, but five domain controllers
+        // (KeyAdmin/ActionMatrix/AuditPackExport/QtiImport/ExternalTraining/
+        // Rollover) type-hint `OCA\Scholiq\Service\ActionAuthService`, so the DI
+        // container must return an instance that IS that subtype.
+        $context->registerService(
+            ActionAuthService::class,
+            static function (ContainerInterface $c) {
+                return new ActionAuthService(
+                    appId: self::APP_ID,
+                    appConfig: $c->get('OCP\\IAppConfig'),
+                    groupManager: $c->get('OCP\\IGroupManager')
+                );
+            }
+        );
+
+        // Re-point the InitializeSettings repair step at Scholiq's bespoke step
+        // (injects the bespoke SettingsService above). Bootstrap aliased this
+        // class name at GenericInitializeSettings, which drives the generic
+        // settings service's incompatible importFromApp call (see note above).
+        $context->registerService(
+            InitializeSettings::class,
+            static function (ContainerInterface $c) {
+                return new InitializeSettings(
+                    settingsService: $c->get(SettingsService::class),
+                    logger: $c->get('Psr\\Log\\LoggerInterface')
+                );
+            }
         );
 
         // ADR-031 legitimate exception: xAPI completion → Enrolment lifecycle transition.
@@ -104,16 +185,6 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CredentialIssuanceHandler::class
-        );
-
-        // Register ScholiqToolProvider as the MCP tool provider for the AI Chat Companion.
-        // The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::scholiq' is the format
-        // that OR's McpToolsService enumerates to discover per-app providers.
-        // The interface ships in openregister PR #1466 (ai-chat-companion-orchestrator);
-        // until merged, Scholiq implements the stub at tests/Stubs/Mcp/IMcpToolProvider.php.
-        $context->registerServiceAlias(
-            'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::scholiq',
-            ScholiqToolProvider::class
         );
 
         // ADR-031 legitimate exception: GradeEntry.published → FinalGrade recompute bridge,

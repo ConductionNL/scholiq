@@ -6,6 +6,8 @@ import { test, expect } from './fixtures'
  * These tests navigate to /index.php/apps/scholiq/ and check that:
  *   1. The CnAppRoot shell renders (no blank page / fatal error).
  *   2. The navigation contains the expected top-level menu items.
+ *
+ * @e2e apphost-adoption::spa-shell-and-deep-links-still-render
  */
 test.describe('Scholiq shell', () => {
 	test('SPA loads without fatal JS error', async ({ loggedInPage: page }) => {

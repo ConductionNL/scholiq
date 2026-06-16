@@ -1,14 +1,20 @@
 <?php
 
 /**
- * Scholiq Admin Settings
+ * Scholiq Admin Settings (AppHost stub)
  *
- * Provides the admin settings form for the Scholiq application.
+ * One-line subclass of the OpenRegister AppHost {@see GenericAdminSettings}
+ * (ADR-040). The class name must physically exist in Scholiq's namespace
+ * because info.xml `<settings><admin>` loads it by class name AND Scholiq's
+ * domain controllers (KeyAdminController, ActionMatrixController,
+ * AuditPackExportController, SettingsController) reference it in
+ * `#[AuthorizedAdminSetting(AdminSettings::class)]`. The generic provides the
+ * IDelegatedSettings form (section `scholiq`, priority 10).
  *
  * @category Settings
  * @package  OCA\Scholiq\Settings
  *
- * @author    Conduction Development Team <dev@conductio.nl>
+ * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
@@ -23,92 +29,11 @@ declare(strict_types=1);
 
 namespace OCA\Scholiq\Settings;
 
-use OCA\Scholiq\AppInfo\Application;
-use OCP\App\IAppManager;
-use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Services\IInitialState;
-use OCP\Settings\IDelegatedSettings;
+use OCA\OpenRegister\AppHost\Settings\GenericAdminSettings;
 
 /**
- * Provides the admin settings form for the Scholiq application.
- *
- * Implements IDelegatedSettings so the form can be guarded by
- * #[AuthorizedAdminSetting(AdminSettings::class)] on the controllers
- * that mutate Scholiq configuration.
+ * AppHost stub for Scholiq's admin settings panel.
  */
-class AdminSettings implements IDelegatedSettings
+class AdminSettings extends GenericAdminSettings
 {
-    /**
-     * Constructor.
-     *
-     * @param IAppManager   $appManager   The app manager.
-     * @param IInitialState $initialState The initial state service.
-     */
-    public function __construct(
-        private readonly IAppManager $appManager,
-        private readonly IInitialState $initialState,
-    ) {
-    }//end __construct()
-
-    /**
-     * Get the settings form template.
-     *
-     * @return TemplateResponse
-     */
-    public function getForm(): TemplateResponse
-    {
-        $version = $this->appManager->getAppVersion(appId: Application::APP_ID);
-
-        $this->initialState->provideInitialState('version', $version);
-
-        return new TemplateResponse(
-            Application::APP_ID,
-            'settings/admin',
-            []
-        );
-    }//end getForm()
-
-    /**
-     * Get the section ID this settings page belongs to.
-     *
-     * @return string
-     */
-    public function getSection(): string
-    {
-        return 'scholiq';
-    }//end getSection()
-
-    /**
-     * Get the priority for ordering within the section.
-     *
-     * @return int
-     */
-    public function getPriority(): int
-    {
-        return 10;
-    }//end getPriority()
-
-    /**
-     * Human-readable name of the delegated settings section.
-     *
-     * @return string|null The section name, or null to use the section default.
-     */
-    public function getName(): ?string
-    {
-        return null;
-    }//end getName()
-
-    /**
-     * App config keys an authorized (delegated) admin may manage.
-     *
-     * Returned as a map of appId => list of allowed config keys. Scholiq
-     * exposes no delegatable sub-keys yet, so this is intentionally empty;
-     * the attribute still scopes the endpoint to full admins.
-     *
-     * @return array<string,string[]> Map of appId to allowed config keys.
-     */
-    public function getAuthorizedAppConfig(): array
-    {
-        return [];
-    }//end getAuthorizedAppConfig()
 }//end class
