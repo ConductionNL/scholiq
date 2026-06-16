@@ -4,6 +4,18 @@ kind: code
 
 # Proposal: Scholiq Adopts OpenRegister AppHost (Observability + Boilerplate)
 
+## Why
+
+Scholiq carries the fleet's most non-standard health endpoint plus ~870 lines of drifted boilerplate that the OpenRegister AppHost engine now provides centrally (ADR-040). Adopting it normalises health to the public ADR-006 shape, adds a metrics endpoint Scholiq lacked, and replaces hand-written settings/preferences/repair/admin plumbing with one-line subclass stubs over verified generics — while keeping the Scholiq grading/plagiarism/proctoring/credential/role-dashboard domain bespoke.
+
+## What Changes
+
+- Add an `observability` block (health checks + objectCount metrics) and a `deepLinks` block to `src/manifest.json`.
+- Re-point `/api/health` at the AppHost `GenericHealthController` (public) and add `/api/metrics` (admin) via `GenericMetricsController`.
+- Delete the bespoke `HealthController`, `PreferencesController`, and `DeepLinkRegistrationListener`; wire the generics via `Bootstrap::register()`.
+- Reduce `InitializeSettings`/`InitializeActions`/`AdminSettings`/`SettingsSection`/`ActionAuthService` to one-line subclass stubs over the AppHost generics.
+- Keep `PageController` (role-aware dashboard state) and `SettingsController`/`SettingsService` (bespoke register-import signature) physical.
+
 ## Problem
 
 Scholiq carries the fleet's **most non-standard health endpoint** plus ~1,400 lines of drifted boilerplate that the AppHost (`apphost-observability-engine` + `apphost-boilerplate-controllers`) now provides centrally.

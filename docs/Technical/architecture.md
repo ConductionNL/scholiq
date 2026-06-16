@@ -257,8 +257,24 @@ ADR-031 prohibits writing PHP service classes for behaviour that fits `x-openreg
 | `CredentialVerifyController.php` | External-system contract + document generation | Public (unauthenticated) endpoint for verifying a credential by ID. Returns credential validity, OB3 payload, and revocation status. Required to make credentials verifiable outside the Nextcloud session. |
 | `KeyAdminController.php` | NC framework requirement (admin API) | Admin-only REST endpoints for generating, rotating, and inspecting tenant signing keys. Required for the key management UI; no equivalent in OR's schema API. |
 | `AuditPackExportController.php` | Document generation, ADR-008 section 6 | Queries OR's audit trail + Regulation + Attestation objects for a regulation and date range; packages results into a ZIP (audit-trail.ndjson, audit-trail.csv, manifest.json, signature-verification.txt). No business logic, pure query and packaging. |
-| `HealthController.php` | NC framework requirement (admin widget) | Provides `GET /api/admin/health` data for the AdminHealth manifest page. Checks OR connection, schema registration, and key presence. |
-| `SettingsController.php` | NC framework requirement | REST endpoints backing the `ScholiqSettings` custom component. Reads/writes user and admin preferences. |
+| `SettingsController.php` | NC framework requirement | REST endpoints backing the `ScholiqSettings` custom component. Reads/writes user and admin preferences. Kept bespoke (not aliased to the AppHost generic) because its register-import path calls OpenRegister's `ConfigurationService::importFromApp(appId, data, version, force)` — a signature the generic settings service does not yet drive. |
+
+> **AppHost adoption (ADR-040):** the former bespoke `HealthController` was
+> **deleted**. Health is now served by the OpenRegister AppHost
+> `GenericHealthController` (public `GET /api/health`, ADR-006 declarative
+> checks), and a new admin-only `GenericMetricsController` serves
+> `GET /api/metrics`, both driven by the `observability` block in
+> `src/manifest.json` and aliased onto Scholiq's controller namespace by
+> `\OCA\OpenRegister\AppHost\Bootstrap::register()` in `Application.php`.
+> `PreferencesController`, `InitializeSettings`/`InitializeActions`,
+> `AdminSettings`, and `SettingsSection` are now one-line subclass stubs
+> extending the AppHost generics (the class names must exist in Scholiq's
+> namespace because `info.xml` and `#[AuthorizedAdminSetting]` references load
+> them by name). `ActionAuthService` is a stub subclass of
+> `GenericActionAuthService` for the same reason. The SPA `PageController`
+> stays bespoke: it provides role-aware dashboard initial state
+> (`primaryRole`/`dashboardRole`/`dashboardRoles`) the generic dashboard
+> controller does not.
 
 ### 4.5 Anti-patterns that were excluded
 
@@ -298,6 +314,15 @@ Scholiq adopts `CnAppRoot` Tier 4 from `@conduction/nextcloud-vue`. `src/manifes
 
 **Custom components registered via `customComponents`:** `BulkEnrolModal`, `AuditPackExportModal`, `CredentialVerify`, `ScholiqSettings`, `LessonPlayer`.
 
+**AppHost blocks (ADR-040):** `src/manifest.json` also carries an
+`observability` block (health `checks` = `database` + `or`/`orAvailable` +
+`launchpad`/`appEnabled`, `statusCodePolicy: adr006`; three `objectCount`
+metrics over `course`/`enrolment`/`learner-profile`) consumed by the AppHost
+`GenericHealth`/`GenericMetricsController`, and a `deepLinks` block (course /
+enrolment / learner-profile / credential URL templates) consumed by the
+AppHost deep-link listener — replacing the deleted bespoke
+`DeepLinkRegistrationListener` PHP patterns.
+
 **Important note on planned features:** The `visibleIf` role-aware page visibility and the `widget-ref` page-content shape (linking manifest widgets directly to schema widget declarations) were designed but are not yet supported by nc-vue's manifest schema v1.4.0. Dashboard pages currently declare conformant-but-minimal `{id, title, type:custom}` widgets. Role-gating across pages is a follow-up tracked in nc-vue umbrella #200. The intended design is documented above in the schema widget sections (section 2.4, 2.5); mark these as planned when implementing.
 
 ---
@@ -311,14 +336,18 @@ scholiq/
 │   ├── AppInfo/Application.php # Service registration, listener wiring
 │   ├── Controller/             # PageController, CredentialVerifyController,
 │   │                           # KeyAdminController, AuditPackExportController,
-│   │                           # HealthController, SettingsController
+│   │                           # SettingsController (health/metrics/preferences
+│   │                           # are AppHost generics, ADR-040)
 │   ├── Lifecycle/              # CoursePublishGuard, AttestationSigningGuard,
 │   │                           # AiFeatureDpoAckGuard, RoleSelector,
 │   │                           # XapiCompletionHandler
-│   ├── Listener/               # CredentialIssuanceHandler,
-│   │                           # DeepLinkRegistrationListener
+│   ├── Listener/               # CredentialIssuanceHandler (deep-link patterns
+│   │                           # now declared in manifest `deepLinks`, ADR-040)
+│   ├── Repair/                 # InitializeSettings, InitializeActions
+│   │                           # (one-line AppHost subclass stubs)
 │   ├── Service/                # CredentialSigningService, Cmi5LaunchTokenService,
-│   │                           # KeyManagementService, SettingsService
+│   │                           # KeyManagementService, SettingsService,
+│   │                           # ActionAuthService (AppHost stub)
 │   └── Settings/               # AdminSettings, scholiq_register.json
 ├── src/
 │   ├── manifest.json           # Canonical page/menu/dependency declaration

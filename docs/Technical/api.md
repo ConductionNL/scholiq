@@ -3,7 +3,8 @@
 Scholiq exposes two categories of API surface:
 
 1. **OpenRegister object API**, all CRUD and lifecycle operations on the 9 schemas go through OR's REST API. Scholiq does not wrap these with its own controllers.
-2. **Scholiq-specific endpoints**, thin PHP controllers for operations OR cannot yet express declaratively: public credential verification, audit-pack ZIP export, admin key management, and health diagnostics.
+2. **Scholiq-specific endpoints**, thin PHP controllers for operations OR cannot yet express declaratively: public credential verification, audit-pack ZIP export, and admin key management.
+3. **AppHost generic endpoints** (ADR-040), served by the OpenRegister AppHost generic controllers aliased onto Scholiq's controller class names: the public `/api/health` and admin `/api/metrics` observability endpoints (driven by the `observability` block in `src/manifest.json`), plus the generic settings and preferences endpoints.
 
 Base URL (local dev): `http://localhost:8080/index.php/apps`
 
@@ -155,23 +156,67 @@ Verifies a credential by ID. Returns validity status and the Open Badges 3.0 pay
 
 ---
 
-### GET `/scholiq/api/admin/health`
+### GET `/scholiq/api/health`
 
-**Auth required. Admin-only.**
+**Public (`#[PublicPage]`). No auth.**
 
-Returns observability data for the AdminHealth dashboard widget.
+Standard ADR-006 health endpoint, served by the OpenRegister AppHost
+`GenericHealthController` from the `observability.health` block in
+`src/manifest.json` (AppHost adoption, ADR-040). Replaces the former
+admin-only `/api/admin/health` and its bespoke JSON shape.
 
-**Response 200:**
+The declarative checks are: `database` (critical), `or` → `orAvailable`
+(critical — a real OpenRegister availability probe, not the old
+file-existence check), and `launchpad` → `appEnabled` (degraded).
+`statusCodePolicy` is `adr006`: HTTP 200 when healthy/degraded, 503 when a
+critical check fails.
+
+**Response 200 (healthy):**
 
 ```json
 {
-  "openregisterConnected": true,
-  "schemaCount": 9,
-  "auditEventsLast24h": 142,
-  "launchpadInstalled": false,
-  "lastAuditPackExport": "2026-05-10T08:30:00Z"
+  "status": "healthy",
+  "app": "scholiq",
+  "version": "0.1.0",
+  "checks": {
+    "database":  { "status": "healthy", "severity": "critical" },
+    "or":        { "status": "healthy", "severity": "critical" },
+    "launchpad": { "status": "degraded", "severity": "degraded" }
+  }
 }
 ```
+
+A failing critical check (e.g. OpenRegister unavailable) returns HTTP 503
+with `"status": "unhealthy"`.
+
+---
+
+### GET `/scholiq/api/metrics`
+
+**Admin-only** (no `#[NoAdminRequired]` — NC requires admin).
+
+Prometheus text exposition served by the AppHost `GenericMetricsController`
+from the `observability.metrics` block in `src/manifest.json`. New with the
+AppHost adoption — Scholiq had no metrics endpoint before. Each gauge is an
+`objectCount` over the Scholiq register, replacing the old placeholder
+counters (`audit_trail_events_24h: 0`, `last_audit_pack_export: null`) with
+live values:
+
+```
+# HELP scholiq_courses_total Number of Course objects in the Scholiq register.
+# TYPE scholiq_courses_total gauge
+scholiq_courses_total 12
+# HELP scholiq_enrolments_total Number of Enrolment objects in the Scholiq register.
+# TYPE scholiq_enrolments_total gauge
+scholiq_enrolments_total 87
+# HELP scholiq_learner_profiles_total Number of LearnerProfile objects in the Scholiq register.
+# TYPE scholiq_learner_profiles_total gauge
+scholiq_learner_profiles_total 34
+```
+
+Real audit-pack metrics (e.g. audit-pack export count) can be added later
+as an additional `objectCount`/`provider` descriptor once the audit-pack
+feature records events.
 
 ---
 
