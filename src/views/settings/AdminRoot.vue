@@ -16,27 +16,37 @@
 			</template>
 		</CnVersionInfoCard>
 
-		<Settings v-if="storesReady" />
+		<ScholiqSettings v-if="storesReady" />
+		<ActionAuthMatrix />
 	</div>
 </template>
 
 <script>
+import { loadState } from '@nextcloud/initial-state'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
-import Settings from './Settings.vue'
+import ScholiqSettings from '../ScholiqSettings.vue'
+import ActionAuthMatrix from '../../components/admin/ActionAuthMatrix.vue'
 import { initializeStores } from '../../store/store.js'
 
 export default {
 	name: 'AdminRoot',
 	components: {
 		CnVersionInfoCard,
-		Settings,
+		ScholiqSettings,
+		ActionAuthMatrix,
 	},
 	data() {
 		return {
 			storesReady: false,
-			appVersion: document.getElementById('scholiq-settings')?.dataset?.version || 'Unknown',
+			appVersion: loadState('scholiq', 'version', 'Unknown'),
 		}
 	},
+	/**
+	 * Initialise the Pinia stores at boot before rendering settings.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-4
+	 */
 	async created() {
 		await initializeStores()
 		this.storesReady = true

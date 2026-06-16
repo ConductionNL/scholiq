@@ -1,0 +1,23 @@
+# Scholiq
+
+> Scholiq is an open-source education app for the Nextcloud workspace.
+
+Scholiq is an open-source education app for the Nextcloud workspace. It runs as a leerlingvolgsysteem (LVS) for Dutch primary and secondary schools, as a full LMS for higher education, and as a compliance-training engine for MKB and government bodies. Scholiq connects natively to DUO BRON/ROD, OSO transfer, SURFconext, IMS QTI 3.0, and EDCI / Open-Badges 3.0, with EU AI Act gating built in from day one. Released under EUPL-1.2 and maintained by Conduction since 2019.
+
+## Docs
+
+- [Documentation](https://scholiq.conduction.nl/docs/intro): main entry, including tutorials, user guide, and admin guide.
+- [API reference](https://scholiq.conduction.nl/api): OpenAPI documentation.
+
+## Optional
+
+- [Install](https://www.conduction.nl/install): self-host on your Nextcloud instance.
+- [Source code](https://codeberg.org/Conduction/scholiq): repository and issue tracker.
+- [App page](https://www.conduction.nl/apps/scholiq): product positioning on conduction.nl.
+
+## Contact
+
+- Email: info@conduction.nl
+- Web: https://www.conduction.nl
+- GitHub: https://codeberg.org/Conduction
+- Conduction B.V. · KvK 76741850 · Lauriergracht 14h, Amsterdam, Netherlands

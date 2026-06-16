@@ -1,7 +1,7 @@
 ---
 slug: certification
 title: Certification & Digital Credentials
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-003]   # TODO until ADRs land
 created: 2026-05-11
@@ -9,7 +9,9 @@ created: 2026-05-11
 
 # Certification & Digital Credentials
 
-## Why
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes and scheduled expiry jobs — no `#### Scenario:` headings exist in this spec.
+
+## Purpose
 "Certification management" and "Credential management" are both top-10 canonical features (153 demand). Insight #10: "EDCI / Europass digital credentials open the diploma + microcredential market." Insight #11: "Dutch government spends €250M+ annually on employee training" — every euro requires a defensible record. Five `compliance-training` and `government-training` stories pivot on issuing, expiring, and renewing credentials.
 
 ## What
@@ -29,9 +31,30 @@ Certificate templates (visual + metadata); issuance triggered by course/exam com
 - GIVEN a degree is awarded, WHEN the registrar confirms, THEN a Bologna Diploma Supplement is generated and an EDCI credential is issued.
 
 ## Requirements
-- The system MUST issue EDCI / Europass credentials and Open Badges 3.0 with verifiable URLs.
-- The system MUST detect expiries on a daily schedule and dispatch tiered notifications.
-- The system MUST auto-enrol learners in renewal or delta modules when triggered by expiry or content-version change.
+
+### Requirement: Issue EDCI/Europass and Open Badges 3.0 credentials
+The system MUST issue EDCI / Europass credentials and Open Badges 3.0 with verifiable URLs.
+
+#### Scenario: Credential issued with verifiable URL
+- **GIVEN** a learner who completes a course or exam with a defined certificate template
+- **WHEN** the credential is issued
+- **THEN** an EDCI / Europass credential and an Open Badges 3.0 badge are produced, each with a verifiable URL
+
+### Requirement: Detect expiries on a daily schedule
+The system MUST detect expiries on a daily schedule and dispatch tiered notifications.
+
+#### Scenario: Daily expiry detection dispatches tiered notifications
+- **GIVEN** certifications carrying expiry dates
+- **WHEN** the daily expiry-detection schedule runs
+- **THEN** expiries are detected and tiered notifications are dispatched at 90/60/30 days to learners, managers, and compliance officers
+
+### Requirement: Auto-enrol on renewal or content-version change
+The system MUST auto-enrol learners in renewal or delta modules when triggered by expiry or content-version change.
+
+#### Scenario: Auto-enrol on renewal or content-version change
+- **GIVEN** a previously certified learner whose certification expires or whose related course gets a new content version
+- **WHEN** the expiry or content-version change is triggered
+- **THEN** the learner is auto-enrolled in the corresponding renewal or delta module
 
 ## Standards
 EDCI (Europass), Open Badges 3.0, E-Portfolio NL, Bologna Diploma Supplement, Schema.org `EducationalOccupationalCredential`.

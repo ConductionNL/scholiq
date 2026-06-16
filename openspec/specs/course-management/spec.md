@@ -1,7 +1,7 @@
 ---
 slug: course-management
 title: Course Management
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-002, adr-011]   # TODO until ADRs land
 created: 2026-05-11
@@ -9,7 +9,9 @@ created: 2026-05-11
 
 # Course Management
 
-## Why
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, OOAPI endpoints, and cmi5/xAPI runtime — no `#### Scenario:` headings exist in this spec.
+
+## Purpose
 Course Management ranks #2 of 354 canonical features (153 demand, 43 tenders, 12 competitors). All 13 OSS LMS leaders ship it; the differentiator is a modern Vue/NL-Design surface — insight #16 says "OSS LMS leaders all share dated UX". Without authoring, Scholiq cannot anchor the LVS, eLearning, training, and certification surfaces above it.
 
 ## What
@@ -29,9 +31,31 @@ Authoring of courses, modules, and lessons; cloning of templates; ordered learni
 - GIVEN an HE administrator queries `/ooapi/v5/courses`, WHEN the request authenticates, THEN the response complies with OOAPI 5.0 and includes ECTS, language, and level fields.
 
 ## Requirements
-- The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
-- The system MUST publish the course catalog via OOAPI 5.0 endpoints.
-- The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
+
+### Requirement: Course/Module/Lesson hierarchy in OpenRegister
+The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
+
+#### Scenario: Persist course hierarchy as OpenRegister objects
+- **GIVEN** an instructional designer authoring a course with modules and lessons
+- **WHEN** the course, its modules, and their lessons are saved
+- **THEN** the system persists the Course → Module → Lesson hierarchy as related OpenRegister objects
+
+### Requirement: Publish course catalog via OOAPI 5.0
+The system MUST publish the course catalog via OOAPI 5.0 endpoints.
+
+#### Scenario: Serve the catalog over OOAPI 5.0
+- **GIVEN** a published course catalog
+- **WHEN** an authenticated client requests `/ooapi/v5/courses`
+- **THEN** the system returns an OOAPI 5.0-compliant response including ECTS, language, and level fields
+
+### Requirement: Run cmi5 + xAPI natively with SCORM shim
+The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
+
+#### Scenario: Run cmi5/xAPI content with SCORM fallback
+- **GIVEN** a lesson backed by a content package
+- **WHEN** a learner launches the lesson
+- **THEN** the system runs cmi5 + xAPI content natively
+- **AND** it runs SCORM 1.2/2004 packages through the compatibility shim
 
 ## Standards
 SCORM, xAPI, cmi5, LTI 1.3, Common Cartridge, NL LOM, VDEX, OAI-PMH, OOAPI 5.0, Schema.org `Course` / `CourseInstance`, ECTS, Bologna.

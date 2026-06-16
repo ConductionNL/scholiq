@@ -1,0 +1,64 @@
+---
+slug: attendance
+title: Attendance & Threshold Reporting
+status: planned
+feature_tier: must
+depends_on_adrs: [ADR-008, ADR-022, ADR-024, ADR-031]
+created: 2026-05-12
+updated: 2026-05-12
+profiles: [leerplicht-16uur, college-aanwezigheid, training-attendance, compliance-presence]
+replaces: [absence-leerplicht]
+---
+
+# Attendance & Threshold Reporting
+
+## Why
+
+Institutions record who was present, and some are obliged to act when absence crosses a threshold. The Dutch **Leerplichtwet** art. 21a obliges every school to report `ongeoorloofd verzuim` of 16 lesuren in 4 weeks to the `leerplichtambtenaar`; HE programmes track `college-aanwezigheid` for attendance-based credit; corporate compliance training needs presence proof for an audit; some certifications require N hours of attended instruction. The structure is the same: an `AttendanceRecord` per (Session, learner) with a status, and an `AttendanceThreshold` rule that watches a learner's records over a window and fires a trigger when crossed. This generalises the Dutch `absence-leerplicht` stub: the 16-uur leerplicht rule is one `AttendanceThreshold` profile; the *report to the leerplichtambtenaar* is a `data-exchange` adapter (Digikoppeling), not part of this spec.
+
+## What
+
+- **AttendanceRecord** — per Session per learner: `status` (`present` | `absent-unexcused` | `absent-excused` | `late` | `left-early`), `minutesAttended`, `markedBy`, `markedAt`, optional `reason`/`excuseRef`. Bulk-markable from a Session roster.
+- **ExcuseRequest** — a learner (or parent, or 18+ learner self) submits an absence excuse for a date range, with a reason and optional attachment; a coordinator approves/rejects; an approved one flips matching `AttendanceRecord`s to `absent-excused`. The submission may go through an external authenticated flow (Dutch: DigiD sick-reporting) — the auth strength is configurable.
+- **AttendanceThreshold** — a rule: `scope` (per learner / per cohort), `window` (rolling N weeks / a fixed term), `metric` (unexcused lesuren / unexcused sessions / attendance-%), `limit`, and an `onCross` action (notify mentor + coordinator; create a flag; trigger a `data-exchange` job to a `target`). Reuses the same threshold/`calculatedChange` machinery as `Regulation` coverage thresholds in the compliance wedge.
+- **AttendanceFlag** — created when a threshold crosses: the learner, the rule, the window, the breaching records, and a workflow (`open → in-handling → reported → resolved`) — so a mentor's intervention and the leerplicht report are tracked. Append-only audit per ADR-008.
+- A mentor dashboard widget: which learners in my cohort are trending toward a threshold.
+
+## User Stories
+
+- As a teacher, I want to mark a Session's attendance for the whole cohort in one screen, including late and left-early.
+- As a parent (or an 18+ learner for themselves), I want to submit a sick report for a date range via the authenticated flow, and have it flip those days to excused once a coordinator approves.
+- As an attendance coordinator, I want a threshold rule that watches for 16 unexcused lesuren in any rolling 4-week window and flags the learner when it's crossed.
+- As a mentor, I want a dashboard of learners in my cohort approaching a threshold so I can intervene before it triggers.
+- As a coordinator, I want a crossed threshold to produce a flag with a workflow, and (where the rule says so) to kick off the report to the leerplichtambtenaar — with the report attempt recorded for audit.
+
+## Acceptance Criteria
+
+- GIVEN a Session, WHEN a teacher bulk-marks the roster, THEN one `AttendanceRecord` per cohort member is created/updated with the chosen status and `minutesAttended`.
+- GIVEN an approved `ExcuseRequest` covering a date range, WHEN it's approved, THEN matching `AttendanceRecord`s flip to `absent-excused`; the affected threshold metrics recompute.
+- GIVEN an `AttendanceThreshold` of 16 unexcused lesuren in a rolling 4 weeks, WHEN a learner's count reaches 16 in any such window, THEN an `AttendanceFlag` is created (`open`) and the `onCross` notification fires to the mentor + coordinator (idempotency-keyed — re-crossing the same window doesn't re-flag).
+- GIVEN a threshold rule with `onCross` including a `data-exchange` target, WHEN the flag is created, THEN a `DataExchangeJob` (see `data-exchange`) is queued to that target; the flag moves `open → reported` only after the job succeeds, and the attempt is in the audit trail.
+- GIVEN a mentor opens the cohort attendance widget, THEN learners are shown with their current count against each applicable threshold, sorted by proximity to the limit.
+
+## Requirements
+
+- The system MUST persist `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, `AttendanceFlag` as OpenRegister objects with `x-openregister-lifecycle` (ExcuseRequest: submitted → approved | rejected; AttendanceFlag: open → in-handling → reported → resolved), `x-openregister-relations` (AttendanceRecord↔Session/learner, Flag↔learner/threshold), `x-openregister-calculations` (per-learner rolling counts vs each threshold), and `x-openregister-notifications` (`onCross` mentor/coordinator alert, idempotency-keyed). `AttendanceFlag` MUST be `appendOnly: true` (audit per ADR-008).
+- The threshold-crossing detection MUST be a declared calculation + `calculatedChange` trigger — NOT a PHP TimedJob. It MUST reuse the same threshold machinery as compliance-`Regulation` coverage thresholds (no parallel mechanism — ADR-022).
+- The external authenticated sick-reporting flow's auth strength MUST be declarative config; the DigiD handshake itself is a `data-exchange`/openconnector concern.
+- The report to an external authority (leerplichtambtenaar via Digikoppeling, etc.) MUST be a `DataExchangeJob` (see `data-exchange`), not implemented inline here.
+- Frontend declarative: `src/manifest.json` pages for AttendanceRecord/ExcuseRequest/AttendanceThreshold/AttendanceFlag index+detail; a custom `MarkAttendanceView` (the Session roster grid — genuine UI), `SubmitExcuseModal`, and a `cohort-attendance` dashboard widget. No PHP CRUD controllers.
+
+## Standards
+
+Schema.org `Event` / `Schedule` for sessions; NL Leerplichtwet art. 21a (the 16-uur rule as an `AttendanceThreshold` profile); Digikoppeling / StUF for the leerplicht report (a `data-exchange` adapter); eIDAS / DigiD assurance for authenticated sick-reporting.
+
+## Data Model
+
+All in OpenRegister. New: `AttendanceRecord`, `ExcuseRequest`, `AttendanceThreshold`, `AttendanceFlag`. Consumes: `Session`, `Cohort` (`school-structure`), the `Regulation`/threshold/`calculatedChange` machinery (compliance wedge), `DataExchangeJob` (`data-exchange`). No PHP service classes — fully declarative. See `docs/ARCHITECTURE.md`.
+
+## Out of Scope
+
+- The wire protocol of the leerplicht report (Digikoppeling/StUF) — a `data-exchange` / openconnector adapter.
+- The DigiD authentication handshake — openconnector / NC auth.
+- Geofenced / NFC / biometric attendance capture (a follow-up if a buyer needs it).
+- Truancy-pattern prediction (would be an `AiFeature` registration).

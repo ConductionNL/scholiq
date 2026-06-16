@@ -14,14 +14,23 @@ jobs:
       app-name: scholiq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32", "stable33"]'
+      # appinfo/info.xml requires <nextcloud min-version="33"/>, so only stable33+.
+      nextcloud-test-refs: '["stable33"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
-      enable-newman: true
-      # additional-apps: '[]'  # Add app dependencies here if needed, e.g.:
-      # additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"main"}]'
+      # Newman disabled: the collections hit `localhost:8080/apps/openregister/...`
+      # (no `/index.php/` prefix → 404 under the CI PHP built-in server) and
+      # assume the Scholiq OpenRegister register/schemas are already seeded.
+      # Re-enable once the collection is rewritten to the CI base_url + a seed
+      # step provisions the `scholiq` register.
+      enable-newman: false
+      # scholiq's info.xml declares <app>openregister</app>/<app>openconnector</app>
+      # and Application.php registers listeners for OR lifecycle events; OR's
+      # `development` carries ObjectCreatedEvent/ObjectTransitionedEvent + the
+      # IMcpToolProvider interface the ScholiqToolProvider tests need.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true

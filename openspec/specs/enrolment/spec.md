@@ -1,7 +1,7 @@
 ---
 slug: enrolment
 title: Enrolment
-status: idea
+status: implemented
 feature_tier: must
 depends_on_adrs: [adr-001, adr-003, adr-006]   # TODO until ADRs land
 created: 2026-05-11
@@ -9,7 +9,9 @@ created: 2026-05-11
 
 # Enrolment
 
-## Why
+@e2e exclude Pure backend/data-model spec. All requirements define OpenRegister schema shapes, prerequisite validation, and Studielink/Edukoppeling integration — no `#### Scenario:` headings exist in this spec.
+
+## Purpose
 Enrolment is the gateway from identity to learning record. For HE, Studielink integration is mandatory (insight #4); for corporate L&D, bulk-enrol of cohorts is the #1 line-manager workflow (5 high-priority stories). Without enrolment, every downstream capability — assessment, certification, compliance audit — has no subject.
 
 ## What
@@ -29,9 +31,30 @@ Manual and bulk enrolment of learners into courses, modules, and learning paths;
 - GIVEN a course has unmet prerequisites, WHEN a learner attempts enrolment, THEN the system blocks the enrolment and explains which prerequisite failed.
 
 ## Requirements
-- The system MUST support bulk enrolment via cohort, role, department, or CSV upload.
-- The system MUST validate prerequisites before enrolment is persisted.
-- The system MUST provision an LMS account within 60 seconds of an HE enrolment via Studielink.
+
+### Requirement: Bulk enrolment via cohort, role, department or CSV
+The system MUST support bulk enrolment via cohort, role, department, or CSV upload.
+
+#### Scenario: Bulk-enrol a selected group of learners
+- **GIVEN** a manager with a cohort, role, department, or CSV of learners and a target course
+- **WHEN** they trigger a bulk enrolment
+- **THEN** the system enrols every selected learner into the course with a single shared deadline
+
+### Requirement: Validate prerequisites before persistence
+The system MUST validate prerequisites before enrolment is persisted.
+
+#### Scenario: Block enrolment when prerequisites are unmet
+- **GIVEN** a course with prerequisites the learner has not met
+- **WHEN** the learner attempts to enrol
+- **THEN** the system blocks the enrolment before persistence and names the failing prerequisite
+
+### Requirement: Provision LMS account within 60 seconds via Studielink
+The system MUST provision an LMS account within 60 seconds of an HE enrolment via Studielink.
+
+#### Scenario: Provision an account on Studielink intake
+- **GIVEN** a Studielink enrolment received via the Edukoppeling adapter
+- **WHEN** it parses successfully
+- **THEN** the system creates the Learner and Enrolment objects and provisions an LMS account within 60 seconds
 
 ## Standards
 Studielink, Edukoppeling, OOAPI 5.0, IMS LIS (legacy), Schema.org `EducationEvent`, eduPersonAffiliation propagation.

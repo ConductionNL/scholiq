@@ -8,7 +8,7 @@
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "author": "Conduction B.V.",
-  "repository": "https://github.com/ConductionNL/scholiq",
+  "repository": "https://codeberg.org/Conduction/scholiq",
   "dependencies": {
     "requiresOpenRegister": true,
     "additionalCiApps": [
@@ -25,9 +25,9 @@
   "wedge": "compliance-audit",
   "wedgePlan": "openspec/WEDGE-PLAN.md",
   "adrs": [
-    { "id": "ADR-002", "title": "Content runtime: cmi5 + xAPI primary, SCORM compatibility shim", "status": "proposed" },
-    { "id": "ADR-005", "title": "EU AI Act compliance gate: feature-flag + mandatory audit trail per AI decision", "status": "proposed" },
-    { "id": "ADR-008", "title": "Immutable audit trail as architectural foundation", "status": "proposed" }
+    { "id": "ADR-002", "title": "Content runtime: cmi5 + xAPI primary, SCORM compatibility shim", "status": "accepted", "accepted_at": "2026-05-11" },
+    { "id": "ADR-005", "title": "EU AI Act compliance gate: feature-flag + mandatory audit trail per AI decision", "status": "accepted", "accepted_at": "2026-05-11" },
+    { "id": "ADR-008", "title": "Immutable audit trail as architectural foundation", "status": "accepted", "accepted_at": "2026-05-11" }
   ],
   "createdAt": "2026-05-11",
   "updatedAt": "2026-05-11"

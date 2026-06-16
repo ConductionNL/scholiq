@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-008
-title: Immutable audit trail as architectural foundation
-status: proposed
+title: Audit trail consumed from OpenRegister; behaviour declared via x-openregister-lifecycle / -notifications
+status: accepted
 category: architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
   - dpo
@@ -18,12 +19,15 @@ applies_to:
   - proctoring
   - dashboard
   - nextcloud-app
+references:
+  - hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md
+  - hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md
 ---
 
-# ADR-008 — Immutable audit trail as architectural foundation
+# ADR-008 — Audit trail consumed from OpenRegister
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea`. This is the most foundational of the three Phase 1 ADRs.
+**accepted** (2026-05-11) — foundational. Scholiq's audit-trail surface (compliance "immutable evidence log", credential history, enrolment history, AI Act decision log, NIS2 security event log) **is** OpenRegister's audit-trail abstraction. Scholiq does not maintain a parallel substrate. Every state-changing behaviour is declared via `x-openregister-lifecycle` / `x-openregister-notifications` in `lib/Settings/scholiq_register.json`, which makes OR emit the audit entries automatically. ADR-002 (xAPI statements) and ADR-005 (AI decisions) are specialisations of this same audit trail.
 
 ## Context
 
@@ -41,143 +45,113 @@ Beyond the wedge, three foundational requirements force audit-trail discipline i
 2. **EU AI Act Art. 12 + 14** (per ADR-005): every high-risk AI decision must persist a decision audit log retained ≥ 10 years.
 3. **NIS2 / Cyberbeveiligingswet**: incident-response evidence requires reconstructable event history for security-relevant events (failed logins, permission changes, encrypted-data access).
 
-Brief insights (architecture):
-> *"Nextcloud as education platform: strong privacy positioning. Self-hosted deployment means schools control their data."*
-> *"High switching costs create both barrier and opportunity. Dutch schools face 12-18 month migration cycles when switching LVS/LMS."* (interpreted: easy data export = easy migration in)
+### Why this ADR was rewritten (2026-05-11)
 
-We need a single audit-trail substrate that:
-1. Underwrites compliance-audit's evidence export
-2. Backs xAPI statement persistence (per ADR-002)
-3. Backs AI Act decision audit (per ADR-005)
-4. Backs AVG record-of-processing for every learner-data mutation
-5. Backs NIS2 security-event logging
-6. Is portable / queryable / readable by an auditor without Scholiq running
+The first version of this ADR specified a Scholiq-owned audit-trail substrate: a `scholiq-audit-event` schema, a `Scholiq\Service\AuditTrail::record()` service entry point, a `Scholiq\Controllers\AuditedController` base class with a `afterController` lifecycle hook + a PHPStan custom rule (`MissingAuditTrailRule`). That entire pattern violates two company-wide ADRs:
+
+- **ADR-022** (apps consume OR abstractions) — audit-trail-immutable is the **first row** of the OR-abstractions table. Building a parallel substrate is the canonical anti-pattern ADR-022 was written to prevent. ("Home-grown audit trails. An app writing to a private events table instead of OR's audit trail for actions on OR-owned objects.")
+- **ADR-031** (schema-declarative business logic over service classes) — the `AuditedController` + `AuditTrail::record()` pair is glue code for behaviour that fits `x-openregister-lifecycle` and `x-openregister-notifications` exactly. New `lib/Service/AuditTrail.php` is the textbook example of "custom service class for behaviour the schema engine can express declaratively".
+
+The rewritten pattern below produces the **same compliance evidence** (immutable, hash-chained, append-only, retention-aware, exportable per regulation) with **zero app-local audit substrate** and **zero `AuditedController` enforcement plumbing**.
 
 ## Decision
 
-**Every state mutation in Scholiq writes an append-only audit-trail entry into OpenRegister.** No exceptions. The audit trail is the source of truth for "what happened"; entity tables are projections of the audit trail's accepted state.
+**Scholiq's audit trail IS OpenRegister's audit trail.** No parallel `scholiq-audit-event` schema. No `AuditTrail::record()` service method. No `AuditedController` base class. No `MissingAuditTrailRule` PHPStan rule.
 
 ### Concretely
 
-1. **One generic `audit_event` schema in OpenRegister** with these fields:
+1. **OR owns the substrate.** OpenRegister already ships an append-only, hash-chained, retention-aware, RBAC-respecting audit trail per ADR-022. Scholiq consumes it. The audit-event schema, the append-only guarantee, the hash chain, the export format — all live in OR.
 
-   | Field | Type | Notes |
-   |---|---|---|
-   | `id` | UUID | event id |
-   | `tenant_id` | UUID | tenant separation |
-   | `event_type` | string | controlled vocabulary (see §2) |
-   | `actor_type` | enum | `user` / `system` / `external` / `ai-system` |
-   | `actor_id` | string | NC user id / system identifier / external system slug |
-   | `actor_ip` | string | for NIS2 evidence |
-   | `subject_type` | string | the entity affected (course / enrolment / credential / …) |
-   | `subject_id` | UUID | entity id |
-   | `verb` | IRI | xAPI-aligned verb when applicable |
-   | `before` | json | entity snapshot before mutation (null on create) |
-   | `after` | json | entity snapshot after mutation (null on delete) |
-   | `reason` | text | optional admin-supplied justification |
-   | `lawful_basis` | enum | AVG Art. 6 basis when personal data is touched |
-   | `correlation_id` | UUID | groups multi-step business operations |
-   | `created_at` | timestamp | server-set, UTC |
-   | `signature` | string | optional HMAC for tamper detection (see §5) |
+2. **Scholiq declares WHAT to audit via schema metadata.** Every state-changing behaviour is declared on the relevant Scholiq schema in `lib/Settings/scholiq_register.json`:
 
-2. **Append-only, enforced at three layers**:
-   - OpenRegister schema flag `append_only: true` (rejects UPDATE / DELETE)
-   - Database-level: `audit_event` table has REVOKE UPDATE / DELETE for the application user; only INSERT + SELECT
-   - Backup retention: pgdump preserves history; restore is a fresh insert, never an UPDATE
+   - **State transitions** — `x-openregister-lifecycle` on the schema. OR's lifecycle engine emits an audit entry on every transition automatically, capturing `before`, `after`, actor, IP, lawful basis, and correlation id. Example: `Enrolment.lifecycle: pending → active` emits `enrolment.activated`.
+   - **Notification dispatch** — `x-openregister-notifications` on the schema. OR's notification engine writes a notification audit entry on every dispatch.
+   - **Aggregation computation** — `x-openregister-aggregations` on the schema. Reads against aggregations are recorded by OR's query layer (configurable per tenant).
+   - **Calculated field reads** — `x-openregister-calculations` on the schema. Reads against materialised calculations are recorded by OR's query layer.
 
-3. **Event-type vocabulary** is controlled. Bootstrap-time registry at `lib/Bootstrap/AuditEventTypes.php`. Examples:
-   - `enrolment.created`, `enrolment.completed`, `enrolment.withdrawn`
-   - `credential.issued`, `credential.revoked`, `credential.expired`, `credential.verified`
-   - `attestation.signed`, `attestation.revoked`
-   - `course.published`, `course.archived`
-   - `learner.profile.created`, `learner.profile.merged`, `learner.profile.deleted` (deletion = audit row, not table row removal)
-   - `compliance.audit_pack.exported`, `compliance.regulation.published`
-   - `xapi.statement.received` (per ADR-002)
-   - `ai.decision.recorded`, `ai.feature.flag.toggled` (per ADR-005)
-   - `security.login.failed`, `security.role.changed`, `security.config.changed` (NIS2)
+   This list updates as OR adds extensions; the OR team owns the schema-extension contract (ADR-031).
 
-   New event types are added via PR; PHPStan rule fails the build if `AuditTrail::record()` is called with an unknown event_type.
+3. **Event-type vocabulary lives in OR.** OR's audit trail uses a stable controlled vocabulary. Scholiq schemas pick the right `event_type` value when they declare lifecycle transitions:
 
-4. **The audit trail is the source of truth for derived state**:
-   - "What's the current enrolment status of learner X in course Y?" = SELECT * FROM enrolment WHERE …  → that row is a *projection* materialised from the latest enrolment.* event. The projection table exists for query speed; the audit trail is canonical.
-   - Compliance coverage % is computed by scanning `xapi.statement.received` events with verb in {`completed`, `passed`} filtered by activity tag = "mandatory-training-X" — there is no separate "completed table" to drift out of sync.
+   - `enrolment.activated`, `enrolment.completed`, `enrolment.withdrawn` (declared as transition outcomes on Enrolment.lifecycle)
+   - `credential.issued`, `credential.revoked`, `credential.expired`, `credential.verified` (declared on Credential.lifecycle)
+   - `attestation.signed`, `attestation.revoked` (declared on Attestation.lifecycle)
+   - `course.published`, `course.archived` (declared on Course.lifecycle)
+   - `learner.profile.created`, `learner.profile.merged`, `learner.profile.deleted` (declared on LearnerProfile.lifecycle — note: deletion is an audit row, not a table-row removal; OR's archival/destruction-workflow abstraction handles the soft-delete + retention)
+   - `compliance.audit_pack.exported`, `compliance.regulation.published` (emitted by the AuditPackExportController + by the Regulation.lifecycle publish transition)
+   - `xapi.statement.received` (declared on the XapiStatement schema — see ADR-002)
+   - `ai.decision.recorded`, `ai.feature.flag.toggled` (declared on the relevant target object + the AiFeature.lifecycle — see ADR-005)
+   - `security.login.failed`, `security.role.changed`, `security.config.changed` (emitted by NC's auth subsystem + OR's RBAC + tenant-config change events; Scholiq merely surfaces them — NIS2)
 
-5. **Tamper detection (optional but recommended for high-risk tenants)**:
-   - Per-tenant HMAC key (rotated annually).
-   - Every event signed at write time: `signature = HMAC-SHA256(key, canonicalized_event_minus_signature)`.
-   - Chain integrity (optional, configurable per tenant): each event signs `previous_signature || event_body`, creating a hash chain. Compromise of any past event invalidates all subsequent signatures.
-   - Verification UI in admin settings: "verify last N days" returns first-broken-event timestamp or "all clean".
+   New event types arrive by adding a transition / notification to a schema in `scholiq_register.json` — never by adding a value to a Scholiq-side enum.
 
-6. **Export format**:
-   - Audit pack export is a ZIP containing:
-     - `audit-trail.ndjson` — newline-delimited JSON, one event per line
-     - `audit-trail.csv` — flat CSV for spreadsheet consumption
-     - `manifest.json` — export metadata (tenant_id, period, filter criteria, event count, signature_status)
-     - `signature-verification.txt` — verification report
-   - For compliance regulations, the export filter is regulation_slug → relevant event types.
-   - Auditor can verify the pack offline given the public verification key.
+4. **Audit trail is the source of truth for derived state.** Aggregations (coverage %) read OR's audit trail directly via `x-openregister-aggregations` (e.g. count distinct learners with verb=`completed` for lessons in regulation X). The aggregation IS the projection; the audit trail IS the source. There is no separate "completion table" to drift out of sync. This is the same architectural property the v1 ADR aimed for; the difference is that OR's engine performs the projection, not Scholiq.
 
-7. **Retention**:
+5. **Tamper detection comes from OR.** The hash-chain + per-tenant signing key + verification UI all live in OR's audit-trail abstraction. Scholiq exposes a "verify audit trail" admin action that delegates to OR's verification endpoint. No app-local `HmacKeyService`, no app-local `key_rotation_id` field on a Scholiq schema, no app-local `ComplianceHmacRotationJob`.
+
+6. **Export format is OR's audit-trail query export.** The compliance audit-pack export is a thin PHP controller (`AuditPackExportController`, legitimate per ADR-031 — document generation) that:
+   - Queries OR's audit-trail API filtered by `event_type IN (attestation.*, credential.*, enrolment.*, compliance.*, xapi.statement.received)` for the requested period + tenant.
+   - Queries `Regulation` + `Attestation` objects in scope.
+   - Pipes the result into a ZIP containing `audit-trail.ndjson`, `audit-trail.csv`, `manifest.json`, `signature-verification.txt`.
+   - The signature verification report is rendered from OR's response — Scholiq does no signing or verification itself.
+
+7. **Retention is OR-managed.** Retention class is declared per schema; OR enforces it.
    - Default: 7 years (AVG general accounting period).
-   - Compliance events (`compliance.*`, `attestation.*`, `credential.*`): 10 years.
-   - AI Act high-risk decisions (`ai.decision.recorded` for risk_level=high): 10 years (per ADR-005).
-   - Security events (`security.*`): 1 year (per NIS2 baseline).
-   - Configurable per tenant up to the maximum allowed by AVG retention policy.
+   - Compliance schemas (`Attestation`, `Credential`): 10 years (declared via OR's archival/destruction-workflow abstraction).
+   - AI decisions on high-risk features: 10 years (per ADR-005).
+   - Security events: 1 year (per NIS2 baseline) — set on the schemas that emit them.
 
 ### What this enables for v0.1
 
-- The compliance-audit "immutable evidence log" UI is a straight `SELECT * FROM audit_event WHERE event_type LIKE 'attestation.%' OR event_type LIKE 'credential.%' ORDER BY created_at DESC`.
-- The "audit pack export per regulation" is server-side filtering + ZIP packaging.
-- "See coverage % per regulation in real time" is a windowed count over the same source.
-- xAPI LRS endpoint (per ADR-002) writes `xapi.statement.received` events; query the audit trail to derive learner completion state.
-- Compliance officer sees a single, consistent "what happened, when, by whom, with what justification" trail across every Scholiq surface.
+- The compliance-audit "immutable evidence log" UI is a query over OR's audit-trail API filtered by event_type — a thin `CnObjectSidebar` audit-trail tab consuming the existing OR endpoint.
+- The "audit pack export per regulation" is a single PHP controller method that calls OR's query API + pipes through ZipArchive (≈ 50 LOC).
+- "See coverage % per regulation in real time" is `x-openregister-aggregations` declared on the `Regulation` schema — fed automatically by `xapi.statement.received` audit entries. No `CoverageComputationService`.
+- xAPI LRS endpoint (per ADR-002) writes to the `XapiStatement` schema; OR's `x-openregister-lifecycle` on that schema produces the `xapi.statement.received` audit entry automatically.
+- Compliance officer sees a single, consistent "what happened, when, by whom, with what justification" trail across every Scholiq surface — because every Scholiq surface writes through OR.
 
 ## Consequences
 
 ### Positive
-- Compliance evidence is *the* core data, not a side artifact.
+- Compliance evidence is *the* core data, not a side artifact — same as v1 of this ADR aimed for, now with zero app-local plumbing.
 - No drift between operational state and audit log — they're the same source.
-- Migration / data-portability story is trivial: export the audit trail; replay it elsewhere.
-- AI Act + AVG + NIS2 compliance share a single substrate; no per-regulation parallel infrastructure.
-- A future Scholiq2-rewrite or migration to another stack is far cheaper than the LVS-switching-costs the incumbents inflict on schools (insight #4) — Scholiq's data is not a hostage.
-- Differentiator vs incumbents: Magister/SOMtoday/ParnasSys treat audit logs as DBA-only diagnostics; Scholiq treats them as the buyer-visible product surface.
+- Migration / data-portability story is trivial: export OR's audit trail; replay it elsewhere. Scholiq adds zero proprietary substrate.
+- AI Act + AVG + NIS2 compliance share a single substrate (OR's audit trail); no per-regulation parallel infrastructure.
+- Hash-chain integrity, retention-aware purge, RBAC on audit reads, MCP discovery, GraphQL exposure — all inherited from OR by virtue of consuming the abstraction. Each improvement to OR's audit trail lands in Scholiq with no per-app work.
+- Cross-app uniformity: a "submitted → adopted" event in scholiq (enrolment.completed) looks identical to one in decidesk (motion.adopted) — same audit format, same RBAC hooks, same MCP exposure.
 
 ### Negative / risks
-- Storage cost grows linearly with activity. Mitigation: partitioning by year + month; cold-storage tier after retention threshold.
-- Write amplification — every business mutation produces both projection-table write + audit-event write. Mitigation: transactional (both in one DB transaction); OpenRegister handles this idempotently.
-- Schema rigour: every mutation path needs the audit-trail call. Mitigation: PHPStan rule + base controller hook + transactional middleware that fails the request if no audit event was recorded for state-changing endpoints.
-- HMAC key management adds operational complexity. Mitigation: optional per tenant; keys live in NC's `OCP\Security\ICrypto` keyring, rotated annually with a dual-signing transition window.
+- Scholiq depends on OR's audit-trail abstraction being feature-complete for the wedge. Mitigated by the abstraction being already-stable (operating policy per ADR-022 — `decidesk/lib/Settings/decidesk_register.json` is the working reference).
+- App authors must learn OR's audit-trail contract instead of writing local code. Mitigated by ADR-031's reference example: every Scholiq schema follows the same declarative shape decidesk uses.
+- A future Scholiq need not currently expressible by OR's audit-trail abstraction will require an OR change. Mitigated by exception path in ADR-031 §"Exceptions" — open an issue against `openregister`, document in `design.md`, use a service in the interim with a sunset date.
 
 ## Alternatives considered
 
-- **Use only OCP\Activity\IManager** for activity-stream entries. Rejected: too loose a schema; not append-only at storage level; designed for UI activity feeds, not legal evidence.
-- **Use only OpenRegister's per-table audit log**. Rejected: per-table audit captures CRUD but not cross-entity business operations (a "credential issued because attestation signed because course completed because lessons watched" chain needs a correlation_id semantic OR has to be reassembled from four tables).
-- **Use a separate event-sourcing framework** (Prooph, Broadway, etc.). Rejected: framework lock-in; OpenRegister already provides 80% of what event-sourcing needs (object store + relations + audit).
-- **Defer audit-trail discipline to "later"**. Rejected: this is the *substance* of the compliance-audit wedge. Retrofitting append-only semantics into a mutable-state codebase is a 10x more painful migration.
+- **Build a Scholiq-local audit trail (the v1 ADR-008 pattern).** Rejected per ADR-022 + ADR-031 — duplication of OR's audit-trail abstraction. The `scholiq-audit-event` schema, the `AuditTrail::record()` service, the `AuditedController` base class are the textbook anti-patterns.
+- **Use only `OCP\Activity\IManager` for activity-stream entries.** Rejected: too loose a schema; not append-only at storage level; designed for UI activity feeds, not legal evidence.
+- **Use only OpenRegister's per-table audit log.** Rejected as a primary substrate, but accepted *as the OR abstraction Scholiq consumes here* — per-table audit captures CRUD; cross-entity business operations are captured via the `correlation_id` field OR's audit trail provides.
+- **Use a separate event-sourcing framework** (Prooph, Broadway, etc.). Rejected: framework lock-in; OpenRegister already provides 80% of what event-sourcing needs (object store + relations + audit + lifecycle + replay).
+- **Defer audit-trail discipline to "later".** Rejected: this is the *substance* of the compliance-audit wedge.
 
 ## Implementation notes
 
-- `Scholiq\Service\AuditTrail::record(string $eventType, array $payload): string` is the single entry point. Returns the new event id.
-- Base controller `Scholiq\Controllers\AuditedController` extends `OCP\AppFramework\Controller` and hooks the request lifecycle: any 2xx response from a state-changing endpoint that didn't call `AuditTrail::record()` triggers a 500 in dev, a Sentry warning in production.
-- Projection-table writes happen inside a single DB transaction with the audit-event insert. If the audit-event insert fails, the projection write rolls back.
-- Migration path: when Scholiq v0.1 has been live a while and a v0.2 schema change is needed, projections are *rebuilt* from the audit trail, not migrated in place.
-- OpenRegister schema: `scholiq-audit-event.json` with `append_only: true`, indexed on (tenant_id, event_type, created_at), (subject_id, created_at), (actor_id, created_at), (correlation_id).
-- `CnAuditTrailTab` component for `@conduction/nextcloud-vue` — a reusable audit-trail panel for the CnObjectSidebar (it's already in the 5 standard tabs per skill guardrail; this ADR specifies its data shape).
+- Every Scholiq schema in `lib/Settings/scholiq_register.json` that mutates declares `x-openregister-lifecycle` for state changes; the lifecycle engine writes the audit entry.
+- Notification dispatch (T-30 reminders, completion alerts, compliance-officer alerts) is `x-openregister-notifications` on the relevant schema; the notification engine writes the audit entry.
+- The only PHP that touches the audit trail is `AuditPackExportController` (legitimate per ADR-031 — document generation). It reads OR's audit-trail query API; it does not write.
+- The `CnObjectSidebar` audit-trail tab is the existing reusable component from `@conduction/nextcloud-vue`; it consumes OR's audit-trail API directly. Scholiq does not register a custom tab.
+- Migration path: when Scholiq v0.1 has been live a while and a v0.2 schema change is needed, projections are *rebuilt* from OR's audit trail, not migrated in place.
 
 ## Verification
 
-A code change is audit-trail-compliant if:
-- Every state-changing controller endpoint emits at least one audit event.
-- The event's `event_type` is registered in `AuditEventTypes`.
-- `before` and `after` are populated for updates; `after` only for creates; `before` only for deletes.
-- `lawful_basis` is set when `subject_type` references personal data.
-- The audit event id is returned (or referenced) in API responses for traceability.
-- The new event type, if added in this PR, has a comment explaining its retention class.
+A Scholiq code change is audit-trail-compliant if:
+- Every state-changing behaviour is declared as `x-openregister-lifecycle` / `x-openregister-notifications` / `x-openregister-aggregations` on a schema in `lib/Settings/scholiq_register.json`.
+- No new file matches `lib/Service/*AuditTrail*.php`.
+- No new class extends an `AuditedController` base.
+- No new schema is named `scholiq-audit-event` or `*_audit_event` (a parallel audit substrate).
+- The audit-pack export controller's only PHP responsibility is querying OR's audit-trail API and packaging the response.
 
-Automated checks:
-- PHPStan custom rule: `AuditedController::*` endpoints that return 2xx without `AuditTrail::record()` call fail the build.
-- Unit test: schema flag `append_only: true` rejects an UPDATE attempt at OpenRegister level.
-- Integration test: `audit-pack export` ZIP contains a valid `manifest.json` and ndjson with ≥ N events for a known-good test fixture.
+Automated checks (Hydra reviewer / mechanical gates):
+- Reviewer flags any new `lib/Service/*` class whose name matches `*AuditTrail*` or `*AuditedController*` — those are ADR-031 / ADR-022 anti-patterns on net-new code.
+- Reviewer flags any new schema entry whose `slug` matches `*-audit-event` (parallel substrate).
 
 ## References
 
@@ -185,5 +159,7 @@ Automated checks:
 - EU AI Act Art. 12 (record-keeping) + Art. 14 (human oversight)
 - NIS2 Directive Art. 21 (incident-response evidence)
 - Brief insights: "Maintain immutable evidence log", "Export audit pack per regulation", "Capture signed attestation per learner" (compliance-training, critical)
-- Companion ADRs: ADR-002 (xAPI statements are an instance of audit events), ADR-005 (AI decisions are an instance of audit events)
-- Pattern reference: event sourcing in OpenRegister — see openregister/docs/ADR-XXX (data model ADR) if/when published
+- **Hydra ADR-022** — apps consume OR abstractions (audit trail is the first row of the abstractions table).
+- **Hydra ADR-031** — schema-declarative business logic over service classes.
+- Companion ADRs: ADR-002 (xAPI statements are an instance of OR audit-trail entries), ADR-005 (AI decisions are an instance of OR audit-trail entries).
+- Working reference: `decidesk/lib/Settings/decidesk_register.json` — Meeting / Motion / Amendment lifecycles, Meeting + Decision notifications, ActionItem aggregations + calculations.

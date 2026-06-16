@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-002
 title: Content runtime — cmi5 + xAPI as primary, SCORM 1.2/2004 compatibility shim
-status: proposed
+status: accepted
 category: architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
 supersedes: []
@@ -19,7 +20,7 @@ applies_to:
 # ADR-002 — Content runtime: cmi5 + xAPI primary, SCORM compatibility shim
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea` status.
+**accepted** (2026-05-11) — binding before any Phase 1 spec moves from `idea` to `planned`. Implementation reviewers MUST verify conformance with §4 (Decision) on every spec PR. Supersession requires a new ADR plus migration plan for already-emitted xAPI statements.
 
 ## Context
 
@@ -83,7 +84,7 @@ Scholiq adopts **cmi5 + xAPI as the primary content launch protocol and learning
 
 ### Positive
 - Modern content authors (Articulate Storyline 360, Adobe Captivate 2025, iSpring Suite, H5P, Articulate Rise, Genially) emit xAPI/cmi5 out of the box → zero friction onboarding for corporate content libraries.
-- The xAPI statement stream is queryable in OpenRegister → directly feeds compliance evidence packs, AVG retention, AI Act audit trails (per ADR-008), mydash analytics.
+- The xAPI statement stream is queryable in OpenRegister → directly feeds compliance evidence packs, AVG retention, AI Act audit trails (per ADR-008), launchpad analytics.
 - Single learning-event format across all capabilities → grades, exam scores, attestations, lesson completions all become xAPI statements with different verbs. Uniform analytics surface.
 - Forward compatibility — xAPI captures off-platform learning (mobile apps, simulations, on-the-job assessment, AR/VR) without architectural changes.
 - Distinct from Moodle / ILIAS / Open edX's SCORM-first defaults → marketing differentiation.

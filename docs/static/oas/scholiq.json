@@ -1,0 +1,81 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Scholiq API",
+    "version": "0.1.0",
+    "description": "Scholiq is an open-source learning management system and leerlingvolgsysteem (LVS) for Nextcloud. This API reference covers the Scholiq-specific endpoints; the bulk of data operations go through the OpenRegister object API.\n\n**Note:** This specification is a placeholder. The full OpenAPI spec is being authored in [GitHub issue #75](https://codeberg.org/Conduction/scholiq/issues/75).",
+    "license": {
+      "name": "EUPL-1.2",
+      "url": "https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+    },
+    "contact": {
+      "name": "Conduction",
+      "url": "https://conduction.nl",
+      "email": "info@conduction.nl"
+    }
+  },
+  "servers": [
+    {
+      "url": "/apps/scholiq",
+      "description": "Nextcloud Scholiq app endpoint"
+    }
+  ],
+  "paths": {
+    "/api/settings": {
+      "get": {
+        "summary": "Get Scholiq settings",
+        "description": "Returns the current Scholiq configuration (register slugs, AI feature flags, signing key status).",
+        "operationId": "getSettings",
+        "tags": ["Settings"],
+        "responses": {
+          "200": {
+            "description": "Settings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Settings": {
+        "type": "object",
+        "description": "Scholiq application settings",
+        "properties": {
+          "registerSlug": {
+            "type": "string",
+            "description": "OpenRegister register slug for Scholiq data",
+            "example": "scholiq"
+          },
+          "aiFeatureFlags": {
+            "type": "object",
+            "description": "EU AI Act high-risk feature flags",
+            "properties": {
+              "adaptiveLearning": {
+                "type": "boolean",
+                "default": false
+              },
+              "proctoring": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          },
+          "signingKeyConfigured": {
+            "type": "boolean",
+            "description": "Whether the credential signing key is configured"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,9 +1,10 @@
 ---
 adr_id: ADR-005
-title: EU AI Act compliance — feature-flag + mandatory audit trail per AI decision
-status: proposed
+title: EU AI Act compliance — schema-declarative feature flags + per-decision audit via OR
+status: accepted
 category: legal-architecture
 date: 2026-05-11
+accepted_at: 2026-05-11
 deciders:
   - architecture-team
   - dpo
@@ -17,12 +18,15 @@ applies_to:
   - dashboard
   - course-management
   - compliance-audit
+references:
+  - hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md
+  - hydra/openspec/architecture/adr-031-schema-declarative-business-logic.md
 ---
 
 # ADR-005 — EU AI Act compliance gate
 
 ## Status
-**proposed** — accepted target: before Phase 1 specs leave `idea`, even though no AI features ship in v0.1.
+**accepted** (2026-05-11) — binding for every PR that introduces AI/ML behaviour, even if no AI ships in v0.1. The `AiFeature` schema MUST land in `lib/Settings/scholiq_register.json` (with an empty seed array) before the first AI-bearing capability (assessment-engine proctoring or course-management adaptive paths). DPO sign-off (encoded as the `AiFeatureDpoAckGuard` lifecycle precondition) is required to flip any high-risk feature from `disabled` to `enabled`.
 
 ## Context
 
@@ -46,23 +50,37 @@ Brief insight (critical, legal-requirement):
 
 **Phase 1 (compliance-audit wedge) ships ZERO AI features.** The wedge is watch-content + click-attest — no AI in the loop. But the architectural pattern that ANY future AI feature must conform to has to be established day one, because once code is shipped it is much more expensive to retrofit feature-flag + audit-trail discipline.
 
+### Why this ADR was rewritten (2026-05-11)
+
+The first version of this ADR specified an `AiFeatureRegistry` PHP singleton plus an `ai_decisions` schema written via `Scholiq\Service\AuditTrail::record()`. Both patterns are **forbidden** on net-new code by the company-wide ADRs:
+
+- **ADR-022** (apps consume OR abstractions) — Scholiq does not get its own audit-trail substrate; it consumes OR's audit trail.
+- **ADR-031** (schema-declarative business logic over service classes) — feature flags + decision-recording fit `x-openregister-lifecycle` and `x-openregister-notifications` exactly. The PHP singleton is the canonical anti-pattern ADR-031 prohibits ("Custom state-machine service for an object whose schema could declare `x-openregister-lifecycle`").
+
+The rewritten pattern below produces the **same legal compliance** (Article 11 dossier, Article 12 audit log, Article 14 human override) with **zero state-machine / notification PHP**.
+
 ## Decision
 
 Every AI / ML feature in Scholiq MUST conform to a single architectural pattern, enforced by code review and by automated tests, even when no AI features are currently active.
 
 ### The pattern
 
-1. **Per-tenant feature flag, default off.**
-   Every AI feature is registered in a central `ai_features` registry (`Scholiq\Service\AiFeatureRegistry`) with: `feature_slug`, `display_name`, `ai_act_category` (Annex III §3 (a)/(b)/(c)/(d)/none), `risk_level` (high-risk / limited / minimal), `model_card_ref`. Admin UI shows the toggle per tenant; default = off; flipping to on requires:
-   - admin explicitly acknowledges a CE / Declaration of Conformity confirmation
-   - an audit-trail entry records who flipped the flag, when, with what acknowledgement text
+1. **Feature flags as schema-declared lifecycle, default off.**
+   AI features live as `AiFeature` objects in `lib/Settings/scholiq_register.json`. The schema declares:
+   - Fields: `slug`, `displayName`, `aiActCategory` (Annex III §3 (a)/(b)/(c)/(d)/none), `riskLevel` (high-risk / limited / minimal), `modelCardRef`.
+   - `x-openregister-lifecycle` with `disabled → enabled → disabled`, default `disabled`. The `enable` transition declares `requires: OCA\\Scholiq\\Lifecycle\\AiFeatureDpoAckGuard` — a thin PHP guard (legitimate per ADR-031 §"PHP guards remain a legitimate seam") that asserts the admin acknowledged the CE / Declaration of Conformity confirmation text. The guard is the only PHP in the flag flow.
+   - `x-openregister-notifications` dispatches a `security.config.changed` audit-trail entry on every `enable` / `disable` transition — recorded automatically via OR's audit-trail abstraction (ADR-022), no app-side `AuditTrail::record()` call.
 
-2. **Decision audit trail (depends on ADR-008).**
-   Every individual AI decision (one classification, one essay score, one item generated, one anomaly flagged) writes an audit entry into the `ai_decisions` schema in OpenRegister with these mandatory fields:
+   In v0.1 the schema exists with an empty seed array. Zero AI features ship.
+
+2. **Decision audit via OR's audit-trail abstraction (depends on ADR-008).**
+   Every individual AI decision (one classification, one essay score, one item generated, one anomaly flagged) writes an **audit-trail entry on the affected OR object** (the Enrolment, the AssessmentSubmission, the ProctoringSession). The audit-trail abstraction is OR's — Scholiq does not maintain a parallel `ai_decisions` store.
+
+   The event_type is `ai.decision.recorded`. The payload carries:
+
    | Field | Type | Purpose |
    |---|---|---|
-   | `feature_slug` | string | which AI feature |
-   | `tenant_id` | UUID | tenant separation |
+   | `feature_slug` | string | which AI feature (links to `AiFeature` object) |
    | `model_id` | string | which model/provider |
    | `model_version` | string | exact version hash |
    | `input_hash` | string | SHA-256 of input (not the input itself, to respect minimisation) |
@@ -71,69 +89,75 @@ Every AI / ML feature in Scholiq MUST conform to a single architectural pattern,
    | `human_override_link` | string \| null | route to override UI |
    | `human_override_at` | timestamp \| null | when overridden |
    | `human_override_by` | UUID \| null | who overrode |
-   | `affected_subject` | UUID | learner / cohort / submission |
-   | `created_at` | timestamp | xAPI-shaped |
 
-   Append-only. Retention ≥ 10 years for high-risk features (per AI Act Article 12 + 14).
+   Retention is OR-managed: high-risk features get the 10-year class (AI Act Article 12 + 14); limited / minimal get 7 years.
 
 3. **Human override is non-optional for high-risk features.**
-   Every high-risk decision MUST have a UI surface where a qualified human (instructor / DPO / compliance officer) can override the AI output before it has effect on the learner. "Effect" means: gate access, set a grade, fail an exam, recommend a remedial path. The override link must be present in the audit trail entry.
+   Every high-risk decision MUST have a UI surface — declared as a `customComponents` page in `src/manifest.json` per ADR-024 — where a qualified human (instructor / DPO / compliance officer) can override the AI output before it has effect on the learner. "Effect" means: gate access, set a grade, fail an exam, recommend a remedial path. The override action writes a follow-up audit-trail entry that references the original decision's audit id.
 
 4. **Transparency notice in the UI.**
-   Anywhere a high-risk AI decision is presented to a learner, the UI MUST render a transparency notice naming the model and stating that the decision is AI-generated and reviewable. NL Design System banner pattern. Non-dismissible.
+   Anywhere a high-risk AI decision is presented to a learner, the UI MUST render a transparency banner naming the model and stating that the decision is AI-generated and reviewable. NL Design System banner pattern. Non-dismissible. The banner is a reusable `CnAiTransparencyBanner` component proposed for `@conduction/nextcloud-vue` (since this pattern is reusable across decidesk + procest as their AI features land).
 
-5. **Technical documentation pack auto-generated.**
-   For each AI feature registered, the registry exposes a `GET /api/ai-features/{slug}/dossier` endpoint that returns the technical-documentation pack required by AI Act Article 11 + Annex IV: intended purpose, training data summary (data card), accuracy + robustness metrics, known limitations, human-oversight mechanism, post-market monitoring plan, version history. Auto-generated from registry metadata + model card.
+5. **Technical documentation dossier auto-generated from schema metadata.**
+   For each enabled `AiFeature` object, an `AuditPackExportController` endpoint (`GET /api/ai-features/{slug}/dossier`, legitimate PHP per ADR-031 — document generation) returns the technical-documentation pack required by AI Act Article 11 + Annex IV: intended purpose, training data summary (data card), accuracy + robustness metrics, known limitations, human-oversight mechanism, post-market monitoring plan, version history. **All inputs are read from the `AiFeature` schema fields + linked model card; no app-local registry.**
 
 6. **Post-market monitoring.**
-   Decisions of confidence < admin-configurable threshold (default 0.7) and decisions overridden by human reviewer surface in a "post-market monitoring" dashboard view per AI Act Article 72. Compliance officer can export a quarterly monitoring report.
+   Decisions of confidence < admin-configurable threshold (default 0.7) and decisions overridden by human reviewer surface in the compliance dashboard via `x-openregister-aggregations` declared on the `AiFeature` schema — exposing `lowConfidenceDecisionCount` and `humanOverrideCount` as widget data points consumed by `CnDashboardPage`. No `PostMarketMonitoringService`. Compliance officer exports a quarterly monitoring report through the same audit-pack export endpoint, filtered by `event_type=ai.decision.recorded`.
 
 7. **Bans (Article 5).**
    Scholiq does NOT implement any AI feature that falls in AI Act Article 5 prohibited list — specifically no emotion-recognition inference in education contexts, no social scoring of learners.
 
 ### Concretely for v0.1
 
-No AI features are registered in v0.1. The registry exists; the schema exists; the controller exists; the UI scaffolding for the feature-flag admin panel exists (wireframe in DESIGN-REFERENCES.md §4.10). When Phase 3 adds `assessment-engine` proctoring with AI integrity flags, ADR-005 is the binding contract — that PR must register the feature, fill the dossier, wire the audit trail, expose the override UI, and add the transparency notice, or it fails review.
+No AI features are registered in v0.1. The `AiFeature` schema exists; the lifecycle guard exists; the transparency banner component exists; the dossier export endpoint exists (returns 404 for any slug because the seed array is empty). When Phase 3 adds `assessment-engine` proctoring with AI integrity flags, ADR-005 is the binding contract — that PR must:
+
+1. Patch `lib/Settings/scholiq_register.json` with a new `AiFeature` seed for the proctoring integrity classifier.
+2. Wire the `customComponents` page in `src/manifest.json` that renders the override UI.
+3. Add the schema metadata that feeds the dossier endpoint.
+4. Add the `CnAiTransparencyBanner` to the relevant learner-facing page.
+
+No PHP service code is required for any of those steps.
 
 ## Consequences
 
 ### Positive
 - v1+ AI features inherit a uniform compliance posture; no per-feature scrambling against the August 2026 deadline.
-- Competitive positioning: Scholiq can claim AI Act compliance as a baseline, where commercial competitors (Docebo, Cornerstone, SAP SuccessFactors) still play catch-up.
-- Compliance officers (Scholiq's primary v0.1 buyer) recognise the pattern immediately — same audit trail discipline as their existing GRC tools.
+- Compliance officers (Scholiq's primary v0.1 buyer) recognise the pattern immediately — same audit-trail discipline as their existing GRC tools.
+- Zero PHP state-machine code; every flag flip + every decision flows through OR's audit-trail abstraction, inheriting hash-chain integrity, retention, replayability, and MCP discovery for free.
 
 ### Negative / risks
-- Engineering tax on every AI feature PR (registry entry, audit-trail wiring, override UI, transparency banner, dossier text). Mitigation: a code-generator skill (`/scholiq:ai-feature-add`) that scaffolds all five layers from a single command.
-- Decision storage grows fast at scale (hundreds of thousands of per-decision audit rows). Mitigation: 10y retention is non-negotiable but partitioning by year + columnar indexing on actor + feature_slug + month keeps queries cheap.
-- Over-restricts low-risk AI features that don't legally need the full audit pack. Mitigation: `risk_level` field tiers the obligations — limited-risk AI (e.g. recommend-a-course) gets only transparency + opt-out, not full audit + dossier.
+- The dossier export endpoint needs to be flexible enough to render an Article-11-shaped document from arbitrary schema metadata. Mitigation: the schema declares an explicit `dossier_template` field per AiFeature; the controller is a simple template engine.
+- Decision storage grows fast at scale (hundreds of thousands of per-decision audit rows). Mitigation: handled by OR's audit-trail partitioning + retention class — already part of the abstraction Scholiq consumes.
+- Over-restricts low-risk AI features that don't legally need the full audit pack. Mitigation: `riskLevel` field tiers the obligations; limited-risk AI (e.g. recommend-a-course) gets only transparency + opt-out, not full audit + dossier.
 
 ## Alternatives considered
 
-- **Defer AI Act compliance until first AI feature lands.** Rejected: retrofit cost grows quickly once code is shipped; same trap most legacy LMSes are in right now (insight #1 of the brief).
+- **Defer AI Act compliance until first AI feature lands.** Rejected: retrofit cost grows quickly once code is shipped.
 - **Adopt an external AI governance platform** (e.g. Credo AI, Holistic AI). Rejected: adds a vendor lock-in for what is essentially a structured-data + audit-trail problem that OpenRegister already solves.
-- **Hand-wave with a "responsible AI policy" doc, no code enforcement.** Rejected: not credible to compliance buyers; not enforceable; not auditable.
+- **App-local PHP `AiFeatureRegistry` singleton + `ai_decisions` schema with `Scholiq\Service\AuditTrail::record()`** (the original ADR-005 v1 pattern). Rejected per ADR-022 + ADR-031 — the singleton is the canonical anti-pattern (custom state-machine + custom audit substrate where OR already provides both).
 
 ## Implementation notes
 
-- `Scholiq\Service\AiFeatureRegistry` is a singleton service registered in `OCA\Scholiq\AppInfo\Application::register()`.
-- The `ai_features` registry is bootstrap data, not runtime data — checked into `lib/Bootstrap/AiFeatures.php`.
-- OpenRegister schemas: `scholiq-ai-feature`, `scholiq-ai-decision`. Append-only on decision.
-- The transparency banner is `<CnAiTransparencyBanner>` — a new component proposed for `@conduction/nextcloud-vue`, since this pattern is reusable across decidesk + procest as their AI features land.
-- The dossier endpoint output format MUST match the European Commission's draft "Standardised AI Documentation Template" once published; until then, use Article 11 + Annex IV section structure.
+- `AiFeature` schema lives in `lib/Settings/scholiq_register.json` alongside every other Scholiq entity.
+- `AiFeatureDpoAckGuard` is a single-method PHP class under `lib/Lifecycle/`. It receives the transition context and returns true/false. No state; no dependencies beyond `OCP\IConfig` for reading the DPO acknowledgement value.
+- The dossier endpoint is `Scholiq\Controllers\AuditPackExportController::dossier($slug)` — same controller that serves the regulation audit-pack export (per ADR-008). Single legitimate PHP entry point.
+- `<CnAiTransparencyBanner>` lives in `@conduction/nextcloud-vue`; Scholiq registers it via `customComponents` on `CnAppRoot` per ADR-024.
+- AI decision recording is done by whatever service performs the inference (an external API call adapter via OpenConnector, or a future internal classifier). The adapter calls OR's audit-trail abstraction directly — no Scholiq-side wrapper.
 
 ## Verification
 
 A code change that touches AI-feature behaviour is compliant if:
-- The feature is registered in `Scholiq\Service\AiFeatureRegistry` with full metadata.
-- Decisions write to `ai_decisions` with all 11 mandatory fields.
-- The corresponding UI surface renders `<CnAiTransparencyBanner>`.
-- For high-risk features: a human-override path exists and is reachable in ≤ 2 clicks from the decision surface.
+- The new feature appears as an `AiFeature` schema seed in `lib/Settings/scholiq_register.json`.
+- The schema declares `x-openregister-lifecycle` with the `AiFeatureDpoAckGuard` precondition on the `enable` transition.
+- The schema declares `x-openregister-notifications` so that lifecycle transitions emit `security.config.changed` audit entries via OR's audit trail.
+- Decisions are recorded as audit-trail entries on the affected object (Enrolment / AssessmentSubmission / ProctoringSession) with `event_type=ai.decision.recorded` and the 9 mandatory fields.
+- The corresponding UI surface renders `<CnAiTransparencyBanner>` and is declared in `src/manifest.json`.
+- For high-risk features: a human-override page exists in the manifest and is reachable in ≤ 2 clicks from the decision surface.
 - `GET /api/ai-features/{slug}/dossier` returns a non-empty Article-11-shaped document.
-- Feature flag defaults to off; flipping on writes an audit-trail entry.
 
 Automated checks:
-- PHPStan custom rule fails the build if a class implementing `AiDecisionMaker` does not call `AiAuditTrail::record()` in its decision path.
-- Unit test asserts every entry in `AiFeatureRegistry::all()` has a non-empty dossier.
+- Hydra reviewer flags any new `lib/Service/*` class whose name matches `*AiDecision*`, `*AiFeature*Service`, or `*AiRegistry*` — those are ADR-031 anti-patterns on net-new code.
+- Unit test asserts every enabled `AiFeature` seed has a non-empty `modelCardRef` and `dossier_template`.
 
 ## References
 
@@ -141,4 +165,6 @@ Automated checks:
 - Annex III §3 — High-risk education AI list
 - Article 9 (risk management) · Article 10 (data governance) · Article 11 (technical documentation) · Article 12 (record-keeping) · Article 13 (transparency) · Article 14 (human oversight) · Article 15 (accuracy & robustness) · Article 72 (post-market monitoring)
 - Brief insight: "EU AI Act classifies LMS adaptive learning + proctoring as high-risk" (legal-requirement, critical)
-- Companion ADR: ADR-008 (audit trail foundation) — required dependency.
+- Hydra ADR-022 — apps consume OR abstractions (audit trail is the first row of the abstractions table).
+- Hydra ADR-031 — schema-declarative business logic over service classes (the canonical "no AiFeatureRegistry singleton" rule).
+- Companion ADR: ADR-008 (audit trail consumed from OR) — required dependency.

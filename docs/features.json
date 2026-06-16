@@ -1,0 +1,86 @@
+[
+  {
+    "slug": "ai-companion-tools",
+    "title": "AI Companion Tools",
+    "summary": "",
+    "docsUrl": "openspec/specs/ai-companion-tools/spec.md"
+  },
+  {
+    "slug": "assessment",
+    "title": "Assessment",
+    "summary": "",
+    "docsUrl": "openspec/specs/assessment/spec.md"
+  },
+  {
+    "slug": "assignments",
+    "title": "Assignments & Submissions",
+    "summary": "",
+    "docsUrl": "openspec/specs/assignments/spec.md"
+  },
+  {
+    "slug": "attendance",
+    "title": "Attendance & Threshold Reporting",
+    "summary": "",
+    "docsUrl": "openspec/specs/attendance/spec.md"
+  },
+  {
+    "slug": "certification",
+    "title": "Certification & Digital Credentials",
+    "summary": "",
+    "docsUrl": "openspec/specs/certification/spec.md"
+  },
+  {
+    "slug": "compliance-audit",
+    "title": "Compliance Training & Audit",
+    "summary": "",
+    "docsUrl": "openspec/specs/compliance-audit/spec.md"
+  },
+  {
+    "slug": "course-management",
+    "title": "Course Management",
+    "summary": "",
+    "docsUrl": "openspec/specs/course-management/spec.md"
+  },
+  {
+    "slug": "dashboard",
+    "title": "Role-Aware Dashboards",
+    "summary": "",
+    "docsUrl": "openspec/specs/dashboard/spec.md"
+  },
+  {
+    "slug": "data-exchange",
+    "title": "Data Exchange",
+    "summary": "",
+    "docsUrl": "openspec/specs/data-exchange/spec.md"
+  },
+  {
+    "slug": "enrolment",
+    "title": "Enrolment",
+    "summary": "",
+    "docsUrl": "openspec/specs/enrolment/spec.md"
+  },
+  {
+    "slug": "grading",
+    "title": "Grading",
+    "summary": "",
+    "docsUrl": "openspec/specs/grading/spec.md"
+  },
+  {
+    "slug": "learning-plan",
+    "title": "Individual Learning Plan",
+    "summary": "",
+    "docsUrl": "openspec/specs/learning-plan/spec.md"
+  },
+  {
+    "slug": "nextcloud-app",
+    "title": "Nextcloud App Shell",
+    "summary": "",
+    "docsUrl": "openspec/specs/nextcloud-app/spec.md"
+  },
+  {
+    "slug": "school-structure",
+    "title": "School Structure",
+    "summary": "",
+    "docsUrl": "openspec/specs/school-structure/spec.md"
+  }
+]

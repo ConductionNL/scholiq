@@ -4,7 +4,7 @@ app:
   slug: scholiq
   name: Scholiq
   description: Open-source education platform for Nextcloud — student tracking (leerlingvolgsysteem), course creation, eLearning, training management, and certification.
-  repository: https://github.com/ConductionNL/scholiq
+  repository: https://codeberg.org/Conduction/scholiq
   license: EUPL-1.2
   version: 0.1.0
   status: idea
@@ -50,7 +50,7 @@ context: |
   Sister apps:
     - openregister (REQUIRED — data layer, multi-tenancy, audit trail, REST API)
     - openconnector (REQUIRED — BRON/ROD, UWLR, OSO, Edukoppeling, Studielink, Digikoppeling adapters)
-    - mydash (RECOMMENDED — student/credential analytics surfaces)
+    - launchpad (RECOMMENDED — student/credential analytics surfaces)
     - docudesk (OPTIONAL — diploma/certificate document templating)
   Shared specs: See ../openspec/specs/ for cross-project conventions
   Project guidelines: See ../project.md for workspace-wide standards
@@ -62,7 +62,7 @@ depends_on:
     - openregister
     - openconnector
   recommended:
-    - mydash
+    - launchpad
   optional:
     - docudesk
 

@@ -3,6 +3,13 @@ docusaurus/node_modules/
 docusaurus/build/
 docusaurus/.docusaurus/
 docusaurus/.cache-loader/
+# Docusaurus documentation site (docs/ — journeydoc / ADR-030)
+/docs/node_modules/
+/docs/build/
+/docs/.docusaurus/
+/docs/.cache-loader/
+# Generated translation files — scaffold committed; exclude generated build artefacts only
+/docs/i18n/nl/docusaurus-plugin-content-docs/current/.cache-loader/
 node_modules/
 .npm/
 
@@ -32,16 +39,23 @@ vendor/
 composer.phar
 .phpunit.result.cache
 
-# Build artifacts
-dist/
-js/
-css/
+# Build artifacts (root-level only — leading slash prevents matching
+# nested directories like docusaurus/src/css/)
+/dist/
+/js/
+/css/
 *.tsbuildinfo
 
 # Coverage
 coverage/
 .nyc_output/
 
+# Playwright
+test-results/
+playwright-report/
+.playwright/
+
 # Misc
 *.bak
 .cache/
+.phpunit.cache

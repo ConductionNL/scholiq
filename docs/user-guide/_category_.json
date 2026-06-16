@@ -1,0 +1,11 @@
+{
+  "label": "User Guide",
+  "position": 2,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Scholiq user guide",
+    "description": "Step-by-step walkthroughs for everyday Scholiq tasks. The user track covers individual workflows, creating courses, enrolling students, taking attendance, grading, and issuing certificates; the admin track covers org-wide configuration like school structure and compliance-training audits."
+  }
+}

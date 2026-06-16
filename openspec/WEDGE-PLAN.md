@@ -27,26 +27,35 @@ Compliance officer at a Dutch MKB-to-mid-market organisation (50–2,000 employe
 
 ---
 
-## Capabilities in scope (Phase 1)
+## Capabilities — Phase 1 (the wedge) vs Phase 2 (the generic LVS/LMS/training core)
 
-6 of the 14 capability specs ship in v0.1; the other 8 defer.
+Phase 1 ships the **compliance-audit wedge** (6 capabilities, all built). Phase 2 is the **generic educational-institution core** — restructured 2026-05-12 from 8 Dutch-specific stubs into 7 jurisdiction-neutral specs where the Dutch requirements are *profiles*, not the model (see the rationale in `## The Phase-2 restructuring` below).
+
+### Phase 1 — the wedge (built)
 
 | Capability | Spec | Status |
 |---|---|---|
-| Nextcloud app shell, NcAppSettingsDialog, OpenRegister dep check | `nextcloud-app` | **in scope** |
-| Basic Course + Lesson (no QTI assessments) | `course-management` | **in scope (slim)** |
-| Bulk-enrol learners, mandatory flag, due_date | `enrolment` | **in scope (slim)** |
-| Attestation capture, certificate issuance, expiry detection | `certification` | **in scope** |
-| Regulation tracking, coverage %, audit pack export, immutable evidence | `compliance-audit` | **in scope (full)** |
-| Compliance Officer dashboard (wireframe §4.3) | `dashboard` | **in scope (slim, role-aware)** |
-| QTI 3.0 assessment authoring + scoring | `assessment-engine` | defer to Phase 3 |
-| Proctored exams (ProctoringProviderInterface) | `proctoring` | defer to Phase 3 |
-| NL VO PTA grading | `grading-pta` | defer to Phase 2 |
-| OPP passend onderwijs cycle | `opp-cycle` | defer to Phase 2 |
-| DUO BRON/ROD exchange | `bron-rod-exchange` | defer to Phase 2 |
-| OSO transfer dossier PO → VO | `oso-transfer` | defer to Phase 2 |
-| Sick reporting + leerplicht 16-uur | `absence-leerplicht` | defer to Phase 2 |
-| SURFconext / Studielink / DigiD parent flow | `identity-federation` | defer to Phase 2 |
+| Nextcloud app shell, CnAppRoot Tier-4 manifest, OpenRegister dep check | `nextcloud-app` | **built** |
+| Course + Lesson, cmi5/xAPI runtime, SCORM shim | `course-management` | **built** (follow-up: collapse Course/Module → recursive Course; link CurriculumPlan) |
+| Bulk-enrol learners, mandatory flag, due_date, reminder cascade | `enrolment` | **built** |
+| Attestation capture, OB3 credential issuance, expiry detection | `certification` | **built** |
+| Regulation tracking, coverage %, audit pack export, immutable evidence | `compliance-audit` | **built** (wedge core) |
+| Compliance Officer dashboard, role-aware surfaces | `dashboard` | **built** |
+
+### Phase 2 — the generic core (planned; build order top-to-bottom)
+
+| Capability | Spec | Replaces (Dutch stubs) | Dutch profile |
+|---|---|---|---|
+| Programmes, CurriculumPlans, Cohorts, Sessions, Materials | `school-structure` | — | PTA / OER-studiegids / opleidingsplan |
+| Assignments, Submissions, Rubrics, hand-in flow | `assignments` | (½ of grading-pta) | opdracht / werkstuk / portfolio |
+| Tests/exams, QTI 3.0 item banks, pluggable proctoring | `assessment` | `assessment-engine` + `proctoring` | toets / tentamen / examen |
+| Grade entries, scales, final-grade roll-up, soft-publish | `grading` | `grading-pta` | PTA-kolom / SE-gemiddelde / eindcijfer |
+| Individual learning plans, goals, evaluations, signatures | `learning-plan` | `opp-cycle` | OPP / handelingsplan |
+| Attendance, excuse requests, threshold rules + flags | `attendance` | `absence-leerplicht` | leerplicht 16-uur |
+| Export/import jobs to external registries (delegates to OpenConnector) | `data-exchange` | thin slice of `bron-rod-exchange` + `oso-transfer` | BRON/ROD · OSO · leerplichtmelding |
+| ~~Federated identity~~ | **dropped** — NC auth + OpenConnector adapters; identifiers already on `LearnerProfile` | `identity-federation` | DigiD / SURFconext / eduID |
+
+The NL gatekeeper *integrations* (BRON/ROD, OSO, leerplicht-Digikoppeling, SURFconext attribute release, generic HR sync) and federated *authentication* (DigiD/SURFconext/eduID) are **OpenConnector** source/target configurations and Nextcloud auth providers — not Scholiq schemas. `data-exchange` is the thin Scholiq side: a `DataExchangeJob` queue + `DataMappingProfile`s that hand off to OpenConnector. Issues filed against `ConductionNL/openconnector`.
 
 ### What the wedge UI shows
 - Compliance Officer dashboard with coverage % per regulation
@@ -137,6 +146,22 @@ Three measurable outcomes the wedge has to hit before declaring Phase 1 done:
 1. **Compliance officer demo**: a Dutch compliance officer can install Scholiq + OpenRegister on their NC instance, enrol 50 employees in an AVG refresher course, capture attestations, and export an audit pack — without writing any code or asking ConductionNL for help.
 2. **NIS2 board-training reference**: at least one Dutch government agency or NIS2-regulated organisation uses Scholiq for their annual board cyber-security training and exports an evidence pack that survives an external audit.
 3. **Hydra round-trip**: all 6 wedge specs complete the Specter → Hydra round trip (issue → ready-to-build → builder → reviewers → merge to development) without manual intervention beyond initial spec authoring.
+
+---
+
+## The Phase-2 restructuring (2026-05-12)
+
+The original Phase-2/3 specs were 8 Dutch-government-specific stubs (`grading-pta`, `opp-cycle`, `bron-rod-exchange`, `oso-transfer`, `absence-leerplicht`, `identity-federation`, `assessment-engine`, `proctoring`). They were rewritten into **7 jurisdiction-neutral capability specs** on the principle: *model how a school / university / training firm actually operates, then express the Dutch requirements as profiles of that model.* The mapping:
+
+- A **module is just a Course used as a container** → `Course` becomes recursive; the rigid `Course → Module → Lesson` hierarchy collapses.
+- A **PTA is a `CurriculumPlan`** (governing plan: required courses, assessment components with weights + periods, the roll-up formula) — so are an HE `OER/studiegids`, an MBO `opleidingsplan`, a corporate `training curriculum`.
+- A **klas / werkgroep / training group is a `Cohort`**; a **les / hoorcollege / workshop is a `Session`** that carries `Material`s and `Assignment`s.
+- **Hand-in work** (`Assignment` → `Submission` → `GradeEntry`) and **structured tests** (`Assessment` → `AssessmentResult` → `GradeEntry`, with **proctoring as config on an Assessment**, not a schema) are separate specs; **grades roll up** (`GradeEntry` → `FinalGrade`) via the `CurriculumPlan`'s declared formula — the Dutch SE-gemiddelde is one formula profile.
+- An **OPP is a `LearningPlan`** (goals, support measures, evaluation cycle, co-signatures) — so are a `handelingsplan`, a US `IEP`, an HE `PDP`.
+- **Leerplicht 16-uur is an `AttendanceThreshold`** rule; the report to the leerplichtambtenaar is a `DataExchangeJob` (a `data-exchange` target), not inline code.
+- **BRON/ROD, OSO, leerplicht-Digikoppeling, SURFconext attributes, HR sync** are **OpenConnector adapters**; Scholiq only holds `DataExchangeJob` + `DataMappingProfile` and delegates the wire protocol. **Federated authentication (DigiD/SURFconext/eduID) is a Nextcloud auth-provider concern entirely** — Scholiq just stores the pseudonymous identifiers `LearnerProfile` already carries (`eckId`, `schoolId`, `bsnEncrypted`). The `identity-federation` spec was therefore **dropped**.
+
+This keeps the Dutch-gov-integration burden in OpenConnector (where it belongs and is reusable) while making the core model serve any institution — and it removes the EU AI Act exposure from the core (proctoring AI and adaptive learning are explicit `AiFeature` registrations behind the ADR-005 gate, not baked in).
 
 ---
 

@@ -41,6 +41,8 @@ class DeepLinkRegistrationListener implements IEventListener
      * @param Event $event The event to handle
      *
      * @return void
+     *
+     * @spec exclude framework glue — OpenRegister search deep-link registration hook (scaffold placeholder pattern); no business behavior
      */
     public function handle(Event $event): void
     {
