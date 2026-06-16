@@ -3,11 +3,27 @@
 
 declare(strict_types=1);
 
+/*
+ * AppHost adoption (ADR-040): the settings, preferences, health and metrics
+ * controllers are the OpenRegister AppHost generics, aliased onto Scholiq's
+ * conventional controller class names in lib/AppInfo/Application.php via
+ * \OCA\OpenRegister\AppHost\Bootstrap::register(). The route entries below keep
+ * Scholiq's URLs and route names so info.xml navigation + frontend
+ * `generateUrl` calls are unchanged; only the controller bodies are now engine-owned.
+ *
+ * Routes::standard() is intentionally NOT used for the SPA shell: Scholiq's
+ * `page#index`/`page#catchAll` keep pointing at the bespoke PageController,
+ * which provides role-aware dashboard initial-state (primaryRole / dashboardRole
+ * / dashboardRoles) that the generic GenericDashboardController does not — this
+ * is the role-aware-dashboards domain we keep. The canonical settings/preferences
+ * /health/metrics routes are reproduced here pointing at the aliased generics.
+ */
+
 return [
     'routes' => [
-        // SPA shell — renders the Nextcloud app page (main.php template).
+        // SPA shell — bespoke PageController (role-aware initial state).
         ['name' => 'page#index',     'url' => '/',            'verb' => 'GET'],
-        // ADR-024 §4 — manifest endpoint (bundled blob, override hook deferred to v0.2).
+        // ADR-024 §4 — manifest endpoint (bundled blob).
         ['name' => 'page#manifest',  'url' => '/api/manifest', 'verb' => 'GET'],
 
         // Public credential verification — no auth, per ADR-031 external-system contract.
@@ -40,10 +56,13 @@ return [
         ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
         ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
 
-        // App health observability — admin-only via #[AuthorizedAdminSetting] (ADR-031 exception).
-        ['name' => 'health#index', 'url' => '/api/admin/health', 'verb' => 'GET'],
+        // Observability (ADR-006 / ADR-040) — AppHost generic controllers.
+        // health#index → GenericHealthController (PUBLIC, declarative checks).
+        ['name' => 'health#index',  'url' => '/api/health',  'verb' => 'GET'],
+        // metrics#index → GenericMetricsController (admin-only Prometheus text).
+        ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 
-        // Settings (admin-only via #[AuthorizedAdminSetting]).
+        // Settings (admin-only) — AppHost GenericSettingsController.
         ['name' => 'settings#index',  'url' => '/api/settings',      'verb' => 'GET'],
         ['name' => 'settings#create', 'url' => '/api/settings',      'verb' => 'POST'],
         ['name' => 'settings#load',   'url' => '/api/settings/load', 'verb' => 'POST'],
@@ -52,7 +71,7 @@ return [
         ['name' => 'actionMatrix#getMatrix', 'url' => '/api/admin/action-matrix', 'verb' => 'GET'],
         ['name' => 'actionMatrix#setMatrix', 'url' => '/api/admin/action-matrix', 'verb' => 'PUT'],
 
-        // Generic per-user preferences (used by shared nextcloud-vue widgets, e.g. CnSupportDialog).
+        // Generic per-user preferences — AppHost GenericPreferencesController.
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 
