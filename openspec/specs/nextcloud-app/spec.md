@@ -1,7 +1,7 @@
 ---
 slug: nextcloud-app
 title: Nextcloud App Shell
-status: in-progress
+status: done
 feature_tier: must
 openspec_changes:
   - fix-dashboards-settings-notifications

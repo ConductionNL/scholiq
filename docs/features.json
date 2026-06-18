@@ -2,85 +2,121 @@
   {
     "slug": "ai-companion-tools",
     "title": "AI Companion Tools",
-    "summary": "",
+    "summary": "The hydra AI Chat Companion (ADR-034 + ADR-035) wires a per-app `IMcpToolProvider` (openregister PR #1466) so an LLM can call back into a Conduction app for live data. Scholiq holds course catalogues alongside privacy-sensitive learner records, so its MVP provider deliberately exposes only the two least-sensitive read-only tools (`scholiq.listCourses`, `scholiq.getCourseDetails`). This capability spec retroactively documents the observable contract of that provider so future changes (adding tools, tightening auth, adopting an MCP-wide registry) extend an explicit baseline rather than relying on code-archaeology.",
     "docsUrl": "openspec/specs/ai-companion-tools/spec.md"
+  },
+  {
+    "slug": "ai-surface",
+    "title": "ai-surface",
+    "summary": "Consolidates Scholiq's AI surfaces into a single interactive \"Assistant\" navigation entry that opens the LLM chat companion, removing the duplicate standalone \"AI features\" menu entry. The EU AI Act AI features register and its detail pages remain routable via deep links and are reachable through a \"Manage AI features\" affordance on the Settings page, keeping the governance register discoverable.",
+    "docsUrl": "openspec/specs/ai-surface/spec.md"
   },
   {
     "slug": "assessment",
     "title": "Assessment",
-    "summary": "",
+    "summary": "Beyond hand-in assignments, institutions run **structured tests**: a vmbo `toets`, an HBO `tentamen`, a state `examen`, a certification `exam`, a formative `quiz`. These have an item bank, a scoring scheme, often a time limit, sometimes proctoring. No open-source Dutch assessment platform exists today (Cito / DiatOets / IEP are all proprietary); IMS **QTI 3.0** is the lock-in escape hatch. And the **EU AI Act** (Reg. 2024/1689) classifies online proctoring as high-risk AI — so proctoring must be a *pluggable provider*, never a hard dependency on one US vendor, and any AI-assisted flag-review must register in the `AiFeature` gate (ADR-005). This spec merges what were two separate Dutch stubs (`assessment-engine` + `proctoring`) into one capability: proctoring is *configuration on an Assessment*, not a standalone schema.",
     "docsUrl": "openspec/specs/assessment/spec.md"
   },
   {
     "slug": "assignments",
     "title": "Assignments & Submissions",
-    "summary": "",
+    "summary": "Learners hand work in; teachers grade it. That loop is universal — a vmbo `opdracht`, an HBO `werkstuk`, a university `portfolio-item`, a corporate `case study`. Scholiq can hold courses and lessons but has nowhere for a learner to *submit* anything and nowhere for a teacher to mark it against criteria. This spec adds the deliverable side of assessment (the structured-test side is the `assessment` spec): an `Assignment` belongs to a Course or Session, has a due date and a `Rubric`; a learner files a `Submission` (one or more attachments) which moves through draft → submitted → returned; the grade a teacher gives a Submission becomes a `GradeEntry` (see `grading`) so it can roll up into a final grade per the CurriculumPlan.",
     "docsUrl": "openspec/specs/assignments/spec.md"
   },
   {
     "slug": "attendance",
     "title": "Attendance & Threshold Reporting",
-    "summary": "",
+    "summary": "Institutions record who was present, and some are obliged to act when absence crosses a threshold. The Dutch **Leerplichtwet** art. 21a obliges every school to report `ongeoorloofd verzuim` of 16 lesuren in 4 weeks to the `leerplichtambtenaar`; HE programmes track `college-aanwezigheid` for attendance-based credit; corporate compliance training needs presence proof for an audit; some certifications require N hours of attended instruction. The structure is the same: an `AttendanceRecord` per (Session, learner) with a status, and an `AttendanceThreshold` rule that watches a learner's records over a window and fires a trigger when crossed. This generalises the Dutch `absence-leerplicht` stub: the 16-uur leerplicht rule is one `AttendanceThreshold` profile; the *report to the leerplichtambtenaar* is a `data-exchange` adapter (Digikoppeling), not part of this spec.",
     "docsUrl": "openspec/specs/attendance/spec.md"
+  },
+  {
+    "slug": "avg-verwerkingsregister",
+    "title": "avg-verwerkingsregister",
+    "summary": "Provides Scholiq's GDPR Article 30 processing-activities register (verwerkingsregister), declaring its processing catalogue — learner administration, attendance and leerplicht reporting, grading, compliance training, credentialing, data exchange, and AI features — as draft seed content that a privacy officer activates. The register slice is browsable through a declarative Compliance UI served over the platform's verwerkingsactiviteiten API, and its platform-generated Art. 30 export is included in the compliance audit pack. All storage, RBAC, review reminders, and export logic are owned by OpenRegister; Scholiq contributes only the seed catalogue and UI surface.",
+    "docsUrl": "openspec/specs/avg-verwerkingsregister/spec.md"
   },
   {
     "slug": "certification",
     "title": "Certification & Digital Credentials",
-    "summary": "",
+    "summary": "\"Certification management\" and \"Credential management\" are both top-10 canonical features (153 demand). Insight #10: \"EDCI / Europass digital credentials open the diploma + microcredential market.\" Insight #11: \"Dutch government spends €250M+ annually on employee training\" — every euro requires a defensible record. Five `compliance-training` and `government-training` stories pivot on issuing, expiring, and renewing credentials.",
     "docsUrl": "openspec/specs/certification/spec.md"
   },
   {
     "slug": "compliance-audit",
     "title": "Compliance Training & Audit",
-    "summary": "",
+    "summary": "Deliver Scholiq's wedge promise: audience-targeted bulk-enrolment in mandatory compliance training, signed attestation capture with full provenance, an append-only signed evidence log, a live coverage % per regulation, and an audit-ready ZIP export per regulation and date range. Coverage counts a learner as covered when they hold a signed Attestation, a valid Credential, OR a verified external-training record for the regulation, and the audit pack carries each evidence class distinctly.",
     "docsUrl": "openspec/specs/compliance-audit/spec.md"
   },
   {
     "slug": "course-management",
     "title": "Course Management",
-    "summary": "",
+    "summary": "Course Management ranks #2 of 354 canonical features (153 demand, 43 tenders, 12 competitors). All 13 OSS LMS leaders ship it; the differentiator is a modern Vue/NL-Design surface — insight #16 says \"OSS LMS leaders all share dated UX\". Without authoring, Scholiq cannot anchor the LVS, eLearning, training, and certification surfaces above it.",
     "docsUrl": "openspec/specs/course-management/spec.md"
   },
   {
     "slug": "dashboard",
     "title": "Role-Aware Dashboards",
-    "summary": "",
+    "summary": "Present a single role-aware dashboard surface (ADR-009 §6): one component, reached from one `Dashboards` menu entry, that re-renders for the active user's resolved role (admin / teacher / student) with an in-component switcher for multi-role users, built exclusively on `@conduction/nextcloud-vue` dashboard primitives. Exactly one `CnDashboardPage` renders per route (no dashboard-in-dashboard nesting), and heavy cross-tenant analytics deep-link into launchpad rather than being reimplemented.",
     "docsUrl": "openspec/specs/dashboard/spec.md"
   },
   {
     "slug": "data-exchange",
     "title": "Data Exchange",
-    "summary": "",
+    "summary": "An institution's data has to flow to and from external systems: a Dutch school's `leveringsverplichting` to **DUO BRON/ROD**, a pupil's **OSO** transfer dossier PO→VO, a `leerplichtmelding` to the municipality over **Digikoppeling**, **SURFconext** attribute mapping for HE login, a corporate **HR-system** sync for who must do which mandatory training. These are real and non-negotiable for the relevant buyers — but they are **integration adapters**, not Scholiq schemas. Scholiq's job is to (a) expose its data (`LearnerProfile`, `Enrolment`, `GradeEntry`, `FinalGrade`, `AttendanceRecord`, `Credential`, `Attestation`…) in a mappable form, (b) hold a small `DataExchangeJob` queue so a user can *request* an export/import and watch it, and (c) record every exchange in the audit trail (ADR-008). The actual wire protocols (Edukoppeling, StUF, OSO XML, OOAPI, OAuth/SAML attribute release) live in **OpenConnector** source/target configurations — separate issues filed against `ConductionNL/openconnector`. Federated *authentication* (DigiD / SURFconext / eduID) is likewise an OpenConnector + Nextcloud-auth concern: Scholiq only stores the resulting pseudonymous identifiers, which `LearnerProfile` already carries (`eckId`, `schoolId`, `bsnEncrypted`).",
     "docsUrl": "openspec/specs/data-exchange/spec.md"
   },
   {
     "slug": "enrolment",
     "title": "Enrolment",
-    "summary": "",
+    "summary": "Enrolment is the gateway from identity to learning record. For HE, Studielink integration is mandatory (insight #4); for corporate L&D, bulk-enrol of cohorts is the #1 line-manager workflow (5 high-priority stories). Without enrolment, every downstream capability — assessment, certification, compliance audit — has no subject.",
     "docsUrl": "openspec/specs/enrolment/spec.md"
+  },
+  {
+    "slug": "external-training-recording",
+    "title": "external-training-recording",
+    "summary": "Capture externally-completed training (classroom, third-party e-learning, conferences, on-the-job) per learner as `ExternalTrainingRecord` OpenRegister objects with evidence file attachments and an officer verification gate — a separate, clearly-labelled evidence class that feeds compliance coverage and audit packs without diluting the signed-attestation model.",
+    "docsUrl": "openspec/specs/external-training-recording/spec.md"
   },
   {
     "slug": "grading",
     "title": "Grading",
-    "summary": "",
+    "summary": "Component grades have to roll up into a final grade, and the roll-up rule belongs to the governing plan, not the gradebook. Dutch VO does this with the **PTA**: each `kolom` has a `weegfactor`, kolommen group by `periode`, and the weighted average across periods is the **SE-gemiddelde** which (with the CE) gives the **eindcijfer**. An HE module does the same with `deeltoetsen → eindcijfer`. A certification track does it with `all-must-pass`. Magister/SOMtoday own the Dutch VO workflow today but draw systemic UX backlash (instant per-grade pings, no concept state, opaque impact). This spec generalises it: a `GradeEntry` is one mark on one component for one learner; a `FinalGrade` is computed from a learner's GradeEntries using the `CurriculumPlan`'s declared `formula` and `component weights` (from `school-structure`); soft-publish lets a teacher review the cohort distribution before any parent/learner notification fires; the learner sees each grade's weight and its impact on the running average.",
     "docsUrl": "openspec/specs/grading/spec.md"
   },
   {
     "slug": "learning-plan",
     "title": "Individual Learning Plan",
-    "summary": "",
+    "summary": "Some learners need an individualised plan: a school pupil with extra ondersteuningsbehoeften, a university student on a remediation track, an employee on a personal-development plan. The structure is the same everywhere — a set of **goals**, the **support measures** in place to reach them, a **review cycle** with dated **evaluations**, and **signatures** (the learner / parent / coordinator co-sign each version). In the Netherlands the **Wet Passend Onderwijs** makes the **Ontwikkelingsperspectief (OPP)** mandatory for every pupil with extra needs, and `handelingsplannen` sit underneath it; ParnasSys owns ~65% of the PO market but the OPP UI is widely criticised. This spec generalises it: `LearningPlan` is the abstract document, the Dutch **OPP** is one profile (with its sector-template structure and DigiD parent-signing), an **IEP** (US), a higher-ed **PDP**, and a corporate **IDP** are others.",
     "docsUrl": "openspec/specs/learning-plan/spec.md"
   },
   {
     "slug": "nextcloud-app",
     "title": "Nextcloud App Shell",
-    "summary": "",
+    "summary": "Define the non-negotiable Nextcloud-native shell guardrails every other Scholiq spec relies on: the OpenRegister/OpenConnector dependency declaration and bootstrap refusal, hash-mode Vue Router, NcEmptyContent empty states, the NL Design double-fallback CSS pattern, the read/write Settings API, and the correct split between the admin settings panel (default register, AI features, credential-signing key — admin-guarded) and the per-user settings dialog (notification preferences), with a single consistent monochrome navigation icon family.",
     "docsUrl": "openspec/specs/nextcloud-app/spec.md"
+  },
+  {
+    "slug": "preferences-api",
+    "title": "Preferences API",
+    "summary": "This app exposes a generic per-user preferences endpoint (read/write a small key/value flag, backed by Nextcloud `IConfig` user values) consumed by shared `@conduction/nextcloud-vue` widgets that need to persist a cross-device UI flag without a bespoke endpoint per feature. This capability spec retroactively documents the observable contract of that endpoint.",
+    "docsUrl": "openspec/specs/preferences-api/spec.md"
+  },
+  {
+    "slug": "scholiq-notifications",
+    "title": "scholiq-notifications",
+    "summary": "Declares Scholiq's learner-facing notifications as `x-openregister-notifications` rules in the register, using only OpenRegister's verified engine dialect so the platform delivers them. Covers the four core learner events — grade availability, credential issuance, attendance flags, and course/lesson completion — each routed to the affected user, with delivery honouring the per-user override preference set through the Scholiq settings panel. Notification rendering and dispatch are performed by OpenRegister; Scholiq declares rules only and issues no imperative Nextcloud notifications.",
+    "docsUrl": "openspec/specs/scholiq-notifications/spec.md"
   },
   {
     "slug": "school-structure",
     "title": "School Structure",
-    "summary": "",
+    "summary": "Every educational institution — a school, a university faculty, or a corporate training department — runs the same backbone: a **programme** (a degree / diploma / certification track) is described by a **governing plan** (which courses are required, what the assessment components are, how component grades roll up to a final grade, what the period structure is), learners take courses inside **cohorts** (a klas, a werkgroep, a training group), and a cohort meets in scheduled **sessions** (a les, a hoorcollege, a workshop) that carry materials and assignments. Scholiq's built register has `Course` + `Lesson` but no programme, no governing plan, no cohort, no session — so it can hold *content* but cannot model how a real institution *runs*. This spec adds that backbone in a jurisdiction-neutral way: the Dutch **PTA** (Programma van Toetsing en Afsluiting) is one profile of `CurriculumPlan`; an HE **OER/studiegids**, an MBO **opleidingsplan**, and a corporate **training curriculum** are others.",
     "docsUrl": "openspec/specs/school-structure/spec.md"
+  },
+  {
+    "slug": "school-year-rollover",
+    "title": "school-year-rollover",
+    "summary": "Plan, preview, and execute the annual jaarovergang: bulk cohort promotion with per-learner overrides (doubleur retention, graduation, OSO outflow), carry-over of incomplete mandatory enrolments, NC-group sync, and archival of the old year — as one audited, resumable operation driven by a `RolloverPlan` OpenRegister object with a mandatory dry-run gate.",
+    "docsUrl": "openspec/specs/school-year-rollover/spec.md"
   }
 ]

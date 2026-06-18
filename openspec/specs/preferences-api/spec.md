@@ -1,7 +1,7 @@
 ---
 slug: preferences-api
 title: Preferences API — per-user key/value preference endpoints for scholiq
-status: implemented
+status: done
 retrofit: true
 created: 2026-05-26
 updated: 2026-05-31

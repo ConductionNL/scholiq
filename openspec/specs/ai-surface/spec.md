@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # ai-surface Specification
 
 ## Purpose
-TBD - created by archiving change scholiq-merge-ai-surfaces. Update Purpose after archive.
+Consolidates Scholiq's AI surfaces into a single interactive "Assistant" navigation entry that opens the LLM chat companion, removing the duplicate standalone "AI features" menu entry. The EU AI Act AI features register and its detail pages remain routable via deep links and are reachable through a "Manage AI features" affordance on the Settings page, keeping the governance register discoverable.
 ## Requirements
 ### Requirement: REQ-SAI-001 — The system SHALL expose exactly one interactive AI nav entry, "Assistant"
 The system SHALL present exactly one top-level navigation entry for the interactive AI companion, the `AssistantMenu` entry labelled "Assistant" routing to the `Assistant` chat page (`/assistant`), per ADR-034. The system SHALL NOT present a second top-level AI-labelled nav entry alongside it.
