@@ -22,6 +22,9 @@ import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
+// learning-people-cards-collapse (ADR-044): group landing pages.
+import LearningCards from './components/learning/LearningCards.vue'
+import PeopleCards from './components/people/PeopleCards.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -41,8 +44,10 @@ function page(component) {
 export default {
 	GradeImpactDetail: page(GradeImpactDetail),
 	ItemAuthorView: page(ItemAuthorView),
+	LearningCards: page(LearningCards),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
+	PeopleCards: page(PeopleCards),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	RolloverWizard: page(RolloverWizard),
 	ScholiqAdminHealth: page(ScholiqAdminHealth),
