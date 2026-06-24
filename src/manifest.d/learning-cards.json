@@ -1,0 +1,26 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "learning-people-cards-collapse",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Learning group cards-collapse (ADR-044): GroupLearning becomes a direct link to the LearningCards landing page. The six former child leaves (Courses, Curriculum, LearningPlans, Assignments, Assessments, Grades) are removed from the menu via menu-layout.json#removals; their pages remain routable via original routes."
+	},
+	"menu": [
+		{ "id": "GroupLearning", "route": "LearningCards" }
+	],
+	"pages": [
+		{
+			"id": "LearningCards",
+			"route": "/learning",
+			"type": "custom",
+			"title": "Learning",
+			"icon": "SchoolOutline",
+			"component": "LearningCards",
+			"group": "GroupLearning",
+			"config": {
+				"register": "scholiq"
+			}
+		}
+	]
+}
