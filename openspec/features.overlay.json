@@ -1,0 +1,208 @@
+[
+  {
+    "slug": "compliance-audit",
+    "title": "Compliance training and audit",
+    "title_nl": "Compliancetraining en audit",
+    "summary": "Prove who is trained, with signed evidence in one export.",
+    "summary_nl": "Bewijs wie getraind is, met getekend bewijs in een export.",
+    "status": "stable",
+    "providedBy": "openregister",
+    "docsUrl": "openspec/specs/compliance-audit/spec.md"
+  },
+  {
+    "slug": "certification",
+    "title": "Certification and digital credentials",
+    "title_nl": "Certificering en digitale credentials",
+    "summary": "Issue verifiable Open Badges 3.0 an auditor can check.",
+    "summary_nl": "Geef verifieerbare Open Badges 3.0 uit die een auditor kan controleren.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/certification/spec.md"
+  },
+  {
+    "slug": "enrolment",
+    "title": "Enrolment",
+    "title_nl": "Inschrijving",
+    "summary": "Enrol a whole cohort and chase the stragglers automatically.",
+    "summary_nl": "Schrijf een hele groep in en herinner de achterblijvers automatisch.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/enrolment/spec.md"
+  },
+  {
+    "slug": "course-management",
+    "title": "Course management",
+    "title_nl": "Cursusbeheer",
+    "summary": "Author and publish courses with a clear draft-to-live flow.",
+    "summary_nl": "Schrijf en publiceer cursussen met een heldere flow van concept naar live.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/course-management/spec.md"
+  },
+  {
+    "slug": "assignments",
+    "title": "Assignments and submissions",
+    "title_nl": "Opdrachten en inleveringen",
+    "summary": "Hand in, grade against a rubric, roll up to a final mark.",
+    "summary_nl": "Lever in, beoordeel met een rubric en tel op naar een eindcijfer.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/assignments/spec.md"
+  },
+  {
+    "slug": "grading",
+    "title": "Grading",
+    "title_nl": "Cijfers",
+    "summary": "Set the weighting once and let the final grade compute itself.",
+    "summary_nl": "Stel de weging een keer in en laat het eindcijfer zichzelf berekenen.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/grading/spec.md"
+  },
+  {
+    "slug": "attendance",
+    "title": "Attendance and threshold reporting",
+    "title_nl": "Aanwezigheid en verzuimmelding",
+    "summary": "Catch absence over the limit and flag it for the report.",
+    "summary_nl": "Signaleer verzuim boven de grens en markeer het voor de melding.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/attendance/spec.md"
+  },
+  {
+    "slug": "school-structure",
+    "title": "School structure",
+    "title_nl": "Schoolstructuur",
+    "summary": "Model programmes, cohorts and sessions the way the institution runs.",
+    "summary_nl": "Modelleer opleidingen, groepen en lessen zoals de instelling werkt.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/school-structure/spec.md"
+  },
+  {
+    "slug": "learning-plan",
+    "title": "Individual learning plan",
+    "title_nl": "Individueel leerplan",
+    "summary": "Co-sign a learner's plan and track every review.",
+    "summary_nl": "Onderteken samen het plan van een leerling en volg elke evaluatie.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/learning-plan/spec.md"
+  },
+  {
+    "slug": "external-training-recording",
+    "title": "External training records",
+    "title_nl": "Externe trainingen",
+    "summary": "Record training done elsewhere with a verified evidence trail.",
+    "summary_nl": "Leg elders gevolgde training vast met een geverifieerd bewijsspoor.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/external-training-recording/spec.md"
+  },
+  {
+    "slug": "school-year-rollover",
+    "title": "School-year rollover",
+    "title_nl": "Schooljaarovergang",
+    "summary": "Promote every cohort to the new year in one audited run.",
+    "summary_nl": "Zet elke groep over naar het nieuwe jaar in een audited run.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/school-year-rollover/spec.md"
+  },
+  {
+    "slug": "dashboard",
+    "title": "Role-aware dashboards",
+    "title_nl": "Dashboards per rol",
+    "summary": "Open one dashboard that fits your role on sight.",
+    "summary_nl": "Open een dashboard dat meteen past bij jouw rol.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/dashboard/spec.md"
+  },
+  {
+    "slug": "ai-surface",
+    "title": "EU AI Act governance",
+    "title_nl": "EU AI Act-governance",
+    "summary": "AI features stay off until a DPO signs them on.",
+    "summary_nl": "AI-functies blijven uit totdat een FG ze aanzet.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/ai-surface/spec.md"
+  },
+  {
+    "slug": "privacy-by-design",
+    "title": "Privacy by design",
+    "title_nl": "Privacy by design",
+    "summary": "Keep the BSN inside the boundary; share only a pseudonym.",
+    "summary_nl": "Houd het BSN binnen de grens en deel alleen een pseudoniem.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/ai-surface/spec.md"
+  },
+  {
+    "slug": "scholiq-notifications",
+    "title": "Notifications",
+    "title_nl": "Meldingen",
+    "summary": "Tell the right learner the moment a grade or badge lands.",
+    "summary_nl": "Bereik de juiste leerling zodra een cijfer of badge binnenkomt.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/scholiq-notifications/spec.md"
+  },
+  {
+    "slug": "avg-verwerkingsregister",
+    "title": "AVG processing register",
+    "title_nl": "AVG-verwerkingsregister",
+    "summary": "Keep your Article 30 register and export it with the audit pack.",
+    "summary_nl": "Houd je Artikel 30-register bij en exporteer het met de auditpack.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/avg-verwerkingsregister/spec.md"
+  },
+  {
+    "slug": "ai-companion-tools",
+    "title": "AI assistant",
+    "title_nl": "AI-assistent",
+    "summary": "Ask the assistant about a course; it only reads, never writes.",
+    "summary_nl": "Vraag de assistent naar een cursus; hij leest alleen, schrijft nooit.",
+    "status": "beta",
+    "providedBy": "openregister",
+    "docsUrl": "openspec/specs/ai-companion-tools/spec.md"
+  },
+  {
+    "slug": "nextcloud-app",
+    "title": "Nextcloud app",
+    "title_nl": "Nextcloud-app",
+    "summary": "Run the whole thing inside Nextcloud, no extra server.",
+    "summary_nl": "Draai alles binnen Nextcloud, zonder extra server.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/nextcloud-app/spec.md"
+  },
+  {
+    "slug": "assessment",
+    "title": "Assessment",
+    "title_nl": "Toetsing",
+    "summary": "Build QTI item banks and score exams inside your own tenant.",
+    "summary_nl": "Bouw QTI-itembanken en beoordeel examens binnen je eigen omgeving.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/assessment/spec.md"
+  },
+  {
+    "slug": "data-exchange",
+    "title": "Data exchange",
+    "title_nl": "Gegevensuitwisseling",
+    "summary": "Queue exports to DUO and OSO; the wire runs through OpenConnector.",
+    "summary_nl": "Zet exports naar DUO en OSO in de wachtrij; verzending loopt via OpenConnector.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/data-exchange/spec.md"
+  },
+  {
+    "slug": "online-proctoring-and-plagiarism",
+    "title": "Online proctoring and plagiarism",
+    "title_nl": "Online proctoring en plagiaat",
+    "summary": "Plug in a provider; nothing is locked to one vendor.",
+    "summary_nl": "Koppel een aanbieder; niets zit vast aan een leverancier.",
+    "status": "soon"
+  },
+  {
+    "slug": "scorm-and-cmi5-content-runtime",
+    "title": "SCORM and cmi5 content runtime",
+    "title_nl": "SCORM- en cmi5-content runtime",
+    "summary": "Launch packaged courseware and record completions.",
+    "summary_nl": "Start verpakte cursussen en leg afrondingen vast.",
+    "status": "soon"
+  },
+  {
+    "slug": "edci-and-europass-credentials",
+    "title": "EDCI and Europass credentials",
+    "title_nl": "EDCI- en Europass-credentials",
+    "summary": "Issue European diploma credentials alongside badges.",
+    "summary_nl": "Geef Europese diplomacredentials uit naast badges.",
+    "status": "soon"
+  }
+]
