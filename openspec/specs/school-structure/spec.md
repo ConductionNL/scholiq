@@ -1,7 +1,7 @@
 ---
 slug: school-structure
 title: School Structure — Programmes, Curriculum Plans, Cohorts, Sessions
-status: implemented
+status: done
 feature_tier: must
 depends_on_adrs: [ADR-022, ADR-024, ADR-031]
 created: 2026-05-12

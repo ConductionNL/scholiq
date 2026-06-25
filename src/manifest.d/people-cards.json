@@ -1,0 +1,26 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "learning-people-cards-collapse",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "People group cards-collapse (ADR-044): GroupPeople becomes a direct link to the PeopleCards landing page. The four former child leaves (LearnerProfilesMenu, Enrolments, Attendance, Credentials) are removed from the menu via menu-layout.json#removals; their pages remain routable via original routes."
+	},
+	"menu": [
+		{ "id": "GroupPeople", "route": "PeopleCards" }
+	],
+	"pages": [
+		{
+			"id": "PeopleCards",
+			"route": "/people",
+			"type": "custom",
+			"title": "People",
+			"icon": "AccountGroupOutline",
+			"component": "PeopleCards",
+			"group": "GroupPeople",
+			"config": {
+				"register": "scholiq"
+			}
+		}
+	]
+}

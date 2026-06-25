@@ -1,7 +1,7 @@
 ---
 slug: ai-companion-tools
 title: AI Companion Tools — MCP provider for scholiq
-status: implemented
+status: done
 retrofit: true
 feature_tier: should
 depends_on_adrs: [ADR-005, ADR-022]

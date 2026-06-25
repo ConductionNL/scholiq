@@ -1,7 +1,11 @@
+---
+status: done
+---
+
 # avg-verwerkingsregister Specification
 
 ## Purpose
-TBD - created by archiving change avg-verwerkingsregister. Update Purpose after archive.
+Provides Scholiq's GDPR Article 30 processing-activities register (verwerkingsregister), declaring its processing catalogue — learner administration, attendance and leerplicht reporting, grading, compliance training, credentialing, data exchange, and AI features — as draft seed content that a privacy officer activates. The register slice is browsable through a declarative Compliance UI served over the platform's verwerkingsactiviteiten API, and its platform-generated Art. 30 export is included in the compliance audit pack. All storage, RBAC, review reminders, and export logic are owned by OpenRegister; Scholiq contributes only the seed catalogue and UI surface.
 ## Requirements
 ### Requirement: Scholiq MUST ship its processing catalogue as draft seed content
 

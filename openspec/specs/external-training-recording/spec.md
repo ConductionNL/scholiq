@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # external-training-recording Specification
 
 ## Purpose

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # school-year-rollover Specification
 
 ## Purpose

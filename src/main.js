@@ -12,10 +12,12 @@ import {
 	defaultPageTypes,
 	registerIcons,
 	registerTranslations,
+	buildManifest,
 } from '@conduction/nextcloud-vue'
 import pinia from './pinia.js'
 import App from './App.vue'
 import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
 import registry from './registry.js'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
@@ -90,10 +92,17 @@ bundledManifest.runtime = {
 	},
 }
 
+// Collect the app's manifest.d/*.json fragments — require.context is resolved
+// by this app's own webpack build, so it stays app-local — then hand the base
+// manifest, fragments, and menu-layout to the shared pipeline (ADR-037 / ADR-044).
+const fragmentCtx = require.context('./manifest.d/', false, /\.json$/)
+const fragments = fragmentCtx.keys().sort().map((key) => fragmentCtx(key))
+const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
+
 const router = new VueRouter({
 	mode: 'history',
 	base: generateUrl('/apps/scholiq'),
-	routes: routesFromManifest(bundledManifest),
+	routes: routesFromManifest(mergedManifest),
 })
 
 tryLoadTranslations()
@@ -117,7 +126,7 @@ const registryProp = { ...registry }
 		router,
 		render: (h) => h(App, {
 			props: {
-				manifest: bundledManifest,
+				manifest: mergedManifest,
 				registry: registryProp,
 				pageTypes: pageTypesProp,
 			},

@@ -1,0 +1,27 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Canonical nav layout applied AFTER all manifest.d fragments merge (ADR-044). relocations: sourceId -> targetGroupId. settingsSection: top-level config/admin leaf ids lifted into the NC settings foldout (gear icon, outside the scrollable nav). removals: leaf menu-entry ids retired as duplicate navigation — their PAGES stay routable."
+	},
+	"relocations": {},
+	"removals": [
+		"Courses",
+		"Curriculum",
+		"LearningPlans",
+		"Assignments",
+		"Assessments",
+		"Grades",
+		"LearnerProfilesMenu",
+		"Enrolments",
+		"Attendance",
+		"Credentials"
+	],
+	"settingsSection": [
+		"DataExchange",
+		"XapiStatementsMenu",
+		"AssistantMenu",
+		"FeaturesRoadmapMenu"
+	],
+	"_settingsSectionNote": "DataExchange and XapiStatementsMenu carry section:'settings' in the base manifest; AssistantMenu is an integration/config leaf; FeaturesRoadmapMenu (formerly section:'footer') is lifted here so the foldout is the single authoritative source for all settings-adjacent leaves. AdminHealthMenu is intentionally absent — it belongs inside the Insight group (admin-gated, visibleIf:admin)."
+}

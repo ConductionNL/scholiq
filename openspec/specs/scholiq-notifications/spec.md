@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # scholiq-notifications Specification
 
 **Status**: in-progress
@@ -5,7 +9,7 @@
 - fix-dashboards-settings-notifications
 
 ## Purpose
-TBD - created by archiving change scholiq-notifications. Update Purpose after archive.
+Declares Scholiq's learner-facing notifications as `x-openregister-notifications` rules in the register, using only OpenRegister's verified engine dialect so the platform delivers them. Covers the four core learner events — grade availability, credential issuance, attendance flags, and course/lesson completion — each routed to the affected user, with delivery honouring the per-user override preference set through the Scholiq settings panel. Notification rendering and dispatch are performed by OpenRegister; Scholiq declares rules only and issues no imperative Nextcloud notifications.
 ## Requirements
 ### Requirement: Annotated schemas MUST declare notifications in the verified engine dialect
 
