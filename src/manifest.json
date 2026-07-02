@@ -312,10 +312,22 @@
 			"route": "/courses/:id",
 			"type": "detail",
 			"title": "Course Detail",
+			"_note": "A Course is a curricular container (parent of lessons, sessions, enrolments, assignments, assessments) — the education 'catalog/parent' archetype. Body leads with the course metadata (code, level, language, mandatory-training flag, regulation, curriculum-plan) as the 8-wide primary block with a compact Related panel resolving parent-course/curriculum-plan/programmes. Below sit the child rosters as related-index tables: Lessons (the syllabus), Enrolments (who is taking it), Cohorts (delivery groups) and Assignments — the four things a course owner actually manages. Course Materials render as a Files leaf (materials/handouts are the course's document surface). No email/calendar/talk: the Course schema declares NO linkedTypes and a course is a definition, not a correspondence thread (HARD RULE 1). Sidebar keeps metadata; lifecycle/change history lives on the audit-trail leaf there.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Course"
-			}
+			},
+			"widgets": [
+				{ "id": "course-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "course-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+				{ "id": "course-lessons", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "Lesson", "filter": { "courseId": ":id" }, "columns": ["order", "name", "contentType", "durationMinutes", "mandatoryTraining"], "actions": ["create", "edit", "delete"] }, "title": "Lessons" } },
+				{ "id": "course-enrolments", "widgetKey": "related-index", "slot": "body", "gridX": 6, "gridY": 5, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "Enrolment", "filter": { "courseId": ":id" }, "columns": ["learnerId", "cohortId", "mandatory", "dueDate", "source"], "actions": ["create", "edit", "delete"] }, "title": "Enrolments" } },
+				{ "id": "course-cohorts", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 10, "gridWidth": 6, "gridHeight": 4, "props": { "config": { "register": "scholiq", "schema": "Cohort", "filter": { "courseId": ":id" }, "columns": ["name", "academicYear", "period", "programmeId"], "actions": ["create", "edit"] }, "title": "Cohorts" } },
+				{ "id": "course-assignments", "widgetKey": "related-index", "slot": "body", "gridX": 6, "gridY": 10, "gridWidth": 6, "gridHeight": 4, "props": { "config": { "register": "scholiq", "schema": "Assignment", "filter": { "courseId": ":id" }, "columns": ["title", "dueAt", "maxPoints", "rubricId"], "actions": ["create", "edit"] }, "title": "Assignments" } },
+				{ "id": "course-materials", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 14, "gridWidth": 12, "gridHeight": 4, "props": { "only": "files", "schema": "Course", "surface": "detail-page", "title": "Course materials" } },
+				{ "id": "course-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "course-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Course", "surface": "sidebar", "title": "History" } }
+			]
 		},
 		{
 			"id": "LessonIndex",
@@ -335,10 +347,19 @@
 			"route": "/courses/:courseId/lessons/:id",
 			"type": "detail",
 			"title": "Lesson Detail",
+			"_note": "A Lesson is a single learning unit inside a course (ordered content item with a media contentRef) — the education content-item archetype. Body leads with lesson metadata (order, contentType, contentRef, duration, learning objectives, mandatory-training flag, regulation) 8-wide, with a Related panel resolving the parent Course alongside. Below, the lesson's Materials (files/media pointed at by lessonId) render as a related-index table plus a Files leaf, because a lesson IS its content and handouts. No comms leaves: Lesson declares no linkedTypes and is a definition, not a conversation (HARD RULE 1). Sidebar keeps metadata + an audit-trail leaf for content-change history.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Lesson"
-			}
+			},
+			"widgets": [
+				{ "id": "lesson-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "lesson-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+				{ "id": "lesson-materials", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4, "props": { "config": { "register": "scholiq", "schema": "Material", "filter": { "lessonId": ":id" }, "columns": ["order", "title", "kind", "license"], "actions": ["create", "edit", "delete"] }, "title": "Materials" } },
+				{ "id": "lesson-files", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 9, "gridWidth": 12, "gridHeight": 4, "props": { "only": "files", "schema": "Lesson", "surface": "detail-page", "title": "Lesson content" } },
+				{ "id": "lesson-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "lesson-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Lesson", "surface": "sidebar", "title": "History" } }
+			]
 		},
 		{
 			"id": "LessonPlayer",
@@ -370,10 +391,20 @@
 			"route": "/enrolments/:id",
 			"type": "detail",
 			"title": "Enrolment",
+			"_note": "An Enrolment links one learner to one course (learnerId, courseId, cohortId, mandatory flag, dueDate, source, manager, regulation) — the education enrolment/participation archetype. Body leads with enrolment metadata 8-wide with a Related panel resolving learner + course + cohort. The enrolment's academic footprint is surfaced as related-index tables filtered by learnerId + courseId: Grade entries, Submissions and Attendance records — the progress a coordinator checks on this enrolment. No email/calendar: the Enrolment schema declares no linkedTypes; learner correspondence belongs on the Learner profile, not on a join record (HARD RULE 1). Sidebar keeps metadata + audit-trail (enrolment source/mandate changes are compliance-relevant).",
 			"config": {
 				"register": "scholiq",
 				"schema": "Enrolment"
-			}
+			},
+			"widgets": [
+				{ "id": "enrol-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 4, "props": { "columns": 2 } },
+				{ "id": "enrol-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 4 },
+				{ "id": "enrol-grades", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 4, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "grade-entry", "filter": { "learnerId": "@object.learnerId", "courseId": "@object.courseId" }, "columns": ["componentId", "sourceKind", "value", "period", "gradedAt"], "actions": ["edit"] }, "title": "Grade entries" } },
+				{ "id": "enrol-submissions", "widgetKey": "related-index", "slot": "body", "gridX": 6, "gridY": 4, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "Submission", "filter": { "learnerIds": "@object.learnerId" }, "columns": ["assignmentId", "submittedAt", "proposedGrade"], "actions": [] }, "title": "Submissions" } },
+				{ "id": "enrol-attendance", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 9, "gridWidth": 12, "gridHeight": 4, "props": { "config": { "register": "scholiq", "schema": "attendance-record", "filter": { "learnerId": "@object.learnerId", "courseId": "@object.courseId" }, "columns": ["sessionId", "status", "minutesAttended", "markedAt"], "actions": [] }, "title": "Attendance" } },
+				{ "id": "enrol-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "enrol-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Enrolment", "surface": "sidebar", "title": "History" } }
+			]
 		},
 		{
 			"id": "BulkEnrol",
@@ -398,10 +429,20 @@
 			"route": "/compliance/regulations/:slug",
 			"type": "detail",
 			"title": "Regulation",
+			"_note": "A Regulation is a compliance rule (applicability criteria, audience scope, annual-renewal + cycle, RAG thresholds) that mandatory courses map to via regulationSlug — the config/rule archetype. Body leads with the rule definition 8-wide + a Related panel. Its compliance footprint is shown as related-index tables of the records that cite this regulation's slug: Attestations (proof-of-completion) and External training records, plus the mandatory Courses bound to it — what a compliance officer audits. No comms/files: a regulation is a policy definition, not a document or conversation (HARD RULES 1-2); attestations carry the evidence. Sidebar keeps metadata + audit-trail (threshold/renewal changes are auditable policy edits).",
 			"config": {
 				"register": "scholiq",
 				"schema": "Regulation"
-			}
+			},
+			"widgets": [
+				{ "id": "reg-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "reg-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+				{ "id": "reg-attestations", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "Attestation", "filter": { "regulationSlug": "@object.slug" }, "columns": ["learnerId", "courseId", "score"], "actions": [] }, "title": "Attestations" } },
+				{ "id": "reg-external", "widgetKey": "related-index", "slot": "body", "gridX": 6, "gridY": 5, "gridWidth": 6, "gridHeight": 5, "props": { "config": { "register": "scholiq", "schema": "external-training-record", "filter": { "regulationSlug": "@object.slug" }, "columns": ["learnerId", "title", "provider", "completedAt", "validUntil"], "actions": [] }, "title": "External training" } },
+				{ "id": "reg-courses", "widgetKey": "related-index", "slot": "body", "gridX": 0, "gridY": 10, "gridWidth": 12, "gridHeight": 4, "props": { "config": { "register": "scholiq", "schema": "Course", "filter": { "regulationSlug": "@object.slug" }, "columns": ["code", "name", "level", "mandatoryTraining"], "actions": ["edit"] }, "title": "Mandatory courses" } },
+				{ "id": "reg-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "reg-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Regulation", "surface": "sidebar", "title": "Policy history" } }
+			]
 		},
 		{
 			"id": "Attestations",
@@ -419,11 +460,19 @@
 			"route": "/compliance/attestations/:id",
 			"type": "detail",
 			"title": "Attestation",
+			"_note": "An Attestation is an immutable proof-of-completion record (learner, course/lesson, regulation, score, signature, signing key, actor IP, xAPI statement) — the education document/record archetype, read-only. Body leads with the attestation fields 8-wide + a Related panel resolving learner + course + lesson + regulation. Signed evidence renders as a Files leaf below (the attestation IS a signed document a compliance officer downloads). No email/calendar: an attestation is a sealed record, not a conversation (HARD RULE 1). Sidebar keeps metadata + audit-trail — the tamper-evidence trail is the whole point of an attestation.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Attestation",
 				"readOnly": true
-			}
+			},
+			"widgets": [
+				{ "id": "att-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "att-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+				{ "id": "att-files", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4, "props": { "only": "files", "schema": "Attestation", "surface": "detail-page", "title": "Signed evidence" } },
+				{ "id": "att-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "att-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Attestation", "surface": "sidebar", "title": "Tamper log" } }
+			]
 		},
 		{
 			"id": "AuditPackExport",
@@ -438,22 +487,35 @@
 			"route": "/credentials/:id",
 			"type": "detail",
 			"title": "Credential",
+			"_note": "A Credential is an issued certificate/badge (learner, course, kind, issued/expires, issuer DID, signature, OpenBadges3 + EDCI payloads, verification URL, revocation reason) — the education document/attestation archetype. Body leads with issuance metadata 8-wide + a Related panel resolving learner + course + issuing enrolment. The signed badge artefacts render as a Files leaf (a credential IS a downloadable/verifiable document). No email/calendar: a credential is a sealed award, not correspondence (HARD RULE 1). Sidebar keeps metadata + audit-trail — issuance and revocation events are the credential's legal record.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Credential"
-			}
+			},
+			"widgets": [
+				{ "id": "cred-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "cred-related", "widgetKey": "related", "slot": "body", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5 },
+				{ "id": "cred-files", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4, "props": { "only": "files", "schema": "Credential", "surface": "detail-page", "title": "Badge & certificate files" } },
+				{ "id": "cred-metadata", "widgetKey": "metadata", "slot": "sidebar", "gridX": 0, "gridY": 0, "gridWidth": 1, "gridHeight": 2 },
+				{ "id": "cred-audit", "widgetKey": "integration", "slot": "sidebar", "gridX": 0, "gridY": 2, "gridWidth": 1, "gridHeight": 4, "props": { "only": "audit-trail", "schema": "Credential", "surface": "sidebar", "title": "Issuance & revocation" } }
+			]
 		},
 		{
 			"id": "CredentialVerify",
 			"route": "/credentials/:id/verify",
 			"type": "detail",
 			"title": "Verify Credential",
+			"_note": "Public verification view of a Credential (mode:public) — a third party checking authenticity, NOT an internal editor. Deliberately minimal: a single full-width Data block showing only the verifiable claims (kind, learner, course, issued/expires, issuer DID, revocation status) plus a Files leaf for the signed badge artefact. No related-index, no comms, no audit sidebar — a public verifier must see the assertion and its signature and nothing about internal relations or history (HARD RULE 1, minimal-surface). Sidebar disabled: this is an anonymous proof page.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Credential",
 				"mode": "public",
 				"id": "@route.id"
-			}
+			},
+			"widgets": [
+				{ "id": "credv-data", "widgetKey": "data", "slot": "body", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 5, "props": { "columns": 2 } },
+				{ "id": "credv-files", "widgetKey": "integration", "slot": "body", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 4, "props": { "only": "files", "schema": "Credential", "surface": "detail-page", "title": "Signed badge" } }
+			]
 		},
 		{
 			"id": "LearnerHome",
@@ -488,8 +550,140 @@
 			"title": "Programme",
 			"config": {
 				"register": "scholiq",
-				"schema": "Programme"
-			}
+				"schema": "Programme",
+				"_note": "A Programme is a qualification-level container (level, code, curriculum-plan, member courses, credential template) \u2014 the education 'parent/catalog' archetype. Body leads with programme metadata (8-wide) and a Related panel resolving the curriculum-plan and credential template. Below, the constituent Courses and delivery Cohorts render as related-index rosters \u2014 the two things a programme owner manages \u2014 and Final grades give an outcome roster. No comms leaves: Programme declares no linkedTypes and is a definition, not a correspondence thread (HARD RULE 1). Sidebar keeps metadata + audit-trail change history."
+			},
+			"widgets": [
+				{
+					"id": "prog-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "prog-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "prog-courses",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Course",
+							"filter": {
+								"programmeId": "@objectId"
+							},
+							"columns": [
+								"code",
+								"name",
+								"level",
+								"language"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Courses"
+					}
+				},
+				{
+					"id": "prog-cohorts",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Cohort",
+							"filter": {
+								"programmeId": "@objectId"
+							},
+							"columns": [
+								"name",
+								"academicYear",
+								"period",
+								"courseId"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Cohorts"
+					}
+				},
+				{
+					"id": "prog-finals",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 10,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "final-grade",
+							"filter": {
+								"programmeId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"courseId",
+								"value",
+								"passed"
+							],
+							"actions": []
+						},
+						"title": "Final grades"
+					}
+				},
+				{
+					"id": "prog-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "prog-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Programme",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "CurriculumPlans",
@@ -508,8 +702,108 @@
 			"title": "Curriculum plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "curriculum-plan"
-			}
+				"schema": "curriculum-plan",
+				"_note": "A Curriculum Plan defines the structure and pass-rules of a qualification (required/elective courses, components, formula, grade-scale, pass rules, periods) \u2014 a config/structure archetype. Body leads with the plan definition (8-wide) plus a Related panel resolving the grade-scale and owning programmes. Below, the Grade entries and Final grades computed against this plan render as related-index tables so an examinations officer can audit outcomes. No comms leaves (no linkedTypes; this is a rule definition). Sidebar keeps metadata + audit-trail for rule-change history."
+			},
+			"widgets": [
+				{
+					"id": "cplan-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "cplan-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "cplan-grades",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "grade-entry",
+							"filter": {
+								"curriculumPlanId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"componentId",
+								"value",
+								"period"
+							],
+							"actions": []
+						},
+						"title": "Grade entries"
+					}
+				},
+				{
+					"id": "cplan-finals",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "final-grade",
+							"filter": {
+								"curriculumPlanId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"courseId",
+								"value",
+								"passed"
+							],
+							"actions": []
+						},
+						"title": "Final grades"
+					}
+				},
+				{
+					"id": "cplan-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "cplan-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "curriculum-plan",
+						"surface": "sidebar",
+						"title": "Rule history"
+					}
+				}
+			]
 		},
 		{
 			"id": "Cohorts",
@@ -528,8 +822,140 @@
 			"title": "Cohort",
 			"config": {
 				"register": "scholiq",
-				"schema": "Cohort"
-			}
+				"schema": "Cohort",
+				"_note": "A Cohort is a delivery group (a course/programme run for a set of learners in an academic year/period, mapped to an NC group). Body leads with cohort metadata (8-wide) and a Related panel resolving programme, course and NC group. The three things a cohort coordinator manages render as related-index rosters: scheduled Sessions, Enrolments (the roster) and Attendance flags (early-warning). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "coh-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "coh-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "coh-sessions",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Session",
+							"filter": {
+								"cohortId": "@objectId"
+							},
+							"columns": [
+								"title",
+								"startsAt",
+								"endsAt",
+								"location"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Sessions"
+					}
+				},
+				{
+					"id": "coh-enrol",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Enrolment",
+							"filter": {
+								"cohortId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"courseId",
+								"mandatory",
+								"dueDate"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Enrolments"
+					}
+				},
+				{
+					"id": "coh-flags",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 10,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "attendance-flag",
+							"filter": {
+								"cohortId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"metricValue",
+								"windowStart",
+								"windowEnd"
+							],
+							"actions": []
+						},
+						"title": "Attendance flags"
+					}
+				},
+				{
+					"id": "coh-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "coh-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Cohort",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "CohortTimetable",
@@ -556,8 +982,124 @@
 			"title": "Session",
 			"config": {
 				"register": "scholiq",
-				"schema": "Session"
-			}
+				"schema": "Session",
+				"_note": "A Session is a scheduled teaching occurrence (start/end, location, tied to cohort/course/lesson, with materials and assignments). Body leads with session details (8-wide) and a Related panel resolving cohort/course/lesson. The attendance roster is the primary operational surface, so Attendance records render as a wide related-index; assigned work shows as an Assignments table. Session materials render as a Files leaf (handouts for the session). No calendar/email leaf: Session declares no linkedTypes despite being time-boxed (HARD RULE 1). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "sess-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "sess-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "sess-attend",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 7,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "attendance-record",
+							"filter": {
+								"sessionId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"status",
+								"minutesAttended",
+								"markedAt"
+							],
+							"actions": [
+								"edit"
+							]
+						},
+						"title": "Attendance"
+					}
+				},
+				{
+					"id": "sess-assign",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 7,
+					"gridY": 5,
+					"gridWidth": 5,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Assignment",
+							"filter": {
+								"sessionId": "@objectId"
+							},
+							"columns": [
+								"title",
+								"dueAt",
+								"maxPoints"
+							],
+							"actions": []
+						},
+						"title": "Assignments"
+					}
+				},
+				{
+					"id": "sess-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 10,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "Session",
+						"surface": "detail-page",
+						"title": "Session materials"
+					}
+				},
+				{
+					"id": "sess-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "sess-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Session",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "Materials",
@@ -576,8 +1118,71 @@
 			"title": "Material",
 			"config": {
 				"register": "scholiq",
-				"schema": "Material"
-			}
+				"schema": "Material",
+				"_note": "A Material is a learning resource (kind, file reference or URL, license, LOM tags) attached to a course/lesson/session \u2014 a document/asset archetype, so it is files-first. Body leads with the actual file/preview via a wide Files leaf, then the material metadata (kind, license, LOM tags, order) below, with a Related panel resolving the owning course/lesson/session. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for version history."
+			},
+			"widgets": [
+				{
+					"id": "mat-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"only": "files",
+						"schema": "Material",
+						"surface": "detail-page",
+						"title": "Resource file"
+					}
+				},
+				{
+					"id": "mat-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "mat-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "mat-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "mat-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Material",
+						"surface": "sidebar",
+						"title": "Version history"
+					}
+				}
+			]
 		},
 		{
 			"id": "Rubrics",
@@ -596,8 +1201,82 @@
 			"title": "Rubric",
 			"config": {
 				"register": "scholiq",
-				"schema": "Rubric"
-			}
+				"schema": "Rubric",
+				"_note": "A Rubric is a scoring scaffold (named criteria + max points) reused across assignments \u2014 a config/definition archetype. Body leads with the rubric definition including the criteria list (8-wide) and a Related panel. Below, the Assignments that reference this rubric render as a related-index so a designer sees reuse. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "rub-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "rub-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "rub-assign",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Assignment",
+							"filter": {
+								"rubricId": "@objectId"
+							},
+							"columns": [
+								"title",
+								"courseId",
+								"dueAt",
+								"maxPoints"
+							],
+							"actions": []
+						},
+						"title": "Used by assignments"
+					}
+				},
+				{
+					"id": "rub-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "rub-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Rubric",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "Assignments",
@@ -616,8 +1295,120 @@
 			"title": "Assignment",
 			"config": {
 				"register": "scholiq",
-				"schema": "Assignment"
-			}
+				"schema": "Assignment",
+				"_note": "An Assignment is gradable work (instructions, due date, max points, rubric, late/plagiarism policy) belonging to a course/session/cohort. Body leads with assignment details (8-wide) and a Related panel resolving course/session/rubric. The Submissions roster is the operational heart, rendered as a wide related-index, with a Submissions-received KPI stat. Briefing materials render as a Files leaf. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "asn-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "asn-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "asn-count",
+					"widgetKey": "stat",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 4,
+					"gridHeight": 2,
+					"props": {
+						"label": "Submissions received",
+						"source": {
+							"register": "scholiq",
+							"schema": "Submission",
+							"metric": "count",
+							"field": "id",
+							"filter": {
+								"assignmentId": "@objectId"
+							}
+						}
+					}
+				},
+				{
+					"id": "asn-subs",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 7,
+					"gridWidth": 12,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Submission",
+							"filter": {
+								"assignmentId": "@objectId"
+							},
+							"columns": [
+								"learnerIds",
+								"submittedAt",
+								"proposedGrade",
+								"gradeEntryId"
+							],
+							"actions": [
+								"edit"
+							]
+						},
+						"title": "Submissions"
+					}
+				},
+				{
+					"id": "asn-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 12,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "Assignment",
+						"surface": "detail-page",
+						"title": "Briefing materials"
+					}
+				},
+				{
+					"id": "asn-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "asn-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Assignment",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "Submissions",
@@ -640,8 +1431,71 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "Submission",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "A Submission is a learner's handed-in work for an assignment (attachments, feedback, rubric scores, proposed grade, linked grade entry) \u2014 a result/score record. Body leads with the submission data including feedback and rubric scores (8-wide), a proposed-grade KPI stat, and a Related panel resolving the assignment and grade entry. The submitted work renders as a Files leaf (attachments are the point of a submission). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "sub-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "sub-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "sub-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "Submission",
+						"surface": "detail-page",
+						"title": "Submitted work"
+					}
+				},
+				{
+					"id": "sub-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "sub-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Submission",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "SubmitWorkModal",
@@ -676,8 +1530,106 @@
 			"title": "Item bank",
 			"config": {
 				"register": "scholiq",
-				"schema": "item-bank"
-			}
+				"schema": "item-bank",
+				"_note": "An Item Bank is a reusable pool of assessment questions grouped by subject. Body leads with the bank metadata (8-wide) and a Related panel. The constituent Items render as a wide related-index (the bank's actual content), with a total-items KPI stat. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "ibank-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "ibank-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "ibank-count",
+					"widgetKey": "stat",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 4,
+					"gridHeight": 2,
+					"props": {
+						"label": "Items",
+						"source": {
+							"register": "scholiq",
+							"schema": "Item",
+							"metric": "count",
+							"field": "id",
+							"filter": {
+								"itemBankId": "@objectId"
+							}
+						}
+					}
+				},
+				{
+					"id": "ibank-items",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 7,
+					"gridWidth": 12,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Item",
+							"filter": {
+								"itemBankId": "@objectId"
+							},
+							"columns": [
+								"title",
+								"interactionType",
+								"maxScore",
+								"difficulty"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Items"
+					}
+				},
+				{
+					"id": "ibank-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "ibank-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "item-bank",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "Items",
@@ -696,8 +1648,56 @@
 			"title": "Item",
 			"config": {
 				"register": "scholiq",
-				"schema": "Item"
-			}
+				"schema": "Item",
+				"_note": "An Item is a single assessment question (interaction type, QTI body, correct response, max score, difficulty, subject tags). Body leads with the item definition including the QTI body (8-wide) and a Related panel resolving the owning item-bank. No child rosters (an item is a leaf). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for revision history."
+			},
+			"widgets": [
+				{
+					"id": "item-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "item-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "item-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "item-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Item",
+						"surface": "sidebar",
+						"title": "Revision history"
+					}
+				}
+			]
 		},
 		{
 			"id": "Assessments",
@@ -716,8 +1716,105 @@
 			"title": "Assessment",
 			"config": {
 				"register": "scholiq",
-				"schema": "Assessment"
-			}
+				"schema": "Assessment",
+				"_note": "An Assessment is a configured test (item refs, scoring scheme, pass mark, time limit, attempts, proctoring, availability window) tied to a course/session/cohort. Body leads with the assessment configuration (8-wide) and a Related panel resolving course/session and grade-entry component. Learner attempts render as a wide Results related-index, with an attempts KPI stat. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "ass-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "ass-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "ass-count",
+					"widgetKey": "stat",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 4,
+					"gridHeight": 2,
+					"props": {
+						"label": "Attempts",
+						"source": {
+							"register": "scholiq",
+							"schema": "assessment-result",
+							"metric": "count",
+							"field": "id",
+							"filter": {
+								"assessmentId": "@objectId"
+							}
+						}
+					}
+				},
+				{
+					"id": "ass-res",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 7,
+					"gridWidth": 12,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "assessment-result",
+							"filter": {
+								"assessmentId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"attemptNumber",
+								"submittedAt",
+								"gradeEntryId"
+							],
+							"actions": [
+								"edit"
+							]
+						},
+						"title": "Results"
+					}
+				},
+				{
+					"id": "ass-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "ass-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Assessment",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "AssessmentResults",
@@ -749,8 +1846,81 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "assessment-result",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "An Assessment Result is one learner's attempt (responses, timing, proctoring session, grade entry). Body leads with the result data including responses (8-wide) and a Related panel resolving the assessment, learner and grade entry. The proctoring evidence for this attempt renders as a related-index. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "ares-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "ares-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "ares-proc",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "proctoring-session",
+							"filter": {
+								"assessmentResultId": "@objectId"
+							},
+							"columns": [
+								"provider",
+								"status",
+								"flags"
+							],
+							"actions": []
+						},
+						"title": "Proctoring"
+					}
+				},
+				{
+					"id": "ares-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "ares-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "assessment-result",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "ProctoringSessions",
@@ -771,8 +1941,71 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "proctoring-session",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "A Proctoring Session records exam-monitoring for one assessment attempt (provider, status, recorded artefacts, integrity flags) \u2014 an evidence archetype. Body leads with the session data including flags (8-wide) and a Related panel resolving the assessment result and learner. Recorded artefacts (video/screen captures) render as a wide Files leaf \u2014 the evidence surface. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail as a tamper log."
+			},
+			"widgets": [
+				{
+					"id": "proc-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "proc-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "proc-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "proctoring-session",
+						"surface": "detail-page",
+						"title": "Recorded artefacts"
+					}
+				},
+				{
+					"id": "proc-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "proc-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "proctoring-session",
+						"surface": "sidebar",
+						"title": "Tamper log"
+					}
+				}
+			]
 		},
 		{
 			"id": "TakeAssessmentView",
@@ -823,8 +2056,82 @@
 			"title": "Grade scale",
 			"config": {
 				"register": "scholiq",
-				"schema": "grade-scale"
-			}
+				"schema": "grade-scale",
+				"_note": "A Grade Scale defines how scores map to grades (kind, bands, min/max, pass threshold, rounding) \u2014 a config archetype. Body leads with the scale definition including bands (8-wide) and a Related panel. Grade entries recorded against this scale render as a related-index so an examinations officer sees usage. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for rule-change history."
+			},
+			"widgets": [
+				{
+					"id": "gscale-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "gscale-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "gscale-grades",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "grade-entry",
+							"filter": {
+								"gradeScaleId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"componentId",
+								"value",
+								"period"
+							],
+							"actions": []
+						},
+						"title": "Grade entries"
+					}
+				},
+				{
+					"id": "gscale-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "gscale-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "grade-scale",
+						"surface": "sidebar",
+						"title": "Rule history"
+					}
+				}
+			]
 		},
 		{
 			"id": "GradeEntries",
@@ -843,8 +2150,56 @@
 			"title": "Grade entry",
 			"config": {
 				"register": "scholiq",
-				"schema": "grade-entry"
-			}
+				"schema": "grade-entry",
+				"_note": "A Grade Entry is a single recorded score (value, scale, weight, period, grader, source submission/result) for a learner and curriculum component \u2014 a score record. Body leads with the entry data including value and comment (8-wide), a value KPI stat, and a Related panel resolving the learner, course, grade-scale and source submission/result. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail as the grade-change audit."
+			},
+			"widgets": [
+				{
+					"id": "gentry-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "gentry-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "gentry-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "gentry-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "grade-entry",
+						"surface": "sidebar",
+						"title": "Grade audit"
+					}
+				}
+			]
 		},
 		{
 			"id": "FinalGrades",
@@ -865,8 +2220,83 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "final-grade",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "A Final Grade is the computed outcome for a learner on a course/programme (value, passed flag, breakdown, last recompute time) \u2014 an aggregate result. Body leads with the final-grade data including the breakdown (8-wide), a value KPI stat and a passed KPI, plus a Related panel resolving learner/course/programme/plan. The contributing Grade entries render as a related-index for traceability. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "fgrade-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "fgrade-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "fgrade-grades",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "grade-entry",
+							"filter": {
+								"learnerId": "@object.learnerId",
+								"courseId": "@object.courseId"
+							},
+							"columns": [
+								"componentId",
+								"sourceKind",
+								"value",
+								"period"
+							],
+							"actions": []
+						},
+						"title": "Contributing grades"
+					}
+				},
+				{
+					"id": "fgrade-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "fgrade-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "final-grade",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "GradebookView",
@@ -910,8 +2340,82 @@
 			"title": "Learning plan template",
 			"config": {
 				"register": "scholiq",
-				"schema": "learning-plan-template"
-			}
+				"schema": "learning-plan-template",
+				"_note": "A Learning Plan Template defines the structure of individual learning/support plans (sections, goal domains, required signer roles, review cadence) \u2014 a config/template archetype. Body leads with the template definition (8-wide) and a Related panel. Learning plans instantiated from this template render as a related-index so a coordinator sees adoption. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "lpt-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "lpt-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "lpt-plans",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "learning-plan",
+							"filter": {
+								"templateId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"kind",
+								"period",
+								"nextReviewAt"
+							],
+							"actions": []
+						},
+						"title": "Plans using template"
+					}
+				},
+				{
+					"id": "lpt-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "lpt-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "learning-plan-template",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "LearningPlans",
@@ -930,8 +2434,99 @@
 			"title": "Learning plan",
 			"config": {
 				"register": "scholiq",
-				"schema": "learning-plan"
-			}
+				"schema": "learning-plan",
+				"_note": "A Learning Plan is an individual learner's development/support plan (goals, support measures, review cadence, coordinator, versioning). Body leads with the plan data including goals and support measures (8-wide) and a Related panel resolving learner, template, cohort/course and coordinator. Its Evaluations (periodic reviews) render as a wide related-index \u2014 the plan's living history \u2014 and supporting documents render as a Files leaf. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "lp-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "lp-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "lp-evals",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 7,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "learning-plan-evaluation",
+							"filter": {
+								"learningPlanId": "@objectId"
+							},
+							"columns": [
+								"evaluatedAt",
+								"evaluatedBy",
+								"nextReviewAt"
+							],
+							"actions": [
+								"create",
+								"edit"
+							]
+						},
+						"title": "Evaluations"
+					}
+				},
+				{
+					"id": "lp-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 7,
+					"gridY": 5,
+					"gridWidth": 5,
+					"gridHeight": 5,
+					"props": {
+						"only": "files",
+						"schema": "learning-plan",
+						"surface": "detail-page",
+						"title": "Plan documents"
+					}
+				},
+				{
+					"id": "lp-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "lp-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "learning-plan",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "LearningPlanEvaluations",
@@ -963,8 +2558,71 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "learning-plan-evaluation",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "A Learning Plan Evaluation is a periodic review of a learning plan (goal outcomes, narrative, attendees, next review date). Body leads with the evaluation data including goal outcomes and narrative (8-wide) and a Related panel resolving the parent plan and attendees. Supporting documents (minutes/evidence) render as a Files leaf. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "lpe-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "lpe-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "lpe-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "learning-plan-evaluation",
+						"surface": "detail-page",
+						"title": "Review documents"
+					}
+				},
+				{
+					"id": "lpe-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "lpe-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "learning-plan-evaluation",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "Signatures",
@@ -997,8 +2655,71 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "Signature",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "A Signature is a cryptographic/attested sign-off on a subject object (subject kind/id/version, signer, role, assurance level, method, evidence ref) \u2014 an attestation/evidence archetype, files-first. Body leads with the signed-evidence artefact via a Files leaf, then the signature metadata (signer, role, assurance, method) and a Related panel resolving the signed subject. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail as a tamper log."
+			},
+			"widgets": [
+				{
+					"id": "sig-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"only": "files",
+						"schema": "Signature",
+						"surface": "detail-page",
+						"title": "Signed evidence"
+					}
+				},
+				{
+					"id": "sig-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "sig-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "sig-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "sig-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "Signature",
+						"surface": "sidebar",
+						"title": "Tamper log"
+					}
+				}
+			]
 		},
 		{
 			"id": "SignPlanModal",
@@ -1033,8 +2754,71 @@
 			"title": "Attendance record",
 			"config": {
 				"register": "scholiq",
-				"schema": "attendance-record"
-			}
+				"schema": "attendance-record",
+				"_note": "An Attendance Record is a single presence mark (status, minutes attended, marked by/at, reason, linked excuse) for a learner in a session. Body leads with the record data (8-wide) and a Related panel resolving session, learner, cohort and any linked excuse request. Supporting evidence renders as a Files leaf. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail as the mark-change audit."
+			},
+			"widgets": [
+				{
+					"id": "att-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "att-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "att-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "attendance-record",
+						"surface": "detail-page",
+						"title": "Evidence"
+					}
+				},
+				{
+					"id": "att-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "att-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "attendance-record",
+						"surface": "sidebar",
+						"title": "Mark audit"
+					}
+				}
+			]
 		},
 		{
 			"id": "ExcuseRequests",
@@ -1053,8 +2837,96 @@
 			"title": "Excuse request",
 			"config": {
 				"register": "scholiq",
-				"schema": "excuse-request"
-			}
+				"schema": "excuse-request",
+				"_note": "An Excuse Request is an absence justification (date range, reason kind, attachment, submitter auth level, decision) \u2014 a request/case archetype. Body leads with the request data including reason and decision (8-wide), a Related panel resolving learner and submitter, and the supporting attachment as a wide Files leaf (the evidence). Attendance records covered by this excuse render as a related-index. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "exc-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "exc-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "exc-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 7,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "excuse-request",
+						"surface": "detail-page",
+						"title": "Supporting evidence"
+					}
+				},
+				{
+					"id": "exc-att",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 7,
+					"gridY": 5,
+					"gridWidth": 5,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "attendance-record",
+							"filter": {
+								"excuseRequestId": "@objectId"
+							},
+							"columns": [
+								"sessionId",
+								"status",
+								"markedAt"
+							],
+							"actions": []
+						},
+						"title": "Covered records"
+					}
+				},
+				{
+					"id": "exc-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "exc-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "excuse-request",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "AttendanceThresholds",
@@ -1073,8 +2945,82 @@
 			"title": "Attendance threshold",
 			"config": {
 				"register": "scholiq",
-				"schema": "attendance-threshold"
-			}
+				"schema": "attendance-threshold",
+				"_note": "An Attendance Threshold is a rule (kind, scope, window, metric, limit, on-cross action) that triggers early-warning flags \u2014 a config/rule archetype. Body leads with the rule definition (8-wide) and a Related panel resolving the scoped cohort. The Attendance flags this rule has raised render as a wide related-index so a mentor sees its effect. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for rule-change history."
+			},
+			"widgets": [
+				{
+					"id": "thr-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "thr-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "thr-flags",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "attendance-flag",
+							"filter": {
+								"attendanceThresholdId": "@objectId"
+							},
+							"columns": [
+								"learnerId",
+								"cohortId",
+								"metricValue",
+								"windowEnd"
+							],
+							"actions": []
+						},
+						"title": "Raised flags"
+					}
+				},
+				{
+					"id": "thr-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "thr-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "attendance-threshold",
+						"surface": "sidebar",
+						"title": "Rule history"
+					}
+				}
+			]
 		},
 		{
 			"id": "AttendanceFlags",
@@ -1095,8 +3041,83 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "attendance-flag",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "An Attendance Flag is a raised early-warning (learner, threshold, window, metric value, breaching records, mentor) \u2014 an alert/case archetype. Body leads with the flag data including the metric value (8-wide), a metric KPI stat, and a Related panel resolving learner, threshold, cohort, mentor and any data-exchange job. The breaching Attendance records render as a related-index (the evidence). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "flag-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "flag-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "flag-recs",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "attendance-record",
+							"filter": {
+								"learnerId": "@object.learnerId",
+								"cohortId": "@object.cohortId"
+							},
+							"columns": [
+								"sessionId",
+								"status",
+								"minutesAttended",
+								"markedAt"
+							],
+							"actions": []
+						},
+						"title": "Attendance records"
+					}
+				},
+				{
+					"id": "flag-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "flag-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "attendance-flag",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "MarkAttendanceView",
@@ -1131,8 +3152,82 @@
 			"title": "Data mapping profile",
 			"config": {
 				"register": "scholiq",
-				"schema": "data-mapping-profile"
-			}
+				"schema": "data-mapping-profile",
+				"_note": "A Data Mapping Profile is an integration config (target, direction, source/target schema, field mappings, validation) for data exchange \u2014 a technical/config archetype. Body leads with the profile definition including field mappings (8-wide) and a Related panel. The Data exchange jobs run against this profile render as a wide related-index (the run log). NO comms leaves \u2014 this is machine config, not correspondence (HARD RULE 1). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "dmp-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "dmp-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "dmp-jobs",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "data-exchange-job",
+							"filter": {
+								"mappingProfileId": "@objectId"
+							},
+							"columns": [
+								"direction",
+								"target",
+								"requestedAt",
+								"result"
+							],
+							"actions": []
+						},
+						"title": "Exchange jobs"
+					}
+				},
+				{
+					"id": "dmp-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "dmp-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "data-mapping-profile",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "DataExchangeJobs",
@@ -1151,8 +3246,71 @@
 			"title": "Data exchange job",
 			"config": {
 				"register": "scholiq",
-				"schema": "data-exchange-job"
-			}
+				"schema": "data-exchange-job",
+				"_note": "A Data Exchange Job is a single import/export run (direction, target, mapping profile, scope, format, timing, result, connector run, error) \u2014 a technical/run-log archetype. Body leads with the job data including result and error message (8-wide) and a Related panel resolving the mapping profile, requester and originating flag. The result payload/log renders as a Files leaf. NO comms leaves (machine job, not correspondence). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "dej-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "dej-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "dej-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "data-exchange-job",
+						"surface": "detail-page",
+						"title": "Job payload & logs"
+					}
+				},
+				{
+					"id": "dej-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "dej-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "data-exchange-job",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "RequestExportModal",
@@ -1187,8 +3345,132 @@
 			"title": "Learner",
 			"config": {
 				"register": "scholiq",
-				"schema": "learner-profile"
-			}
+				"schema": "learner-profile",
+				"_note": "A Learner Profile is the person record (names, birth date, encrypted BSN, school, ECK id, affiliation, roles, parents, manager, department) \u2014 the person archetype. Body leads with the profile data (8-wide) and a Related panel resolving parents and manager. The learner's Enrolments, Learning plans and Final grades render as related-index rosters \u2014 the operational surfaces a mentor needs. No comms leaves on the body: LearnerProfile declares no linkedTypes (HARD RULE 1). Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "lprof-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "lprof-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "lprof-enrol",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "Enrolment",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"columns": [
+								"courseId",
+								"cohortId",
+								"mandatory",
+								"dueDate"
+							],
+							"actions": []
+						},
+						"title": "Enrolments"
+					}
+				},
+				{
+					"id": "lprof-plans",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 6,
+					"gridY": 5,
+					"gridWidth": 6,
+					"gridHeight": 5,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "learning-plan",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"columns": [
+								"kind",
+								"period",
+								"nextReviewAt"
+							],
+							"actions": []
+						},
+						"title": "Learning plans"
+					}
+				},
+				{
+					"id": "lprof-finals",
+					"widgetKey": "related-index",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 10,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"config": {
+							"register": "scholiq",
+							"schema": "final-grade",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"columns": [
+								"courseId",
+								"value",
+								"passed"
+							],
+							"actions": []
+						},
+						"title": "Final grades"
+					}
+				},
+				{
+					"id": "lprof-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "lprof-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "learner-profile",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "XapiStatements",
@@ -1209,8 +3491,56 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "xapi-statement",
-				"readOnly": true
-			}
+				"readOnly": true,
+				"_note": "An xAPI Statement is an immutable learning-experience event (actor, verb, object, result, context, timestamp, authority) \u2014 a log/technical archetype. Body leads with the statement data including the full actor/verb/object/result JSON (wide, 12-col, single column for readability) and a Related panel resolving the linked course/lesson. NO comms leaves, NO child rosters \u2014 an xAPI statement is a write-once event. Sidebar keeps metadata + audit-trail."
+			},
+			"widgets": [
+				{
+					"id": "xapi-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 6,
+					"props": {
+						"columns": 1
+					}
+				},
+				{
+					"id": "xapi-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 6
+				},
+				{
+					"id": "xapi-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "xapi-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "xapi-statement",
+						"surface": "sidebar",
+						"title": "History"
+					}
+				}
+			]
 		},
 		{
 			"id": "AiFeatures",
@@ -1229,8 +3559,71 @@
 			"title": "AI feature",
 			"config": {
 				"register": "scholiq",
-				"schema": "AiFeature"
-			}
+				"schema": "AiFeature",
+				"_note": "An AI Feature is an AI-governance register entry (slug, name, description, risk category, lifecycle) \u2014 a config/compliance archetype. Body leads with the feature definition (8-wide) and a Related panel. Governance/DPIA documents render as a Files leaf. NO comms leaves, NO run log (this is a register entry, not an executing job). Sidebar keeps metadata + audit-trail for compliance history."
+			},
+			"widgets": [
+				{
+					"id": "aif-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "aif-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "aif-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "AiFeature",
+						"surface": "detail-page",
+						"title": "Governance documents"
+					}
+				},
+				{
+					"id": "aif-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "aif-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "AiFeature",
+						"surface": "sidebar",
+						"title": "Compliance history"
+					}
+				}
+			]
 		},
 		{
 			"id": "Assistant",
@@ -1263,8 +3656,71 @@
 			"title": "External training",
 			"config": {
 				"register": "scholiq",
-				"schema": "external-training-record"
-			}
+				"schema": "external-training-record",
+				"_note": "An External Training Record is a learner's externally-completed training awaiting verification (title, provider, kind, regulation, completion/validity dates, evidence, verifier, resulting credential) \u2014 a request/evidence archetype. Body leads with the record data including verification status (8-wide), a Related panel resolving learner, linked course and resulting credential, and the certificate/evidence as a wide Files leaf (the point of the record). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail as the verification audit."
+			},
+			"widgets": [
+				{
+					"id": "ext-data",
+					"widgetKey": "data",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 8,
+					"gridHeight": 5,
+					"props": {
+						"columns": 2
+					}
+				},
+				{
+					"id": "ext-related",
+					"widgetKey": "related",
+					"slot": "body",
+					"gridX": 8,
+					"gridY": 0,
+					"gridWidth": 4,
+					"gridHeight": 5
+				},
+				{
+					"id": "ext-files",
+					"widgetKey": "integration",
+					"slot": "body",
+					"gridX": 0,
+					"gridY": 5,
+					"gridWidth": 12,
+					"gridHeight": 4,
+					"props": {
+						"only": "files",
+						"schema": "external-training-record",
+						"surface": "detail-page",
+						"title": "Certificate & evidence"
+					}
+				},
+				{
+					"id": "ext-metadata",
+					"widgetKey": "metadata",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 0,
+					"gridWidth": 1,
+					"gridHeight": 2
+				},
+				{
+					"id": "ext-audit",
+					"widgetKey": "integration",
+					"slot": "sidebar",
+					"gridX": 0,
+					"gridY": 2,
+					"gridWidth": 1,
+					"gridHeight": 4,
+					"props": {
+						"only": "audit-trail",
+						"schema": "external-training-record",
+						"surface": "sidebar",
+						"title": "Verification audit"
+					}
+				}
+			]
 		}
 	]
 }
