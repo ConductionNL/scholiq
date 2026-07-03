@@ -106,7 +106,11 @@ class RolloverController extends Controller
 
         $fromCohorts = [];
         foreach ($cohorts as $row) {
-            $fromCohorts[] = is_array($row) === true ? $row : (array) $row->jsonSerialize();
+            if (is_array($row) === true) {
+                $fromCohorts[] = $row;
+            } else {
+                $fromCohorts[] = (array) $row->jsonSerialize();
+            }
         }
 
         return new JSONResponse(data: ['mappings' => $this->rolloverService->proposeDefaultMapping(fromCohorts: $fromCohorts)]);

@@ -86,6 +86,7 @@ class AuditPackExportController extends Controller
      * @param ActionAuthService $actionAuth       ADR-023 action authorization service.
      * @param IClientService    $clientService    NC HTTP client factory (OR read-log fetch).
      * @param IURLGenerator     $urlGenerator     NC URL generator for the OR endpoint.
+     * @param ObjectService     $objectService    OR object service for register/schema queries.
      */
     public function __construct(
         IRequest $request,
@@ -244,7 +245,7 @@ class AuditPackExportController extends Controller
             dateTo: $dateTo,
         );
 
-        // external-training.csv: verified externally-completed training records
+        // External-training.csv: verified externally-completed training records
         // for this regulation + date range. These are a SEPARATE, clearly-labelled
         // evidence class — never synthesised attestations. The evidence files
         // themselves are OR file attachments referenced per row.
@@ -547,7 +548,19 @@ class AuditPackExportController extends Controller
 
         fputcsv(
             $handle,
-            ['learner_id', 'title', 'provider', 'kind', 'regulation_slug', 'completed_at', 'valid_until', 'verified_by', 'verified_at', 'credential_id', 'evidence_files']
+            [
+                'learner_id',
+                'title',
+                'provider',
+                'kind',
+                'regulation_slug',
+                'completed_at',
+                'valid_until',
+                'verified_by',
+                'verified_at',
+                'credential_id',
+                'evidence_files',
+            ]
         );
 
         foreach ($rows as $row) {
