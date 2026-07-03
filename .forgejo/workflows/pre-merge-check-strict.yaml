@@ -24,8 +24,8 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             git curl ca-certificates gnupg jq unzip zip \
-            libzip-dev libpng-dev python3 nodejs
-          docker-php-ext-install -j"$(nproc)" zip gd
+            libzip-dev libpng-dev libxslt1-dev libxml2-dev python3 nodejs
+          docker-php-ext-install -j"$(nproc)" zip gd xsl
           curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
       - name: Checkout PR
         uses: https://code.forgejo.org/actions/checkout@v4
