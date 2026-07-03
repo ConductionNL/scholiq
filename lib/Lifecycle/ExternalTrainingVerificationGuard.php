@@ -77,9 +77,9 @@ class ExternalTrainingVerificationGuard
      * Constructor.
      *
      * @param IGroupManager   $groupManager OR/NC group manager to resolve the
-     *                                       acting user's role groups.
+     *                                      acting user's role groups.
      * @param IUserManager    $userManager  User manager to resolve the acting
-     *                                       user object for membership checks.
+     *                                      user object for membership checks.
      * @param LoggerInterface $logger       PSR logger for guard rejections.
      */
     public function __construct(
