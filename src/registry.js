@@ -25,6 +25,7 @@ import RolloverWizard from './views/RolloverWizard.vue'
 // learning-people-cards-collapse (ADR-044): group landing pages.
 import LearningCards from './components/learning/LearningCards.vue'
 import PeopleCards from './components/people/PeopleCards.vue'
+import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -39,6 +40,20 @@ import PeopleCards from './components/people/PeopleCards.vue'
  */
 function page(component) {
 	return { kind: 'page', component }
+}
+
+/*
+ * Grid metadata required for every kind:"widget" registry entry by the
+ * ADR-036 registry validator in CnAppRoot. `allowedSlots` uses the v2 slot
+ * literals; `audit-trail` is placed on both body and sidebar since detail
+ * pages use it in either position depending on the page's layout.
+ */
+const PANEL_WIDGET_META = {
+	defaultSize: { w: 6, h: 4 },
+	minSize: { w: 3, h: 2 },
+	maxSize: { w: 12, h: 6 },
+	allowedSlots: ['body', 'sidebar'],
+	propsSchema: null,
 }
 
 export default {
@@ -56,4 +71,12 @@ export default {
 	ScholiqLearnerHome: page(ScholiqLearnerHome),
 	ScholiqSettings: page(ScholiqSettings),
 	TakeAssessmentView: page(TakeAssessmentView),
+
+	// --- Shared library widgets registered under manifest widget keys (ADR-036). ---
+	'audit-trail': {
+		kind: 'widget',
+		component: AuditTrailWidget,
+		...PANEL_WIDGET_META,
+		_note: 'Object change-log card — self-fetches from the detail object context (register/schema/objectId).',
+	},
 }

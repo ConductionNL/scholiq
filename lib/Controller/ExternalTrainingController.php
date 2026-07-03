@@ -81,9 +81,9 @@ class ExternalTrainingController extends Controller
      *
      * @param array<string>       $learnerIds The learners attending the session.
      * @param array<string,mixed> $training   Shared training fields (title,
-     *                                         provider, kind, completedAt,
-     *                                         regulationSlug?, validUntil?,
-     *                                         evidenceNote?, tenant_id).
+     *                                        provider, kind, completedAt,
+     *                                        regulationSlug?, validUntil?,
+     *                                        evidenceNote?, tenant_id).
      *
      * @return JSONResponse The created batchId + count, or an error.
      *

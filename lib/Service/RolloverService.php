@@ -82,8 +82,8 @@ class RolloverService
      * it — no silent guessing (D2).
      *
      * @param array<int,array<string,mixed>> $fromCohorts The from-year cohorts
-     *                                                     (each with id + name +
-     *                                                     programmeId).
+     *                                                    (each with id + name +
+     *                                                    programmeId).
      *
      * @return array<int,array<string,mixed>> Proposed mappings.
      *
@@ -104,9 +104,9 @@ class RolloverService
             ];
 
             if (preg_match('/^(\d+)(.*)$/', $name, $m) === 1) {
-                $leerjaar = (int) $m[1];
-                $suffix   = $m[2];
-                $mapping['action']       = 'promote';
+                $leerjaar          = (int) $m[1];
+                $suffix            = $m[2];
+                $mapping['action'] = 'promote';
                 $mapping['toCohortName'] = ($leerjaar + 1).$suffix;
             }
 
@@ -133,15 +133,15 @@ class RolloverService
     public function preview(array $plan): array
     {
         $mappings  = (array) ($plan['mappings'] ?? []);
-        $overrides = $this->indexOverrides((array) ($plan['learnerOverrides'] ?? []));
+        $overrides = $this->indexOverrides(overrides: (array) ($plan['learnerOverrides'] ?? []));
 
         $report = [
-            'blocked'             => false,
-            'blockingCohorts'     => [],
-            'cohortsToCreate'     => [],
-            'counts'              => ['promote' => 0, 'retain' => 0, 'graduate' => 0, 'outflow' => 0, 'dissolve' => 0],
-            'enrolmentsToCarry'   => 0,
-            'ncGroupsToSync'      => [],
+            'blocked'           => false,
+            'blockingCohorts'   => [],
+            'cohortsToCreate'   => [],
+            'counts'            => ['promote' => 0, 'retain' => 0, 'graduate' => 0, 'outflow' => 0, 'dissolve' => 0],
+            'enrolmentsToCarry' => 0,
+            'ncGroupsToSync'    => [],
         ];
 
         foreach ($mappings as $mapping) {
@@ -154,7 +154,7 @@ class RolloverService
                 continue;
             }
 
-            $cohort  = $this->loadCohort($fromCohortId);
+            $cohort  = $this->loadCohort(cohortId: $fromCohortId);
             $members = (array) ($cohort['learnerIds'] ?? []);
 
             if ($action === 'dissolve') {
@@ -167,7 +167,7 @@ class RolloverService
                 continue;
             }
 
-            // promote: classify each member by override.
+            // Promote: classify each member by override.
             $toCohortName = (string) ($mapping['toCohortName'] ?? '');
             if ($toCohortName !== '') {
                 $report['cohortsToCreate'][] = $toCohortName;
@@ -196,7 +196,7 @@ class RolloverService
      * Deterministic NC group name for a to-year cohort.
      *
      * @param string $academicYear The to-year academic year.
-     * @param string $cohortName    The to-year cohort name.
+     * @param string $cohortName   The to-year cohort name.
      *
      * @return string A stable group identifier.
      *
@@ -228,7 +228,7 @@ class RolloverService
             return false;
         }
 
-        $fresh = $this->preview($plan);
+        $fresh = $this->preview(plan: $plan);
 
         return ($stored['blocked'] ?? null) === $fresh['blocked']
             && ($stored['cohortsToCreate'] ?? []) === $fresh['cohortsToCreate']
@@ -258,7 +258,7 @@ class RolloverService
         $tenantId       = (string) ($plan['tenant_id'] ?? '');
         $toAcademicYear = (string) ($plan['toAcademicYear'] ?? '');
         $mappings       = (array) ($plan['mappings'] ?? []);
-        $overrides      = $this->indexOverrides((array) ($plan['learnerOverrides'] ?? []));
+        $overrides      = $this->indexOverrides(overrides: (array) ($plan['learnerOverrides'] ?? []));
         $progress       = (array) ($plan['perMappingProgress'] ?? []);
 
         foreach ($mappings as $mapping) {
@@ -274,7 +274,7 @@ class RolloverService
                 continue;
             }
 
-            $cohort  = $this->loadCohort($fromCohortId);
+            $cohort  = $this->loadCohort(cohortId: $fromCohortId);
             $members = (array) ($cohort['learnerIds'] ?? []);
 
             if ($action === 'promote') {
@@ -300,11 +300,11 @@ class RolloverService
      * Execute a single promote mapping: create cohort, move members, sync group,
      * carry enrolments, queue outflow.
      *
-     * @param array<string,mixed>      $mapping        The mapping.
-     * @param array<int,string>        $members        The from-cohort learner IDs.
-     * @param array<string,array>      $overrides      Indexed learner overrides.
-     * @param string                   $toAcademicYear To-year academic year.
-     * @param string                   $tenantId       Tenant ID.
+     * @param array<string,mixed> $mapping        The mapping.
+     * @param array<int,string>   $members        The from-cohort learner IDs.
+     * @param array<string,array> $overrides      Indexed learner overrides.
+     * @param string              $toAcademicYear To-year academic year.
+     * @param string              $tenantId       Tenant ID.
      *
      * @return void
      */
@@ -318,7 +318,7 @@ class RolloverService
         // Members that move forward: promote + retain (retain joins the new-year
         // cohort of the same leerjaar conceptually; in execution it still lands in
         // the to-year cohort created for this mapping). Graduate/outflow do not move.
-        $movingMembers = [];
+        $movingMembers  = [];
         $outflowMembers = [];
         foreach ($members as $learnerId) {
             $learnerAction = ($overrides[$learnerId]['action'] ?? 'promote');
@@ -327,7 +327,8 @@ class RolloverService
             } else if ($learnerAction === 'outflow') {
                 $outflowMembers[] = $learnerId;
             }
-            // graduate: no move, no carry.
+
+            // Graduate: no move, no carry.
         }
 
         $toCohort = $this->createOrFindToCohort(
@@ -374,8 +375,14 @@ class RolloverService
      *
      * @return array<string,mixed> The created/found cohort.
      */
-    private function createOrFindToCohort(string $toCohortName, string $toAcademicYear, mixed $programmeId, mixed $courseId, array $learnerIds, string $tenantId): array
-    {
+    private function createOrFindToCohort(
+        string $toCohortName,
+        string $toAcademicYear,
+        mixed $programmeId,
+        mixed $courseId,
+        array $learnerIds,
+        string $tenantId
+    ): array {
         $existing = $this->objectService->findAll(
             [
                 'register' => self::SCHOLIQ_REGISTER,
@@ -390,11 +397,11 @@ class RolloverService
         );
 
         if (empty($existing) === false) {
-            $found = $this->toArray($existing[0]);
+            $found = $this->toArray(row: $existing[0]);
             // Idempotent re-run: ensure members are present without duplicating.
             $found['learnerIds'] = array_values(array_unique(array_merge((array) ($found['learnerIds'] ?? []), $learnerIds)));
             $saved = $this->objectService->saveObject(register: self::SCHOLIQ_REGISTER, schema: 'cohort', object: $found);
-            return $this->toArray($saved);
+            return $this->toArray(row: $saved);
         }
 
         $cohort = [
@@ -407,12 +414,13 @@ class RolloverService
         if ($programmeId !== null && $programmeId !== '') {
             $cohort['programmeId'] = $programmeId;
         }
+
         if ($courseId !== null && $courseId !== '') {
             $cohort['courseId'] = $courseId;
         }
 
         $saved = $this->objectService->saveObject(register: self::SCHOLIQ_REGISTER, schema: 'cohort', object: $cohort);
-        return $this->toArray($saved);
+        return $this->toArray(row: $saved);
     }//end createOrFindToCohort()
 
     /**
@@ -459,7 +467,7 @@ class RolloverService
         );
 
         foreach ($enrolments as $row) {
-            $enrolment = $this->toArray($row);
+            $enrolment = $this->toArray(row: $row);
 
             if (in_array(($enrolment['lifecycle'] ?? ''), self::TERMINAL_ENROLMENT_STATES, true) === true) {
                 continue;
@@ -563,9 +571,9 @@ class RolloverService
     /**
      * Count carryable enrolments for a member set (preview only — no writes).
      *
-     * @param array<int,string>            $learnerIds        Members.
-     * @param array<string,array>          $overrides         Indexed overrides.
-     * @param bool                         $carryNonMandatory Whether non-mandatory counts.
+     * @param array<int,string>   $learnerIds        Members.
+     * @param array<string,array> $overrides         Indexed overrides.
+     * @param bool                $carryNonMandatory Whether non-mandatory counts.
      *
      * @return int Count of enrolments that would be carried over.
      */
@@ -587,7 +595,7 @@ class RolloverService
             );
 
             foreach ($enrolments as $row) {
-                $enrolment = $this->toArray($row);
+                $enrolment = $this->toArray(row: $row);
                 if (in_array(($enrolment['lifecycle'] ?? ''), self::TERMINAL_ENROLMENT_STATES, true) === true) {
                     continue;
                 }
@@ -619,7 +627,7 @@ class RolloverService
             return [];
         }
 
-        return $this->toArray($obj);
+        return $this->toArray(row: $obj);
     }//end loadCohort()
 
     /**
