@@ -23,9 +23,15 @@
 
 		<div class="rollover-wizard__years">
 			<label for="rollover-from">{{ t('scholiq', 'From academic year') }}</label>
-			<input id="rollover-from" v-model="fromAcademicYear" type="text" placeholder="2025/2026">
+			<input id="rollover-from"
+				v-model="fromAcademicYear"
+				type="text"
+				placeholder="2025/2026">
 			<label for="rollover-to">{{ t('scholiq', 'To academic year') }}</label>
-			<input id="rollover-to" v-model="toAcademicYear" type="text" placeholder="2026/2027">
+			<input id="rollover-to"
+				v-model="toAcademicYear"
+				type="text"
+				placeholder="2026/2027">
 			<NcButton type="secondary" :disabled="!fromAcademicYear" @click="propose">
 				{{ t('scholiq', 'Propose mapping') }}
 			</NcButton>

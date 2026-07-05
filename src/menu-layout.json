@@ -2,26 +2,18 @@
 	"_meta": {
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
-		"description": "Canonical nav layout applied AFTER all manifest.d fragments merge (ADR-044). relocations: sourceId -> targetGroupId. settingsSection: top-level config/admin leaf ids lifted into the NC settings foldout (gear icon, outside the scrollable nav). removals: leaf menu-entry ids retired as duplicate navigation — their PAGES stay routable."
+		"description": "Canonical nav layout applied AFTER all manifest.d fragments merge (ADR-037/ADR-044, buildManifest.js). relocations: sourceId -> targetGroupId; a missing/synthetic target id (e.g. '__toplevel__') lifts the entry to the top level, and an emptied group shell is dropped. removals: leaf menu-entry ids retired from nav (their PAGES stay routable). settingsSection: top-level config/admin leaf ids lifted into the NC settings foldout (gear icon, outside the scrollable nav). nav-restructure-dashboards IA (amends ADR-009, supersedes ADR-044): the app opens on the top-level Dashboard; the Insight group is dissolved (Dashboard + Compliance promoted to top level); Learning + People are navigable domain dashboards whose leaves render as collapsible sub-children (so #removals no longer hides them); Features & roadmap sits in the footer beside Documentation; School-year rollover lives in the settings foldout."
 	},
-	"relocations": {},
-	"removals": [
-		"Courses",
-		"Curriculum",
-		"LearningPlans",
-		"Assignments",
-		"Assessments",
-		"Grades",
-		"LearnerProfilesMenu",
-		"Enrolments",
-		"Attendance",
-		"Credentials"
-	],
+	"relocations": {
+		"Dashboard": "__toplevel__",
+		"Compliance": "__toplevel__"
+	},
+	"removals": [],
 	"settingsSection": [
 		"DataExchange",
 		"XapiStatementsMenu",
 		"AssistantMenu",
-		"FeaturesRoadmapMenu"
+		"Rollover"
 	],
-	"_settingsSectionNote": "DataExchange and XapiStatementsMenu carry section:'settings' in the base manifest; AssistantMenu is an integration/config leaf; FeaturesRoadmapMenu (formerly section:'footer') is lifted here so the foldout is the single authoritative source for all settings-adjacent leaves. AdminHealthMenu is intentionally absent — it belongs inside the Insight group (admin-gated, visibleIf:admin)."
+	"_settingsSectionNote": "DataExchange and XapiStatementsMenu carry section:'settings' in the base manifest; AssistantMenu is an integration/config leaf; Rollover (School-year rollover) is admin-gated structural config lifted here so the foldout is the single authoritative home for settings-adjacent leaves. FeaturesRoadmapMenu was removed from this list by nav-restructure-dashboards — it keeps section:'footer' in the manifest and now renders in the footer beside Documentation, matching the fleet convention (pipelinq/opencatalogi/docudesk). DataExchange + AssistantMenu are earmarked for removal in the follow-up feature-removal change (Assistant chat is inherited; the generic data-exchange plumbing is dropped while OSO is preserved)."
 }

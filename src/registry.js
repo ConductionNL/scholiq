@@ -20,11 +20,11 @@ import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import ScholiqDashboards from './views/ScholiqDashboards.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
-import ScholiqAdminHealth from './views/ScholiqAdminHealth.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
-// learning-people-cards-collapse (ADR-044): group landing pages.
-import LearningCards from './components/learning/LearningCards.vue'
-import PeopleCards from './components/people/PeopleCards.vue'
+// nav-restructure-dashboards (supersedes ADR-044 cards-collapse): the Learning
+// and People groups land on domain dashboards instead of tile-grid card pages.
+import LearningDashboard from './views/LearningDashboard.vue'
+import PeopleDashboard from './views/PeopleDashboard.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 
 /**
@@ -59,13 +59,12 @@ const PANEL_WIDGET_META = {
 export default {
 	GradeImpactDetail: page(GradeImpactDetail),
 	ItemAuthorView: page(ItemAuthorView),
-	LearningCards: page(LearningCards),
+	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
-	PeopleCards: page(PeopleCards),
+	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	RolloverWizard: page(RolloverWizard),
-	ScholiqAdminHealth: page(ScholiqAdminHealth),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),

@@ -159,19 +159,7 @@
 					"label": "Dashboards",
 					"icon": "icon-home",
 					"route": "Dashboard",
-					"order": 10
-				},
-				{
-					"id": "AdminHealthMenu",
-					"label": "App health",
-					"icon": "icon-toggle",
-					"route": "AdminHealth",
-					"order": 20,
-					"visibleIf": {
-						"user.primaryRole": {
-							"eq": "admin"
-						}
-					}
+					"order": 5
 				},
 				{
 					"id": "Compliance",
@@ -1391,14 +1379,6 @@
 			"title": "My learning",
 			"component": "ScholiqLearnerHome",
 			"_note": "Learner-facing home surface (enrolled courses, progress, next activities); no generic lib index/detail analogue."
-		},
-		{
-			"id": "AdminHealth",
-			"route": "/admin/health",
-			"type": "custom",
-			"title": "App health",
-			"component": "ScholiqAdminHealth",
-			"_note": "Admin observability surface (register/connector health, job status); no generic lib index/detail analogue."
 		},
 		{
 			"id": "Programmes",
