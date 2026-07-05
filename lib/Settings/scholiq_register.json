@@ -1413,7 +1413,6 @@
                 "description": "Learner enrolment in a course (Schema.org EnrollmentRequest)",
                 "type": "object",
                 "x-openregister": {
-                    "schemaType": "schema:EnrollmentRequest",
                     "active": true,
                     "hardDelete": false,
                     "searchable": true
