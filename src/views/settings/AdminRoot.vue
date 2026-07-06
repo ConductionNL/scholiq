@@ -17,6 +17,7 @@
 		</CnVersionInfoCard>
 
 		<ScholiqSettings v-if="storesReady" />
+		<DataExchangeSettingsSection />
 		<ActionAuthMatrix />
 	</div>
 </template>
@@ -25,6 +26,7 @@
 import { loadState } from '@nextcloud/initial-state'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import ScholiqSettings from '../ScholiqSettings.vue'
+import DataExchangeSettingsSection from './DataExchangeSettingsSection.vue'
 import ActionAuthMatrix from '../../components/admin/ActionAuthMatrix.vue'
 import { initializeStores } from '../../store/store.js'
 
@@ -33,6 +35,7 @@ export default {
 	components: {
 		CnVersionInfoCard,
 		ScholiqSettings,
+		DataExchangeSettingsSection,
 		ActionAuthMatrix,
 	},
 	data() {

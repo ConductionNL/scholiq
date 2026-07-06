@@ -36,6 +36,10 @@ const ROUTES: { name: string; path: string }[] = [
 	{ name: 'CredentialDetail', path: '#/credentials/test-id' },
 	{ name: 'CredentialVerify', path: '#/credentials/test-id/verify' },
 	{ name: 'LearnerHome', path: '#/learner' },
+	// @e2e data-exchange::data-exchange-page-remains-routable-via-deep-link
+	// Nav entry moved to Admin Settings (relocate-dataexchange-remove-assistant); pages stay routable.
+	{ name: 'DataExchangeJobs', path: '#/data-exchange/jobs' },
+	{ name: 'DataMappingProfiles', path: '#/data-exchange/mapping-profiles' },
 ]
 
 test.describe('Scholiq page routes', () => {

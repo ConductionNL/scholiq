@@ -1,5 +1,9 @@
 {
 	"translations": {
+		"Data exchange": "Data exchange",
+		"Data-exchange jobs": "Data-exchange jobs",
+		"Mapping profiles": "Mapping profiles",
+		"Manage the aanleveringen and imports scholiq exchanges with DUO/BRON, OSO, the municipality, and ELO systems. Jobs and field-mapping profiles are administered here.": "Manage the aanleveringen and imports scholiq exchanges with DUO/BRON, OSO, the municipality, and ELO systems. Jobs and field-mapping profiles are administered here.",
 		"Learning": "Learning",
 		"People": "People",
 		"Courses": "Courses",

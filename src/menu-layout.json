@@ -10,10 +10,8 @@
 	},
 	"removals": [],
 	"settingsSection": [
-		"DataExchange",
 		"XapiStatementsMenu",
-		"AssistantMenu",
 		"Rollover"
 	],
-	"_settingsSectionNote": "DataExchange and XapiStatementsMenu carry section:'settings' in the base manifest; AssistantMenu is an integration/config leaf; Rollover (School-year rollover) is admin-gated structural config lifted here so the foldout is the single authoritative home for settings-adjacent leaves. FeaturesRoadmapMenu was removed from this list by nav-restructure-dashboards — it keeps section:'footer' in the manifest and now renders in the footer beside Documentation, matching the fleet convention (pipelinq/opencatalogi/docudesk). DataExchange + AssistantMenu are earmarked for removal in the follow-up feature-removal change (Assistant chat is inherited; the generic data-exchange plumbing is dropped while OSO is preserved)."
+	"_settingsSectionNote": "XapiStatementsMenu carries section:'settings' in the base manifest; Rollover (School-year rollover) is admin-gated structural config lifted here so the foldout is the single authoritative home for settings-adjacent leaves. FeaturesRoadmapMenu was removed by nav-restructure-dashboards (Phase A) — it renders in the footer beside Documentation. AssistantMenu was removed entirely by relocate-dataexchange-remove-assistant (Phase B) — the inherited AI chat is gone. DataExchange was also removed from the in-app foldout by Phase B: the data-exchange BACKEND + OSO are kept intact and its management UI now lives in the Nextcloud Admin Settings page (AdminRoot.vue → DataExchangeSettingsSection), which deep-links into the still-routable data-exchange pages."
 }

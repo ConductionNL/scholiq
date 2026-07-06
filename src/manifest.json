@@ -195,27 +195,12 @@
 			"order": 100
 		},
 		{
-			"id": "DataExchange",
-			"label": "Data exchange",
-			"icon": "icon-external",
-			"route": "DataExchangeJobs",
-			"section": "settings",
-			"order": 93
-		},
-		{
 			"id": "XapiStatementsMenu",
 			"label": "xAPI statements",
 			"icon": "icon-history",
 			"route": "XapiStatements",
 			"section": "settings",
 			"order": 94
-		},
-		{
-			"id": "AssistantMenu",
-			"label": "Assistant",
-			"icon": "icon-comment",
-			"route": "Assistant",
-			"order": 92
 		},
 		{
 			"id": "Rollover",
@@ -5112,12 +5097,6 @@
 					"showMetadata": true
 				}
 			}
-		},
-		{
-			"id": "Assistant",
-			"route": "/assistant",
-			"type": "chat",
-			"title": "Assistant"
 		},
 		{
 			"id": "RolloverWizard",
