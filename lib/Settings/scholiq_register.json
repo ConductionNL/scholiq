@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.2.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
-        "version": "0.2.1"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
+        "version": "0.3.1"
     },
     "x-openregister": {
         "type": "application",
@@ -1321,7 +1321,7 @@
             "Enrolment": {
                 "slug": "enrolment",
                 "icon": "AccountSchoolOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Enrolment",
                 "description": "Learner enrolment in a course (Schema.org EnrollmentRequest)",
                 "type": "object",
@@ -1341,6 +1341,13 @@
                         "type": "string",
                         "description": "Nextcloud user ID of the enrolled learner.",
                         "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
                     },
                     "courseId": {
                         "type": "string",
@@ -2432,7 +2439,7 @@
                 },
                 "slug": "learner-profile",
                 "icon": "AccountOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "LearnerProfile",
                 "description": "Scholiq learner profile. Owns role assignment and is the actor reference for enrolments, credentials, and attestations.",
                 "type": "object",
@@ -2518,6 +2525,15 @@
                         },
                         "description": "Nextcloud user IDs of linked parent/guardian accounts.",
                         "title": "Parent / Guardian IDs"
+                    },
+                    "guardianRefs": {
+                        "type": "array",
+                        "description": "UUID references to the guardian domain object(s) linked to this learner — the parent-audience portal linkage (ADR-046 A4). Distinct from parentIds, which are Nextcloud user ids. The portal resolves parent->learner via a one-hop join: it matches the parent subject's guardianRef against this array to find the child LearnerProfile, then reads that learner's records by learnerRef. Additive and optional; existing rows leave it unset (fail-closed) until backfilled.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "title": "Guardian Refs"
                     },
                     "managerId": {
                         "type": "string",
@@ -4096,7 +4112,7 @@
             "Submission": {
                 "slug": "submission",
                 "icon": "FileUploadOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Submission",
                 "description": "A learner's (or group's) hand-in for an Assignment. Carries file attachment references (bytes live in OpenRegister file attachments), rubric scores from the teacher's marking, and the proposed grade before it becomes a GradeEntry via the grading spec.",
                 "type": "object",
@@ -4125,6 +4141,15 @@
                         },
                         "minItems": 1,
                         "title": "Learner IDs"
+                    },
+                    "learnerRefs": {
+                        "type": "array",
+                        "description": "UUID references to the LearnerProfile object(s) who submitted — the portal-subject scoping key (ADR-046 A4). Distinct from learnerIds, which are Nextcloud user ids. Additive and optional; the portal matches the student subject's LearnerProfile UUID against this array (membership). Existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "title": "Learner Refs"
                     },
                     "attachmentRefs": {
                         "type": "array",
@@ -5525,7 +5550,7 @@
             "GradeEntry": {
                 "slug": "grade-entry",
                 "icon": "ClipboardCheckOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "GradeEntry",
                 "description": "One mark on one CurriculumPlan component for one learner. Starts as concept (editable); a teacher publishes it to notify the learner (and parents) and feed the FinalGrade roll-up. Once published, it can only move to revised (new value with audit trail). Not appendOnly — concept entries are editable; lifecycle enforces immutability once published.",
                 "type": "object",
@@ -5547,6 +5572,13 @@
                         "type": "string",
                         "description": "Nextcloud user ID of the learner this mark belongs to.",
                         "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
                     },
                     "curriculumPlanId": {
                         "type": "string",
@@ -5746,7 +5778,7 @@
             "FinalGrade": {
                 "slug": "final-grade",
                 "icon": "TrophyOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "FinalGrade",
                 "description": "Calculated roll-up per learner per Course or Programme. Recomputed whenever a GradeEntry for this (learnerId, curriculumPlanId) publishes — applying the CurriculumPlan.formula over the learner's published GradeEntries. No lifecycle — it is fully derived. Read-only from the frontend.",
                 "type": "object",
@@ -5767,6 +5799,13 @@
                         "type": "string",
                         "description": "Nextcloud user ID of the learner this grade belongs to.",
                         "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
                     },
                     "courseId": {
                         "type": "string",
@@ -6602,7 +6641,7 @@
                 },
                 "slug": "attendance-record",
                 "icon": "ClipboardCheckOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "AttendanceRecord",
                 "description": "Per-Session per-learner attendance fact. Records whether a learner was present, absent, late, or left early. Not appendOnly — a teacher may correct a mis-marked record; OR's update audit trail is sufficient.",
                 "type": "object",
@@ -6630,6 +6669,13 @@
                         "type": "string",
                         "description": "Nextcloud user ID of the learner.",
                         "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
                     },
                     "cohortId": {
                         "type": "string",
@@ -6764,7 +6810,7 @@
             "ExcuseRequest": {
                 "slug": "excuse-request",
                 "icon": "FileDocumentEditOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "ExcuseRequest",
                 "description": "Absence excuse submitted by a learner, parent, or 18+ learner-self for a date range. On approval, matching AttendanceRecords are flipped to absent-excused by ExcuseApprovalHandler.",
                 "type": "object",
@@ -6789,10 +6835,24 @@
                         "description": "Nextcloud user ID of the learner whose absence is being excused.",
                         "title": "Learner ID"
                     },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object whose absence is being excused — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. For a student self-submission the portal stamps this from the student subject; for a parent submission it is the child LearnerProfile UUID supplied on create. Additive and optional; existing rows leave it unset (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
                     "submittedBy": {
                         "type": "string",
                         "description": "Nextcloud user ID of the submitter (may be a parent or the 18+ learner themselves).",
                         "title": "Submitted By"
+                    },
+                    "submittedByRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the domain object that submitted this request (the guardian domain object for a parent submission, or the LearnerProfile for an 18+ self-submission) — the portal scope-stamp for parent-audience creates (ADR-046 A4). Distinct from submittedBy, which is the Nextcloud user id. Additive and optional; existing rows leave it unset.",
+                        "title": "Submitted By Ref"
                     },
                     "dateFrom": {
                         "type": "string",
@@ -8038,7 +8098,7 @@
             "GradeNotification": {
                 "slug": "grade-notification",
                 "icon": "BellOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "GradeNotification",
                 "description": "Lightweight parent-notification record created by GradeRollupHandler when a GradeEntry publishes. Contains no grade values — only the fields needed to dispatch the notification to a parent. Records are append-only. The canonical GradeEntry is never modified during fan-out (fixes #183, wave-12 WF4).",
                 "type": "object",
@@ -8078,6 +8138,13 @@
                         "type": "string",
                         "description": "Nextcloud user ID of the learner whose grade was published.",
                         "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "description": "UUID reference to the LearnerProfile object whose grade was published — the portal inbox scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id, and from recipient, which is the Nextcloud user id of the notified parent. Additive and optional; existing rows leave it unset and stay invisible to the portal inbox (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
                     },
                     "courseId": {
                         "type": "string",

@@ -9,6 +9,7 @@ import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
+	CnAuditTrailWidget,
 	defaultPageTypes,
 	registerIcons,
 	registerTranslations,
@@ -20,7 +21,6 @@ import App from './App.vue'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import registry from './registry.js'
-import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
@@ -28,12 +28,19 @@ import '@conduction/nextcloud-vue/css/index.css'
 // Global (unscoped) app styles
 import './assets/app.css'
 
-// Register `audit-trail` into the shared widget-type catalog so CnDetailPage's
-// config-grid body (which resolves widget `type` via the catalog, not the
-// app registry) can render it as a body widget, mirroring the app-registry
-// entry used by the slot CnWidgetGrid path.
+// Bootstrap the library's built-in `audit-trail` widget (CnAuditTrailWidget)
+// into the shared widget-type catalog. CnDetailPage's config-grid body resolves
+// widget `type` via getWidgetTypeEntry (the dashboard-widget catalog), NOT via
+// BUILT_IN_WIDGETS — and the library only self-seeds chart/stats-block/table/
+// related into that catalog, so `audit-trail` must be registered here for the
+// 36 detail-page audit-trail widgets to render. This dissolves the former
+// bespoke AuditTrailWidget adapter (deleted) down to the library component and
+// works around the dissolution renderer gap tracked in nextcloud-vue#89 (the
+// library should self-seed audit-trail into the detail-page catalog too; once
+// it does, this bootstrap can be removed outright). The v2 slot/widgetKey path
+// already resolves `audit-trail` via the library's BUILT_IN_WIDGETS map.
 registerDashboardWidget('audit-trail', {
-	renderer: AuditTrailWidget,
+	renderer: CnAuditTrailWidget,
 	form: null,
 	defaultContent: {},
 	displayName: 'Audit trail',
