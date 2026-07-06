@@ -326,5 +326,4 @@ class PortalContributionProvider
         ];
 
     }//end studentContribution()
-
 }//end class
