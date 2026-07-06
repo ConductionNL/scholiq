@@ -50,7 +50,7 @@ use Psr\Container\ContainerInterface;
  *
  * Per ADR-031: DI registrations limited to legitimate PHP seams only:
  *   - Cryptographic operations (Cmi5LaunchTokenService)
- *   - Lifecycle guards (AiFeatureDpoAckGuard)
+ *   - Lifecycle guards (AssessmentPublishGuard)
  *   - NC framework requirements (controllers, event listeners)
  *
  * NOT registered: AuditTrail, AuditedController, AiFeatureRegistry,

@@ -35,47 +35,21 @@
 			</div>
 		</NcSettingsSection>
 
-		<!-- Section 2: AI features (read-only, sourced from AiFeature schema objects) -->
+		<!-- Section 2: AI features — governance delegated to Hermiq (ADR-005). -->
 		<NcSettingsSection
 			:name="t('scholiq', 'AI Features')"
-			:description="t('scholiq', 'EU AI Act high-risk features declared in this app. Toggle via lifecycle transitions — DPO acknowledgement required.')">
-			<div v-if="aiFeaturesLoading" class="scholiq-settings__loading">
-				<NcLoadingIcon :size="32" />
-			</div>
-			<table v-else class="scholiq-settings__table">
-				<thead>
-					<tr>
-						<th>{{ t('scholiq', 'Feature') }}</th>
-						<th>{{ t('scholiq', 'Status') }}</th>
-						<th>{{ t('scholiq', 'Description') }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-if="aiFeatures.length === 0">
-						<td colspan="3" class="scholiq-settings__empty">
-							{{ t('scholiq', 'No AI features declared yet.') }}
-						</td>
-					</tr>
-					<tr v-for="feature in aiFeatures"
-						:key="feature.id">
-						<td>{{ feature.name || feature.slug }}</td>
-						<td>
-							<span :class="['scholiq-settings__badge', 'scholiq-settings__badge--' + (feature.lifecycle || 'disabled')]">
-								{{ feature.lifecycle || 'disabled' }}
-							</span>
-						</td>
-						<td>{{ feature.description }}</td>
-					</tr>
-				</tbody>
-			</table>
-			<div class="scholiq-settings__field">
-				<NcButton type="secondary" @click="manageAiFeatures">
+			:description="t('scholiq', 'EU AI Act high-risk AI-feature governance (the feature register and DPO acknowledgement) is centralised in the Hermiq app, the fleet-wide home for AI-feature governance. Scholiq\'s AI features are declared and acknowledged there.')">
+			<div v-if="hermiqInstalled" class="scholiq-settings__field">
+				<NcButton type="secondary" @click="openHermiqAiFeatures">
 					<template #icon>
-						<CogOutline :size="20" />
+						<OpenInNew :size="20" />
 					</template>
-					{{ t('scholiq', 'Manage AI features') }}
+					{{ t('scholiq', 'Open the AI-feature register in Hermiq') }}
 				</NcButton>
 			</div>
+			<NcNoteCard v-else type="warning">
+				{{ t('scholiq', 'Install and enable the Hermiq app to manage this app\'s EU AI Act high-risk AI features in the central governance register.') }}
+			</NcNoteCard>
 		</NcSettingsSection>
 
 		<!-- Section 3: Credential signing key -->
@@ -177,7 +151,6 @@ import { NcButton, NcLoadingIcon, NcNoteCard, NcSelect, NcSettingsSection } from
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
 import AccountSearchOutline from 'vue-material-design-icons/AccountSearchOutline.vue'
-import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 
 export default {
 	name: 'ScholiqSettings',
@@ -191,7 +164,6 @@ export default {
 		OpenInNew,
 		FileExportOutline,
 		AccountSearchOutline,
-		CogOutline,
 	},
 
 	props: {
@@ -210,8 +182,6 @@ export default {
 			defaultRegister: null,
 			registerOptions: [],
 			registersLoading: false,
-			aiFeatures: [],
-			aiFeaturesLoading: false,
 			signingKeyLoading: false,
 			signingKeyMessage: '',
 			isAdmin: false,
@@ -220,6 +190,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the Hermiq app (the fleet-wide AI-feature governance home) is
+		 * enabled on this instance. Drives the delegated "AI Features" section:
+		 * link to Hermiq's register when present, otherwise an install notice.
+		 *
+		 * @return {boolean} True when Hermiq is enabled.
+		 */
+		hermiqInstalled() {
+			return window.OC?.appswebroots?.hermiq !== undefined
+		},
+
 		/**
 		 * The seven Scholiq processing activities surfaced in the AVG Art. 30
 		 * compliance section. Mirrors the x-openregister-processing catalogue
@@ -278,7 +259,7 @@ export default {
 	},
 
 	/**
-	 * Load the register options and AI features in parallel on mount.
+	 * Load the register options and settings status in parallel on mount.
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
@@ -286,7 +267,7 @@ export default {
 	async created() {
 		await Promise.all([
 			this.fetchRegisters(),
-			this.fetchAiFeatures(),
+			this.fetchSettingsStatus(),
 		])
 	},
 
@@ -316,30 +297,29 @@ export default {
 		},
 
 		/**
-		 * Load AiFeature schema objects from OpenRegister via the Scholiq settings API.
+		 * Load the settings status (admin flag + whether OpenRegister is
+		 * installed) from the Scholiq settings API; both gate the AVG Art. 30
+		 * section. AI-feature governance is delegated to Hermiq, so this no
+		 * longer reads any AiFeature objects.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
 		 */
-		async fetchAiFeatures() {
-			this.aiFeaturesLoading = true
+		async fetchSettingsStatus() {
 			try {
 				const response = await fetch(generateUrl('/apps/scholiq/api/settings'), {
 					headers: { requesttoken: getRequestToken() },
 				})
 				if (response.ok) {
 					const data = await response.json()
-					this.aiFeatures = data.aiFeatures || []
-					// The settings API also reports admin status and whether
+					// The settings API reports admin status and whether
 					// OpenRegister is installed; both gate the AVG Art. 30 section.
 					this.isAdmin = !!data.isAdmin
 					this.openRegisterInstalled = !!data.openregisters
 				}
 			} catch (error) {
 				// eslint-disable-next-line no-console
-				console.error('[ScholiqSettings] fetchAiFeatures failed:', error)
-			} finally {
-				this.aiFeaturesLoading = false
+				console.error('[ScholiqSettings] fetchSettingsStatus failed:', error)
 			}
 		},
 
@@ -395,22 +375,16 @@ export default {
 		},
 
 		/**
-		 * Open the EU AI Act AiFeature governance register. Now that the
-		 * standalone "AI features" menu entry is removed, this Settings
-		 * affordance is the discoverable entry point to the still-routable
-		 * `/ai-features` register view. Uses the in-app router when Settings is
-		 * rendered as a page; falls back to a full navigation when rendered in
-		 * the admin settings dialog (no router context).
+		 * Open Hermiq's central EU AI Act AI-feature governance register.
+		 * AI-feature governance is delegated to Hermiq (ADR-005), so this opens
+		 * Hermiq's `/ai-features` register via a full navigation (a different
+		 * Nextcloud app, so no in-app router). Only shown when Hermiq is enabled.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/scholiq-merge-ai-surfaces/specs/ai-surface/spec.md
+		 * @spec openspec/changes/ai-feature-delegate-to-hermiq/specs/ai-surface/spec.md
 		 */
-		manageAiFeatures() {
-			if (this.$router) {
-				this.$router.push('/ai-features').catch(() => {})
-			} else {
-				window.location.href = generateUrl('/apps/scholiq') + '/ai-features'
-			}
+		openHermiqAiFeatures() {
+			window.location.href = generateUrl('/apps/hermiq') + '/ai-features'
 		},
 
 		/**

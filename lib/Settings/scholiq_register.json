@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
-        "version": "0.2.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.2.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
+        "version": "0.2.1"
     },
     "x-openregister": {
         "type": "application",
@@ -719,12 +719,11 @@
                 "x-openregister-processing": {
                     "code": "scholiq-ai-features",
                     "naam": "AI-assisted learning features",
-                    "doelbinding": "Operate adaptive learning paths and AI-assisted item generation; record EU AI Act high-risk decision traces and DPO acknowledgements for transparency and accountability.",
+                    "doelbinding": "Operate adaptive learning paths and AI-assisted item generation for learners and record decision traces for transparency and accountability. EU AI Act high-risk classification, DPO acknowledgement, and enablement of these features are governed centrally in the Hermiq app (ADR-005).",
                     "rechtsgrond": "consent",
                     "grondslagSource": "Regulation.slug",
                     "dataCategories": [
                         "learnerId",
-                        "riskCategory",
                         "decisionTrace"
                     ],
                     "backend": "scholiq.ai",
@@ -741,9 +740,9 @@
                 },
                 "slug": "AiFeature",
                 "icon": "RobotOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "AI Feature",
-                "description": "An EU AI Act high-risk feature declaration. Lifecycle transitions (disabled → enabled) require DPO acknowledgement via AiFeatureDpoAckGuard before the feature may be activated.",
+                "description": "AVG Art. 30 processing-activity declaration for Scholiq's AI-assisted learning. The EU AI Act high-risk feature register, DPO-acknowledgement gate, and lifecycle governance are delegated to the Hermiq app (ADR-005); this schema now only carries the processing-activity catalogue annotation.",
                 "type": "object",
                 "required": [
                     "slug",
@@ -752,7 +751,7 @@
                 "properties": {
                     "slug": {
                         "type": "string",
-                        "description": "Machine-readable identifier, e.g. 'adaptive-learning-paths'. Used as the IAppConfig key suffix for DPO acknowledgement.",
+                        "description": "Machine-readable identifier for the processing-activity declaration.",
                         "example": "adaptive-learning-paths",
                         "title": "Feature Slug"
                     },
@@ -764,95 +763,9 @@
                     },
                     "description": {
                         "type": "string",
-                        "description": "Plain-language description of the AI feature and its EU AI Act risk classification.",
-                        "example": "Personalised course sequencing based on learner performance data. Classified as high-risk under EU AI Act Annex III §4(a).",
+                        "description": "Plain-language description of the AI-assisted learning processing.",
+                        "example": "Personalised course sequencing based on learner performance data.",
                         "title": "Feature Description"
-                    },
-                    "riskCategory": {
-                        "type": "string",
-                        "description": "EU AI Act risk category.",
-                        "enum": [
-                            "minimal",
-                            "limited",
-                            "high",
-                            "unacceptable"
-                        ],
-                        "example": "high",
-                        "title": "EU AI Act Risk Category"
-                    },
-                    "lifecycle": {
-                        "type": "string",
-                        "description": "Current lifecycle state. Managed by OpenRegister's lifecycle engine; do not set directly.",
-                        "enum": [
-                            "disabled",
-                            "enabled"
-                        ],
-                        "default": "disabled",
-                        "example": "disabled",
-                        "title": "Lifecycle State"
-                    }
-                },
-                "x-openregister-lifecycle": {
-                    "property": "lifecycle",
-                    "initial": "disabled",
-                    "transitions": {
-                        "enable": {
-                            "from": "disabled",
-                            "to": "enabled",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AiFeatureDpoAckGuard"
-                            ]
-                        },
-                        "disable": {
-                            "from": "enabled",
-                            "to": "disabled"
-                        }
-                    }
-                },
-                "x-openregister-notifications": {
-                    "enabled": {
-                        "trigger": {
-                            "type": "transition",
-                            "action": "enable"
-                        },
-                        "enabled": true,
-                        "channels": [
-                            "activity"
-                        ],
-                        "recipients": [
-                            {
-                                "kind": "groups",
-                                "groups": [
-                                    "admin"
-                                ]
-                            }
-                        ],
-                        "subject": {
-                            "nl": "AI-functie '{{title}}' is ingeschakeld",
-                            "en": "AI feature '{{title}}' was enabled"
-                        }
-                    },
-                    "disabled": {
-                        "trigger": {
-                            "type": "transition",
-                            "action": "disable"
-                        },
-                        "enabled": true,
-                        "channels": [
-                            "activity"
-                        ],
-                        "recipients": [
-                            {
-                                "kind": "groups",
-                                "groups": [
-                                    "admin"
-                                ]
-                            }
-                        ],
-                        "subject": {
-                            "nl": "AI-functie '{{title}}' is uitgeschakeld",
-                            "en": "AI feature '{{title}}' was disabled"
-                        }
                     }
                 },
                 "x-openregister-seed": []
@@ -4672,7 +4585,7 @@
                 "icon": "ClipboardCheckOutline",
                 "version": "0.1.0",
                 "title": "Assessment",
-                "description": "A structured test (toets, tentamen, examen, quiz) composed of items from an ItemBank with a scoring scheme, time limit, attempt policy, availability window, and optional proctoring. AI-assisted proctoring requires an AiFeature registration (ADR-005 DPO gate).",
+                "description": "A structured test (toets, tentamen, examen, quiz) composed of items from an ItemBank with a scoring scheme, time limit, attempt policy, availability window, and optional proctoring. AI-assisted proctoring requires the high-risk AI feature to be registered and DPO-enabled in the central Hermiq governance app (ADR-005 DPO gate).",
                 "type": "object",
                 "x-openregister": {
                     "active": true,
@@ -4831,7 +4744,7 @@
                                     "ai-assisted"
                                 ],
                                 "default": "manual",
-                                "description": "Flag review mode. ai-assisted requires an AiFeature with slug assessment-ai-proctor-review in enabled state (ADR-005).",
+                                "description": "Flag review mode. ai-assisted requires the AI feature with slug assessment-ai-proctor-review to be enabled in the central Hermiq governance register (ADR-005).",
                                 "title": "Flag Review Mode"
                             }
                         },
