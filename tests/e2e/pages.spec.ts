@@ -15,6 +15,8 @@ import { test, expect } from './fixtures'
 
 const ROUTES: { name: string; path: string }[] = [
 	{ name: 'Dashboard', path: '#/' },
+	{ name: 'Learning', path: '#/learning' },
+	{ name: 'People', path: '#/people' },
 	{ name: 'Courses', path: '#/courses' },
 	{ name: 'Enrolments', path: '#/enrolments' },
 	{ name: 'Credentials', path: '#/credentials' },
@@ -34,7 +36,6 @@ const ROUTES: { name: string; path: string }[] = [
 	{ name: 'CredentialDetail', path: '#/credentials/test-id' },
 	{ name: 'CredentialVerify', path: '#/credentials/test-id/verify' },
 	{ name: 'LearnerHome', path: '#/learner' },
-	{ name: 'AdminHealth', path: '#/admin/health' },
 ]
 
 test.describe('Scholiq page routes', () => {

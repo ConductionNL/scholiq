@@ -1,0 +1,26 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "nav-restructure-dashboards",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Learning group landing dashboard (nav-restructure-dashboards, supersedes ADR-044 cards-collapse): GroupLearning is BOTH navigable (lands on the LearningDashboard domain dashboard) AND collapsible (its six leaves render as nav sub-children — no longer in menu-layout.json#removals). CnAppNav renders a parent with a route + visible children as navigable-and-collapsible natively."
+	},
+	"menu": [
+		{ "id": "GroupLearning", "route": "LearningDashboard" }
+	],
+	"pages": [
+		{
+			"id": "LearningDashboard",
+			"route": "/learning",
+			"type": "custom",
+			"title": "Learning",
+			"icon": "SchoolOutline",
+			"component": "LearningDashboard",
+			"group": "GroupLearning",
+			"config": {
+				"register": "scholiq"
+			}
+		}
+	]
+}
