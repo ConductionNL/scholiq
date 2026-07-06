@@ -195,6 +195,7 @@ export default {
 		 * enabled on this instance. Drives the delegated "AI Features" section:
 		 * link to Hermiq's register when present, otherwise an install notice.
 		 *
+		 * @spec openspec/changes/ai-feature-delegate-to-hermiq/specs/ai-surface/spec.md#requirement-req-sai-004-the-system-shall-surface-ai-feature-governance-from-settings-via-hermiq
 		 * @return {boolean} True when Hermiq is enabled.
 		 */
 		hermiqInstalled() {
