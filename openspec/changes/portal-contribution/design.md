@@ -81,40 +81,45 @@ the client — ADR-005):
 | `student` | `learnerRef` | the student's own `LearnerProfile` object UUID       |
 | `parent`  | `guardianRef`| a guardian domain-object UUID (matched vs `guardianRefs`) |
 
-## Parent audience — DEFERRED (why the shipped provider is student-only)
+## Parent audience — SHIPPED via the reverse / scope-value join
 
-The parent surface (a guardian reading a minor's records) is **not shipped in
-this change**. It needs a join portaliq's reader cannot currently express.
+> Originally this section deferred the parent surface. Portaliq has since merged
+> the reverse join and the follow-up change **`portal-parent`** re-enabled the
+> `parent` audience; this section now documents the shipped shape. Full
+> derivation + a worked nil-UUID example: `openspec/changes/portal-parent/design.md`.
 
-The desired resolution is: from `learner-profile` rows whose `guardianRefs`
-contains the guardian's ref, collect the child learner ref, then read
-`grade-entry`/`attendance-record`/… **where `learnerRef` ∈ those child refs**.
-That is a *reverse / scope-value join*: the record carries a foreign scope key
-(`learnerRef`) that the join resolves.
+The parent surface (a guardian reading a minor's records) resolves: from
+`learner-profile` rows whose `guardianRefs` contains the guardian's ref, collect
+the child learner ref, then read `grade-entry`/`attendance-record`/… **where
+`learnerRef` ∈ those child refs**. That is a *reverse / scope-value join*: the
+record carries a foreign scope key (`learnerRef`) that the join resolves.
 
-Portaliq's shipped one-hop `via` does the **opposite** direction: it keeps outer
-rows whose **own id** is in the join's target set (the zaakafhandelapp `rol →
-zaak` shape, where the join row references the outer object by id). There is no
-`via` shape that makes it match `grade-entry.learnerRef` instead of
-`grade-entry.id`, so a parent manifest would fail-closed to **empty** — which
-looks supported but shows a guardian nothing. Rather than ship that, the provider
-serves `['student']` only and returns `null` for `parent`.
+Portaliq's original one-hop `via` did the **opposite** direction (kept outer
+rows whose **own id** was in the target set — the zaakafhandelapp `rol → zaak`
+shape). Portaliq now ships a `match` discriminator on `via`: `match: 'id'`
+(default, forward) keeps rows by their own id, while `match: 'scopeField'`
+(reverse) keeps outer rows whose value at their own `scopeField` (dot-path) is
+in the verified target set. So each parent collection declares
+`via {register: scholiq, schema: learner-profile, scopeField: guardianRefs,
+targetField: id, match: 'scopeField'}` with its own `scopeField: learnerRef` —
+the guardian resolves to the children's `LearnerProfile` UUIDs (via `targetField:
+id`, the OR object identity), and each `grade-entry` survives iff its `learnerRef`
+is in that set.
 
-The additive schema refs this change's `portal-identity` head lands
-(`guardianRefs` on `learner-profile`, `submittedByRef` on `excuse-request`) are
-kept: once portaliq's reader gains a scope-value join, the parent audience is a
-pure provider addition (re-add the `parent` branch + collections), no schema
-work. Tracked on scholiq#39 + the portaliq scope-value-join follow-up.
+The additive schema refs `portal-identity` landed (`guardianRefs` on
+`learner-profile`, `submittedByRef` on `excuse-request`) made the parent
+audience a **pure provider addition** — no schema work. Tracked on
+Conduction/scholiq#43.
 
 ## minTrust story
 
 - **student reads** (grades/attendance/etc.): `minTrust: low` — the learner
   viewing their own data.
-- **parent reads** (grades/attendance): `minTrust: low` **today**, but MUST be
-  raised to `substantial` once the DigiD/eHerkenning broker lands, because a
-  parent authenticating to view a **minor's** data needs substantial assurance.
-  Recorded here and in the provider docblock; there is no exposure meanwhile
-  because the parent `via` reads are fail-closed.
+- **parent reads** (grades/attendance/excuses): `minTrust: substantial` — set by
+  the `portal-parent` follow-up now that the reverse `via` reads are live: a
+  guardian authenticating to view a **minor's** data needs substantial assurance
+  (pairs with the DigiD/eHerkenning broker). (Earlier, while deferred, this was
+  noted as "low today, raise later"; the true floor is declared now.)
 - **parent ExcuseRequest create**: `minTrust: substantial` **now** — the schema
   already models the eIDAS `submittedAuthLevel`, and a guardian acting on a
   minor's behalf implies substantial assurance.
@@ -201,9 +206,9 @@ portal (fail-closed).
 - **Field whitelist on read and create**: grades, status, lifecycle, staff
   identities, decision notes and assurance levels are never exposed on read and
   never client-settable on create; portaliq enforces both server-side.
-- **Minor-data trust**: parent grade/attendance reads carry the documented
-  `substantial` raise for the broker; parent excuse-create requires substantial
-  now.
+- **Minor-data trust**: parent reads and the parent excuse-create all require
+  `minTrust: substantial` (set by the `portal-parent` follow-up; pairs with the
+  DigiD/eHerkenning broker).
 - No secrets, no tokens, no endpoints in this change.
 
 ## File Structure
@@ -220,11 +225,10 @@ openspec/
 
 - **Both audience methods vs v2-only** — v2-only is leaner but the registry's v1
   fallback path must keep working; two constant-return methods cost nothing.
-- **Declared `via`/`minTrust`/`scopeClaim` vs omit-until-honoured** — declaring
-  them now (fleet convention per pipelinq) makes the parent surface and the
-  trust raise a data-only future flip; the honest cost is that some keys are
-  forward-looking today, documented explicitly above so copiers don't
-  cargo-cult.
+- **Declared `via`/`minTrust`/`scopeClaim` (fleet convention per pipelinq)** —
+  declaring them keeps the manifest a pure-data surface portaliq interprets; the
+  parent `via` join was forward-looking while deferred and is now honoured by
+  portaliq's merged reverse-join reader (re-enabled in `portal-parent`).
 - **Parent `via` join vs a Guardian schema** — a first-class Guardian schema is
   heavier than this slice warrants; the one-hop join over `guardianRefs` is the
   minimum honest parent linkage. Guardians-as-domain-objects is a later slice.
