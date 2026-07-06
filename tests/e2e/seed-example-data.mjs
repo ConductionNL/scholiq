@@ -242,11 +242,10 @@ async function seedObjects(presentSlugs) {
 	for (let n = 1; n <= 2; n++) await seed('attestation', { field: 'learnerId', value: `demo-learner-${n}` }, { learnerId: `demo-learner-${n}`, lessonId: id(courseCompliance) ?? 'demo-lesson', courseId: id(courseCompliance) ?? 'demo-course', regulationSlug: 'AVG', score: 90, lifecycle: 'drafted', tenant_id: TENANT })
 	for (let n = 1; n <= 2; n++) await seed('credential', { field: 'learnerId', value: `demo-learner-${n}` }, { learnerId: `demo-learner-${n}`, kind: 'certificate', issuedAt: '2026-09-01', issuedBy: 'Conduction', source: 'system', regulationSlug: 'AVG', lifecycle: 'issued', tenant_id: TENANT, ...(id(courseCompliance) ? { courseId: id(courseCompliance) } : {}) })
 	for (let n = 1; n <= 2; n++) await seed('enrolment', { field: 'learnerId', value: `demo-learner-${n}` }, { learnerId: `demo-learner-${n}`, courseId: id(courseCompliance) ?? id(courseRoot) ?? 'demo-course', mandatory: n === 1, dueDate: '2026-12-01', source: 'bulk', tenant_id: TENANT, ...(id(cohort) ? { cohortId: id(cohort) } : {}) })
-	// xAPI, DataExchange, AiFeature
+	// xAPI, DataExchange. (AiFeature governance is delegated to Hermiq — scholiq seeds no AiFeature objects.)
 	await seed('xapi-statement', { field: 'verb', value: 'completed' }, { actor: { account: { name: 'demo-learner-1' } }, verb: { id: 'http://adlnet.gov/expapi/verbs/completed' }, object: { id: 'demo://lesson/5' }, version: '1.0.3', timestamp: '2026-09-30T10:00:00Z', tenant_id: TENANT })
 	await seed('data-mapping-profile', { field: 'name', value: 'Demo BRON mapping' }, { name: 'Demo BRON mapping', target: 'bron-rod', tenant_id: TENANT })
 	await seed('data-exchange-job', { field: 'target', value: 'bron-rod' }, { direction: 'export', target: 'bron-rod', scope: { cohortId: id(cohort) ?? null }, lifecycle: 'queued', requestedBy: 'admin', tenant_id: TENANT })
-	await seed('ai-feature', { field: 'slug', value: 'demo-adaptive-paths' }, { slug: 'demo-adaptive-paths', name: 'Adaptive learning paths (demo)', riskCategory: 'high', lifecycle: 'disabled', tenant_id: TENANT })
 
 	return counts
 }
