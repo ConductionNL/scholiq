@@ -263,7 +263,7 @@ export default {
 	 * Load the register options and settings status in parallel on mount.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
+	 * @spec openspec/changes/archive/retrofit-2026-05-25-app-shell-settings/tasks.md#tasks
 	 */
 	async created() {
 		await Promise.all([
@@ -277,7 +277,7 @@ export default {
 		 * Load available registers from OpenRegister for the default-register picker.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
+		 * @spec openspec/changes/archive/retrofit-2026-05-25-app-shell-settings/tasks.md#tasks
 		 */
 		async fetchRegisters() {
 			this.registersLoading = true
@@ -304,7 +304,7 @@ export default {
 		 * longer reads any AiFeature objects.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
+		 * @spec openspec/changes/archive/retrofit-2026-05-25-app-shell-settings/tasks.md#tasks
 		 */
 		async fetchSettingsStatus() {
 			try {
@@ -328,7 +328,7 @@ export default {
 		 * Persist the selected default register to IAppConfig.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-2
+		 * @spec openspec/changes/archive/retrofit-2026-05-25-app-shell-settings/tasks.md#tasks
 		 */
 		async saveDefaultRegister() {
 			if (!this.defaultRegister) return
@@ -351,7 +351,7 @@ export default {
 		 * Rotate the RS256 credential signing key pair via the backend endpoint.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retrofit-2026-05-25-app-shell-settings/tasks.md#task-3
+		 * @spec openspec/changes/archive/retrofit-2026-05-25-app-shell-settings/tasks.md#tasks
 		 */
 		async rotateSigningKey() {
 			this.signingKeyLoading = true

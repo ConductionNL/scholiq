@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-25
+ * @spec openspec/changes/archive/retrofit-2026-05-24-annotate-scholiq/tasks.md#tasks
  */
 
 declare(strict_types=1);
