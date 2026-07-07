@@ -276,21 +276,24 @@
 			"route": "/dashboards/admin",
 			"type": "custom",
 			"title": "Administration",
-			"component": "DashboardAdmin"
+			"component": "DashboardAdmin",
+			"_note": "Per-role dashboard (ADR-009 §6): DashboardAdmin renders ScholiqDashboards in its admin view. Backs the group-gated Administration menu item (visibleIf user.canAdminDashboard)."
 		},
 		{
 			"id": "DashboardTeacher",
 			"route": "/dashboards/teaching",
 			"type": "custom",
 			"title": "Teaching",
-			"component": "DashboardTeacher"
+			"component": "DashboardTeacher",
+			"_note": "Per-role dashboard (ADR-009 §6): DashboardTeacher renders ScholiqDashboards in its teacher view. Backs the group-gated Teaching menu item (visibleIf user.canTeachDashboard)."
 		},
 		{
 			"id": "DashboardStudent",
 			"route": "/dashboards/my-learning",
 			"type": "custom",
 			"title": "My learning",
-			"component": "DashboardStudent"
+			"component": "DashboardStudent",
+			"_note": "Per-role dashboard (ADR-009 §6): DashboardStudent renders ScholiqDashboards in its student view. Backs the group-gated My learning menu item (visibleIf user.canLearnDashboard)."
 		},
 		{
 			"id": "Courses",

@@ -28,7 +28,12 @@
 		:empty-text="t('scholiq', 'No items found')"
 		:row-click-route="rowClickRoute">
 		<template #footer>
-			<a class="cn-data-table__view-all" @click.prevent="navigate">
+			<a class="cn-data-table__view-all"
+				role="button"
+				tabindex="0"
+				@click.prevent="navigate"
+				@keydown.enter.prevent="navigate"
+				@keydown.space.prevent="navigate">
 				+ {{ t('scholiq', 'New') }} {{ schemaLabel }}
 			</a>
 		</template>
