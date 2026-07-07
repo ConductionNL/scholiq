@@ -51,7 +51,7 @@
 		{
 			"registerSlug": "scholiq",
 			"schemaSlug": "learner-profile",
-			"urlTemplate": "/apps/scholiq/#/learners/{uuid}",
+			"urlTemplate": "/apps/scholiq/#/learner-profiles/{uuid}",
 			"displayName": "Learner"
 		},
 		{
@@ -206,6 +206,13 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "MyTimetableMenu",
+			"label": "My timetable",
+			"icon": "icon-calendar",
+			"route": "MyTimetable",
+			"order": 25
 		},
 		{
 			"id": "Documentation",
@@ -2007,6 +2014,14 @@
 			"title": "Cohort timetable",
 			"component": "CnTimelineView",
 			"_note": "Mounts CnTimelineView from @conduction/nextcloud-vue for the date-grouped session timetable (calendar-like layout)."
+		},
+		{
+			"id": "MyTimetable",
+			"route": "/my-timetable",
+			"type": "custom",
+			"title": "My timetable",
+			"component": "MyTimetable",
+			"_note": "personal-timetable: the signed-in user's own week view. A bespoke component (no generic lib index/detail analogue) rendering the caller's OWN Session objects for a window, resolved server-side from cohort membership (teacher/learner) and RBAC-scoped via ObjectService. Read-only — clicking a session deep-links to SessionDetail; no create/edit here."
 		},
 		{
 			"id": "Sessions",

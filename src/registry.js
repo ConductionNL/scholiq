@@ -30,6 +30,8 @@ import RolloverWizard from './views/RolloverWizard.vue'
 // and People groups land on domain dashboards instead of tile-grid card pages.
 import LearningDashboard from './views/LearningDashboard.vue'
 import PeopleDashboard from './views/PeopleDashboard.vue'
+// personal-timetable: the signed-in user's own week view over Session objects.
+import MyTimetable from './views/MyTimetable.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -55,6 +57,7 @@ export default {
 	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
+	MyTimetable: page(MyTimetable),
 	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	RolloverWizard: page(RolloverWizard),
