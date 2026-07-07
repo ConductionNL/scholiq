@@ -11,10 +11,12 @@
  * contract (amendment A1), so no mocks and no container are involved.
  *
  * A register-drift pin (testManifestMatchesRegisterSchemas) loads the shipped
- * `scholiq_register.json` and asserts every schema slug, scope field and
- * whitelisted field the manifest references actually exists — so a rename in
- * the register (or a missing `portal-identity` ref) fails this test instead of
- * silently breaking the portal at runtime.
+ * `scholiq_register.json` and asserts every schema slug, scope field,
+ * whitelisted field AND parent `via` scope field the manifest references
+ * actually exists — so a rename in the register (or a missing `portal-identity`
+ * ref) fails this test instead of silently breaking the portal at runtime. The
+ * `parent` reverse-join collections are covered now that portaliq ships the
+ * reverse / scope-value `via` join (`match: 'scopeField'`).
  *
  * @category Test
  * @package  OCA\Scholiq\Tests\Unit\Portal
@@ -104,15 +106,15 @@ class PortalContributionProviderTest extends TestCase
     }//end testClassIsPlainAndDependencyFree()
 
     /**
-     * getAudiences() (v2) returns exactly ['student'] and getAudience()
-     * (v1 fallback) is one of them. The `parent` audience is deferred until
-     * portaliq's reader supports a reverse/scope-value join (see the provider).
+     * getAudiences() (v2) returns exactly ['student','parent'] and getAudience()
+     * (v1 fallback) is one of them. The `parent` audience is re-enabled now that
+     * portaliq ships the reverse / scope-value `via` join (match: 'scopeField').
      *
      * @return void
      */
     public function testAudienceContract(): void
     {
-        $this->assertSame(['student'], $this->provider->getAudiences());
+        $this->assertSame(['student', 'parent'], $this->provider->getAudiences());
         $this->assertSame('student', $this->provider->getAudience());
         $this->assertContains($this->provider->getAudience(), $this->provider->getAudiences());
 
@@ -120,7 +122,8 @@ class PortalContributionProviderTest extends TestCase
 
     /**
      * Unserved / absent audiences get null — fail-closed audience filtering.
-     * `parent` is deferred and therefore also null for now.
+     * `student` and `parent` are served; everything else (and an empty subject)
+     * is null.
      *
      * @return void
      */
@@ -131,7 +134,9 @@ class PortalContributionProviderTest extends TestCase
 
         $this->assertNull($this->provider->getContribution($teacher));
         $this->assertNull($this->provider->getContribution([]));
-        $this->assertNull($this->provider->getContribution(self::PARENT_SUBJECT));
+
+        // `parent` is now a served audience — it returns a manifest, not null.
+        $this->assertIsArray($this->provider->getContribution(self::PARENT_SUBJECT));
 
     }//end testGetContributionReturnsNullForUnservedSubjects()
 
@@ -237,10 +242,132 @@ class PortalContributionProviderTest extends TestCase
     }//end testStudentCreateActionsWhitelistIntakeFields()
 
     /**
+     * The parent manifest is labelled and carries exactly the three
+     * reverse-joined read collections (grades, attendance, excuse-requests),
+     * each guardian-claimed, learnerRef-scoped and substantial-trust,
+     * field-projected identically to the student surface.
+     *
+     * @return void
+     */
+    public function testParentManifestShape(): void
+    {
+        $manifest = $this->provider->getContribution(self::PARENT_SUBJECT);
+
+        $this->assertIsArray($manifest);
+        $this->assertSame('Scholiq', $manifest['label']);
+        $this->assertSame([], $manifest['notifications']);
+
+        $collections = $manifest['collections'];
+        $this->assertCount(3, $collections);
+        $this->assertSame(
+            ['parentGrades', 'parentAttendance', 'parentExcuseRequests'],
+            array_column($collections, 'id')
+        );
+
+        foreach ($collections as $collection) {
+            $this->assertSame('scholiq', $collection['register']);
+            // Parent scope key is the guardian claim; the outer record scope
+            // field is the child's learnerRef (matched by the reverse via).
+            $this->assertSame('guardianRef', $collection['scopeClaim']);
+            $this->assertSame('learnerRef', $collection['scopeField']);
+            // A guardian reading a MINOR's data needs substantial assurance.
+            $this->assertSame('substantial', $collection['minTrust']);
+            $this->assertNotEmpty($collection['fields']);
+            // Parent reads never expose staff-only columns (same drop as student).
+            foreach (['grader', 'comment', 'markedBy', 'submittedBy', 'submittedByRef', 'decidedBy', 'decisionNote'] as $forbidden) {
+                $this->assertNotContains($forbidden, $collection['fields']);
+            }
+        }
+
+        // Parent grade/attendance/excuse projections mirror the student ones.
+        $byId = array_column($collections, null, 'id');
+        $this->assertSame(
+            ['learnerRef', 'courseId', 'curriculumPlanId', 'componentId', 'value', 'gradeScaleId', 'period', 'gradedAt'],
+            $byId['parentGrades']['fields']
+        );
+        $this->assertSame(
+            ['learnerRef', 'sessionId', 'cohortId', 'status', 'minutesAttended', 'markedAt'],
+            $byId['parentAttendance']['fields']
+        );
+        $this->assertSame(
+            ['learnerRef', 'dateFrom', 'dateTo', 'reason', 'reasonKind', 'attachmentRef', 'lifecycle', 'decidedAt'],
+            $byId['parentExcuseRequests']['fields']
+        );
+
+    }//end testParentManifestShape()
+
+    /**
+     * Every parent read collection carries the reverse / scope-value `via` join
+     * with EXACTLY the reader's contract keys — `{register, schema, scopeField,
+     * targetField, match}` — and `match: 'scopeField'`. The join resolves the
+     * guardian's children through `learner-profile.guardianRefs` and collects
+     * each child profile's own OR object UUID (`id`), which the outer records
+     * match on their own `learnerRef`. Invented keys (`matchField`/`selectField`)
+     * would fail portaliq's `isValidVia()` fail-closed — so pin the exact set.
+     *
+     * @return void
+     */
+    public function testParentCollectionsUseReverseScopeValueVia(): void
+    {
+        $manifest = $this->provider->getContribution(self::PARENT_SUBJECT);
+
+        foreach ($manifest['collections'] as $collection) {
+            $via = $collection['via'] ?? null;
+            $this->assertIsArray($via, "parent collection '{$collection['id']}' must declare a via join");
+
+            // The reader (PortalObjectReader::isValidVia) recognises EXACTLY these
+            // keys; anything else (matchField/selectField) is ignored/fails closed.
+            $this->assertSame(
+                ['register', 'schema', 'scopeField', 'targetField', 'match'],
+                array_keys($via),
+                "via keys must be exactly the reader's contract for '{$collection['id']}'"
+            );
+
+            $this->assertSame('scholiq', $via['register']);
+            $this->assertSame('learner-profile', $via['schema']);
+            // The join row's field matched against the guardian scope value.
+            $this->assertSame('guardianRefs', $via['scopeField']);
+            // The child LearnerProfile's own object UUID — a normalised OR row
+            // exposes it at top-level `id` (ObjectEntity::jsonSerialize sets
+            // $object['id'] = $this->uuid), which is what learnerRef points at.
+            $this->assertSame('id', $via['targetField']);
+            // Reverse mode: keep outer rows whose OWN scopeField is in the set.
+            $this->assertSame('scopeField', $via['match']);
+
+            // The outer collection's own scope field the reverse match reads.
+            $this->assertSame('learnerRef', $collection['scopeField']);
+        }
+
+    }//end testParentCollectionsUseReverseScopeValueVia()
+
+    /**
+     * The parent audience ships READS only — no create action. A guardian
+     * reporting an absence would supply the child `learnerRef` in the create
+     * body, but portaliq's writer only server-stamps the scope field
+     * (`submittedByRef` = guardian); it does not verify a client-supplied
+     * cross-reference (`learnerRef`) against the guardian's own children. That
+     * would be a write IDOR, so the create is withheld until portaliq validates
+     * create-body cross-refs against the subject's reverse-join set. Parent
+     * reads are safe (the reverse `via` verifies the child set per row).
+     *
+     * @return void
+     */
+    public function testParentShipsNoCreateActionPendingCrossRefValidation(): void
+    {
+        $manifest = $this->provider->getContribution(self::PARENT_SUBJECT);
+
+        $this->assertSame([], $manifest['actions']);
+
+    }//end testParentShipsNoCreateActionPendingCrossRefValidation()
+
+    /**
      * Register-drift pin: every schema slug, scope field, whitelisted field and
-     * `via` match-field the manifest references MUST exist in the shipped
+     * `via` scope-field the manifest references MUST exist in the shipped
      * scholiq_register.json — proving the `portal-identity` refs are present and
-     * that no register rename silently broke the portal.
+     * that no register rename silently broke the portal. Covers the parent
+     * reverse-join collections too (their via `scopeField` is `guardianRefs` on
+     * `learner-profile`; `targetField` is the OR object-identity token `id`, not
+     * a schema property, so it is checked against the identity tokens).
      *
      * @return void
      */
@@ -267,13 +394,10 @@ class PortalContributionProviderTest extends TestCase
         $this->assertContains('submittedByRef', $propsBySlug['excuse-request'] ?? []);
         $this->assertContains('guardianRefs', $propsBySlug['learner-profile'] ?? []);
 
+        // Both audiences are served (parent is re-enabled); each yields a manifest.
         foreach ([self::STUDENT_SUBJECT, self::PARENT_SUBJECT] as $subject) {
             $manifest = $this->provider->getContribution($subject);
-            if ($manifest === null) {
-                // `parent` is deferred (returns null) until portaliq's reader
-                // supports the reverse scope-value join; nothing to drift-check.
-                continue;
-            }
+            $this->assertIsArray($manifest);
 
             foreach (($manifest['collections'] ?? []) as $collection) {
                 $slug = $collection['schema'];
@@ -286,12 +410,23 @@ class PortalContributionProviderTest extends TestCase
                 }
 
                 if (isset($collection['via']) === true) {
-                    $viaSlug = $collection['via']['schema'];
+                    $via     = $collection['via'];
+                    $viaSlug = $via['schema'];
                     $this->assertArrayHasKey($viaSlug, $propsBySlug, "via schema '$viaSlug' missing from register");
+                    // The via's join scope field (guardianRefs) MUST be a real
+                    // property on the via schema — this is the drift-detectable ref.
                     $this->assertContains(
-                        $collection['via']['matchField'],
+                        $via['scopeField'],
                         $propsBySlug[$viaSlug],
-                        "via matchField not in register"
+                        "via scopeField '{$via['scopeField']}' not in register schema '$viaSlug'"
+                    );
+                    // The via's targetField is either a schema property OR the OR
+                    // object-identity token ('id'/'uuid') the normalised row
+                    // exposes — never an invented key.
+                    $this->assertContains(
+                        $via['targetField'],
+                        array_merge($propsBySlug[$viaSlug], ['id', 'uuid']),
+                        "via targetField '{$via['targetField']}' is neither a register property on '$viaSlug' nor an identity token"
                     );
                 }
             }
