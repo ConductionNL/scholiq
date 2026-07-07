@@ -23,6 +23,7 @@
 		:loading="loading"
 		hide-header
 		borderless
+		fill-height
 		row-key="id"
 		:empty-text="t('scholiq', 'No items found')"
 		:row-click-route="rowClickRoute">
