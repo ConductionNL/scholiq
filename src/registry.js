@@ -18,6 +18,11 @@ import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import ScholiqDashboards from './views/ScholiqDashboards.vue'
+// Per-role dashboard route wrappers (group-gated menu items; replaces the
+// single role-switcher dashboard).
+import DashboardAdmin from './views/DashboardAdmin.vue'
+import DashboardTeacher from './views/DashboardTeacher.vue'
+import DashboardStudent from './views/DashboardStudent.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
@@ -42,6 +47,9 @@ function page(component) {
 }
 
 export default {
+	DashboardAdmin: page(DashboardAdmin),
+	DashboardTeacher: page(DashboardTeacher),
+	DashboardStudent: page(DashboardStudent),
 	GradeImpactDetail: page(GradeImpactDetail),
 	ItemAuthorView: page(ItemAuthorView),
 	LearningDashboard: page(LearningDashboard),

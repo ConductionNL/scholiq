@@ -13,7 +13,7 @@ openspec_changes:
 
 ## Purpose
 
-Present a single role-aware dashboard surface (ADR-009 §6): one component, reached from one `Dashboards` menu entry, that re-renders for the active user's resolved role (admin / teacher / student) with an in-component switcher for multi-role users, built exclusively on `@conduction/nextcloud-vue` dashboard primitives. Exactly one `CnDashboardPage` renders per route (no dashboard-in-dashboard nesting), and heavy cross-tenant analytics deep-link into launchpad rather than being reimplemented.
+Present per-role dashboard surfaces (ADR-009 §6) as **three group-gated menu items** — Administration / Teaching / My learning — each routing to the shared dashboard component in its role view (admin / teacher / student); menu visibility follows `scholiq-{role}` Nextcloud group membership (admins see all three) and there is no in-page role switcher. Built exclusively on `@conduction/nextcloud-vue` dashboard primitives. Exactly one `CnDashboardPage` renders per route (no dashboard-in-dashboard nesting), and heavy cross-tenant analytics deep-link into launchpad rather than being reimplemented.
 
 ## Why
 "Analytics dashboard" (#17, 39 demand) and "Student Analytics" (#18, 34 demand) score in the top 20 canonical features. Insight #16: OSS LMS leaders share dated UX — a modern Vue / NL-Design dashboard surface is the structural differentiator. Eight stories across six roles (mentor pattern view, manager team progress, board compliance %, board renewal report, principal Cito overview, parent grade digest, pupil grade-impact view, civil-servant RADIO progress) anchor this spec.
@@ -36,24 +36,26 @@ Per-role landing dashboards composed via `@conduction/nextcloud-vue` primitives 
 
 ## Requirements
 
-### Requirement: Per-resolved-role default dashboard
-The system MUST present a different default dashboard per resolved role (teacher / student / parent / HR / compliance / inspector / mentor / manager) through **one role-aware component reached from a single `Dashboards` menu entry**, per ADR-009 §6. The component MUST select the view from the active user's resolved `primaryRole` (administrator → admin overview, instructor/manager → teacher view, learner → student view), MUST offer an in-component role switcher to users who hold more than one role, and MUST NOT expose a separate top-level menu item per role. The application root route MUST land each user on the dashboard view matching their resolved role; when the role cannot be resolved the system MUST fall back to the least-privileged (student) view.
+### Requirement: Per-role group-gated dashboard menu items
+The system MUST present a **separate top-level dashboard menu item per role** — Administration (admin), Teaching (teacher), My learning (student) — per ADR-009 §6. Each item MUST be visible only to users whose resolved dashboard-view set includes that role, derived server-side from `scholiq-{role}` Nextcloud group membership (with the NC admin group short-circuiting to all three); an admin therefore sees all three items, and the view set always includes `student` so every Scholiq user reaches their own My-learning view. The system MUST NOT render an in-page role switcher. Each menu item routes to the shared dashboard component rendering that role's view (exactly one `CnDashboardPage` per route). The application root route MUST land each user on the dashboard view matching their resolved `primaryRole`; when the role cannot be resolved the system MUST fall back to the least-privileged (student) view.
 
-#### Scenario: Learner lands on the student dashboard
-- **GIVEN** a signed-in user whose resolved `primaryRole` is `learner`
-- **WHEN** they open the Scholiq app root
-- **THEN** the single Dashboards view renders the student dashboard (my enrolments, my grades, due assignments, mandatory training)
-- **AND** no admin KPI grid and no second/third "Dashboard" heading is shown
+#### Scenario: Learner sees only the My learning item and lands on it
+- **GIVEN** a signed-in user in the `scholiq-student` group only
+- **WHEN** they open the Scholiq app
+- **THEN** the navigation shows a single **My learning** dashboard item (no Administration or Teaching item)
+- **AND** the app root lands on the student dashboard (my enrolments, my grades, due assignments, mandatory training)
 
-#### Scenario: Instructor sees the teacher dashboard
-- **GIVEN** a signed-in user whose resolved `primaryRole` is `instructor`
-- **WHEN** they open the Dashboards menu entry
-- **THEN** the teacher dashboard renders (my courses, assignments to grade, sessions to mark, my cohorts)
+#### Scenario: Instructor sees Teaching + My learning
+- **GIVEN** a signed-in user in the `scholiq-teacher` group
+- **WHEN** they open the navigation
+- **THEN** a **Teaching** item and a **My learning** item are shown (no Administration item)
+- **AND** the Teaching item renders the teacher dashboard (my courses, assignments to grade, sessions to mark, my cohorts)
 
-#### Scenario: Multi-role user switches view
-- **GIVEN** a user who is both `instructor` and `admin`
-- **WHEN** they use the in-component role switcher
-- **THEN** the same Dashboards page re-renders the chosen role's view without navigating to a different menu item
+#### Scenario: Admin sees all three dashboard items
+- **GIVEN** a signed-in user in the Nextcloud admin group
+- **WHEN** they open the navigation
+- **THEN** **Administration**, **Teaching** and **My learning** items are all shown
+- **AND** each routes to its own dashboard view without any in-page role switcher
 
 ### Requirement: Use @conduction/nextcloud-vue dashboard components
 The system MUST use `@conduction/nextcloud-vue` dashboard components (`CnDashboardPage` et al.) — no custom equivalents. A `type: "dashboard"` manifest page MUST declare its tiles directly in `config.widgets` / `config.layout` / `slots`, each slot resolving to a plain widget component (KPI card, list, chart). A dashboard page or any widget component it hosts MUST NOT render a nested `CnDashboardPage` (the dashboard-in-dashboard antipattern); exactly one `CnDashboardPage` MUST render per dashboard route.

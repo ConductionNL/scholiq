@@ -155,11 +155,40 @@
 			"order": 30,
 			"children": [
 				{
-					"id": "Dashboard",
-					"label": "Dashboards",
+					"id": "DashboardAdmin",
+					"label": "Administration",
 					"icon": "icon-home",
-					"route": "Dashboard",
-					"order": 5
+					"route": "DashboardAdmin",
+					"order": 5,
+					"visibleIf": {
+						"user.canAdminDashboard": {
+							"eq": true
+						}
+					}
+				},
+				{
+					"id": "DashboardTeacher",
+					"label": "Teaching",
+					"icon": "icon-home",
+					"route": "DashboardTeacher",
+					"order": 6,
+					"visibleIf": {
+						"user.canTeachDashboard": {
+							"eq": true
+						}
+					}
+				},
+				{
+					"id": "DashboardStudent",
+					"label": "My learning",
+					"icon": "icon-home",
+					"route": "DashboardStudent",
+					"order": 7,
+					"visibleIf": {
+						"user.canLearnDashboard": {
+							"eq": true
+						}
+					}
 				},
 				{
 					"id": "Compliance",
@@ -240,7 +269,28 @@
 			"type": "custom",
 			"title": "Dashboards",
 			"component": "ScholiqDashboards",
-			"_note": "Role-aware dashboard (ADR-009 §6): one component rendering exactly one CnDashboardPage, re-rendered per active role (admin/teacher/student) with an in-page switcher for multi-role users."
+			"_note": "Landing dashboard (ADR-009 §6): ScholiqDashboards with no role prop resolves to the user's default view (initial state dashboardRole). The three explicit per-role pages below back the group-gated Administration/Teaching/My learning menu items — the in-page role switcher was removed."
+		},
+		{
+			"id": "DashboardAdmin",
+			"route": "/dashboards/admin",
+			"type": "custom",
+			"title": "Administration",
+			"component": "DashboardAdmin"
+		},
+		{
+			"id": "DashboardTeacher",
+			"route": "/dashboards/teaching",
+			"type": "custom",
+			"title": "Teaching",
+			"component": "DashboardTeacher"
+		},
+		{
+			"id": "DashboardStudent",
+			"route": "/dashboards/my-learning",
+			"type": "custom",
+			"title": "My learning",
+			"component": "DashboardStudent"
 		},
 		{
 			"id": "Courses",

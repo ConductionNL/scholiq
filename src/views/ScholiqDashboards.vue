@@ -19,24 +19,8 @@
 -->
 <template>
 	<div class="scholiq-dashboards">
-		<div v-if="canSwitch" class="scholiq-dashboards__rolebar">
-			<label for="scholiq-dashboard-role" class="scholiq-dashboards__rolebar-label">
-				{{ t('scholiq', 'Viewing as') }}
-			</label>
-			<NcSelect
-				id="scholiq-dashboard-role"
-				v-model="selectedRole"
-				class="scholiq-dashboards__roleselect"
-				:options="roleOptions"
-				:clearable="false"
-				:input-label="t('scholiq', 'Dashboard role')"
-				:aria-label-combobox="t('scholiq', 'Dashboard role')"
-				label="label"
-				:reduce="option => option.value" />
-		</div>
-
 		<CnDashboardPage
-			:key="selectedRole"
+			:key="activeRole"
 			:title="pageTitle"
 			:widgets="widgets"
 			:layout="layout">
@@ -110,7 +94,6 @@
 
 <script>
 import { loadState } from '@nextcloud/initial-state'
-import { NcSelect } from '@nextcloud/vue'
 import { CnDashboardPage } from '@conduction/nextcloud-vue'
 import KpiCoursesWidget from './widgets/KpiCoursesWidget.vue'
 import KpiCohortsWidget from './widgets/KpiCohortsWidget.vue'
@@ -128,8 +111,19 @@ const VALID_ROLES = ['admin', 'teacher', 'student']
 export default {
 	name: 'ScholiqDashboards',
 
+	props: {
+		/**
+		 * Which dashboard view to render: 'admin' | 'teacher' | 'student'.
+		 * Supplied by the thin per-role route wrapper (DashboardAdmin/Teacher/
+		 * Student). Falls back to the user's resolved default view when empty.
+		 */
+		role: {
+			type: String,
+			default: '',
+		},
+	},
+
 	components: {
-		NcSelect,
 		CnDashboardPage,
 		KpiCoursesWidget,
 		KpiCohortsWidget,
@@ -143,35 +137,19 @@ export default {
 		MyMandatoryTrainingWidget,
 	},
 
-	data() {
-		const available = (loadState('scholiq', 'dashboardRoles', ['student']) || [])
-			.filter(role => VALID_ROLES.includes(role))
-		const fallback = available.length > 0 ? available[0] : 'student'
-		const defaultRole = loadState('scholiq', 'dashboardRole', fallback)
-		return {
-			availableRoles: available.length > 0 ? available : ['student'],
-			selectedRole: VALID_ROLES.includes(defaultRole) ? defaultRole : fallback,
-		}
-	},
-
 	computed: {
 		/**
-		 * Whether to show the role switcher — only when the user can access
-		 * more than one dashboard view.
+		 * The active dashboard role — the `role` prop when valid, otherwise the
+		 * user's resolved default view (initial state `dashboardRole`).
 		 *
-		 * @return {boolean}
+		 * @return {string}
 		 */
-		canSwitch() {
-			return this.availableRoles.length > 1
-		},
-
-		/**
-		 * Switcher options (value + localized label) for the accessible roles.
-		 *
-		 * @return {Array<{value: string, label: string}>}
-		 */
-		roleOptions() {
-			return this.availableRoles.map(role => ({ value: role, label: this.roleLabel(role) }))
+		activeRole() {
+			if (VALID_ROLES.includes(this.role)) {
+				return this.role
+			}
+			const dflt = loadState('scholiq', 'dashboardRole', 'student')
+			return VALID_ROLES.includes(dflt) ? dflt : 'student'
 		},
 
 		/**
@@ -180,7 +158,7 @@ export default {
 		 * @return {string}
 		 */
 		pageTitle() {
-			return this.roleLabel(this.selectedRole) + ' · ' + this.t('scholiq', 'Dashboard')
+			return this.roleLabel(this.activeRole) + ' · ' + this.t('scholiq', 'Dashboard')
 		},
 
 		/**
@@ -207,10 +185,10 @@ export default {
 		 * @return {{widgets: Array<object>, layout: Array<object>}}
 		 */
 		viewConfig() {
-			if (this.selectedRole === 'admin') {
+			if (this.activeRole === 'admin') {
 				return this.adminConfig
 			}
-			if (this.selectedRole === 'teacher') {
+			if (this.activeRole === 'teacher') {
 				return this.teacherConfig
 			}
 			return this.studentConfig
