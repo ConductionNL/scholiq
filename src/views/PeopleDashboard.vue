@@ -38,7 +38,8 @@
 				<ManageListWidget
 					schema="learner-profile"
 					:schema-label="t('scholiq', 'learner')"
-					:columns="['name', 'lifecycle']"
+					:columns="['name']"
+					:name-resolver="learnerName"
 					index-route="/learner-profiles"
 					:limit="6" />
 			</template>
@@ -46,7 +47,9 @@
 				<ManageListWidget
 					schema="Enrolment"
 					:schema-label="t('scholiq', 'enrolment')"
-					:columns="['name', 'lifecycle']"
+					:columns="['name']"
+					:extend="['learnerId', 'courseId']"
+					:name-resolver="enrolmentName"
 					index-route="/enrolments"
 					:limit="6" />
 			</template>
@@ -134,6 +137,37 @@ export default {
 				{ id: 7, widgetId: 'manage-attendance', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
 				{ id: 8, widgetId: 'manage-credentials', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
 			]
+		},
+	},
+
+	methods: {
+		/**
+		 * Display label for a learner-profile row: the person's name when set,
+		 * otherwise the linked Nextcloud user id — never the raw object UUID.
+		 *
+		 * @param {object} item A learner-profile object.
+		 * @return {string}
+		 */
+		learnerName(item) {
+			const full = [item.givenName, item.familyName].filter(Boolean).join(' ').trim()
+			return full || item.ncUserId || item['@self']?.name || item.id
+		},
+
+		/**
+		 * Display label for an enrolment row: "learner → course", resolved from
+		 * the `_extend`-expanded learnerId/courseId relations (each may arrive as
+		 * an object or a plain label string).
+		 *
+		 * @param {object} item An enrolment object with extended relations.
+		 * @return {string}
+		 */
+		enrolmentName(item) {
+			const resolve = (rel) => (rel && typeof rel === 'object'
+				? (rel.name || rel['@self']?.name || rel.id)
+				: rel)
+			const learner = resolve(item.learnerId) || '?'
+			const course = resolve(item.courseId) || '?'
+			return `${learner} → ${course}`
 		},
 	},
 }
