@@ -143,6 +143,7 @@ export default {
 		 * user's resolved default view (initial state `dashboardRole`).
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
 		activeRole() {
 			if (VALID_ROLES.includes(this.role)) {
@@ -156,6 +157,7 @@ export default {
 		 * The dashboard page title for the active role view.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
 		pageTitle() {
 			return this.roleLabel(this.activeRole) + ' · ' + this.t('scholiq', 'Dashboard')
@@ -183,6 +185,7 @@ export default {
 		 * Resolve the widgets + layout for the active role view.
 		 *
 		 * @return {{widgets: Array<object>, layout: Array<object>}}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
 		viewConfig() {
 			if (this.activeRole === 'admin') {

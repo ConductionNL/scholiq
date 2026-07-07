@@ -4,7 +4,8 @@
 <!-- My learning dashboard route wrapper — renders the shared ScholiqDashboards
      in its student view. Everyone with a Scholiq role can see it (the resolved
      view set always includes 'student'), so a learner, teacher or admin all
-     reach their own mandatory-training dashboard. -->
+     reach their own mandatory-training dashboard.
+     @visual exclude Thin pass-through wrapper (renders ScholiqDashboards role="student"); the visual surface is ScholiqDashboards, which carries the baseline. -->
 <template>
 	<ScholiqDashboards role="student" />
 </template>

@@ -3,7 +3,8 @@
 
 <!-- Teaching dashboard route wrapper — renders the shared ScholiqDashboards
      in its teacher view. Nav visibility is gated on the `scholiq-teacher`
-     group (runtime `user.canTeachDashboard`); admins see it too. -->
+     group (runtime `user.canTeachDashboard`); admins see it too.
+     @visual exclude Thin pass-through wrapper (renders ScholiqDashboards role="teacher"); the visual surface is ScholiqDashboards, which carries the baseline. -->
 <template>
 	<ScholiqDashboards role="teacher" />
 </template>

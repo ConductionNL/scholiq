@@ -147,6 +147,7 @@ export default {
 		 *
 		 * @param {object} item A learner-profile object.
 		 * @return {string}
+		 * @spec exclude Presentation-only helper composing a display label from object fields; no behavioural spec requirement.
 		 */
 		learnerName(item) {
 			const full = [item.givenName, item.familyName].filter(Boolean).join(' ').trim()
@@ -160,6 +161,7 @@ export default {
 		 *
 		 * @param {object} item An enrolment object with extended relations.
 		 * @return {string}
+		 * @spec exclude Presentation-only helper composing a "learner → course" label from resolved relations; no behavioural spec requirement.
 		 */
 		enrolmentName(item) {
 			const resolve = (rel) => (rel && typeof rel === 'object'
