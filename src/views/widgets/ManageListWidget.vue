@@ -113,8 +113,10 @@ export default {
 			const cols = this.columns.length ? this.columns : ['name']
 			return cols.map((key, i) => ({
 				key,
+				// Name column stays regular weight (matches the reference design);
+				// only the trailing status/value column is muted + right-aligned.
 				cellClass: i === 0
-					? 'cn-cell--strong'
+					? ''
 					: (i === cols.length - 1 ? 'cn-cell--muted cn-cell--end' : 'cn-cell--muted'),
 			}))
 		},
