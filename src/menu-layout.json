@@ -5,7 +5,9 @@
 		"description": "Canonical nav layout applied AFTER all manifest.d fragments merge (ADR-037/ADR-044, buildManifest.js). relocations: sourceId -> targetGroupId; a missing/synthetic target id (e.g. '__toplevel__') lifts the entry to the top level, and an emptied group shell is dropped. removals: leaf menu-entry ids retired from nav (their PAGES stay routable). settingsSection: top-level config/admin leaf ids lifted into the NC settings foldout (gear icon, outside the scrollable nav). nav-restructure-dashboards IA (amends ADR-009, supersedes ADR-044): the app opens on the top-level Dashboard; the Insight group is dissolved (Dashboard + Compliance promoted to top level); Learning + People are navigable domain dashboards whose leaves render as collapsible sub-children (so #removals no longer hides them); Features & roadmap sits in the footer beside Documentation; School-year rollover lives in the settings foldout."
 	},
 	"relocations": {
-		"Dashboard": "__toplevel__",
+		"DashboardAdmin": "__toplevel__",
+		"DashboardTeacher": "__toplevel__",
+		"DashboardStudent": "__toplevel__",
 		"Compliance": "__toplevel__"
 	},
 	"removals": [],

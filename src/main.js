@@ -106,11 +106,20 @@ function routesFromManifest(manifest) {
 // against the signed-in user's role. Provided as initial state by
 // PageController; absent runtime would (by lib fail-safe) hide every
 // role-gated menu item. Defaults to the least-privileged role on miss.
+// The set of dashboard views the signed-in user may see (resolved server-side
+// from `scholiq-{role}` group membership; admins get all three, everyone gets
+// 'student'). Exposed as per-role booleans so each dashboard menu item's
+// `visibleIf` can gate on a scalar `eq: true` (the predicate grammar has no
+// array-contains operator).
+const dashboardRoles = loadState('scholiq', 'dashboardRoles', ['student']) || []
 bundledManifest.runtime = {
 	...(bundledManifest.runtime || {}),
 	user: {
 		...(bundledManifest.runtime?.user || {}),
 		primaryRole: loadState('scholiq', 'primaryRole', 'learner'),
+		canAdminDashboard: dashboardRoles.includes('admin'),
+		canTeachDashboard: dashboardRoles.includes('teacher'),
+		canLearnDashboard: dashboardRoles.includes('student'),
 	},
 }
 
