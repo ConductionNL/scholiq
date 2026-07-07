@@ -34,7 +34,7 @@ const SEEDED_SCHEMAS = new Set([
 	'AssessmentResult', 'GradeScale', 'GradeEntry', 'FinalGrade', 'LearningPlanTemplate',
 	'LearningPlan', 'LearningPlanEvaluation', 'Signature', 'AttendanceThreshold',
 	'AttendanceRecord', 'ExcuseRequest', 'AttendanceFlag', 'Regulation', 'Attestation',
-	'Credential', 'Enrolment', 'XapiStatement', 'DataMappingProfile', 'DataExchangeJob', 'AiFeature',
+	'Credential', 'Enrolment', 'XapiStatement', 'DataMappingProfile', 'DataExchangeJob',
 ])
 
 type IndexPage = { id: string; route: string; title: string; schema?: string }
