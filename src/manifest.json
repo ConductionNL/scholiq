@@ -285,58 +285,98 @@
 			"route": "/courses/:id",
 			"type": "detail",
 			"title": "Course Detail",
-			"_note": "A Course is a curricular container — the education 'catalog/parent' archetype. What a course owner comes here to manage is its four child collections, each its own object-list scoped by courseId: Lessons (the syllabus), Enrolments (the students taking it), Sessions & classes (the scheduled meetings), Assignments and Tests & assessments — plus the delivery Cohorts. These pair 6+6 below the metadata Data block (8-wide) and a compact Related panel (parent-course/curriculum-plan/programmes). A summaryAggregates KPI strip counts lessons/enrolments/assignments/assessments at a glance, and lifecycleActions drives the draft→published→archived transitions (CoursePublishGuard). Course Materials render as a Files leaf — materials/handouts are the course's document surface. No email/calendar/talk: the Course schema declares NO linkedTypes and a course is a definition, not a correspondence thread (HARD RULE 1). The audit trail is a rarely-read history, so it lives as the single sidebar tab (CnAuditTrailTab), not a body widget (HARD RULE 4).",
+			"_note": "A Course is a curricular container — the education 'catalog/parent' archetype. What a course owner comes here to manage is its four child collections, each its own object-list scoped by courseId: Lessons (the syllabus), Enrolments (the students taking it), Sessions & classes (the scheduled meetings), Assignments and Tests & assessments — plus the delivery Cohorts. These pair 6+6 below the metadata Data block (8-wide) and a compact Related panel (parent-course/curriculum-plan/programmes). A stats-block KPI panel counts lessons/enrolments/assignments/assessments at a glance, and lifecycleActions drives the draft→published→archived transitions (CoursePublishGuard). Course Materials render as a Files leaf — materials/handouts are the course's document surface. No email/calendar/talk: the Course schema declares NO linkedTypes and a course is a definition, not a correspondence thread (HARD RULE 1). The audit trail is a rarely-read history, so it lives as the single sidebar tab (the built-in audit widget), not a body widget (HARD RULE 4).",
 			"config": {
 				"register": "scholiq",
 				"schema": "Course",
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{
-						"label": "Lessons",
-						"register": "scholiq",
-						"schema": "lesson",
-						"metric": "count",
-						"filter": {
-							"courseId": "@objectId"
-						}
-					},
-					{
-						"label": "Enrolments",
-						"register": "scholiq",
-						"schema": "enrolment",
-						"metric": "count",
-						"filter": {
-							"courseId": "@objectId"
-						}
-					},
-					{
-						"label": "Assignments",
-						"register": "scholiq",
-						"schema": "assignment",
-						"metric": "count",
-						"filter": {
-							"courseId": "@objectId"
-						}
-					},
-					{
-						"label": "Assessments",
-						"register": "scholiq",
-						"schema": "assessment",
-						"metric": "count",
-						"filter": {
-							"courseId": "@objectId"
-						}
-					}
-				],
 				"widgets": [
 					{
 						"id": "course-data",
 						"type": "data",
 						"title": "Data",
 						"content": {
-							"columns": 2
+							"columns": 2,
+							"include": [
+								"code",
+								"name",
+								"name_nl",
+								"description",
+								"level",
+								"language",
+								"tags",
+								"mandatoryTraining",
+								"certificateTemplate"
+							]
+						},
+						"icon": "School"
+					},
+					{
+						"id": "course-details2",
+						"type": "data",
+						"title": "Curriculum & compliance",
+						"icon": "Sitemap",
+						"content": {
+							"columns": 2,
+							"include": [
+								"regulationSlug",
+								"renewalCourseSlug",
+								"parentCourseId",
+								"curriculumPlanId",
+								"programmeIds"
+							]
+						}
+					},
+					{
+						"id": "course-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Lessons",
+									"register": "scholiq",
+									"schema": "lesson",
+									"metric": "count",
+									"filter": {
+										"courseId": "@objectId"
+									},
+									"route": "LessonIndex"
+								},
+								{
+									"title": "Enrolments",
+									"register": "scholiq",
+									"schema": "enrolment",
+									"metric": "count",
+									"filter": {
+										"courseId": "@objectId"
+									},
+									"route": "Enrolments"
+								},
+								{
+									"title": "Assignments",
+									"register": "scholiq",
+									"schema": "assignment",
+									"metric": "count",
+									"filter": {
+										"courseId": "@objectId"
+									},
+									"route": "Assignments"
+								},
+								{
+									"title": "Assessments",
+									"register": "scholiq",
+									"schema": "assessment",
+									"metric": "count",
+									"filter": {
+										"courseId": "@objectId"
+									},
+									"route": "Assessments"
+								}
+							]
 						}
 					},
 					{
@@ -353,7 +393,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "order",
@@ -376,8 +416,14 @@
 									"label": "Mandatory Training"
 								}
 							],
-							"rowRoute": "LessonDetail"
-						}
+							"rowRoute": "LessonDetail",
+							"viewAllRoute": "LessonIndex",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No lessons found."
+						},
+						"icon": "BookOpenVariant"
 					},
 					{
 						"id": "course-enrolments",
@@ -393,7 +439,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -416,8 +462,14 @@
 									"label": "Source"
 								}
 							],
-							"rowRoute": "EnrolmentDetail"
-						}
+							"rowRoute": "EnrolmentDetail",
+							"viewAllRoute": "Enrolments",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No enrolments found."
+						},
+						"icon": "AccountGroup"
 					},
 					{
 						"id": "course-cohorts",
@@ -433,7 +485,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "name",
@@ -452,8 +504,14 @@
 									"label": "Programme ID"
 								}
 							],
-							"rowRoute": "CohortDetail"
-						}
+							"rowRoute": "CohortDetail",
+							"viewAllRoute": "Cohorts",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No cohorts found."
+						},
+						"icon": "AccountGroup"
 					},
 					{
 						"id": "course-assignments",
@@ -469,7 +527,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -488,8 +546,14 @@
 									"label": "Rubric ID"
 								}
 							],
-							"rowRoute": "AssignmentDetail"
-						}
+							"rowRoute": "AssignmentDetail",
+							"viewAllRoute": "Assignments",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No assignments found."
+						},
+						"icon": "ClipboardList"
 					},
 					{
 						"id": "course-sessions",
@@ -505,7 +569,7 @@
 								"field": "startsAt",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -524,8 +588,14 @@
 									"label": "Location"
 								}
 							],
-							"rowRoute": "SessionDetail"
-						}
+							"rowRoute": "SessionDetail",
+							"viewAllRoute": "Sessions",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No sessions & classes found."
+						},
+						"icon": "Calendar"
 					},
 					{
 						"id": "course-assessments",
@@ -541,7 +611,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -560,19 +630,27 @@
 									"label": "Available From"
 								}
 							],
-							"rowRoute": "AssessmentDetail"
-						}
+							"rowRoute": "AssessmentDetail",
+							"viewAllRoute": "Assessments",
+							"viewAllQuery": {
+								"courseId": "@objectId"
+							},
+							"emptyText": "No tests & assessments found."
+						},
+						"icon": "ClipboardCheckOutline"
 					},
 					{
 						"id": "course-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "course-materials",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Course materials"
+						"title": "Course materials",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -587,7 +665,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "course-related",
+						"widgetId": "course-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -596,65 +674,83 @@
 					},
 					{
 						"id": "3",
-						"widgetId": "course-lessons",
+						"widgetId": "course-details2",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 6,
-						"gridHeight": 5,
+						"gridWidth": 8,
+						"gridHeight": 4,
 						"showTitle": false
 					},
 					{
 						"id": "4",
-						"widgetId": "course-enrolments",
-						"gridX": 6,
+						"widgetId": "course-related",
+						"gridX": 8,
 						"gridY": 5,
-						"gridWidth": 6,
-						"gridHeight": 5,
+						"gridWidth": 4,
+						"gridHeight": 4,
 						"showTitle": false
 					},
 					{
 						"id": "5",
-						"widgetId": "course-sessions",
+						"widgetId": "course-lessons",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 9,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "6",
-						"widgetId": "course-assignments",
+						"widgetId": "course-enrolments",
 						"gridX": 6,
-						"gridY": 10,
+						"gridY": 9,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "7",
-						"widgetId": "course-assessments",
+						"widgetId": "course-cohorts",
 						"gridX": 0,
-						"gridY": 15,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "8",
-						"widgetId": "course-cohorts",
+						"widgetId": "course-assignments",
 						"gridX": 6,
-						"gridY": 15,
+						"gridY": 14,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "9",
+						"widgetId": "course-sessions",
+						"gridX": 0,
+						"gridY": 19,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "10",
+						"widgetId": "course-assessments",
+						"gridX": 6,
+						"gridY": 19,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "11",
 						"widgetId": "course-materials",
 						"gridX": 0,
-						"gridY": 20,
+						"gridY": 24,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -666,7 +762,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -697,9 +797,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Materials", "register": "scholiq", "schema": "material", "metric": "count", "filter": { "lessonId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "lesson-data",
@@ -707,6 +804,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "BookOpenVariant"
+					},
+					{
+						"id": "lesson-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Materials",
+									"register": "scholiq",
+									"schema": "material",
+									"metric": "count",
+									"filter": {
+										"lessonId": "@objectId"
+									},
+									"route": "Materials"
+								}
+							]
 						}
 					},
 					{
@@ -723,7 +841,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "order",
@@ -742,19 +860,27 @@
 									"label": "License"
 								}
 							],
-							"rowRoute": "MaterialDetail"
-						}
+							"rowRoute": "MaterialDetail",
+							"viewAllRoute": "Materials",
+							"viewAllQuery": {
+								"lessonId": "@objectId"
+							},
+							"emptyText": "No materials found."
+						},
+						"icon": "FolderOutline"
 					},
 					{
 						"id": "lesson-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "lesson-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Lesson content"
+						"title": "Lesson content",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -769,7 +895,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "lesson-related",
+						"widgetId": "lesson-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -781,17 +907,26 @@
 						"widgetId": "lesson-materials",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
+						"widgetId": "lesson-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
 						"widgetId": "lesson-files",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -803,7 +938,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -846,17 +985,70 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Grade entries", "register": "scholiq", "schema": "grade-entry", "metric": "count", "filter": { "learnerId": "@object.learnerId", "courseId": "@object.courseId" } },
-					{ "label": "Attendance records", "register": "scholiq", "schema": "attendance-record", "metric": "count", "filter": { "learnerId": "@object.learnerId", "courseId": "@object.courseId" } }
-				],
 				"widgets": [
 					{
 						"id": "enrol-data",
 						"type": "data",
-						"title": "Data",
+						"title": "Enrolment",
 						"content": {
-							"columns": 2
+							"columns": 2,
+							"include": [
+								"learnerId",
+								"learnerRef",
+								"courseId",
+								"cohortId",
+								"managerId"
+							]
+						},
+						"icon": "AccountGroup"
+					},
+					{
+						"id": "enrol-details2",
+						"type": "data",
+						"title": "Progress & logistics",
+						"icon": "ChartLine",
+						"content": {
+							"columns": 2,
+							"include": [
+								"mandatory",
+								"dueDate",
+								"source",
+								"reason",
+								"regulationSlug",
+								"bulkJobId"
+							]
+						}
+					},
+					{
+						"id": "enrol-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Grade entries",
+									"register": "scholiq",
+									"schema": "grade-entry",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@object.learnerId",
+										"courseId": "@object.courseId"
+									},
+									"route": "GradeEntries"
+								},
+								{
+									"title": "Attendance records",
+									"register": "scholiq",
+									"schema": "attendance-record",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@object.learnerId",
+										"courseId": "@object.courseId"
+									},
+									"route": "AttendanceRecords"
+								}
+							]
 						}
 					},
 					{
@@ -874,7 +1066,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "componentId",
@@ -897,8 +1089,16 @@
 									"label": "Graded At"
 								}
 							],
-							"rowRoute": "GradeEntryDetail"
-						}
+							"rowRoute": "GradeEntryDetail",
+							"viewAllRoute": "GradeEntries",
+							"viewAllQuery": {
+								"learnerId": "@object.learnerId",
+								"courseId": "@object.courseId"
+							},
+							"emptyText": "No grade entries found.",
+							"allowCreate": false
+						},
+						"icon": "Percent"
 					},
 					{
 						"id": "enrol-submissions",
@@ -914,7 +1114,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "assignmentId",
@@ -929,8 +1129,15 @@
 									"label": "Proposed Grade"
 								}
 							],
-							"rowRoute": "SubmissionDetail"
-						}
+							"rowRoute": "SubmissionDetail",
+							"viewAllRoute": "Submissions",
+							"viewAllQuery": {
+								"learnerIds": "@object.learnerId"
+							},
+							"emptyText": "No submissions found.",
+							"allowCreate": false
+						},
+						"icon": "FileDocument"
 					},
 					{
 						"id": "enrol-attendance",
@@ -947,7 +1154,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "sessionId",
@@ -966,13 +1173,22 @@
 									"label": "Marked At"
 								}
 							],
-							"rowRoute": "AttendanceRecordDetail"
-						}
+							"rowRoute": "AttendanceRecordDetail",
+							"viewAllRoute": "AttendanceRecords",
+							"viewAllQuery": {
+								"learnerId": "@object.learnerId",
+								"courseId": "@object.courseId"
+							},
+							"emptyText": "No attendance found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "enrol-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -987,7 +1203,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "enrol-related",
+						"widgetId": "enrol-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -996,27 +1212,45 @@
 					},
 					{
 						"id": "3",
-						"widgetId": "enrol-grades",
+						"widgetId": "enrol-details2",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
-						"gridHeight": 5,
+						"gridWidth": 8,
+						"gridHeight": 4,
 						"showTitle": false
 					},
 					{
 						"id": "4",
-						"widgetId": "enrol-submissions",
-						"gridX": 0,
-						"gridY": 10,
-						"gridWidth": 12,
-						"gridHeight": 5,
+						"widgetId": "enrol-related",
+						"gridX": 8,
+						"gridY": 5,
+						"gridWidth": 4,
+						"gridHeight": 4,
 						"showTitle": false
 					},
 					{
 						"id": "5",
+						"widgetId": "enrol-grades",
+						"gridX": 0,
+						"gridY": 9,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "6",
+						"widgetId": "enrol-submissions",
+						"gridX": 6,
+						"gridY": 9,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "7",
 						"widgetId": "enrol-attendance",
 						"gridX": 0,
-						"gridY": 15,
+						"gridY": 14,
 						"gridWidth": 12,
 						"gridHeight": 5,
 						"showTitle": false
@@ -1030,7 +1264,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1066,11 +1304,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Attestations", "register": "scholiq", "schema": "attestation", "metric": "count", "filter": { "regulationSlug": "@object.slug" } },
-					{ "label": "External training", "register": "scholiq", "schema": "external-training-record", "metric": "count", "filter": { "regulationSlug": "@object.slug" } },
-					{ "label": "Mandatory courses", "register": "scholiq", "schema": "course", "metric": "count", "filter": { "regulationSlug": "@object.slug" } }
-				],
 				"widgets": [
 					{
 						"id": "reg-data",
@@ -1078,6 +1311,47 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Gavel"
+					},
+					{
+						"id": "reg-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Attestations",
+									"register": "scholiq",
+									"schema": "attestation",
+									"metric": "count",
+									"filter": {
+										"regulationSlug": "@object.slug"
+									},
+									"route": "Attestations"
+								},
+								{
+									"title": "External training",
+									"register": "scholiq",
+									"schema": "external-training-record",
+									"metric": "count",
+									"filter": {
+										"regulationSlug": "@object.slug"
+									},
+									"route": "ExternalTrainingRecords"
+								},
+								{
+									"title": "Mandatory courses",
+									"register": "scholiq",
+									"schema": "course",
+									"metric": "count",
+									"filter": {
+										"regulationSlug": "@object.slug"
+									},
+									"route": "Courses"
+								}
+							]
 						}
 					},
 					{
@@ -1094,7 +1368,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1109,8 +1383,15 @@
 									"label": "Score"
 								}
 							],
-							"rowRoute": "AttestationDetail"
-						}
+							"rowRoute": "AttestationDetail",
+							"viewAllRoute": "Attestations",
+							"viewAllQuery": {
+								"regulationSlug": "@object.slug"
+							},
+							"emptyText": "No attestations found.",
+							"allowCreate": false
+						},
+						"icon": "FileSign"
 					},
 					{
 						"id": "reg-external",
@@ -1126,7 +1407,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1149,8 +1430,15 @@
 									"label": "Valid Until"
 								}
 							],
-							"rowRoute": "ExternalTrainingRecordDetail"
-						}
+							"rowRoute": "ExternalTrainingRecordDetail",
+							"viewAllRoute": "ExternalTrainingRecords",
+							"viewAllQuery": {
+								"regulationSlug": "@object.slug"
+							},
+							"emptyText": "No external training found.",
+							"allowCreate": false
+						},
+						"icon": "School"
 					},
 					{
 						"id": "reg-courses",
@@ -1166,7 +1454,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "code",
@@ -1185,13 +1473,20 @@
 									"label": "Mandatory Training"
 								}
 							],
-							"rowRoute": "CourseDetail"
-						}
+							"rowRoute": "CourseDetail",
+							"viewAllRoute": "Courses",
+							"viewAllQuery": {
+								"regulationSlug": "@object.slug"
+							},
+							"emptyText": "No mandatory courses found."
+						},
+						"icon": "School"
 					},
 					{
 						"id": "reg-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -1206,7 +1501,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "reg-related",
+						"widgetId": "reg-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -1218,16 +1513,16 @@
 						"widgetId": "reg-attestations",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
 						"widgetId": "reg-external",
-						"gridX": 0,
-						"gridY": 10,
-						"gridWidth": 12,
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
@@ -1235,8 +1530,17 @@
 						"id": "5",
 						"widgetId": "reg-courses",
 						"gridX": 0,
-						"gridY": 15,
-						"gridWidth": 12,
+						"gridY": 10,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "6",
+						"widgetId": "reg-related",
+						"gridX": 6,
+						"gridY": 10,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -1249,7 +1553,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1283,18 +1591,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "FileSign"
 					},
 					{
 						"id": "att-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "att-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Signed evidence"
+						"title": "Signed evidence",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -1322,7 +1633,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -1334,7 +1645,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1367,18 +1682,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "cred-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "cred-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Badge & certificate files"
+						"title": "Badge & certificate files",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -1406,7 +1724,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -1418,7 +1736,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1442,13 +1764,15 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "credv-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Signed badge"
+						"title": "Signed badge",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -1467,7 +1791,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -1502,15 +1826,10 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "Programme",
-				"_note": "A Programme is a qualification-level container (level, code, curriculum-plan, member courses, credential template) — the education 'parent/catalog' archetype. Body leads with programme metadata (8-wide) and a Related panel resolving the curriculum-plan and credential template. Below, the constituent Courses and delivery Cohorts render as related-index rosters — the two things a programme owner manages — and Final grades give an outcome roster. A summaryAggregates KPI strip counts courses/cohorts/final-grades and lifecycleActions drives draft→published→archived (ProgrammePublishGuard). No comms leaves: Programme declares no linkedTypes and is a definition, not a correspondence thread (HARD RULE 1). The audit trail is the single sidebar tab (CnAuditTrailTab), not a body widget (HARD RULE 4).",
+				"_note": "A Programme is a qualification-level container (level, code, curriculum-plan, member courses, credential template) — the education 'parent/catalog' archetype. Body leads with programme metadata (8-wide) and a Related panel resolving the curriculum-plan and credential template. Below, the constituent Courses and delivery Cohorts render as related-index rosters — the two things a programme owner manages — and Final grades give an outcome roster. A stats-block KPI panel counts courses/cohorts/final-grades and lifecycleActions drives draft→published→archived (ProgrammePublishGuard). No comms leaves: Programme declares no linkedTypes and is a definition, not a correspondence thread (HARD RULE 1). The audit trail is the single sidebar tab (the built-in audit widget), not a body widget (HARD RULE 4).",
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Courses", "register": "scholiq", "schema": "course", "metric": "count", "filter": { "programmeId": "@objectId" } },
-					{ "label": "Cohorts", "register": "scholiq", "schema": "cohort", "metric": "count", "filter": { "programmeId": "@objectId" } },
-					{ "label": "Final grades", "register": "scholiq", "schema": "final-grade", "metric": "count", "filter": { "programmeId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "prog-data",
@@ -1518,6 +1837,47 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Sitemap"
+					},
+					{
+						"id": "prog-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Courses",
+									"register": "scholiq",
+									"schema": "course",
+									"metric": "count",
+									"filter": {
+										"programmeId": "@objectId"
+									},
+									"route": "Courses"
+								},
+								{
+									"title": "Cohorts",
+									"register": "scholiq",
+									"schema": "cohort",
+									"metric": "count",
+									"filter": {
+										"programmeId": "@objectId"
+									},
+									"route": "Cohorts"
+								},
+								{
+									"title": "Final grades",
+									"register": "scholiq",
+									"schema": "final-grade",
+									"metric": "count",
+									"filter": {
+										"programmeId": "@objectId"
+									},
+									"route": "FinalGrades"
+								}
+							]
 						}
 					},
 					{
@@ -1534,7 +1894,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "code",
@@ -1553,8 +1913,14 @@
 									"label": "Language"
 								}
 							],
-							"rowRoute": "CourseDetail"
-						}
+							"rowRoute": "CourseDetail",
+							"viewAllRoute": "Courses",
+							"viewAllQuery": {
+								"programmeId": "@objectId"
+							},
+							"emptyText": "No courses found."
+						},
+						"icon": "School"
 					},
 					{
 						"id": "prog-cohorts",
@@ -1570,7 +1936,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "name",
@@ -1589,8 +1955,14 @@
 									"label": "Course ID"
 								}
 							],
-							"rowRoute": "CohortDetail"
-						}
+							"rowRoute": "CohortDetail",
+							"viewAllRoute": "Cohorts",
+							"viewAllQuery": {
+								"programmeId": "@objectId"
+							},
+							"emptyText": "No cohorts found."
+						},
+						"icon": "AccountGroup"
 					},
 					{
 						"id": "prog-finals",
@@ -1606,7 +1978,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1625,13 +1997,21 @@
 									"label": "Passed"
 								}
 							],
-							"rowRoute": "FinalGradeDetail"
-						}
+							"rowRoute": "FinalGradeDetail",
+							"viewAllRoute": "FinalGrades",
+							"viewAllQuery": {
+								"programmeId": "@objectId"
+							},
+							"emptyText": "No final grades found.",
+							"allowCreate": false
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "prog-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -1646,7 +2026,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "prog-related",
+						"widgetId": "prog-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -1658,16 +2038,16 @@
 						"widgetId": "prog-courses",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
 						"widgetId": "prog-cohorts",
-						"gridX": 0,
-						"gridY": 10,
-						"gridWidth": 12,
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
@@ -1675,8 +2055,17 @@
 						"id": "5",
 						"widgetId": "prog-finals",
 						"gridX": 0,
-						"gridY": 15,
-						"gridWidth": 12,
+						"gridY": 10,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "6",
+						"widgetId": "prog-related",
+						"gridX": 6,
+						"gridY": 10,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -1689,7 +2078,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1717,10 +2110,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Grade entries", "register": "scholiq", "schema": "grade-entry", "metric": "count", "filter": { "curriculumPlanId": "@objectId" } },
-					{ "label": "Final grades", "register": "scholiq", "schema": "final-grade", "metric": "count", "filter": { "curriculumPlanId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "cplan-data",
@@ -1728,6 +2117,37 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Sitemap"
+					},
+					{
+						"id": "cplan-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Grade entries",
+									"register": "scholiq",
+									"schema": "grade-entry",
+									"metric": "count",
+									"filter": {
+										"curriculumPlanId": "@objectId"
+									},
+									"route": "GradeEntries"
+								},
+								{
+									"title": "Final grades",
+									"register": "scholiq",
+									"schema": "final-grade",
+									"metric": "count",
+									"filter": {
+										"curriculumPlanId": "@objectId"
+									},
+									"route": "FinalGrades"
+								}
+							]
 						}
 					},
 					{
@@ -1744,7 +2164,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1763,8 +2183,15 @@
 									"label": "Period"
 								}
 							],
-							"rowRoute": "GradeEntryDetail"
-						}
+							"rowRoute": "GradeEntryDetail",
+							"viewAllRoute": "GradeEntries",
+							"viewAllQuery": {
+								"curriculumPlanId": "@objectId"
+							},
+							"emptyText": "No grade entries found.",
+							"allowCreate": false
+						},
+						"icon": "Percent"
 					},
 					{
 						"id": "cplan-finals",
@@ -1780,7 +2207,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1799,13 +2226,21 @@
 									"label": "Passed"
 								}
 							],
-							"rowRoute": "FinalGradeDetail"
-						}
+							"rowRoute": "FinalGradeDetail",
+							"viewAllRoute": "FinalGrades",
+							"viewAllQuery": {
+								"curriculumPlanId": "@objectId"
+							},
+							"emptyText": "No final grades found.",
+							"allowCreate": false
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "cplan-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -1820,7 +2255,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "cplan-related",
+						"widgetId": "cplan-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -1832,13 +2267,22 @@
 						"widgetId": "cplan-grades",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
 						"widgetId": "cplan-finals",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
+						"widgetId": "cplan-related",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 12,
@@ -1854,7 +2298,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -1882,11 +2330,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Sessions", "register": "scholiq", "schema": "session", "metric": "count", "filter": { "cohortId": "@objectId" } },
-					{ "label": "Enrolments", "register": "scholiq", "schema": "enrolment", "metric": "count", "filter": { "cohortId": "@objectId" } },
-					{ "label": "Attendance flags", "register": "scholiq", "schema": "attendance-flag", "metric": "count", "filter": { "cohortId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "coh-data",
@@ -1894,6 +2337,47 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "AccountGroup"
+					},
+					{
+						"id": "coh-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Sessions",
+									"register": "scholiq",
+									"schema": "session",
+									"metric": "count",
+									"filter": {
+										"cohortId": "@objectId"
+									},
+									"route": "Sessions"
+								},
+								{
+									"title": "Enrolments",
+									"register": "scholiq",
+									"schema": "enrolment",
+									"metric": "count",
+									"filter": {
+										"cohortId": "@objectId"
+									},
+									"route": "Enrolments"
+								},
+								{
+									"title": "Attendance flags",
+									"register": "scholiq",
+									"schema": "attendance-flag",
+									"metric": "count",
+									"filter": {
+										"cohortId": "@objectId"
+									},
+									"route": "AttendanceFlags"
+								}
+							]
 						}
 					},
 					{
@@ -1910,7 +2394,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -1929,8 +2413,14 @@
 									"label": "Location"
 								}
 							],
-							"rowRoute": "SessionDetail"
-						}
+							"rowRoute": "SessionDetail",
+							"viewAllRoute": "Sessions",
+							"viewAllQuery": {
+								"cohortId": "@objectId"
+							},
+							"emptyText": "No sessions found."
+						},
+						"icon": "Calendar"
 					},
 					{
 						"id": "coh-enrol",
@@ -1946,7 +2436,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -1965,8 +2455,14 @@
 									"label": "Due Date"
 								}
 							],
-							"rowRoute": "EnrolmentDetail"
-						}
+							"rowRoute": "EnrolmentDetail",
+							"viewAllRoute": "Enrolments",
+							"viewAllQuery": {
+								"cohortId": "@objectId"
+							},
+							"emptyText": "No enrolments found."
+						},
+						"icon": "AccountGroup"
 					},
 					{
 						"id": "coh-flags",
@@ -1982,7 +2478,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -2001,13 +2497,21 @@
 									"label": "Window End"
 								}
 							],
-							"rowRoute": "AttendanceFlagDetail"
-						}
+							"rowRoute": "AttendanceFlagDetail",
+							"viewAllRoute": "AttendanceFlags",
+							"viewAllQuery": {
+								"cohortId": "@objectId"
+							},
+							"emptyText": "No attendance flags found.",
+							"allowCreate": false
+						},
+						"icon": "AlertCircleOutline"
 					},
 					{
 						"id": "coh-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -2022,7 +2526,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "coh-related",
+						"widgetId": "coh-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -2034,16 +2538,16 @@
 						"widgetId": "coh-sessions",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
 						"widgetId": "coh-enrol",
-						"gridX": 0,
-						"gridY": 10,
-						"gridWidth": 12,
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
@@ -2051,8 +2555,17 @@
 						"id": "5",
 						"widgetId": "coh-flags",
 						"gridX": 0,
-						"gridY": 15,
-						"gridWidth": 12,
+						"gridY": 10,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "6",
+						"widgetId": "coh-related",
+						"gridX": 6,
+						"gridY": 10,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -2065,7 +2578,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2101,10 +2618,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Attendance", "register": "scholiq", "schema": "attendance-record", "metric": "count", "filter": { "sessionId": "@objectId" } },
-					{ "label": "Assignments", "register": "scholiq", "schema": "assignment", "metric": "count", "filter": { "sessionId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "sess-data",
@@ -2112,6 +2625,37 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Calendar"
+					},
+					{
+						"id": "sess-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Attendance",
+									"register": "scholiq",
+									"schema": "attendance-record",
+									"metric": "count",
+									"filter": {
+										"sessionId": "@objectId"
+									},
+									"route": "AttendanceRecords"
+								},
+								{
+									"title": "Assignments",
+									"register": "scholiq",
+									"schema": "assignment",
+									"metric": "count",
+									"filter": {
+										"sessionId": "@objectId"
+									},
+									"route": "Assignments"
+								}
+							]
 						}
 					},
 					{
@@ -2128,7 +2672,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -2147,8 +2691,15 @@
 									"label": "Marked At"
 								}
 							],
-							"rowRoute": "AttendanceRecordDetail"
-						}
+							"rowRoute": "AttendanceRecordDetail",
+							"viewAllRoute": "AttendanceRecords",
+							"viewAllQuery": {
+								"sessionId": "@objectId"
+							},
+							"emptyText": "No attendance found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "sess-assign",
@@ -2164,7 +2715,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -2179,19 +2730,27 @@
 									"label": "Max Points"
 								}
 							],
-							"rowRoute": "AssignmentDetail"
-						}
+							"rowRoute": "AssignmentDetail",
+							"viewAllRoute": "Assignments",
+							"viewAllQuery": {
+								"sessionId": "@objectId"
+							},
+							"emptyText": "No assignments found."
+						},
+						"icon": "ClipboardList"
 					},
 					{
 						"id": "sess-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "sess-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Session materials"
+						"title": "Session materials",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -2206,7 +2765,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "sess-related",
+						"widgetId": "sess-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -2218,13 +2777,22 @@
 						"widgetId": "sess-attend",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
 						"widgetId": "sess-assign",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
+						"widgetId": "sess-related",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 12,
@@ -2232,12 +2800,12 @@
 						"showTitle": false
 					},
 					{
-						"id": "5",
+						"id": "6",
 						"widgetId": "sess-files",
 						"gridX": 0,
 						"gridY": 15,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -2249,7 +2817,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2281,18 +2853,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "FolderOutline"
 					},
 					{
 						"id": "mat-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "mat-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Resource file"
+						"title": "Resource file",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -2320,7 +2895,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -2332,7 +2907,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2360,9 +2939,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Used by assignments", "register": "scholiq", "schema": "assignment", "metric": "count", "filter": { "rubricId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "rub-data",
@@ -2370,6 +2946,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "ClipboardList"
+					},
+					{
+						"id": "rub-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Used by assignments",
+									"register": "scholiq",
+									"schema": "assignment",
+									"metric": "count",
+									"filter": {
+										"rubricId": "@objectId"
+									},
+									"route": "Assignments"
+								}
+							]
 						}
 					},
 					{
@@ -2386,7 +2983,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -2405,13 +3002,20 @@
 									"label": "Max Points"
 								}
 							],
-							"rowRoute": "AssignmentDetail"
-						}
+							"rowRoute": "AssignmentDetail",
+							"viewAllRoute": "Assignments",
+							"viewAllQuery": {
+								"rubricId": "@objectId"
+							},
+							"emptyText": "No used by assignments found."
+						},
+						"icon": "ClipboardList"
 					},
 					{
 						"id": "rub-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -2426,7 +3030,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "rub-related",
+						"widgetId": "rub-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -2438,7 +3042,16 @@
 						"widgetId": "rub-assign",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "rub-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -2451,7 +3064,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2479,9 +3096,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Submissions", "register": "scholiq", "schema": "submission", "metric": "count", "filter": { "assignmentId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "asn-data",
@@ -2489,23 +3103,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "ClipboardList"
 					},
 					{
-						"id": "asn-count",
-						"type": "stat",
-						"title": "Submissions received",
+						"id": "asn-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
 						"content": {
-							"label": "Submissions received",
-							"source": {
-								"register": "scholiq",
-								"schema": "Submission",
-								"metric": "count",
-								"field": "id",
-								"filter": {
-									"assignmentId": "@objectId"
+							"entries": [
+								{
+									"title": "Submissions",
+									"register": "scholiq",
+									"schema": "submission",
+									"metric": "count",
+									"filter": {
+										"assignmentId": "@objectId"
+									},
+									"route": "Submissions"
 								}
-							}
+							]
 						}
 					},
 					{
@@ -2522,7 +3140,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerIds",
@@ -2541,19 +3159,28 @@
 									"label": "Grade Entry ID"
 								}
 							],
-							"rowRoute": "SubmissionDetail"
-						}
+							"rowRoute": "SubmissionDetail",
+							"viewAllRoute": "Submissions",
+							"viewAllQuery": {
+								"assignmentId": "@objectId"
+							},
+							"emptyText": "No submissions found.",
+							"allowCreate": false
+						},
+						"icon": "FileDocument"
 					},
 					{
 						"id": "asn-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "asn-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Briefing materials"
+						"title": "Briefing materials",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -2568,7 +3195,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "asn-related",
+						"widgetId": "asn-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -2577,19 +3204,19 @@
 					},
 					{
 						"id": "3",
-						"widgetId": "asn-count",
+						"widgetId": "asn-subs",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 4,
-						"gridHeight": 2,
+						"gridWidth": 6,
+						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
-						"widgetId": "asn-subs",
-						"gridX": 0,
-						"gridY": 7,
-						"gridWidth": 12,
+						"widgetId": "asn-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
@@ -2597,9 +3224,9 @@
 						"id": "5",
 						"widgetId": "asn-files",
 						"gridX": 0,
-						"gridY": 12,
+						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -2611,7 +3238,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2647,18 +3278,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "FileDocument"
 					},
 					{
 						"id": "sub-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "sub-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Submitted work"
+						"title": "Submitted work",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -2686,7 +3320,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -2698,7 +3332,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2742,9 +3380,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Items", "register": "scholiq", "schema": "item", "metric": "count", "filter": { "itemBankId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "ibank-data",
@@ -2752,23 +3387,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "DatabaseOutline"
 					},
 					{
-						"id": "ibank-count",
-						"type": "stat",
-						"title": "Items",
+						"id": "ibank-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
 						"content": {
-							"label": "Items",
-							"source": {
-								"register": "scholiq",
-								"schema": "Item",
-								"metric": "count",
-								"field": "id",
-								"filter": {
-									"itemBankId": "@objectId"
+							"entries": [
+								{
+									"title": "Items",
+									"register": "scholiq",
+									"schema": "item",
+									"metric": "count",
+									"filter": {
+										"itemBankId": "@objectId"
+									},
+									"route": "Items"
 								}
-							}
+							]
 						}
 					},
 					{
@@ -2785,7 +3424,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "title",
@@ -2804,13 +3443,20 @@
 									"label": "Difficulty"
 								}
 							],
-							"rowRoute": "ItemDetail"
-						}
+							"rowRoute": "ItemDetail",
+							"viewAllRoute": "Items",
+							"viewAllQuery": {
+								"itemBankId": "@objectId"
+							},
+							"emptyText": "No items found."
+						},
+						"icon": "DatabaseOutline"
 					},
 					{
 						"id": "ibank-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -2825,7 +3471,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "ibank-related",
+						"widgetId": "ibank-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -2834,19 +3480,19 @@
 					},
 					{
 						"id": "3",
-						"widgetId": "ibank-count",
+						"widgetId": "ibank-items",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 4,
-						"gridHeight": 2,
+						"gridWidth": 6,
+						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
-						"widgetId": "ibank-items",
-						"gridX": 0,
-						"gridY": 7,
-						"gridWidth": 12,
+						"widgetId": "ibank-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -2859,7 +3505,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2894,12 +3544,14 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "DatabaseOutline"
 					},
 					{
 						"id": "item-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -2930,7 +3582,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -2958,9 +3614,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Attempts", "register": "scholiq", "schema": "assessment-result", "metric": "count", "filter": { "assessmentId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "ass-data",
@@ -2968,23 +3621,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "ClipboardCheckOutline"
 					},
 					{
-						"id": "ass-count",
-						"type": "stat",
-						"title": "Attempts",
+						"id": "ass-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
 						"content": {
-							"label": "Attempts",
-							"source": {
-								"register": "scholiq",
-								"schema": "assessment-result",
-								"metric": "count",
-								"field": "id",
-								"filter": {
-									"assessmentId": "@objectId"
+							"entries": [
+								{
+									"title": "Attempts",
+									"register": "scholiq",
+									"schema": "assessment-result",
+									"metric": "count",
+									"filter": {
+										"assessmentId": "@objectId"
+									},
+									"route": "AssessmentResults"
 								}
-							}
+							]
 						}
 					},
 					{
@@ -3001,7 +3658,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -3020,13 +3677,21 @@
 									"label": "Grade Entry ID"
 								}
 							],
-							"rowRoute": "AssessmentResultDetail"
-						}
+							"rowRoute": "AssessmentResultDetail",
+							"viewAllRoute": "AssessmentResults",
+							"viewAllQuery": {
+								"assessmentId": "@objectId"
+							},
+							"emptyText": "No results found.",
+							"allowCreate": false
+						},
+						"icon": "ClipboardCheckOutline"
 					},
 					{
 						"id": "ass-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3041,7 +3706,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "ass-related",
+						"widgetId": "ass-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3050,19 +3715,19 @@
 					},
 					{
 						"id": "3",
-						"widgetId": "ass-count",
+						"widgetId": "ass-res",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 4,
-						"gridHeight": 2,
+						"gridWidth": 6,
+						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
-						"widgetId": "ass-res",
-						"gridX": 0,
-						"gridY": 7,
-						"gridWidth": 12,
+						"widgetId": "ass-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -3075,7 +3740,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3113,9 +3782,6 @@
 				"schema": "assessment-result",
 				"readOnly": true,
 				"_note": "An Assessment Result is one learner's attempt (responses, timing, proctoring session, grade entry). Body leads with the result data including responses (8-wide) and a Related panel resolving the assessment, learner and grade entry. The proctoring evidence for this attempt renders as a related-index. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
-				"summaryAggregates": [
-					{ "label": "Proctoring sessions", "register": "scholiq", "schema": "proctoring-session", "metric": "count", "filter": { "assessmentResultId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "ares-data",
@@ -3123,6 +3789,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "ClipboardCheckOutline"
+					},
+					{
+						"id": "ares-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Proctoring sessions",
+									"register": "scholiq",
+									"schema": "proctoring-session",
+									"metric": "count",
+									"filter": {
+										"assessmentResultId": "@objectId"
+									},
+									"route": "ProctoringSessions"
+								}
+							]
 						}
 					},
 					{
@@ -3139,7 +3826,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "provider",
@@ -3154,13 +3841,21 @@
 									"label": "Flags"
 								}
 							],
-							"rowRoute": "ProctoringSessionDetail"
-						}
+							"rowRoute": "ProctoringSessionDetail",
+							"viewAllRoute": "ProctoringSessions",
+							"viewAllQuery": {
+								"assessmentResultId": "@objectId"
+							},
+							"emptyText": "No proctoring found.",
+							"allowCreate": false
+						},
+						"icon": "ShieldCheckOutline"
 					},
 					{
 						"id": "ares-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3175,7 +3870,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "ares-related",
+						"widgetId": "ares-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3187,7 +3882,16 @@
 						"widgetId": "ares-proc",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "ares-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -3200,7 +3904,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3234,18 +3942,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "ShieldCheckOutline"
 					},
 					{
 						"id": "proc-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "proc-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Recorded artefacts"
+						"title": "Recorded artefacts",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -3273,7 +3984,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -3285,7 +3996,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3345,9 +4060,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Grade entries", "register": "scholiq", "schema": "grade-entry", "metric": "count", "filter": { "gradeScaleId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "gscale-data",
@@ -3355,6 +4067,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "ScaleBalance"
+					},
+					{
+						"id": "gscale-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Grade entries",
+									"register": "scholiq",
+									"schema": "grade-entry",
+									"metric": "count",
+									"filter": {
+										"gradeScaleId": "@objectId"
+									},
+									"route": "GradeEntries"
+								}
+							]
 						}
 					},
 					{
@@ -3371,7 +4104,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -3390,13 +4123,21 @@
 									"label": "Period"
 								}
 							],
-							"rowRoute": "GradeEntryDetail"
-						}
+							"rowRoute": "GradeEntryDetail",
+							"viewAllRoute": "GradeEntries",
+							"viewAllQuery": {
+								"gradeScaleId": "@objectId"
+							},
+							"emptyText": "No grade entries found.",
+							"allowCreate": false
+						},
+						"icon": "Percent"
 					},
 					{
 						"id": "gscale-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3411,7 +4152,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "gscale-related",
+						"widgetId": "gscale-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3423,7 +4164,16 @@
 						"widgetId": "gscale-grades",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "gscale-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -3436,7 +4186,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3471,12 +4225,14 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "Percent"
 					},
 					{
 						"id": "gentry-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3507,7 +4263,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3534,9 +4294,6 @@
 				"schema": "final-grade",
 				"readOnly": true,
 				"_note": "A Final Grade is the computed outcome for a learner on a course/programme (value, passed flag, breakdown, last recompute time) — an aggregate result. Body leads with the final-grade data including the breakdown (8-wide), a value KPI stat and a passed KPI, plus a Related panel resolving learner/course/programme/plan. The contributing Grade entries render as a related-index for traceability. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
-				"summaryAggregates": [
-					{ "label": "Contributing grades", "register": "scholiq", "schema": "grade-entry", "metric": "count", "filter": { "learnerId": "@object.learnerId", "courseId": "@object.courseId" } }
-				],
 				"widgets": [
 					{
 						"id": "fgrade-data",
@@ -3544,6 +4301,28 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Trophy"
+					},
+					{
+						"id": "fgrade-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Contributing grades",
+									"register": "scholiq",
+									"schema": "grade-entry",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@object.learnerId",
+										"courseId": "@object.courseId"
+									},
+									"route": "GradeEntries"
+								}
+							]
 						}
 					},
 					{
@@ -3561,7 +4340,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "componentId",
@@ -3580,13 +4359,22 @@
 									"label": "Period"
 								}
 							],
-							"rowRoute": "GradeEntryDetail"
-						}
+							"rowRoute": "GradeEntryDetail",
+							"viewAllRoute": "GradeEntries",
+							"viewAllQuery": {
+								"learnerId": "@object.learnerId",
+								"courseId": "@object.courseId"
+							},
+							"emptyText": "No contributing grades found.",
+							"allowCreate": false
+						},
+						"icon": "Percent"
 					},
 					{
 						"id": "fgrade-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3601,7 +4389,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "fgrade-related",
+						"widgetId": "fgrade-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3613,7 +4401,16 @@
 						"widgetId": "fgrade-grades",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "fgrade-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -3626,7 +4423,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3679,9 +4480,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Plans using template", "register": "scholiq", "schema": "learning-plan", "metric": "count", "filter": { "templateId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "lpt-data",
@@ -3689,6 +4487,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "lpt-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Plans using template",
+									"register": "scholiq",
+									"schema": "learning-plan",
+									"metric": "count",
+									"filter": {
+										"templateId": "@objectId"
+									},
+									"route": "LearningPlans"
+								}
+							]
 						}
 					},
 					{
@@ -3705,7 +4524,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -3724,13 +4543,20 @@
 									"label": "Next Review At"
 								}
 							],
-							"rowRoute": "LearningPlanDetail"
-						}
+							"rowRoute": "LearningPlanDetail",
+							"viewAllRoute": "LearningPlans",
+							"viewAllQuery": {
+								"templateId": "@objectId"
+							},
+							"emptyText": "No plans using template found."
+						},
+						"icon": "NoteTextOutline"
 					},
 					{
 						"id": "lpt-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -3745,7 +4571,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "lpt-related",
+						"widgetId": "lpt-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3757,7 +4583,16 @@
 						"widgetId": "lpt-plans",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "lpt-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -3770,7 +4605,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3798,9 +4637,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Evaluations", "register": "scholiq", "schema": "learning-plan-evaluation", "metric": "count", "filter": { "learningPlanId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "lp-data",
@@ -3808,6 +4644,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "lp-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Evaluations",
+									"register": "scholiq",
+									"schema": "learning-plan-evaluation",
+									"metric": "count",
+									"filter": {
+										"learningPlanId": "@objectId"
+									},
+									"route": "LearningPlanEvaluations"
+								}
+							]
 						}
 					},
 					{
@@ -3824,7 +4681,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "evaluatedAt",
@@ -3839,19 +4696,28 @@
 									"label": "Next Review At"
 								}
 							],
-							"rowRoute": "LearningPlanEvaluationDetail"
-						}
+							"rowRoute": "LearningPlanEvaluationDetail",
+							"viewAllRoute": "LearningPlanEvaluations",
+							"viewAllQuery": {
+								"learningPlanId": "@objectId"
+							},
+							"emptyText": "No evaluations found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "lp-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "lp-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Plan documents"
+						"title": "Plan documents",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -3866,7 +4732,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "lp-related",
+						"widgetId": "lp-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -3878,17 +4744,26 @@
 						"widgetId": "lp-evals",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
+						"widgetId": "lp-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
 						"widgetId": "lp-files",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -3900,7 +4775,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -3945,18 +4824,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "lpe-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "lpe-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Review documents"
+						"title": "Review documents",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -3984,7 +4866,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -3996,7 +4878,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4042,18 +4928,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "FileSign"
 					},
 					{
 						"id": "sig-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "sig-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Signed evidence"
+						"title": "Signed evidence",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -4081,7 +4970,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -4093,7 +4982,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4141,18 +5034,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "att-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "att-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Evidence"
+						"title": "Evidence",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -4180,7 +5076,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -4192,7 +5088,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4220,9 +5120,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Covered records", "register": "scholiq", "schema": "attendance-record", "metric": "count", "filter": { "excuseRequestId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "exc-data",
@@ -4230,6 +5127,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "MessageTextOutline"
+					},
+					{
+						"id": "exc-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Covered records",
+									"register": "scholiq",
+									"schema": "attendance-record",
+									"metric": "count",
+									"filter": {
+										"excuseRequestId": "@objectId"
+									},
+									"route": "AttendanceRecords"
+								}
+							]
 						}
 					},
 					{
@@ -4246,7 +5164,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "sessionId",
@@ -4261,19 +5179,28 @@
 									"label": "Marked At"
 								}
 							],
-							"rowRoute": "AttendanceRecordDetail"
-						}
+							"rowRoute": "AttendanceRecordDetail",
+							"viewAllRoute": "AttendanceRecords",
+							"viewAllQuery": {
+								"excuseRequestId": "@objectId"
+							},
+							"emptyText": "No covered records found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "exc-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "exc-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Supporting evidence"
+						"title": "Supporting evidence",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -4288,7 +5215,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "exc-related",
+						"widgetId": "exc-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -4300,17 +5227,26 @@
 						"widgetId": "exc-att",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					},
 					{
 						"id": "4",
+						"widgetId": "exc-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
 						"widgetId": "exc-files",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -4322,7 +5258,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4350,9 +5290,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Raised flags", "register": "scholiq", "schema": "attendance-flag", "metric": "count", "filter": { "attendanceThresholdId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "thr-data",
@@ -4360,6 +5297,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Gauge"
+					},
+					{
+						"id": "thr-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Raised flags",
+									"register": "scholiq",
+									"schema": "attendance-flag",
+									"metric": "count",
+									"filter": {
+										"attendanceThresholdId": "@objectId"
+									},
+									"route": "AttendanceFlags"
+								}
+							]
 						}
 					},
 					{
@@ -4376,7 +5334,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "learnerId",
@@ -4395,13 +5353,21 @@
 									"label": "Window End"
 								}
 							],
-							"rowRoute": "AttendanceFlagDetail"
-						}
+							"rowRoute": "AttendanceFlagDetail",
+							"viewAllRoute": "AttendanceFlags",
+							"viewAllQuery": {
+								"attendanceThresholdId": "@objectId"
+							},
+							"emptyText": "No raised flags found.",
+							"allowCreate": false
+						},
+						"icon": "AlertCircleOutline"
 					},
 					{
 						"id": "thr-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -4416,7 +5382,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "thr-related",
+						"widgetId": "thr-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -4428,7 +5394,16 @@
 						"widgetId": "thr-flags",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "thr-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -4441,7 +5416,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4475,7 +5454,8 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "AlertCircleOutline"
 					},
 					{
 						"id": "flag-recs",
@@ -4492,7 +5472,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "sessionId",
@@ -4511,13 +5491,22 @@
 									"label": "Marked At"
 								}
 							],
-							"rowRoute": "AttendanceRecordDetail"
-						}
+							"rowRoute": "AttendanceRecordDetail",
+							"viewAllRoute": "AttendanceRecords",
+							"viewAllQuery": {
+								"learnerId": "@object.learnerId",
+								"cohortId": "@object.cohortId"
+							},
+							"emptyText": "No attendance records found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "flag-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -4557,7 +5546,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4601,9 +5594,6 @@
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
-				"summaryAggregates": [
-					{ "label": "Exchange jobs", "register": "scholiq", "schema": "data-exchange-job", "metric": "count", "filter": { "mappingProfileId": "@objectId" } }
-				],
 				"widgets": [
 					{
 						"id": "dmp-data",
@@ -4611,6 +5601,27 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "Sitemap"
+					},
+					{
+						"id": "dmp-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Exchange jobs",
+									"register": "scholiq",
+									"schema": "data-exchange-job",
+									"metric": "count",
+									"filter": {
+										"mappingProfileId": "@objectId"
+									},
+									"route": "DataExchangeJobs"
+								}
+							]
 						}
 					},
 					{
@@ -4627,7 +5638,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "direction",
@@ -4646,13 +5657,21 @@
 									"label": "Result"
 								}
 							],
-							"rowRoute": "DataExchangeJobDetail"
-						}
+							"rowRoute": "DataExchangeJobDetail",
+							"viewAllRoute": "DataExchangeJobs",
+							"viewAllQuery": {
+								"mappingProfileId": "@objectId"
+							},
+							"emptyText": "No exchange jobs found.",
+							"allowCreate": false
+						},
+						"icon": "DatabaseOutline"
 					},
 					{
 						"id": "dmp-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -4667,7 +5686,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "dmp-related",
+						"widgetId": "dmp-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -4679,7 +5698,16 @@
 						"widgetId": "dmp-jobs",
 						"gridX": 0,
 						"gridY": 5,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "dmp-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -4692,7 +5720,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4727,18 +5759,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "DatabaseOutline"
 					},
 					{
 						"id": "dej-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "dej-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Job payload & logs"
+						"title": "Job payload & logs",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -4766,7 +5801,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -4778,7 +5813,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -4818,12 +5857,7 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "learner-profile",
-				"_note": "A Learner Profile is the person record — the STUDENT hub. What a mentor lands here to see is this learner's whole footprint, each its own object-list scoped by learnerId: Enrolments (the courses they take), Final grades (outcomes/results), Attendance (presence), Learning plans (support/OPP), and Credentials (diplomas/badges earned) — paired 6+6 below the profile Data block (8-wide) and a Related panel resolving parents + manager. A summaryAggregates KPI strip counts enrolments/attendance/credentials at a glance. No lifecycleActions: LearnerProfile uses a states model (active/merged/deleted via merge/delete transitions), not a linear `lifecycle` enum, so status changes are handled by dedicated flows, not a generic transition menu. No comms leaves on the body: LearnerProfile declares no linkedTypes (HARD RULE 1). The audit trail lives as the single sidebar tab (CnAuditTrailTab), not a body widget (HARD RULE 4).",
-				"summaryAggregates": [
-					{ "label": "Enrolments", "register": "scholiq", "schema": "enrolment", "metric": "count", "filter": { "learnerId": "@objectId" } },
-					{ "label": "Attendance records", "register": "scholiq", "schema": "attendance-record", "metric": "count", "filter": { "learnerId": "@objectId" } },
-					{ "label": "Credentials", "register": "scholiq", "schema": "credential", "metric": "count", "filter": { "learnerId": "@objectId" } }
-				],
+				"_note": "A Learner Profile is the person record — the STUDENT hub. What a mentor lands here to see is this learner's whole footprint, each its own object-list scoped by learnerId: Enrolments (the courses they take), Final grades (outcomes/results), Attendance (presence), Learning plans (support/OPP), and Credentials (diplomas/badges earned) — paired 6+6 below the profile Data block (8-wide) and a Related panel resolving parents + manager. A stats-block KPI panel counts enrolments/attendance/credentials at a glance. No lifecycleActions: LearnerProfile uses a states model (active/merged/deleted via merge/delete transitions), not a linear `lifecycle` enum, so status changes are handled by dedicated flows, not a generic transition menu. No comms leaves on the body: LearnerProfile declares no linkedTypes (HARD RULE 1). The audit trail lives as the single sidebar tab (the built-in audit widget), not a body widget (HARD RULE 4).",
 				"widgets": [
 					{
 						"id": "lprof-data",
@@ -4831,6 +5865,47 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
+						},
+						"icon": "AccountBoxOutline"
+					},
+					{
+						"id": "lprof-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Enrolments",
+									"register": "scholiq",
+									"schema": "enrolment",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@objectId"
+									},
+									"route": "Enrolments"
+								},
+								{
+									"title": "Attendance records",
+									"register": "scholiq",
+									"schema": "attendance-record",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@objectId"
+									},
+									"route": "AttendanceRecords"
+								},
+								{
+									"title": "Credentials",
+									"register": "scholiq",
+									"schema": "credential",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@objectId"
+									},
+									"route": "Credentials"
+								}
+							]
 						}
 					},
 					{
@@ -4847,7 +5922,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "courseId",
@@ -4866,8 +5941,14 @@
 									"label": "Due Date"
 								}
 							],
-							"rowRoute": "EnrolmentDetail"
-						}
+							"rowRoute": "EnrolmentDetail",
+							"viewAllRoute": "Enrolments",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No enrolments found."
+						},
+						"icon": "AccountGroup"
 					},
 					{
 						"id": "lprof-plans",
@@ -4883,7 +5964,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "kind",
@@ -4898,8 +5979,14 @@
 									"label": "Next Review At"
 								}
 							],
-							"rowRoute": "LearningPlanDetail"
-						}
+							"rowRoute": "LearningPlanDetail",
+							"viewAllRoute": "LearningPlans",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No learning plans found."
+						},
+						"icon": "NoteTextOutline"
 					},
 					{
 						"id": "lprof-finals",
@@ -4915,7 +6002,7 @@
 								"field": "id",
 								"dir": "asc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "courseId",
@@ -4930,8 +6017,15 @@
 									"label": "Passed"
 								}
 							],
-							"rowRoute": "FinalGradeDetail"
-						}
+							"rowRoute": "FinalGradeDetail",
+							"viewAllRoute": "FinalGrades",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No final grades found.",
+							"allowCreate": false
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "lprof-attendance",
@@ -4947,7 +6041,7 @@
 								"field": "markedAt",
 								"dir": "desc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "sessionId",
@@ -4966,8 +6060,15 @@
 									"label": "Marked At"
 								}
 							],
-							"rowRoute": "AttendanceRecordDetail"
-						}
+							"rowRoute": "AttendanceRecordDetail",
+							"viewAllRoute": "AttendanceRecords",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No attendance found.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
 					},
 					{
 						"id": "lprof-credentials",
@@ -4983,7 +6084,7 @@
 								"field": "issuedAt",
 								"dir": "desc"
 							},
-							"limit": 100,
+							"limit": 25,
 							"columns": [
 								{
 									"key": "kind",
@@ -5002,13 +6103,21 @@
 									"label": "Status"
 								}
 							],
-							"rowRoute": "CredentialDetail"
-						}
+							"rowRoute": "CredentialDetail",
+							"viewAllRoute": "Credentials",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No credentials found.",
+							"allowCreate": false
+						},
+						"icon": "Trophy"
 					},
 					{
 						"id": "lprof-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -5023,7 +6132,7 @@
 					},
 					{
 						"id": "2",
-						"widgetId": "lprof-related",
+						"widgetId": "lprof-kpis",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
@@ -5041,7 +6150,7 @@
 					},
 					{
 						"id": "4",
-						"widgetId": "lprof-finals",
+						"widgetId": "lprof-plans",
 						"gridX": 6,
 						"gridY": 5,
 						"gridWidth": 6,
@@ -5050,7 +6159,7 @@
 					},
 					{
 						"id": "5",
-						"widgetId": "lprof-attendance",
+						"widgetId": "lprof-finals",
 						"gridX": 0,
 						"gridY": 10,
 						"gridWidth": 6,
@@ -5059,7 +6168,7 @@
 					},
 					{
 						"id": "6",
-						"widgetId": "lprof-plans",
+						"widgetId": "lprof-attendance",
 						"gridX": 6,
 						"gridY": 10,
 						"gridWidth": 6,
@@ -5071,7 +6180,16 @@
 						"widgetId": "lprof-credentials",
 						"gridX": 0,
 						"gridY": 15,
-						"gridWidth": 12,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "8",
+						"widgetId": "lprof-related",
+						"gridX": 6,
+						"gridY": 15,
+						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
 					}
@@ -5084,7 +6202,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -5118,12 +6240,14 @@
 						"title": "Data",
 						"content": {
 							"columns": 1
-						}
+						},
+						"icon": "Timeline"
 					},
 					{
 						"id": "xapi-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					}
 				],
 				"layout": [
@@ -5154,7 +6278,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
@@ -5197,18 +6325,21 @@
 						"title": "Data",
 						"content": {
 							"columns": 2
-						}
+						},
+						"icon": "School"
 					},
 					{
 						"id": "ext-related",
 						"type": "related",
-						"title": "Related"
+						"title": "Related",
+						"icon": "LinkVariant"
 					},
 					{
 						"id": "ext-files",
 						"type": "integration",
 						"integrationId": "files",
-						"title": "Certificate & evidence"
+						"title": "Certificate & evidence",
+						"icon": "FolderOutline"
 					}
 				],
 				"layout": [
@@ -5236,7 +6367,7 @@
 						"gridX": 0,
 						"gridY": 5,
 						"gridWidth": 12,
-						"gridHeight": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					}
 				],
@@ -5248,7 +6379,11 @@
 							"id": "audit",
 							"label": "History",
 							"icon": "History",
-							"widgets": [ { "type": "audit" } ]
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
 						}
 					]
 				}
