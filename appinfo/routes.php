@@ -56,6 +56,12 @@ return [
         ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
         ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
 
+        // Personal timetable — the caller's own sessions for a window, resolved
+        // from cohort membership (teacher/learner) via ObjectService (RBAC-scoped).
+        // Read-only; #[NoAdminRequired] (any signed-in user) + #[NoCSRFRequired] (GET read).
+        // Controller: TimetableController (slug: timetable)
+        ['name' => 'timetable#mine', 'url' => '/api/timetable/mine', 'verb' => 'GET'],
+
         // Observability (ADR-006 / ADR-040) — AppHost generic controllers.
         // health#index → GenericHealthController (PUBLIC, declarative checks).
         ['name' => 'health#index',  'url' => '/api/health',  'verb' => 'GET'],
