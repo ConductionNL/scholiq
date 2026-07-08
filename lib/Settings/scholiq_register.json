@@ -369,20 +369,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "daysUntilExpiry": {
                         "type": "integer",
@@ -1033,26 +1019,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "parentCourse": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "parentCourseId"
-                    },
-                    "curriculumPlan": {
-                        "register": "scholiq",
-                        "schema": "CurriculumPlan",
-                        "cardinality": "many-to-one",
-                        "joinOn": "curriculumPlanId"
-                    },
-                    "programmes": {
-                        "register": "scholiq",
-                        "schema": "Programme",
-                        "cardinality": "many-to-many",
-                        "joinOn": "programmeIds"
-                    }
-                },
                 "x-openregister-seed": []
             },
             "Lesson": {
@@ -1163,14 +1129,6 @@
                         "format": "uuid",
                         "description": "Tenant UUID (multi-tenant isolation)",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
                     }
                 },
                 "x-openregister-lifecycle": {
@@ -1457,26 +1415,6 @@
                             "from": "active",
                             "to": "failed"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -2092,26 +2030,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
-                    }
-                },
                 "x-openregister-seed": [],
                 "appendOnly": true
             },
@@ -2294,26 +2212,6 @@
                             "from": "submitted",
                             "to": "rejected"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "credential": {
-                        "register": "scholiq",
-                        "schema": "Credential",
-                        "cardinality": "many-to-one",
-                        "joinOn": "credentialId"
                     }
                 },
                 "x-openregister-notifications": {
@@ -2712,6 +2610,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Credential",
                         "description": "UUID of the Credential template to issue on programme completion. Null = no auto-issuance.",
                         "title": "Credential Template ID"
                     },
@@ -2752,20 +2651,6 @@
                             "from": "archived",
                             "to": "draft"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "curriculumPlan": {
-                        "register": "scholiq",
-                        "schema": "CurriculumPlan",
-                        "cardinality": "many-to-one",
-                        "joinOn": "curriculumPlanId"
-                    },
-                    "courses": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-many",
-                        "joinOn": "courseIds"
                     }
                 },
                 "x-openregister-calculations": {
@@ -3136,20 +3021,6 @@
                             ],
                             "to": "archived"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "programme": {
-                        "register": "scholiq",
-                        "schema": "Programme",
-                        "cardinality": "many-to-one",
-                        "joinOn": "programmeId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -3552,32 +3423,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
-                    },
-                    "materials": {
-                        "register": "scholiq",
-                        "schema": "Material",
-                        "cardinality": "many-to-many",
-                        "joinOn": "materialIds"
-                    }
-                },
                 "x-openregister-calculations": {
                     "durationMinutes": {
                         "type": "integer",
@@ -3715,26 +3560,6 @@
                         "format": "uuid",
                         "description": "Tenant identifier for multi-tenant isolation.",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
                     }
                 },
                 "x-openregister-seed": []
@@ -4079,38 +3904,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "rubric": {
-                        "register": "scholiq",
-                        "schema": "Rubric",
-                        "cardinality": "many-to-one",
-                        "joinOn": "rubricId"
-                    },
-                    "briefingMaterials": {
-                        "register": "scholiq",
-                        "schema": "Material",
-                        "cardinality": "many-to-many",
-                        "joinOn": "briefingMaterialIds"
-                    }
-                },
                 "x-openregister-calculations": {
                     "isOverdue": {
                         "type": "boolean",
@@ -4304,14 +4097,6 @@
                             "from": "returned",
                             "to": "draft"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assignment": {
-                        "register": "scholiq",
-                        "schema": "Assignment",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assignmentId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -4596,14 +4381,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "itemBank": {
-                        "register": "scholiq",
-                        "schema": "ItemBank",
-                        "cardinality": "many-to-one",
-                        "joinOn": "itemBankId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "needsManualScoring": {
                         "type": "boolean",
@@ -4877,26 +4654,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "itemCount": {
                         "type": "integer",
@@ -5123,14 +4880,6 @@
                                 "OCA\\Scholiq\\Lifecycle\\AssessmentGradeGuard"
                             ]
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assessment": {
-                        "register": "scholiq",
-                        "schema": "Assessment",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assessmentId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -5392,14 +5141,6 @@
                             ],
                             "to": "error"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assessmentResult": {
-                        "register": "scholiq",
-                        "schema": "AssessmentResult",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assessmentResultId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -5780,36 +5521,6 @@
                                 "gradePublished"
                             ]
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "field": "learnerId",
-                        "schema": "learner-profile"
-                    },
-                    "curriculumPlan": {
-                        "field": "curriculumPlanId",
-                        "schema": "curriculum-plan"
-                    },
-                    "course": {
-                        "field": "courseId",
-                        "schema": "course"
-                    },
-                    "cohort": {
-                        "field": "cohortId",
-                        "schema": "cohort"
-                    },
-                    "submission": {
-                        "field": "submissionId",
-                        "schema": "submission"
-                    },
-                    "assessmentResult": {
-                        "field": "assessmentResultId",
-                        "schema": "assessment-result"
-                    },
-                    "session": {
-                        "field": "sessionId",
-                        "schema": "session"
                     }
                 },
                 "x-openregister-calculations": {
@@ -6407,33 +6118,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "schema": "learner-profile",
-                        "localField": "learnerId",
-                        "foreignField": "learnerId"
-                    },
-                    "template": {
-                        "schema": "learning-plan-template",
-                        "localField": "templateId",
-                        "foreignField": "uuid"
-                    },
-                    "cohort": {
-                        "schema": "cohort",
-                        "localField": "cohortId",
-                        "foreignField": "uuid"
-                    },
-                    "course": {
-                        "schema": "course",
-                        "localField": "courseId",
-                        "foreignField": "uuid"
-                    },
-                    "supersedes": {
-                        "schema": "learning-plan",
-                        "localField": "supersedesId",
-                        "foreignField": "uuid"
-                    }
-                },
                 "x-openregister-calculations": {
                     "goalsMetCount": {
                         "description": "Count of goals with status=met.",
@@ -6574,13 +6258,6 @@
                             "to": "recorded"
                         }
                     }
-                },
-                "x-openregister-relations": {
-                    "learningPlan": {
-                        "schema": "learning-plan",
-                        "localField": "learningPlanId",
-                        "foreignField": "uuid"
-                    }
                 }
             },
             "Signature": {
@@ -6678,13 +6355,6 @@
                         "type": "string",
                         "description": "Tenant identifier.",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "subject": {
-                        "schema": "learning-plan",
-                        "localField": "subjectId",
-                        "foreignField": "uuid"
                     }
                 }
             },
@@ -6813,26 +6483,6 @@
                         "title": "Tenant ID"
                     }
                 },
-                "x-openregister-relations": {
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "excuseRequest": {
-                        "register": "scholiq",
-                        "schema": "ExcuseRequest",
-                        "cardinality": "many-to-one",
-                        "joinOn": "excuseRequestId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "isUnexcusedAbsence": {
                         "type": "boolean",
@@ -6932,6 +6582,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the domain object that submitted this request (the guardian domain object for a parent submission, or the LearnerProfile for an 18+ self-submission) — the portal scope-stamp for parent-audience creates (ADR-046 A4). Distinct from submittedBy, which is the Nextcloud user id. Additive and optional; existing rows leave it unset.",
                         "title": "Submitted By Ref"
                     },
@@ -7032,14 +6683,6 @@
                             "from": "submitted",
                             "to": "rejected"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
                     }
                 },
                 "x-openregister-notifications": {
@@ -7286,14 +6929,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "unexcusedLesuren": {
                         "type": "number",
@@ -7513,20 +7148,6 @@
                             ],
                             "to": "resolved"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "attendanceThreshold": {
-                        "register": "scholiq",
-                        "schema": "AttendanceThreshold",
-                        "cardinality": "many-to-one",
-                        "joinOn": "attendanceThresholdId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -8072,20 +7693,6 @@
                             ],
                             "to": "queued"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "mappingProfile": {
-                        "register": "scholiq",
-                        "schema": "DataMappingProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "mappingProfileId"
-                    },
-                    "originFlag": {
-                        "register": "scholiq",
-                        "schema": "AttendanceFlag",
-                        "cardinality": "many-to-one",
-                        "joinOn": "originFlagId"
                     }
                 },
                 "x-openregister-calculations": {
