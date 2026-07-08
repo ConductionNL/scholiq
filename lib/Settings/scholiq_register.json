@@ -1991,6 +1991,7 @@
                     "lessonId": {
                         "type": "string",
                         "format": "uuid",
+                        "x-relation-filter": { "courseId": "@object.courseId" },
                         "description": "ID of the Lesson that was attested.",
                         "title": "Lesson ID"
                     },
@@ -2027,6 +2028,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "x-relation-filter": { "lessonId": "@object.lessonId" },
                         "description": "ID of the cmi5.completed XapiStatement that triggered this attestation.",
                         "title": "xAPI Statement ID"
                     },
