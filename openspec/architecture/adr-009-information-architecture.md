@@ -93,9 +93,9 @@ The cijferregister under Examens is authoritative. Cijfers are surfaced as tabs 
 
 ELO-koppeling (Moodle/Brightspace/Canvas), generic data-exchange, and the Nextcloud-app-shell config live as settings under **Beheer**. The docent sees user-facing actions ("ELO-koppeling testen", "Content ophalen uit Moodle") that hide the adapter; there is no top-level "Integraties" menu. This mirrors ADR-022 (apps consume OR abstractions) on the IA layer: integrations are infrastructure, not destinations.
 
-### 6. Role-aware dashboards are one component with role-switching
+### 6. Per-role dashboards are group-gated menu items (no in-page switcher)
 
-Docent, mentor, coordinator, and student dashboards live in `Studenten > Dashboards` as one role-aware component, not four separate apps or menus. Promoting a docent to coordinator does not require a separate login or a separate menu surface — the component re-renders for the active role.
+Administration (admin), Teaching (teacher), and My learning (student) each appear as their own top-level dashboard menu item, gated on `scholiq-{role}` Nextcloud group membership (the NC admin group short-circuits to all three; every user's view set includes `student`). All three route to one shared dashboard component rendered in the requested role view — still one component and one `CnDashboardPage` per route, just reached from a role-specific menu item instead of an in-page role switcher. This keeps role visibility a security-backed group signal (a user sees exactly the dashboards their groups grant) while a multi-role user — e.g. a teacher who is also a learner — simply sees both their Teaching and My-learning items. (Supersedes the earlier single-component-with-switcher decision.)
 
 ### 7. Tier-suffixed and adapter specs collapse into the six-menu hierarchy
 
@@ -169,3 +169,14 @@ The phased rollout in `/tmp/ia-small5.md` §4.E (Phase 1 MVP-cursus → Phase 2 
 - ADR-005 — EU AI Act gating (AI features land as widgets/actions inside the six menus, never as a separate "AI" menu).
 - ADR-008 — Audit trail consumed from OpenRegister (audit tabs render inside Studenten/Examens/Praktijk surfaces, no separate audit menu).
 - Hydra ADR-022 — apps consume OR abstractions (IA-layer analogue: adapters are settings, not destinations).
+
+## Amendment — 2026-07-05 (change `nav-restructure-dashboards`)
+
+This amendment updates the *live* information architecture in place (no superseding ADR) because no genuinely-new top-level destination is invented — the surfaces re-homed here already existed one level down. The original §7 placement table remains as historical record; the change from the shipped English menu (`Learning`/`People`/`Insight`/…) rather than the Dutch six-menu model is amended, not rewritten row-by-row.
+
+- **Dashboard-first landing; `Insight` group dissolved.** The app opens on the role-aware `Dashboard` (`ScholiqDashboards`, one `CnDashboardPage` at `/`, ADR-009 §6 unchanged). The `Insight` group is removed: `Dashboard` and `Compliance`, previously its children, are promoted to top-level items. The emptied group shell is dropped by the menu-layout relocation filter.
+- **`Learning` and `People` are navigable domain dashboards.** Each group is now simultaneously navigable (it lands on a domain dashboard — `LearningDashboard` / `PeopleDashboard`, one `CnDashboardPage` each, KPIs + manage-lists) and collapsible (its leaves render as nav sub-children). This **supersedes ADR-044 / `learning-people-cards-collapse`** (REQ-LPC-001/REQ-LPC-002 — the tile-grid landing cards): the leaves are no longer hidden via `menu-layout.json#removals`. REQ-LPC-003 (all leaf routes stay routable for deep links + e2e) is preserved.
+- **App-health surface removed.** The `App health` menu entry + `AdminHealth` page (`/admin/health`) + `ScholiqAdminHealth.vue` are deleted; register/data-health is managed from OpenRegister's admin Data-health settings form instead (ADR-022 IA mirror — observability is infrastructure, not an in-app destination).
+- **`Features & roadmap` → footer; `School-year rollover` → Settings foldout.** Reinforces §5 (config/adjacent surfaces live in settings): rollover moves into the NC settings foldout; Features & roadmap moves to the footer beside `Documentation`, matching the fleet convention (pipelinq/opencatalogi/docudesk).
+
+Net top-level nav after this change: `Dashboard`, `Learning` (→ domain dashboard + sub-children), `People` (→ domain dashboard + sub-children), `Compliance`, `External training` — within the §1 six-menu budget.

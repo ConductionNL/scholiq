@@ -28,6 +28,17 @@ references:
 ## Status
 **accepted** (2026-05-11) — binding for every PR that introduces AI/ML behaviour, even if no AI ships in v0.1. The `AiFeature` schema MUST land in `lib/Settings/scholiq_register.json` (with an empty seed array) before the first AI-bearing capability (assessment-engine proctoring or course-management adaptive paths). DPO sign-off (encoded as the `AiFeatureDpoAckGuard` lifecycle precondition) is required to flip any high-risk feature from `disabled` to `enabled`.
 
+## Amendment (2026-07-06) — governance delegated to the Hermiq app
+
+Change `ai-feature-delegate-to-hermiq`. The **compliance pattern below is unchanged**, but its **home moves**: Scholiq no longer owns an AI-feature governance register. The EU AI Act high-risk feature inventory, the DPO-acknowledgement lifecycle (`AiFeatureDpoAckGuard`), the `/ai-features` management pages, the dossier export, the transparency-banner registration, and the post-market-monitoring aggregations are all **delegated to the fleet-wide Hermiq app** (`hermiq`'s `agentaifeature` register). Hermiq is the single, fleet-wide home for AI-feature governance and AI routing — the same feature that was scholiq-local is now registered and DPO-acknowledged there.
+
+**What remains in Scholiq:**
+- A **minimal `AiFeature` schema** in `lib/Settings/scholiq_register.json`, retained *only* as the AVG Art. 30 processing-activity carrier (`scholiq-ai-features`) — slug/name/description + `x-openregister-processing`, with **no** `x-openregister-lifecycle`/`-notifications` governance. This keeps Scholiq's verwerkingsregister at seven activities (`ProcessingActivityCatalogueTest`).
+- The **`AssessmentPublishGuard`** still enforces the Art. 14 / ADR-005 DPO gate for AI-assisted proctoring, but now **sources the `enabled` approval from Hermiq's central register** (`register=hermiq`, `schema=agentaifeature`, `slug=assessment-ai-proctor-review`). It **fails closed** for that high-risk path and degrades gracefully: Hermiq absent → block with an "install Hermiq" log; Hermiq present but feature not enabled → block with a "DPO-enable it in Hermiq" log. Manual proctoring (the default) and every other transition are untouched.
+- The Admin Settings **"AI Features"** section links to Hermiq's register when installed, else shows an "install and enable Hermiq" notice (no hard dependency; Scholiq never fatals when Hermiq is absent).
+
+**What moves to Hermiq:** every step of "The pattern" and "Concretely for v0.1" below now describes **Hermiq's** responsibility. Any new Scholiq high-risk AI feature is registered in Hermiq's `agentaifeature` register (not `scholiq_register.json`), acknowledged by the DPO there, and — where Scholiq must gate on it — looked up cross-app as `AssessmentPublishGuard` does. The sections below are retained for historical context and as the contract Hermiq inherits.
+
 ## Context
 
 The EU AI Act (Regulation 2024/1689) entered into force August 2024; high-risk obligations apply from **August 2026**. Annex III §3 explicitly classifies as **high-risk** any AI system used:

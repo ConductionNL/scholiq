@@ -1,0 +1,25 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "nav-restructure-dashboards",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "People group landing dashboard (nav-restructure-dashboards, supersedes ADR-044 cards-collapse): GroupPeople is BOTH navigable (lands on the PeopleDashboard domain dashboard) AND collapsible (its four leaves render as nav sub-children — no longer in menu-layout.json#removals)."
+	},
+	"menu": [
+		{ "id": "GroupPeople", "route": "PeopleDashboard" }
+	],
+	"pages": [
+		{
+			"id": "PeopleDashboard",
+			"route": "/people",
+			"type": "custom",
+			"title": "People",
+			"component": "PeopleDashboard",
+			"config": {
+				"register": "scholiq"
+			},
+			"_note": "nav-restructure-dashboards: GroupPeople's navigable landing dashboard — a bespoke domain overview with no generic index/detail/dashboard analogue. The nav icon + group association live on the GroupPeople menu entry (base manifest + this fragment's menu route), not on the page (icon/group are not valid v2 page props)."
+		}
+	]
+}

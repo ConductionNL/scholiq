@@ -13,8 +13,10 @@
  * EU AI Act Reg. 2024/1689 Annex III §3 classifies online proctoring as high-risk AI.
  * Adapters:
  * - MUST NOT auto-alter an AssessmentResult based on flags (human oversight, Art. 14).
- * - If using AI-assisted flag analysis, MUST register an AiFeature with slug
- *   `assessment-ai-proctor-review` in the `enabled` state (ADR-005 DPO gate).
+ * - If using AI-assisted flag analysis, the high-risk AI feature with slug
+ *   `assessment-ai-proctor-review` MUST be registered and DPO-enabled in the
+ *   central Hermiq governance register (ADR-005 DPO gate). Scholiq delegates
+ *   AI-feature governance to Hermiq (ai-feature-delegate-to-hermiq).
  *
  * @category Proctoring
  * @package  OCA\Scholiq\Proctoring
@@ -29,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-25
+ * @spec openspec/changes/archive/retrofit-2026-05-24-annotate-scholiq/tasks.md#tasks
  */
 
 declare(strict_types=1);
