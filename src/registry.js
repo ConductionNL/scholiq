@@ -15,6 +15,7 @@ import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LessonPlayer from './views/LessonPlayer.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
+import RegulationDetailPage from './views/RegulationDetailPage.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import ScholiqDashboards from './views/ScholiqDashboards.vue'
@@ -60,6 +61,7 @@ export default {
 	MyTimetable: page(MyTimetable),
 	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
+	RegulationDetailPage: page(RegulationDetailPage),
 	RolloverWizard: page(RolloverWizard),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),

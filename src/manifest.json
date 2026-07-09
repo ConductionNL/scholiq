@@ -1355,9 +1355,10 @@
 		{
 			"id": "RegulationDetail",
 			"route": "/compliance/regulations/:slug",
-			"type": "detail",
+			"type": "custom",
+			"component": "RegulationDetailPage",
 			"title": "Regulation",
-			"_note": "A Regulation is a compliance rule (applicability criteria, audience scope, annual-renewal + cycle, RAG thresholds) that mandatory courses map to via regulationSlug — the config/rule archetype. Body leads with the rule definition 8-wide + a Related panel. Its compliance footprint is shown as related-index tables of the records that cite this regulation's slug: Attestations (proof-of-completion) and External training records, plus the mandatory Courses bound to it — what a compliance officer audits. No comms/files: a regulation is a policy definition, not a document or conversation (HARD RULES 1-2); attestations carry the evidence. Sidebar keeps metadata + audit-trail (threshold/renewal changes are auditable policy edits).",
+			"_note": "A Regulation is a compliance rule (applicability criteria, audience scope, annual-renewal + cycle, RAG thresholds) that mandatory courses map to via regulationSlug — the config/rule archetype. Body leads with the rule definition 8-wide + a Related panel. Its compliance footprint is shown as related-index tables of the records that cite this regulation's slug: Attestations (proof-of-completion) and External training records, plus the mandatory Courses bound to it — what a compliance officer audits. No comms/files: a regulation is a policy definition, not a document or conversation (HARD RULES 1-2); attestations carry the evidence. Sidebar keeps metadata + audit-trail (threshold/renewal changes are auditable policy edits). type:\"custom\" (not \"detail\") because the route is business-slug-keyed (/compliance/regulations/AVG) and OpenRegister's generic single-object lookup only matches id/uuid/@self.slug/@self.uri, not the schema's own `slug` property — RegulationDetailPage.vue resolves the object itself (native match, falling back to a slug-filtered collection lookup) before mounting CnDetailPage with this config's widgets/layout/sidebar, and shows an explicit loading/not-found state instead of the null-objectData crash the generic detail dispatch hit on both link forms.",
 			"config": {
 				"register": "scholiq",
 				"schema": "Regulation",
