@@ -23,11 +23,17 @@
 		:loading="loading"
 		hide-header
 		borderless
+		fill-height
 		row-key="id"
 		:empty-text="t('scholiq', 'No items found')"
 		:row-click-route="rowClickRoute">
 		<template #footer>
-			<a class="cn-data-table__view-all" @click.prevent="navigate">
+			<a class="cn-data-table__view-all"
+				role="button"
+				tabindex="0"
+				@click.prevent="navigate"
+				@keydown.enter.prevent="navigate"
+				@keydown.space.prevent="navigate">
 				+ {{ t('scholiq', 'New') }} {{ schemaLabel }}
 			</a>
 		</template>
@@ -77,6 +83,20 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+		/** OR relation fields to resolve server-side (passed as `_extend`), e.g.
+		 *  ['learnerId', 'courseId'] so a resolver can read the related object. */
+		extend: {
+			type: Array,
+			default: () => [],
+		},
+		/** Optional (item) => string used to compute the first column's display
+		 *  label, for schemas without a plain `name` field (e.g. a learner-profile
+		 *  shown as "givenName familyName", an enrolment as "learner → course").
+		 *  Falls back to the raw field value when not provided. */
+		nameResolver: {
+			type: Function,
+			default: null,
+		},
 	},
 
 	data() {
@@ -95,10 +115,19 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-29
 		 */
 		rows() {
-			return this.items.map((item) => ({
-				...item,
-				id: item.id || item._id || item.uuid || item['@self']?.id,
-			}))
+			const nameKey = (this.columns.length ? this.columns : ['name'])[0]
+			return this.items.map((item) => {
+				const row = {
+					...item,
+					id: item.id || item._id || item.uuid || item['@self']?.id,
+				}
+				// Resolve a human-readable label for schemas without a plain `name`
+				// field, so the first column never falls back to the raw UUID.
+				if (this.nameResolver) {
+					row[nameKey] = this.nameResolver(item)
+				}
+				return row
+			})
 		},
 
 		/**
@@ -113,8 +142,10 @@ export default {
 			const cols = this.columns.length ? this.columns : ['name']
 			return cols.map((key, i) => ({
 				key,
+				// Name column stays regular weight (matches the reference design);
+				// only the trailing status/value column is muted + right-aligned.
 				cellClass: i === 0
-					? 'cn-cell--strong'
+					? ''
 					: (i === cols.length - 1 ? 'cn-cell--muted cn-cell--end' : 'cn-cell--muted'),
 			}))
 		},
@@ -135,6 +166,9 @@ export default {
 			this.loading = true
 			try {
 				const params = new URLSearchParams({ _limit: String(this.limit), ...this.filter })
+				if (this.extend.length) {
+					params.set('_extend', this.extend.join(','))
+				}
 				const url = generateUrl(
 					'/apps/openregister/api/objects/scholiq/' + this.schema + '?' + params.toString(),
 				)

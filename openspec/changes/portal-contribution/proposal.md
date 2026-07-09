@@ -5,16 +5,15 @@ depends_on: [portal-identity]
 
 # Proposal: portal-contribution
 
-> **Scope note (shipped):** this change ships the **`student`** audience only.
-> The **`parent`** audience is **deferred**: a guardian reading a minor's records
-> needs portaliq's reader to resolve a *reverse / scope-value join* (guardian →
-> child `learnerRef`s → records matched by that foreign key). Portaliq's current
-> one-hop `via` keeps outer rows by their **own id** (the zaak/rol shape), which
-> cannot express the guardian→records direction, so a parent manifest would
-> fail-closed to empty. The additive `guardianRefs` / `submittedByRef` schema
-> refs still land here (in `portal-identity`) so the parent surface becomes a
-> pure provider addition once that reader support exists. Tracked on scholiq#39
-> and the portaliq scope-value-join follow-up.
+> **Scope note:** this change originally shipped the **`student`** audience only
+> and deferred the **`parent`** audience, because portaliq's one-hop `via` join
+> was forward-only (it kept outer rows by their **own id**, the zaak/rol shape,
+> which could not express the guardian → records direction). Portaliq has since
+> merged the **reverse / scope-value join** (`via.match: 'scopeField'`, contract
+> v2.2), and the follow-up change **`portal-parent`** re-enabled the `parent`
+> audience against it as a pure provider addition — no schema work, since the
+> additive `guardianRefs` / `submittedByRef` refs already landed in
+> `portal-identity`. Tracked on Conduction/scholiq#43.
 
 ## Summary
 

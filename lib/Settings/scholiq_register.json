@@ -222,6 +222,8 @@
                 "properties": {
                     "learnerId": {
                         "type": "string",
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
                         "description": "Opaque learner UUID. Never BSN.",
                         "title": "Learner ID"
                     },
@@ -229,6 +231,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the associated Course. Null for manually issued credentials.",
                         "title": "Course ID"
                     },
@@ -308,6 +311,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Enrolment",
                         "description": "UUID of the originating Enrolment that triggered issuance. Used for idempotency (one credential per enrolment). Distinct from renewalEnrolmentId which records the renewal enrolment created on expiry.",
                         "x-openregister-index": true,
                         "title": "Enrolment ID"
@@ -316,6 +320,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Enrolment",
                         "description": "UUID of the renewal Enrolment created on expiry. Written back by OR batch.",
                         "title": "Renewal Enrolment ID"
                     },
@@ -362,20 +367,6 @@
                                 "OCA\\Scholiq\\Service\\CredentialSigningService"
                             ]
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -886,6 +877,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the parent Course. Makes Course recursive — a 'module' is a Course used as a container. Null for top-level courses.",
                         "title": "Parent Course ID"
                     },
@@ -893,6 +885,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "CurriculumPlan",
                         "description": "UUID of the CurriculumPlan governing this course. Consumed by the grading spec.",
                         "title": "Curriculum Plan ID"
                     },
@@ -901,7 +894,8 @@
                         "description": "UUIDs of Programmes that include this Course.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Programme"
                         },
                         "title": "Programme IDs"
                     },
@@ -1025,26 +1019,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "parentCourse": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "parentCourseId"
-                    },
-                    "curriculumPlan": {
-                        "register": "scholiq",
-                        "schema": "CurriculumPlan",
-                        "cardinality": "many-to-one",
-                        "joinOn": "curriculumPlanId"
-                    },
-                    "programmes": {
-                        "register": "scholiq",
-                        "schema": "Programme",
-                        "cardinality": "many-to-many",
-                        "joinOn": "programmeIds"
-                    }
-                },
                 "x-openregister-seed": []
             },
             "Lesson": {
@@ -1072,6 +1046,7 @@
                     "courseId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the parent Course",
                         "title": "Course ID"
                     },
@@ -1154,14 +1129,6 @@
                         "format": "uuid",
                         "description": "Tenant UUID (multi-tenant isolation)",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
                     }
                 },
                 "x-openregister-lifecycle": {
@@ -1279,6 +1246,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course this statement relates to (Scholiq denormalisation)",
                         "title": "Course ID"
                     },
@@ -1286,6 +1254,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Lesson",
                         "description": "UUID of the Lesson this statement relates to (Scholiq denormalisation)",
                         "title": "Lesson ID"
                     },
@@ -1346,12 +1315,14 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
                     "courseId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course object in the scholiq register.",
                         "title": "Course ID"
                     },
@@ -1410,6 +1381,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort this enrolment is associated with. Null for individually enrolled learners not in a cohort.",
                         "title": "Cohort ID"
                     },
@@ -1443,26 +1415,6 @@
                             "from": "active",
                             "to": "failed"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -1991,12 +1943,15 @@
                     "lessonId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Lesson",
+                        "x-relation-filter": { "courseId": "@object.courseId" },
                         "description": "ID of the Lesson that was attested.",
                         "title": "Lesson ID"
                     },
                     "courseId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "ID of the Course containing the attested lesson.",
                         "title": "Course ID"
                     },
@@ -2027,6 +1982,8 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "XapiStatement",
+                        "x-relation-filter": { "lessonId": "@object.lessonId" },
                         "description": "ID of the cmi5.completed XapiStatement that triggered this attestation.",
                         "title": "xAPI Statement ID"
                     },
@@ -2071,26 +2028,6 @@
                             "from": "signed",
                             "to": "revoked"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
                     }
                 },
                 "x-openregister-seed": [],
@@ -2146,6 +2083,8 @@
                 "properties": {
                     "learnerId": {
                         "type": "string",
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
                         "description": "UUID of the LearnerProfile this record belongs to.",
                         "title": "Learner ID"
                     },
@@ -2181,6 +2120,8 @@
                     "courseId": {
                         "type": "string",
                         "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
                         "description": "Optional UUID of an in-app Course considered equivalent.",
                         "title": "Equivalent Course ID"
                     },
@@ -2230,6 +2171,8 @@
                     "credentialId": {
                         "type": "string",
                         "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Credential",
                         "description": "Optional UUID of a manual Credential issued on verification (links external certificates into the certification expiry machinery).",
                         "title": "Credential ID"
                     },
@@ -2269,26 +2212,6 @@
                             "from": "submitted",
                             "to": "rejected"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "credential": {
-                        "register": "scholiq",
-                        "schema": "Credential",
-                        "cardinality": "many-to-one",
-                        "joinOn": "credentialId"
                     }
                 },
                 "x-openregister-notifications": {
@@ -2669,6 +2592,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "CurriculumPlan",
                         "description": "UUID of the governing CurriculumPlan. Null until a plan is assigned.",
                         "title": "Curriculum Plan ID"
                     },
@@ -2677,7 +2601,8 @@
                         "description": "Ordered list of Course UUIDs that form the programme's content spine.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Course"
                         },
                         "title": "Course IDs"
                     },
@@ -2685,6 +2610,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Credential",
                         "description": "UUID of the Credential template to issue on programme completion. Null = no auto-issuance.",
                         "title": "Credential Template ID"
                     },
@@ -2725,20 +2651,6 @@
                             "from": "archived",
                             "to": "draft"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "curriculumPlan": {
-                        "register": "scholiq",
-                        "schema": "CurriculumPlan",
-                        "cardinality": "many-to-one",
-                        "joinOn": "curriculumPlanId"
-                    },
-                    "courses": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-many",
-                        "joinOn": "courseIds"
                     }
                 },
                 "x-openregister-calculations": {
@@ -2797,7 +2709,8 @@
                         "description": "UUIDs of courses that are mandatory in this plan.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Course"
                         },
                         "title": "Required Course IDs"
                     },
@@ -2806,7 +2719,8 @@
                         "description": "UUIDs of elective / optional courses in this plan.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Course"
                         },
                         "title": "Elective Course IDs"
                     },
@@ -2885,6 +2799,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "GradeScale",
                         "description": "UUID of the GradeScale object (grading spec). Null = default 1-10 Dutch scale.",
                         "title": "Grade Scale ID"
                     },
@@ -3019,6 +2934,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Programme",
                         "description": "UUID of the Programme this cohort runs. Null for standalone course cohorts.",
                         "title": "Programme ID"
                     },
@@ -3026,6 +2942,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the specific Course this cohort runs (for standalone course cohorts).",
                         "title": "Course ID"
                     },
@@ -3104,20 +3021,6 @@
                             ],
                             "to": "archived"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "programme": {
-                        "register": "scholiq",
-                        "schema": "Programme",
-                        "cardinality": "many-to-one",
-                        "joinOn": "programmeId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -3415,6 +3318,7 @@
                     "cohortId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort this session belongs to.",
                         "title": "Cohort ID"
                     },
@@ -3422,6 +3326,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course covered in this session. Null for administrative / non-content sessions.",
                         "title": "Course ID"
                     },
@@ -3429,6 +3334,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Lesson",
                         "description": "UUID of the Lesson covered in this session. Null when not tied to a specific lesson.",
                         "title": "Lesson ID"
                     },
@@ -3462,7 +3368,8 @@
                         "description": "UUIDs of Material objects attached to this session.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Material"
                         },
                         "title": "Material IDs"
                     },
@@ -3471,7 +3378,8 @@
                         "description": "UUIDs of Assignment objects linked to this session (forward reference to the assignments spec).",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Assignment"
                         },
                         "title": "Assignment IDs"
                     },
@@ -3513,32 +3421,6 @@
                             ],
                             "to": "cancelled"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
-                    },
-                    "materials": {
-                        "register": "scholiq",
-                        "schema": "Material",
-                        "cardinality": "many-to-many",
-                        "joinOn": "materialIds"
                     }
                 },
                 "x-openregister-calculations": {
@@ -3653,6 +3535,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course this material is attached to. Null if attached at Lesson or Session level.",
                         "title": "Course ID"
                     },
@@ -3660,6 +3543,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Lesson",
                         "description": "UUID of the Lesson this material is attached to. Null if attached at Course or Session level.",
                         "title": "Lesson ID"
                     },
@@ -3667,6 +3551,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Session",
                         "description": "UUID of the Session this material is attached to. Null if attached at Course or Lesson level.",
                         "title": "Session ID"
                     },
@@ -3675,26 +3560,6 @@
                         "format": "uuid",
                         "description": "Tenant identifier for multi-tenant isolation.",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "lesson": {
-                        "register": "scholiq",
-                        "schema": "Lesson",
-                        "cardinality": "many-to-one",
-                        "joinOn": "lessonId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
                     }
                 },
                 "x-openregister-seed": []
@@ -3893,6 +3758,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course this assignment belongs to. Null when only attached to a Session.",
                         "title": "Course ID"
                     },
@@ -3900,6 +3766,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Session",
                         "description": "UUID of the Session this assignment belongs to. Null when only attached at Course level.",
                         "title": "Session ID"
                     },
@@ -3907,6 +3774,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort this assignment targets. Null for course-wide assignments.",
                         "title": "Cohort ID"
                     },
@@ -3921,7 +3789,8 @@
                         "description": "UUIDs of Material objects provided as briefing resources for this assignment.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Material"
                         },
                         "title": "Briefing Material IDs"
                     },
@@ -3956,6 +3825,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Rubric",
                         "description": "UUID of the Rubric used to grade submissions. Null for unstructured/holistic grading.",
                         "title": "Rubric ID"
                     },
@@ -4034,38 +3904,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "rubric": {
-                        "register": "scholiq",
-                        "schema": "Rubric",
-                        "cardinality": "many-to-one",
-                        "joinOn": "rubricId"
-                    },
-                    "briefingMaterials": {
-                        "register": "scholiq",
-                        "schema": "Material",
-                        "cardinality": "many-to-many",
-                        "joinOn": "briefingMaterialIds"
-                    }
-                },
                 "x-openregister-calculations": {
                     "isOverdue": {
                         "type": "boolean",
@@ -4130,6 +3968,7 @@
                     "assignmentId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Assignment",
                         "description": "UUID of the Assignment this submission is for.",
                         "title": "Assignment ID"
                     },
@@ -4147,7 +3986,8 @@
                         "description": "UUID references to the LearnerProfile object(s) who submitted — the portal-subject scoping key (ADR-046 A4). Distinct from learnerIds, which are Nextcloud user ids. Additive and optional; the portal matches the student subject's LearnerProfile UUID against this array (membership). Existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "LearnerProfile"
                         },
                         "title": "Learner Refs"
                     },
@@ -4176,6 +4016,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "GradeEntry",
                         "description": "UUID of the GradeEntry created/updated by the grading spec when the teacher marks this submission. Set by the grading spec; read-only from this spec's perspective.",
                         "title": "Grade Entry ID"
                     },
@@ -4256,14 +4097,6 @@
                             "from": "returned",
                             "to": "draft"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assignment": {
-                        "register": "scholiq",
-                        "schema": "Assignment",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assignmentId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -4378,7 +4211,8 @@
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "Item"
                         },
                         "default": [],
                         "description": "UUIDs of Items belonging to this bank.",
@@ -4455,6 +4289,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "ItemBank",
                         "description": "UUID of the owning ItemBank. Null for standalone items.",
                         "title": "Item Bank ID"
                     },
@@ -4546,14 +4381,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "itemBank": {
-                        "register": "scholiq",
-                        "schema": "ItemBank",
-                        "cardinality": "many-to-one",
-                        "joinOn": "itemBankId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "needsManualScoring": {
                         "type": "boolean",
@@ -4637,6 +4464,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the associated Course. Null if scoped to session or cohort only.",
                         "title": "Course ID"
                     },
@@ -4644,6 +4472,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Session",
                         "description": "UUID of the associated Session. Null if scoped to course or cohort only.",
                         "title": "Session ID"
                     },
@@ -4651,6 +4480,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the associated Cohort. Null if scoped to course or session only.",
                         "title": "Cohort ID"
                     },
@@ -4824,26 +4654,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "course": {
-                        "register": "scholiq",
-                        "schema": "Course",
-                        "cardinality": "many-to-one",
-                        "joinOn": "courseId"
-                    },
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "itemCount": {
                         "type": "integer",
@@ -4952,6 +4762,7 @@
                     "assessmentId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Assessment",
                         "description": "UUID of the Assessment being attempted.",
                         "title": "Assessment ID"
                     },
@@ -5021,6 +4832,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "ProctoringSession",
                         "description": "UUID of the associated ProctoringSession. Null for unproctored attempts.",
                         "title": "Proctoring Session ID"
                     },
@@ -5028,6 +4840,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "GradeEntry",
                         "description": "UUID of the GradeEntry created for this result (grading spec, forward-ref).",
                         "title": "Grade Entry ID"
                     },
@@ -5067,14 +4880,6 @@
                                 "OCA\\Scholiq\\Lifecycle\\AssessmentGradeGuard"
                             ]
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assessment": {
-                        "register": "scholiq",
-                        "schema": "Assessment",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assessmentId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -5190,6 +4995,7 @@
                     "assessmentResultId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "AssessmentResult",
                         "description": "UUID of the AssessmentResult this session covers.",
                         "title": "Assessment Result ID"
                     },
@@ -5335,14 +5141,6 @@
                             ],
                             "to": "error"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "assessmentResult": {
-                        "register": "scholiq",
-                        "schema": "AssessmentResult",
-                        "cardinality": "many-to-one",
-                        "joinOn": "assessmentResultId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -5577,12 +5375,14 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
                     "curriculumPlanId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "CurriculumPlan",
                         "description": "UUID of the CurriculumPlan this entry contributes to.",
                         "title": "Curriculum Plan ID"
                     },
@@ -5595,6 +5395,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the associated Course. Null when scope is set via cohort only.",
                         "title": "Course ID"
                     },
@@ -5602,6 +5403,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the associated Cohort.",
                         "title": "Cohort ID"
                     },
@@ -5620,6 +5422,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Submission",
                         "description": "UUID of the Submission that originated this mark (set when sourceKind=assignment-submission).",
                         "title": "Submission ID"
                     },
@@ -5627,6 +5430,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "AssessmentResult",
                         "description": "UUID of the AssessmentResult that originated this mark (set when sourceKind=assessment-result).",
                         "title": "Assessment Result ID"
                     },
@@ -5634,6 +5438,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Session",
                         "description": "UUID of the Session that originated this mark (set when sourceKind=participation).",
                         "title": "Session ID"
                     },
@@ -5645,6 +5450,7 @@
                     "gradeScaleId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "GradeScale",
                         "description": "UUID of the GradeScale used to interpret and display this value.",
                         "title": "Grade Scale ID"
                     },
@@ -5717,36 +5523,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "field": "learnerId",
-                        "schema": "learner-profile"
-                    },
-                    "curriculumPlan": {
-                        "field": "curriculumPlanId",
-                        "schema": "curriculum-plan"
-                    },
-                    "course": {
-                        "field": "courseId",
-                        "schema": "course"
-                    },
-                    "cohort": {
-                        "field": "cohortId",
-                        "schema": "cohort"
-                    },
-                    "submission": {
-                        "field": "submissionId",
-                        "schema": "submission"
-                    },
-                    "assessmentResult": {
-                        "field": "assessmentResultId",
-                        "schema": "assessment-result"
-                    },
-                    "session": {
-                        "field": "sessionId",
-                        "schema": "session"
-                    }
-                },
                 "x-openregister-calculations": {
                     "effectiveWeight": {
                         "description": "The per-entry weight if set, else the matching CurriculumPlan.components[].weight. Used by FinalGrade roll-up.",
@@ -5804,6 +5580,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
@@ -5811,6 +5588,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course this final grade applies to. Null for programme-level grades.",
                         "title": "Course ID"
                     },
@@ -5818,18 +5596,21 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Programme",
                         "description": "UUID of the Programme this final grade applies to. Null for course-level grades.",
                         "title": "Programme ID"
                     },
                     "curriculumPlanId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "CurriculumPlan",
                         "description": "UUID of the CurriculumPlan whose formula is applied.",
                         "title": "Curriculum Plan ID"
                     },
                     "gradeScaleId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "GradeScale",
                         "description": "UUID of the GradeScale used to interpret the computed value.",
                         "title": "Grade Scale ID"
                     },
@@ -6108,6 +5889,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "LearningPlanTemplate",
                         "description": "UUID of the LearningPlanTemplate that pre-structures this plan. Null for free-form plans.",
                         "title": "Template ID"
                     },
@@ -6115,6 +5897,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort the learner belongs to (optional context).",
                         "title": "Cohort ID"
                     },
@@ -6122,6 +5905,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the Course this plan is associated with (optional).",
                         "title": "Course ID"
                     },
@@ -6273,6 +6057,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "LearningPlan",
                         "description": "UUID of the prior LearningPlan version this version supersedes.",
                         "title": "Supersedes Plan ID"
                     },
@@ -6333,33 +6118,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "schema": "learner-profile",
-                        "localField": "learnerId",
-                        "foreignField": "learnerId"
-                    },
-                    "template": {
-                        "schema": "learning-plan-template",
-                        "localField": "templateId",
-                        "foreignField": "uuid"
-                    },
-                    "cohort": {
-                        "schema": "cohort",
-                        "localField": "cohortId",
-                        "foreignField": "uuid"
-                    },
-                    "course": {
-                        "schema": "course",
-                        "localField": "courseId",
-                        "foreignField": "uuid"
-                    },
-                    "supersedes": {
-                        "schema": "learning-plan",
-                        "localField": "supersedesId",
-                        "foreignField": "uuid"
-                    }
-                },
                 "x-openregister-calculations": {
                     "goalsMetCount": {
                         "description": "Count of goals with status=met.",
@@ -6402,6 +6160,7 @@
                     "learningPlanId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "LearningPlan",
                         "description": "UUID of the LearningPlan being evaluated.",
                         "title": "Learning Plan ID"
                     },
@@ -6499,13 +6258,6 @@
                             "to": "recorded"
                         }
                     }
-                },
-                "x-openregister-relations": {
-                    "learningPlan": {
-                        "schema": "learning-plan",
-                        "localField": "learningPlanId",
-                        "foreignField": "uuid"
-                    }
                 }
             },
             "Signature": {
@@ -6545,6 +6297,7 @@
                     "subjectId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "LearningPlan",
                         "description": "UUID of the LearningPlan being signed.",
                         "title": "Subject ID"
                     },
@@ -6603,13 +6356,6 @@
                         "description": "Tenant identifier.",
                         "title": "Tenant ID"
                     }
-                },
-                "x-openregister-relations": {
-                    "subject": {
-                        "schema": "learning-plan",
-                        "localField": "subjectId",
-                        "foreignField": "uuid"
-                    }
                 }
             },
             "AttendanceRecord": {
@@ -6662,6 +6408,7 @@
                     "sessionId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "Session",
                         "description": "UUID of the Session this record belongs to.",
                         "title": "Session ID"
                     },
@@ -6674,6 +6421,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
@@ -6681,6 +6429,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "Denormalised Cohort UUID for filtering. Derived from the Session.",
                         "title": "Cohort ID"
                     },
@@ -6723,6 +6472,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "ExcuseRequest",
                         "description": "UUID of the ExcuseRequest that flipped this record to absent-excused.",
                         "title": "Excuse Request ID"
                     },
@@ -6731,26 +6481,6 @@
                         "format": "uuid",
                         "description": "Tenant identifier for multi-tenant isolation.",
                         "title": "Tenant ID"
-                    }
-                },
-                "x-openregister-relations": {
-                    "session": {
-                        "register": "scholiq",
-                        "schema": "Session",
-                        "cardinality": "many-to-one",
-                        "joinOn": "sessionId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    },
-                    "excuseRequest": {
-                        "register": "scholiq",
-                        "schema": "ExcuseRequest",
-                        "cardinality": "many-to-one",
-                        "joinOn": "excuseRequestId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -6839,6 +6569,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object whose absence is being excused — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. For a student self-submission the portal stamps this from the student subject; for a parent submission it is the child LearnerProfile UUID supplied on create. Additive and optional; existing rows leave it unset (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
@@ -6851,6 +6582,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the domain object that submitted this request (the guardian domain object for a parent submission, or the LearnerProfile for an 18+ self-submission) — the portal scope-stamp for parent-audience creates (ADR-046 A4). Distinct from submittedBy, which is the Nextcloud user id. Additive and optional; existing rows leave it unset.",
                         "title": "Submitted By Ref"
                     },
@@ -6953,14 +6685,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "learner": {
-                        "register": "scholiq",
-                        "schema": "LearnerProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "learnerId"
-                    }
-                },
                 "x-openregister-notifications": {
                     "approved": {
                         "trigger": {
@@ -7057,6 +6781,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort this threshold applies to. Null = applies to all cohorts in the tenant.",
                         "title": "Cohort ID"
                     },
@@ -7204,14 +6929,6 @@
                         }
                     }
                 },
-                "x-openregister-relations": {
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
-                    }
-                },
                 "x-openregister-calculations": {
                     "unexcusedLesuren": {
                         "type": "number",
@@ -7335,6 +7052,7 @@
                     "attendanceThresholdId": {
                         "type": "string",
                         "format": "uuid",
+                        "$ref": "AttendanceThreshold",
                         "description": "UUID of the AttendanceThreshold that was crossed.",
                         "title": "Attendance Threshold ID"
                     },
@@ -7342,6 +7060,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Cohort",
                         "description": "UUID of the Cohort in context when the threshold was crossed.",
                         "title": "Cohort ID"
                     },
@@ -7366,7 +7085,8 @@
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "format": "uuid"
+                            "format": "uuid",
+                            "$ref": "AttendanceRecord"
                         },
                         "description": "UUIDs of the AttendanceRecords that collectively pushed the metric over the limit.",
                         "default": [],
@@ -7376,6 +7096,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "DataExchangeJob",
                         "description": "UUID of the DataExchangeJob queued to the configured target (e.g. leerplichtambtenaar). Null until the job is created. TODO(data-exchange spec).",
                         "title": "Data Exchange Job ID"
                     },
@@ -7427,20 +7148,6 @@
                             ],
                             "to": "resolved"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "attendanceThreshold": {
-                        "register": "scholiq",
-                        "schema": "AttendanceThreshold",
-                        "cardinality": "many-to-one",
-                        "joinOn": "attendanceThresholdId"
-                    },
-                    "cohort": {
-                        "register": "scholiq",
-                        "schema": "Cohort",
-                        "cardinality": "many-to-one",
-                        "joinOn": "cohortId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -7778,6 +7485,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "DataMappingProfile",
                         "description": "UUID of the DataMappingProfile to use for field transformation. Null = use raw Scholiq object.",
                         "default": null,
                         "title": "Mapping Profile ID"
@@ -7911,6 +7619,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "AttendanceFlag",
                         "description": "UUID of an AttendanceFlag that auto-queued this job (e.g. a leerplicht threshold crossing). Null for manually-requested jobs.",
                         "default": null,
                         "title": "Origin Flag ID"
@@ -7984,20 +7693,6 @@
                             ],
                             "to": "queued"
                         }
-                    }
-                },
-                "x-openregister-relations": {
-                    "mappingProfile": {
-                        "register": "scholiq",
-                        "schema": "DataMappingProfile",
-                        "cardinality": "many-to-one",
-                        "joinOn": "mappingProfileId"
-                    },
-                    "originFlag": {
-                        "register": "scholiq",
-                        "schema": "AttendanceFlag",
-                        "cardinality": "many-to-one",
-                        "joinOn": "originFlagId"
                     }
                 },
                 "x-openregister-calculations": {
@@ -8131,6 +7826,8 @@
                     },
                     "sourceId": {
                         "type": "string",
+                        "format": "uuid",
+                        "$ref": "GradeEntry",
                         "description": "UUID or id of the source GradeEntry that triggered this notification.",
                         "title": "Source ID"
                     },
@@ -8143,6 +7840,7 @@
                         "type": "string",
                         "format": "uuid",
                         "nullable": true,
+                        "$ref": "LearnerProfile",
                         "description": "UUID reference to the LearnerProfile object whose grade was published — the portal inbox scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id, and from recipient, which is the Nextcloud user id of the notified parent. Additive and optional; existing rows leave it unset and stay invisible to the portal inbox (fail-closed) until backfilled.",
                         "title": "Learner Ref"
                     },
@@ -8150,6 +7848,7 @@
                         "type": "string",
                         "nullable": true,
                         "format": "uuid",
+                        "$ref": "Course",
                         "description": "UUID of the associated Course. Null when not applicable.",
                         "default": null,
                         "title": "Course ID"

@@ -15,9 +15,15 @@ import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LessonPlayer from './views/LessonPlayer.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
+import RegulationDetailPage from './views/RegulationDetailPage.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import ScholiqDashboards from './views/ScholiqDashboards.vue'
+// Per-role dashboard route wrappers (group-gated menu items; replaces the
+// single role-switcher dashboard).
+import DashboardAdmin from './views/DashboardAdmin.vue'
+import DashboardTeacher from './views/DashboardTeacher.vue'
+import DashboardStudent from './views/DashboardStudent.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
@@ -25,6 +31,8 @@ import RolloverWizard from './views/RolloverWizard.vue'
 // and People groups land on domain dashboards instead of tile-grid card pages.
 import LearningDashboard from './views/LearningDashboard.vue'
 import PeopleDashboard from './views/PeopleDashboard.vue'
+// personal-timetable: the signed-in user's own week view over Session objects.
+import MyTimetable from './views/MyTimetable.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -42,13 +50,18 @@ function page(component) {
 }
 
 export default {
+	DashboardAdmin: page(DashboardAdmin),
+	DashboardTeacher: page(DashboardTeacher),
+	DashboardStudent: page(DashboardStudent),
 	GradeImpactDetail: page(GradeImpactDetail),
 	ItemAuthorView: page(ItemAuthorView),
 	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
+	MyTimetable: page(MyTimetable),
 	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
+	RegulationDetailPage: page(RegulationDetailPage),
 	RolloverWizard: page(RolloverWizard),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),

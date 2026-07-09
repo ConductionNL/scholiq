@@ -93,9 +93,9 @@ The cijferregister under Examens is authoritative. Cijfers are surfaced as tabs 
 
 ELO-koppeling (Moodle/Brightspace/Canvas), generic data-exchange, and the Nextcloud-app-shell config live as settings under **Beheer**. The docent sees user-facing actions ("ELO-koppeling testen", "Content ophalen uit Moodle") that hide the adapter; there is no top-level "Integraties" menu. This mirrors ADR-022 (apps consume OR abstractions) on the IA layer: integrations are infrastructure, not destinations.
 
-### 6. Role-aware dashboards are one component with role-switching
+### 6. Per-role dashboards are group-gated menu items (no in-page switcher)
 
-Docent, mentor, coordinator, and student dashboards live in `Studenten > Dashboards` as one role-aware component, not four separate apps or menus. Promoting a docent to coordinator does not require a separate login or a separate menu surface — the component re-renders for the active role.
+Administration (admin), Teaching (teacher), and My learning (student) each appear as their own top-level dashboard menu item, gated on `scholiq-{role}` Nextcloud group membership (the NC admin group short-circuits to all three; every user's view set includes `student`). All three route to one shared dashboard component rendered in the requested role view — still one component and one `CnDashboardPage` per route, just reached from a role-specific menu item instead of an in-page role switcher. This keeps role visibility a security-backed group signal (a user sees exactly the dashboards their groups grant) while a multi-role user — e.g. a teacher who is also a learner — simply sees both their Teaching and My-learning items. (Supersedes the earlier single-component-with-switcher decision.)
 
 ### 7. Tier-suffixed and adapter specs collapse into the six-menu hierarchy
 
