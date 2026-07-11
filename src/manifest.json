@@ -390,9 +390,9 @@
 						}
 					},
 					{
-						"id": "course-kpis",
+						"id": "course-kpis-lessons",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Lessons",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -405,7 +405,17 @@
 										"courseId": "@objectId"
 									},
 									"route": "LessonIndex"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "course-kpis-enrolments",
+						"type": "stats-block",
+						"title": "Enrolments",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Enrolments",
 									"register": "scholiq",
@@ -415,7 +425,17 @@
 										"courseId": "@objectId"
 									},
 									"route": "Enrolments"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "course-kpis-assignments",
+						"type": "stats-block",
+						"title": "Assignments",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Assignments",
 									"register": "scholiq",
@@ -425,7 +445,17 @@
 										"courseId": "@objectId"
 									},
 									"route": "Assignments"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "course-kpis-assessments",
+						"type": "stats-block",
+						"title": "Assessments",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Assessments",
 									"register": "scholiq",
@@ -724,19 +754,46 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "course-kpis",
+						"id": "2-1",
+						"widgetId": "course-kpis-lessons",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "course-kpis-enrolments",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-3",
+						"widgetId": "course-kpis-assignments",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-4",
+						"widgetId": "course-kpis-assessments",
+						"gridX": 8,
+						"gridY": 6,
+						"gridWidth": 4,
+						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "3",
 						"widgetId": "course-details2",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 8,
 						"gridWidth": 8,
 						"gridHeight": 4,
 						"showTitle": false
@@ -745,7 +802,7 @@
 						"id": "4",
 						"widgetId": "course-related",
 						"gridX": 8,
-						"gridY": 5,
+						"gridY": 8,
 						"gridWidth": 4,
 						"gridHeight": 4,
 						"showTitle": false
@@ -754,7 +811,7 @@
 						"id": "5",
 						"widgetId": "course-lessons",
 						"gridX": 0,
-						"gridY": 9,
+						"gridY": 12,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -763,7 +820,7 @@
 						"id": "6",
 						"widgetId": "course-enrolments",
 						"gridX": 6,
-						"gridY": 9,
+						"gridY": 12,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -772,7 +829,7 @@
 						"id": "7",
 						"widgetId": "course-cohorts",
 						"gridX": 0,
-						"gridY": 14,
+						"gridY": 17,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -781,7 +838,7 @@
 						"id": "8",
 						"widgetId": "course-assignments",
 						"gridX": 6,
-						"gridY": 14,
+						"gridY": 17,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -790,7 +847,7 @@
 						"id": "9",
 						"widgetId": "course-sessions",
 						"gridX": 0,
-						"gridY": 19,
+						"gridY": 22,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -799,7 +856,7 @@
 						"id": "10",
 						"widgetId": "course-assessments",
 						"gridX": 6,
-						"gridY": 19,
+						"gridY": 22,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -808,7 +865,7 @@
 						"id": "11",
 						"widgetId": "course-materials",
 						"gridX": 0,
-						"gridY": 24,
+						"gridY": 27,
 						"gridWidth": 12,
 						"gridHeight": 3,
 						"showTitle": false
@@ -1080,9 +1137,9 @@
 						}
 					},
 					{
-						"id": "enrol-kpis",
+						"id": "enrol-kpis-grade-entries",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Grade entries",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -1096,7 +1153,17 @@
 										"courseId": "@object.courseId"
 									},
 									"route": "GradeEntries"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "enrol-kpis-attendance-records",
+						"type": "stats-block",
+						"title": "Attendance records",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Attendance records",
 									"register": "scholiq",
@@ -1262,12 +1329,21 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "enrol-kpis",
+						"id": "2-1",
+						"widgetId": "enrol-kpis-grade-entries",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "enrol-kpis-attendance-records",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					},
 					{
@@ -1902,9 +1978,9 @@
 						"icon": "Sitemap"
 					},
 					{
-						"id": "prog-kpis",
+						"id": "prog-kpis-courses",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Courses",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -1917,7 +1993,17 @@
 										"programmeId": "@objectId"
 									},
 									"route": "Courses"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "prog-kpis-cohorts",
+						"type": "stats-block",
+						"title": "Cohorts",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Cohorts",
 									"register": "scholiq",
@@ -1927,7 +2013,17 @@
 										"programmeId": "@objectId"
 									},
 									"route": "Cohorts"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "prog-kpis-final-grades",
+						"type": "stats-block",
+						"title": "Final grades",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Final grades",
 									"register": "scholiq",
@@ -2086,19 +2182,37 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "prog-kpis",
+						"id": "2-1",
+						"widgetId": "prog-kpis-courses",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "prog-kpis-cohorts",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-3",
+						"widgetId": "prog-kpis-final-grades",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "3",
 						"widgetId": "prog-courses",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2107,7 +2221,7 @@
 						"id": "4",
 						"widgetId": "prog-cohorts",
 						"gridX": 6,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2116,7 +2230,7 @@
 						"id": "5",
 						"widgetId": "prog-finals",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2125,7 +2239,7 @@
 						"id": "6",
 						"widgetId": "prog-related",
 						"gridX": 6,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2182,9 +2296,9 @@
 						"icon": "Sitemap"
 					},
 					{
-						"id": "cplan-kpis",
+						"id": "cplan-kpis-grade-entries",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Grade entries",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -2197,7 +2311,17 @@
 										"curriculumPlanId": "@objectId"
 									},
 									"route": "GradeEntries"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "cplan-kpis-final-grades",
+						"type": "stats-block",
+						"title": "Final grades",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Final grades",
 									"register": "scholiq",
@@ -2315,12 +2439,21 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "cplan-kpis",
+						"id": "2-1",
+						"widgetId": "cplan-kpis-grade-entries",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "cplan-kpis-final-grades",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					},
 					{
@@ -2402,9 +2535,9 @@
 						"icon": "AccountGroup"
 					},
 					{
-						"id": "coh-kpis",
+						"id": "coh-kpis-sessions",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Sessions",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -2417,7 +2550,17 @@
 										"cohortId": "@objectId"
 									},
 									"route": "Sessions"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "coh-kpis-enrolments",
+						"type": "stats-block",
+						"title": "Enrolments",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Enrolments",
 									"register": "scholiq",
@@ -2427,7 +2570,17 @@
 										"cohortId": "@objectId"
 									},
 									"route": "Enrolments"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "coh-kpis-attendance-flags",
+						"type": "stats-block",
+						"title": "Attendance flags",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Attendance flags",
 									"register": "scholiq",
@@ -2586,19 +2739,37 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "coh-kpis",
+						"id": "2-1",
+						"widgetId": "coh-kpis-sessions",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "coh-kpis-enrolments",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-3",
+						"widgetId": "coh-kpis-attendance-flags",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "3",
 						"widgetId": "coh-sessions",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2607,7 +2778,7 @@
 						"id": "4",
 						"widgetId": "coh-enrol",
 						"gridX": 6,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2616,7 +2787,7 @@
 						"id": "5",
 						"widgetId": "coh-flags",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2625,7 +2796,7 @@
 						"id": "6",
 						"widgetId": "coh-related",
 						"gridX": 6,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -2698,9 +2869,9 @@
 						"icon": "Calendar"
 					},
 					{
-						"id": "sess-kpis",
+						"id": "sess-kpis-attendance",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Attendance",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -2713,7 +2884,17 @@
 										"sessionId": "@objectId"
 									},
 									"route": "AttendanceRecords"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "sess-kpis-assignments",
+						"type": "stats-block",
+						"title": "Assignments",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Assignments",
 									"register": "scholiq",
@@ -2833,12 +3014,21 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "sess-kpis",
+						"id": "2-1",
+						"widgetId": "sess-kpis-attendance",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "sess-kpis-assignments",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 3,
 						"showTitle": false
 					},
 					{
@@ -5938,9 +6128,9 @@
 						"icon": "AccountBoxOutline"
 					},
 					{
-						"id": "lprof-kpis",
+						"id": "lprof-kpis-enrolments",
 						"type": "stats-block",
-						"title": "Overview",
+						"title": "Enrolments",
 						"icon": "ChartBar",
 						"content": {
 							"entries": [
@@ -5953,7 +6143,17 @@
 										"learnerId": "@objectId"
 									},
 									"route": "Enrolments"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "lprof-kpis-attendance-records",
+						"type": "stats-block",
+						"title": "Attendance records",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Attendance records",
 									"register": "scholiq",
@@ -5963,7 +6163,17 @@
 										"learnerId": "@objectId"
 									},
 									"route": "AttendanceRecords"
-								},
+								}
+							]
+						}
+					},
+					{
+						"id": "lprof-kpis-credentials",
+						"type": "stats-block",
+						"title": "Credentials",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
 								{
 									"title": "Credentials",
 									"register": "scholiq",
@@ -6200,19 +6410,37 @@
 						"showTitle": false
 					},
 					{
-						"id": "2",
-						"widgetId": "lprof-kpis",
+						"id": "2-1",
+						"widgetId": "lprof-kpis-enrolments",
 						"gridX": 8,
 						"gridY": 0,
 						"gridWidth": 4,
-						"gridHeight": 5,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-2",
+						"widgetId": "lprof-kpis-attendance-records",
+						"gridX": 8,
+						"gridY": 2,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2-3",
+						"widgetId": "lprof-kpis-credentials",
+						"gridX": 8,
+						"gridY": 4,
+						"gridWidth": 4,
+						"gridHeight": 2,
 						"showTitle": false
 					},
 					{
 						"id": "3",
 						"widgetId": "lprof-enrol",
 						"gridX": 0,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -6221,7 +6449,7 @@
 						"id": "4",
 						"widgetId": "lprof-plans",
 						"gridX": 6,
-						"gridY": 5,
+						"gridY": 6,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -6230,7 +6458,7 @@
 						"id": "5",
 						"widgetId": "lprof-finals",
 						"gridX": 0,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -6239,7 +6467,7 @@
 						"id": "6",
 						"widgetId": "lprof-attendance",
 						"gridX": 6,
-						"gridY": 10,
+						"gridY": 11,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -6248,7 +6476,7 @@
 						"id": "7",
 						"widgetId": "lprof-credentials",
 						"gridX": 0,
-						"gridY": 15,
+						"gridY": 16,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
@@ -6257,7 +6485,7 @@
 						"id": "8",
 						"widgetId": "lprof-related",
 						"gridX": 6,
-						"gridY": 15,
+						"gridY": 16,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
