@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/.",
-        "version": "0.5.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/.",
+        "version": "0.6.0"
     },
     "x-openregister": {
         "type": "application",
@@ -5402,7 +5402,6 @@
                     "learnerId",
                     "curriculumPlanId",
                     "componentId",
-                    "value",
                     "gradeScaleId",
                     "tenant_id"
                 ],
@@ -5455,7 +5454,8 @@
                             "assignment-submission",
                             "assessment-result",
                             "participation",
-                            "manual"
+                            "manual",
+                            "exemption"
                         ],
                         "title": "Source Kind"
                     },
@@ -5483,9 +5483,26 @@
                         "description": "UUID of the Session that originated this mark (set when sourceKind=participation).",
                         "title": "Session ID"
                     },
+                    "exemptionCaseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "ExemptionCase",
+                        "description": "UUID of the ExemptionCase that originated this mark (set when sourceKind=exemption, by ExemptionGrantHandler).",
+                        "title": "Exemption Case ID"
+                    },
+                    "fraudCaseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "FraudCase",
+                        "description": "UUID of a FraudCase contesting this mark, if any. When set, FraudCaseBlockGuard gates the publish/republish transitions and FraudCaseInvalidationGuard gates the invalidate transition.",
+                        "title": "Fraud Case ID"
+                    },
                     "value": {
                         "type": "number",
-                        "description": "Raw mark value on the component's GradeScale (e.g. 7.5 for NL numeric).",
+                        "nullable": true,
+                        "description": "Raw mark value on the component's GradeScale (e.g. 7.5 for NL numeric). Required for every sourceKind except exemption, where it MUST be null — an exemption has no numeric mark, the exam board's decision is the pass signal (enforced by the allOf if/then below).",
                         "title": "Grade Value"
                     },
                     "gradeScaleId": {
@@ -5538,15 +5555,43 @@
                     },
                     "lifecycle": {
                         "type": "string",
-                        "description": "Entry lifecycle state. Concept = editable, published = immutable + notified, revised = superseded by a new published entry.",
+                        "description": "Entry lifecycle state. Concept = editable, published = immutable + notified, revised = superseded by a new published entry, invalidated = terminal state reached only from concept when a linked FraudCase is decided fraud-proven — never published.",
                         "enum": [
                             "concept",
                             "published",
-                            "revised"
+                            "revised",
+                            "invalidated"
                         ],
                         "title": "Lifecycle State"
                     }
                 },
+                "allOf": [
+                    {
+                        "_comment": "exam-board-case-handling: conditional value requiredness by sourceKind. Standard JSON Schema if/then/else — no prior precedent for this construct in this register (documented in design.md §7); value is required and numeric for every sourceKind except exemption, where it MUST be null.",
+                        "if": {
+                            "properties": {
+                                "sourceKind": {
+                                    "const": "exemption"
+                                }
+                            },
+                            "required": [
+                                "sourceKind"
+                            ]
+                        },
+                        "then": {
+                            "properties": {
+                                "value": {
+                                    "type": "null"
+                                }
+                            }
+                        },
+                        "else": {
+                            "required": [
+                                "value"
+                            ]
+                        }
+                    }
+                ],
                 "x-openregister-lifecycle": {
                     "property": "lifecycle",
                     "initial": "concept",
@@ -5554,6 +5599,9 @@
                         "publish": {
                             "from": "concept",
                             "to": "published",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard"
+                            ],
                             "notifications": [
                                 "gradePublished"
                             ]
@@ -5565,8 +5613,18 @@
                         "republish": {
                             "from": "revised",
                             "to": "published",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard"
+                            ],
                             "notifications": [
                                 "gradePublished"
+                            ]
+                        },
+                        "invalidate": {
+                            "from": "concept",
+                            "to": "invalidated",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\FraudCaseInvalidationGuard"
                             ]
                         }
                     }
@@ -5611,11 +5669,14 @@
                     }
                 },
                 "x-property-rbac": {
-                    "_comment": "WF1 (wave-12): grade entries are sensitive academic PII. Learner sees own grades; admins see all.",
+                    "_comment": "WF1 (wave-12): grade entries are sensitive academic PII. Learner sees own grades; admins see all. exam-board-case-handling: examboard role added so a board member can read the specific grade their ExemptionCase or FraudCase concerns.",
                     "read": {
                         "anyOf": [
                             {
                                 "role": "admin"
+                            },
+                            {
+                                "role": "examboard"
                             },
                             {
                                 "match": {
@@ -5706,7 +5767,7 @@
                     "breakdown": {
                         "type": "object",
                         "nullable": true,
-                        "description": "Per-period averages and per-component contributions as a JSON object. Derived — do not set manually.",
+                        "description": "Per-period averages and per-component contributions as a JSON object. Derived — do not set manually. exam-board-case-handling: a component satisfied by a sourceKind=exemption GradeEntry instead carries components[componentId] = { exempt: true } (no value/weight/contribution — see GradeFormulaEvaluator::weightedAverage()).",
                         "example": {
                             "periods": {
                                 "1": 6.5,
@@ -5717,6 +5778,9 @@
                                     "value": 7.0,
                                     "weight": 2,
                                     "contribution": 14.0
+                                },
+                                "comp-b": {
+                                    "exempt": true
                                 }
                             }
                         },
@@ -5767,11 +5831,14 @@
                     }
                 },
                 "x-property-rbac": {
-                    "_comment": "WF1 (wave-12): final grades are academic PII. Learner sees own final grade; admins see all.",
+                    "_comment": "WF1 (wave-12): final grades are academic PII. Learner sees own final grade; admins see all. exam-board-case-handling: examboard role added, same reasoning as GradeEntry.",
                     "read": {
                         "anyOf": [
                             {
                                 "role": "admin"
+                            },
+                            {
+                                "role": "examboard"
                             },
                             {
                                 "match": {
@@ -5783,6 +5850,635 @@
                         ]
                     }
                 }
+            },
+            "ExemptionCase": {
+                "x-openregister-processing": {
+                    "code": "scholiq-exam-board-exemption",
+                    "naam": "Exemption (vrijstelling) case handling",
+                    "doelbinding": "Record and adjudicate a learner's request to be exempted from a CurriculumPlan component on the strength of prior evidence (diploma, certificate, work experience), per WHW art. 7.13's mandate that the examencommissie make individual, reasoned exemption decisions consistent with the school's exemption policy (handreiking).",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "groundsKind",
+                        "groundsDescription",
+                        "decisionRationale",
+                        "policyReference"
+                    ],
+                    "backend": "scholiq.exam-board-exemption",
+                    "retentionReference": "not declared (exemption decisions are examencommissie compliance evidence; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-exam-board-exemption"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-07-12"
+                },
+                "slug": "exemption-case",
+                "icon": "FileCertificateOutline",
+                "version": "0.1.0",
+                "title": "ExemptionCase",
+                "description": "A learner's exemption (vrijstelling) request against one CurriculumPlan.components[] entry, decided by the exam board (examencommissie) on the strength of prior evidence (diploma, certificate, work experience) attached as OpenRegister file evidence. grant/reject require a recorded decisionRationale and policyReference (ExemptionDecisionGuard). On grant, ExemptionGrantHandler creates a GradeEntry (sourceKind: exemption, value: null) and drives it through the existing publish transition.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "curriculumPlanId",
+                    "componentId",
+                    "groundsKind",
+                    "groundsDescription",
+                    "submittedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
+                        "description": "UUID of the LearnerProfile requesting the exemption.",
+                        "title": "Learner ID"
+                    },
+                    "curriculumPlanId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "CurriculumPlan",
+                        "description": "UUID of the CurriculumPlan the requested component belongs to.",
+                        "title": "Curriculum Plan ID"
+                    },
+                    "componentId": {
+                        "type": "string",
+                        "description": "The CurriculumPlan.components[].componentId this exemption request targets — the same pair GradeEntry already scores against.",
+                        "title": "Component ID"
+                    },
+                    "groundsKind": {
+                        "type": "string",
+                        "enum": [
+                            "prior-diploma",
+                            "certificate",
+                            "work-experience",
+                            "other"
+                        ],
+                        "description": "Category of evidence grounding the exemption request.",
+                        "title": "Grounds Kind"
+                    },
+                    "groundsDescription": {
+                        "type": "string",
+                        "description": "Free-text description of the grounds for the exemption request.",
+                        "title": "Grounds Description"
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the exemption request was submitted.",
+                        "title": "Submitted At"
+                    },
+                    "decisionRationale": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Exam-board rationale for the grant/reject decision. Required by ExemptionDecisionGuard before grant or reject can succeed.",
+                        "title": "Decision Rationale"
+                    },
+                    "policyReference": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reference to the school's exemption policy (handreiking) clause applied. Required by ExemptionDecisionGuard before grant or reject can succeed.",
+                        "title": "Policy Reference"
+                    },
+                    "decidedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the exam-board member who decided the case.",
+                        "title": "Decided By"
+                    },
+                    "decidedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "When the case was decided (grant or reject).",
+                        "title": "Decided At"
+                    },
+                    "resultingGradeEntryId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "GradeEntry",
+                        "description": "UUID of the GradeEntry (sourceKind: exemption) created by ExemptionGrantHandler on grant. Null until granted.",
+                        "title": "Resulting Grade Entry ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "submitted",
+                            "in-assessment",
+                            "granted",
+                            "rejected",
+                            "withdrawn"
+                        ],
+                        "default": "submitted",
+                        "description": "Case lifecycle state. Evidence is attached via OpenRegister's native file-attachment mechanism (@self.files), not a schema property.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "submitted",
+                    "transitions": {
+                        "startAssessment": {
+                            "from": "submitted",
+                            "to": "in-assessment"
+                        },
+                        "grant": {
+                            "from": "in-assessment",
+                            "to": "granted",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
+                            ]
+                        },
+                        "reject": {
+                            "from": "in-assessment",
+                            "to": "rejected",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
+                            ]
+                        },
+                        "withdraw": {
+                            "from": [
+                                "submitted",
+                                "in-assessment"
+                            ],
+                            "to": "withdrawn"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "submittedForAssessment": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "examboard"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuwe vrijstellingsaanvraag wacht op beoordeling",
+                            "en": "New exemption request awaits assessment"
+                        }
+                    },
+                    "granted": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "grant"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je vrijstellingsaanvraag is toegekend",
+                            "en": "Your exemption request was granted"
+                        }
+                    },
+                    "rejected": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "reject"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je vrijstellingsaanvraag is afgewezen",
+                            "en": "Your exemption request was rejected"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Exemption cases carry an academic decision + supporting evidence. Learner sees own case; examboard/admin see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "examboard"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "FraudCase": {
+                "x-openregister-processing": {
+                    "code": "scholiq-exam-board-fraud",
+                    "naam": "Fraud/plagiarism case handling",
+                    "doelbinding": "Record and adjudicate a suspected academic-fraud or plagiarism allegation through report, hearing, reasoned decision, and (when proven) a capped sanction, per WHW art. 7.13 and the examencommissie's exclusive sanctioning authority — while the contested work stays blocked from publication for the duration of the case.",
+                    "rechtsgrond": "legal-obligation",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "reporterId",
+                        "accusedLearnerId",
+                        "allegation",
+                        "hearingRecords",
+                        "verdict",
+                        "decisionRationale",
+                        "sanctionType"
+                    ],
+                    "backend": "scholiq.exam-board-fraud",
+                    "retentionReference": "not declared (fraud dossiers are examencommissie compliance + due-process evidence; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-exam-board-fraud"
+                    },
+                    "subjectIdFields": {
+                        "accusedLearnerId": "accusedLearnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-07-12"
+                },
+                "slug": "fraud-case",
+                "icon": "Gavel",
+                "version": "0.1.0",
+                "title": "FraudCase",
+                "description": "A fraud/plagiarism allegation against a learner's work: report → hearing record(s) → reasoned decision → sanction. Linked to the contested work via the same sourceKind/submissionId/assessmentResultId/sessionId shape GradeEntry already uses (a case can be filed before a GradeEntry exists), plus an optional contestedGradeEntryId once one does. decide requires a verdict + rationale (FraudCaseDecisionGuard); a fraud-proven verdict additionally requires a capped sanction and stamps a 42-day appealDeadline. FraudCaseBlockGuard blocks the linked GradeEntry's publish/republish while the case is open or permanently once fraud-proven; FraudCaseDecisionHandler invalidates a still-concept linked GradeEntry on a fraud-proven decision.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "reporterId",
+                    "accusedLearnerId",
+                    "sourceKind",
+                    "allegation",
+                    "reportedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "reporterId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the person (typically a teacher) who filed the case.",
+                        "title": "Reporter ID"
+                    },
+                    "accusedLearnerId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
+                        "description": "UUID of the LearnerProfile the allegation is made against.",
+                        "title": "Accused Learner ID"
+                    },
+                    "sourceKind": {
+                        "type": "string",
+                        "enum": [
+                            "assignment-submission",
+                            "assessment-result",
+                            "participation",
+                            "manual"
+                        ],
+                        "description": "Origin of the contested work — same enum as GradeEntry.sourceKind, so a case can be filed before a GradeEntry exists.",
+                        "title": "Source Kind"
+                    },
+                    "submissionId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Submission",
+                        "description": "UUID of the contested Submission (set when sourceKind=assignment-submission).",
+                        "title": "Submission ID"
+                    },
+                    "assessmentResultId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "AssessmentResult",
+                        "description": "UUID of the contested AssessmentResult (set when sourceKind=assessment-result).",
+                        "title": "Assessment Result ID"
+                    },
+                    "sessionId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Session",
+                        "description": "UUID of the contested Session (set when sourceKind=participation).",
+                        "title": "Session ID"
+                    },
+                    "contestedGradeEntryId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "GradeEntry",
+                        "description": "UUID of the GradeEntry contesting this work, once one exists. Null when the case is filed before a GradeEntry exists.",
+                        "title": "Contested Grade Entry ID"
+                    },
+                    "allegation": {
+                        "type": "string",
+                        "description": "Free-text description of the suspected fraud/plagiarism.",
+                        "title": "Allegation"
+                    },
+                    "reportedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the case was filed.",
+                        "title": "Reported At"
+                    },
+                    "hearingDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Scheduled hearing date/time. Required by FraudCaseHearingGuard before scheduleHearing can succeed.",
+                        "title": "Hearing Date"
+                    },
+                    "hearingRecords": {
+                        "type": "array",
+                        "description": "Append-style record of held hearings — new entries are added, never overwritten.",
+                        "default": [],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "heldAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "title": "Held At",
+                                    "description": "When this hearing took place."
+                                },
+                                "attendees": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "title": "Attendees",
+                                    "description": "NC user IDs of everyone present at this hearing."
+                                },
+                                "notes": {
+                                    "type": "string",
+                                    "title": "Notes",
+                                    "description": "Free-text notes recorded during or after this hearing."
+                                },
+                                "evidenceRefs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "title": "Evidence References",
+                                    "description": "References to evidence (e.g. OpenRegister file attachment identifiers) discussed at this hearing."
+                                }
+                            }
+                        },
+                        "title": "Hearing Records"
+                    },
+                    "verdict": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "fraud-proven",
+                            "unfounded"
+                        ],
+                        "description": "Exam-board verdict, set by decide. Required by FraudCaseDecisionGuard.",
+                        "title": "Verdict"
+                    },
+                    "decisionRationale": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Exam-board rationale for the decision. Required by FraudCaseDecisionGuard.",
+                        "title": "Decision Rationale"
+                    },
+                    "decidedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the exam-board member who decided the case.",
+                        "title": "Decided By"
+                    },
+                    "decidedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "When the case was decided. Stamped by FraudCaseDecisionGuard on decide.",
+                        "title": "Decided At"
+                    },
+                    "sanctionType": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "warning",
+                            "grade-annulment",
+                            "resubmission-required",
+                            "suspension",
+                            "exclusion"
+                        ],
+                        "description": "Sanction imposed when verdict is fraud-proven. Required by FraudCaseDecisionGuard when verdict=fraud-proven.",
+                        "title": "Sanction Type"
+                    },
+                    "sanctionDurationMonths": {
+                        "type": "integer",
+                        "nullable": true,
+                        "maximum": 12,
+                        "description": "Duration of the sanction in months, capped at 12 (\"up to one-year exclusion\"). Required by FraudCaseDecisionGuard when verdict=fraud-proven. The maximum is also schema-enforced (defense in depth) so a direct API write cannot bypass the guard's cap.",
+                        "title": "Sanction Duration (Months)"
+                    },
+                    "sanctionScope": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "single-assessment",
+                            "course",
+                            "programme"
+                        ],
+                        "description": "Scope of the sanction. Required by FraudCaseDecisionGuard when verdict=fraud-proven.",
+                        "title": "Sanction Scope"
+                    },
+                    "appealDeadline": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "decidedAt + 42 days (the CBE appeal window). Stamped by FraudCaseDecisionGuard on decide — a guard side-effect, not a declarative calculation (this register's calculation DSL has no date-arithmetic primitive at HEAD).",
+                        "title": "Appeal Deadline"
+                    },
+                    "appealLodged": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether the accused has lodged a CBE appeal.",
+                        "title": "Appeal Lodged"
+                    },
+                    "appealOutcome": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "pending",
+                            "upheld",
+                            "overturned"
+                        ],
+                        "description": "Outcome of the CBE appeal, if lodged. This spec records the outcome as a case fact only — it does not model the CBE's own adjudication process.",
+                        "title": "Appeal Outcome"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "reported",
+                            "hearing-scheduled",
+                            "heard",
+                            "decided",
+                            "dismissed"
+                        ],
+                        "default": "reported",
+                        "description": "Case lifecycle state.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "reported",
+                    "transitions": {
+                        "scheduleHearing": {
+                            "from": "reported",
+                            "to": "hearing-scheduled",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\FraudCaseHearingGuard"
+                            ]
+                        },
+                        "holdHearing": {
+                            "from": "hearing-scheduled",
+                            "to": "heard"
+                        },
+                        "decide": {
+                            "from": "heard",
+                            "to": "decided",
+                            "requires": [
+                                "OCA\\Scholiq\\Lifecycle\\FraudCaseDecisionGuard"
+                            ]
+                        },
+                        "dismiss": {
+                            "from": [
+                                "reported",
+                                "hearing-scheduled"
+                            ],
+                            "to": "dismissed"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "reported": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "examboard"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuwe fraudezaak wacht op behandeling",
+                            "en": "New fraud case awaits handling"
+                        }
+                    },
+                    "decided": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "decide"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "accusedLearnerId"
+                            },
+                            {
+                                "kind": "field",
+                                "field": "reporterId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "De fraudezaak is beslist",
+                            "en": "The fraud case has been decided"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Fraud dossiers are highly sensitive. Read access restricted to admin, examboard, the accused learner, and the reporter — fail-closed for everyone else. Hearing/decision internals are withheld from the accused/reporter by ExamCaseDossierView (UI convention, not field-level server RBAC — this register has no field-level RBAC primitive at HEAD).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "examboard"
+                            },
+                            {
+                                "match": {
+                                    "field": "accusedLearnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            },
+                            {
+                                "match": {
+                                    "field": "reporterId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
             },
             "LearningPlanTemplate": {
                 "slug": "learning-plan-template",
