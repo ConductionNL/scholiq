@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md.",
-        "version": "0.3.1"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/.",
+        "version": "0.4.0"
     },
     "x-openregister": {
         "type": "application",
@@ -7978,7 +7978,837 @@
                     }
                 },
                 "x-openregister-seed": []
-            }
+            },
+                "Praktijkopleider": {
+                    "slug": "praktijkopleider",
+                    "icon": "AccountTieOutline",
+                    "version": "0.1.0",
+                    "title": "Praktijkopleider",
+                    "description": "The workplace supervisor (praktijkopleider) conducting BPV at a leerbedrijf. A plain reference/identity object with no OpenRegister lifecycle — a person with no Nextcloud account by definition (ADR-046 premise). This object's own UUID is the portal identity anchor. `active` alone gates whether the portal identity is usable.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "givenName",
+                        "familyName",
+                        "email",
+                        "leerbedrijfName",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "givenName": {
+                            "type": "string",
+                            "description": "Given name of the praktijkopleider.",
+                            "example": "Fatima",
+                            "title": "Given Name"
+                        },
+                        "familyName": {
+                            "type": "string",
+                            "description": "Family name of the praktijkopleider.",
+                            "example": "El-Amrani",
+                            "title": "Family Name"
+                        },
+                        "email": {
+                            "type": "string",
+                            "format": "email",
+                            "description": "Contact email address of the praktijkopleider — used for out-of-band (non-Scholiq) communication, since no NC-reachable notification channel exists for this role.",
+                            "title": "Email Address"
+                        },
+                        "phone": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Contact phone number of the praktijkopleider.",
+                            "title": "Phone Number"
+                        },
+                        "leerbedrijfName": {
+                            "type": "string",
+                            "description": "Trade name of the leerbedrijf (workplace/employer) this praktijkopleider represents.",
+                            "example": "Bakkerij De Vries",
+                            "title": "Leerbedrijf Name"
+                        },
+                        "leerbedrijfKvkNumber": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "KVK (Chamber of Commerce) number of the leerbedrijf this praktijkopleider represents. Default reference value; the operative SBB-verification KVK number is recorded on BpvPlacement.leerbedrijfKvkNumber.",
+                            "example": "12345678",
+                            "title": "Leerbedrijf KVK Number"
+                        },
+                        "active": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether this praktijkopleider's portal identity is currently usable. False retires the identity without deleting the audit trail.",
+                            "title": "Active"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "BpvPlacement": {
+                    "slug": "bpv-placement",
+                    "icon": "BriefcaseCheckOutline",
+                    "version": "0.1.0",
+                    "title": "BPV Placement",
+                    "description": "A learner ↔ leerbedrijf match for one beroepspraktijkvorming (BPV, work-placement) period. Gates confirmation on a verified leerbedrijf (WEB art. 7.2.8/7.2.9 — the employer must be a leerbedrijf erkend by SBB) via BpvConfirmationGuard.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "learnerId",
+                        "learnerRef",
+                        "curriculumPlanId",
+                        "praktijkopleiderId",
+                        "schoolCoachId",
+                        "leerbedrijfName",
+                        "leerbedrijfKvkNumber",
+                        "periodFrom",
+                        "periodTo",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "learnerId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the learner on this placement.",
+                            "title": "Learner ID"
+                        },
+                        "learnerRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "LearnerProfile",
+                            "description": "UUID of the learner's LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Modelled A4-clean from day one alongside learnerId, unlike schemas that needed a retrofit.",
+                            "title": "Learner Ref"
+                        },
+                        "programmeId": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "uuid",
+                            "$ref": "Programme",
+                            "description": "UUID of the Programme this placement belongs to.",
+                            "title": "Programme ID"
+                        },
+                        "curriculumPlanId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "CurriculumPlan",
+                            "description": "UUID of the governing CurriculumPlan (the opleidingsplan-mbo profile) this placement's werkproces assessments are graded against.",
+                            "title": "Curriculum Plan ID"
+                        },
+                        "praktijkopleiderId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Praktijkopleider",
+                            "description": "UUID of the Praktijkopleider (workplace supervisor) responsible for this placement.",
+                            "title": "Praktijkopleider ID"
+                        },
+                        "schoolCoachId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the internal BPV-coordinator / docent-begeleider for this placement.",
+                            "title": "School Coach ID"
+                        },
+                        "leerbedrijfName": {
+                            "type": "string",
+                            "description": "Trade name of the leerbedrijf hosting this placement.",
+                            "example": "Bakkerij De Vries",
+                            "title": "Leerbedrijf Name"
+                        },
+                        "leerbedrijfKvkNumber": {
+                            "type": "string",
+                            "description": "KVK number of the leerbedrijf hosting this placement — the identifier checked against the SBB erkend-leerbedrijf register via leerbedrijfVerification.",
+                            "example": "12345678",
+                            "title": "Leerbedrijf KVK Number"
+                        },
+                        "periodFrom": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Start date of the BPV placement period.",
+                            "title": "Period From"
+                        },
+                        "periodTo": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "End date of the BPV placement period.",
+                            "title": "Period To"
+                        },
+                        "leerbedrijfVerification": {
+                            "type": "object",
+                            "description": "SBB erkend-leerbedrijf verification result, resolved via the pluggable ProvidesLeerbedrijfVerification provider. Written back by BpvLeerbedrijfVerificationHandler on the checkLeerbedrijf transition. An unconfigured provider leaves this object at its default (status: unverified) and the placement simply cannot confirm.",
+                            "title": "Leerbedrijf Verification",
+                            "default": {
+                                "status": "unverified"
+                            },
+                            "properties": {
+                                "provider": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Configured ProvidesLeerbedrijfVerification adapter identifier resolved via DI. Null means no adapter is configured — Scholiq ships none.",
+                                    "title": "Verification Provider"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "unverified",
+                                        "pending",
+                                        "verified",
+                                        "rejected",
+                                        "expired"
+                                    ],
+                                    "default": "unverified",
+                                    "description": "Result of the SBB erkend-leerbedrijf check. Only 'verified' satisfies BpvConfirmationGuard.",
+                                    "title": "Verification Status"
+                                },
+                                "erkenningNumber": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "SBB erkenning number returned by the provider, when verified.",
+                                    "title": "Erkenning Number"
+                                },
+                                "verifiedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "date-time",
+                                    "description": "Timestamp of the last verification result written back by the handler.",
+                                    "title": "Verified At"
+                                },
+                                "expiresAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "date-time",
+                                    "description": "Expiry date of the SBB erkenning, when returned by the provider. Re-verification / expiry monitoring past the initial confirmation gate is out of scope for this change.",
+                                    "title": "Expires At"
+                                },
+                                "raw": {
+                                    "type": "object",
+                                    "nullable": true,
+                                    "description": "Raw provider response payload, for audit purposes. Excluded from the praktijkopleider portal field projection.",
+                                    "title": "Raw Provider Payload"
+                                }
+                            }
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Placement lifecycle state.",
+                            "enum": [
+                                "proposed",
+                                "sbb-verification-pending",
+                                "confirmed",
+                                "active",
+                                "completed",
+                                "terminated"
+                            ],
+                            "default": "proposed",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "field": "lifecycle",
+                        "initial": "proposed",
+                        "transitions": {
+                            "checkLeerbedrijf": {
+                                "from": [
+                                    "proposed",
+                                    "sbb-verification-pending"
+                                ],
+                                "to": "sbb-verification-pending"
+                            },
+                            "confirm": {
+                                "from": [
+                                    "sbb-verification-pending"
+                                ],
+                                "to": "confirmed",
+                                "requires": "OCA\\Scholiq\\Lifecycle\\BpvConfirmationGuard"
+                            },
+                            "activate": {
+                                "from": [
+                                    "confirmed"
+                                ],
+                                "to": "active"
+                            },
+                            "complete": {
+                                "from": [
+                                    "active"
+                                ],
+                                "to": "completed"
+                            },
+                            "terminate": {
+                                "from": [
+                                    "proposed",
+                                    "sbb-verification-pending",
+                                    "confirmed",
+                                    "active"
+                                ],
+                                "to": "terminated"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "Praktijkovereenkomst": {
+                    "slug": "praktijkovereenkomst",
+                    "icon": "FileDocumentEditOutline",
+                    "version": "0.1.0",
+                    "title": "Praktijkovereenkomst (POK)",
+                    "description": "The three-party work-placement agreement (WEB art. 7.2.8/7.2.9) for one BpvPlacement — student, school, and praktijkopleider all sign. Activation is gated on all three PokSignatures existing, enforced by PokActivationGuard.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "bpvPlacementId",
+                        "periodFrom",
+                        "periodTo",
+                        "version",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "bpvPlacementId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "BpvPlacement",
+                            "description": "UUID of the BpvPlacement this POK governs.",
+                            "title": "BPV Placement ID"
+                        },
+                        "periodFrom": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Start date covered by this POK.",
+                            "title": "Period From"
+                        },
+                        "periodTo": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "End date covered by this POK.",
+                            "title": "Period To"
+                        },
+                        "terms": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Structured clauses or rich text of the agreement's terms, per the MBO Raad servicedocument POK.",
+                            "title": "Terms"
+                        },
+                        "version": {
+                            "type": "integer",
+                            "default": 1,
+                            "description": "Version number of this POK. PokSignature rows are keyed to a specific (subjectId, subjectVersion) pair.",
+                            "title": "Version"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "POK lifecycle state.",
+                            "enum": [
+                                "draft",
+                                "pending-signatures",
+                                "active",
+                                "completed",
+                                "terminated"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "field": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "requestSignatures": {
+                                "from": [
+                                    "draft"
+                                ],
+                                "to": "pending-signatures"
+                            },
+                            "activate": {
+                                "from": [
+                                    "pending-signatures"
+                                ],
+                                "to": "active",
+                                "requires": "OCA\\Scholiq\\Lifecycle\\PokActivationGuard"
+                            },
+                            "complete": {
+                                "from": [
+                                    "active"
+                                ],
+                                "to": "completed"
+                            },
+                            "terminate": {
+                                "from": [
+                                    "draft",
+                                    "pending-signatures",
+                                    "active"
+                                ],
+                                "to": "terminated"
+                            }
+                        }
+                    },
+                    "x-openregister-calculations": {
+                        "isFullySigned": {
+                            "type": "boolean",
+                            "materialise": true,
+                            "description": "True once a PokSignature exists for each of the three required roles (student, school, praktijkopleider) on this POK's current (subjectId, subjectVersion). A duplicate signature for the same role still counts as one distinct role toward the three. Gates PokActivationGuard's `activate` transition. NOTE: expressed with the countRelated idiom already used elsewhere in this register (e.g. Assignment.submissionCount); PokActivationGuard independently re-derives this same fact by querying PokSignature directly via ObjectService, which is the tested, authoritative enforcement — this field is the declarative read-surface for the frontend.",
+                            "expression": {
+                                "and": [
+                                    {
+                                        "gte": [
+                                            {
+                                                "countRelated": {
+                                                    "schema": "PokSignature",
+                                                    "joinOn": "subjectId",
+                                                    "where": {
+                                                        "eq": [
+                                                            "signerRole",
+                                                            "student"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            1
+                                        ]
+                                    },
+                                    {
+                                        "gte": [
+                                            {
+                                                "countRelated": {
+                                                    "schema": "PokSignature",
+                                                    "joinOn": "subjectId",
+                                                    "where": {
+                                                        "eq": [
+                                                            "signerRole",
+                                                            "school"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            1
+                                        ]
+                                    },
+                                    {
+                                        "gte": [
+                                            {
+                                                "countRelated": {
+                                                    "schema": "PokSignature",
+                                                    "joinOn": "subjectId",
+                                                    "where": {
+                                                        "eq": [
+                                                            "signerRole",
+                                                            "praktijkopleider"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            1
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "PokSignature": {
+                    "slug": "pok-signature",
+                    "icon": "PenOutline",
+                    "version": "0.1.0",
+                    "title": "POK Signature",
+                    "description": "Co-sign record on a specific Praktijkovereenkomst version. Append-only — signatures are immutable audit evidence. Field-for-field shape parity with the learning-plan Signature schema; a parallel schema (not a widened Signature) because Signature.subjectId is hard-$ref'd to LearningPlan and the fleet's relation-dialect gate bans polymorphic $ref targets.",
+                    "type": "object",
+                    "appendOnly": true,
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "subjectId",
+                        "subjectVersion",
+                        "signerId",
+                        "signerRole",
+                        "signedAt",
+                        "assuranceLevel",
+                        "method",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "subjectId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Praktijkovereenkomst",
+                            "description": "UUID of the Praktijkovereenkomst being signed.",
+                            "title": "Subject ID"
+                        },
+                        "subjectVersion": {
+                            "type": "integer",
+                            "description": "Version of the Praktijkovereenkomst being signed.",
+                            "title": "Subject Version"
+                        },
+                        "signerId": {
+                            "type": "string",
+                            "description": "NC user ID (student/school) or Praktijkopleider object UUID (workplace role) of the person signing — an opaque string in this field.",
+                            "title": "Signer ID"
+                        },
+                        "signerRole": {
+                            "type": "string",
+                            "enum": [
+                                "student",
+                                "school",
+                                "praktijkopleider"
+                            ],
+                            "description": "Role of the signer in relation to the POK.",
+                            "title": "Signer Role"
+                        },
+                        "signedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 timestamp of the signing action.",
+                            "title": "Signed At"
+                        },
+                        "assuranceLevel": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "basic",
+                                "substantial",
+                                "high"
+                            ],
+                            "description": "eIDAS assurance level of the signing method used.",
+                            "title": "eIDAS Assurance Level"
+                        },
+                        "method": {
+                            "type": "string",
+                            "description": "Signing method identifier, e.g. 'digid', 'click-to-confirm', 'wet-handtekening-scan'.",
+                            "title": "Signing Method"
+                        },
+                        "evidenceRef": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Optional reference to signing evidence (e.g. redirect log, scan URL).",
+                            "title": "Evidence Reference"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "WerkprocesAssessment": {
+                    "slug": "werkproces-assessment",
+                    "icon": "ClipboardCheckOutline",
+                    "version": "0.1.0",
+                    "title": "Werkproces Assessment",
+                    "description": "One workplace assessment against one werkproces of the kwalificatiedossier, for one BpvPlacement. A confirmed assessment emits or updates a GradeEntry for its curriculumPlanId/componentId via WerkprocesGradeEmitHandler — this schema computes no final grade itself.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "bpvPlacementId",
+                        "curriculumPlanId",
+                        "componentId",
+                        "kwalificatiedossierCode",
+                        "kerntaakCode",
+                        "werkprocesCode",
+                        "werkprocesLabel",
+                        "assessorId",
+                        "beoordeling",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "bpvPlacementId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "BpvPlacement",
+                            "description": "UUID of the BpvPlacement this assessment belongs to.",
+                            "title": "BPV Placement ID"
+                        },
+                        "curriculumPlanId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "CurriculumPlan",
+                            "description": "UUID of the governing CurriculumPlan.",
+                            "title": "Curriculum Plan ID"
+                        },
+                        "componentId": {
+                            "type": "string",
+                            "description": "Identifier of the CurriculumPlan.components[] entry (kind: 'assessment') this werkproces assessment feeds into — the existing generic grading hook, no new component kind needed.",
+                            "title": "Component ID"
+                        },
+                        "kwalificatiedossierCode": {
+                            "type": "string",
+                            "description": "SBB kwalificatiedossier code.",
+                            "title": "Kwalificatiedossier Code"
+                        },
+                        "kerntaakCode": {
+                            "type": "string",
+                            "description": "SBB kerntaak code within the kwalificatiedossier.",
+                            "title": "Kerntaak Code"
+                        },
+                        "werkprocesCode": {
+                            "type": "string",
+                            "description": "SBB werkproces code within the kerntaak.",
+                            "title": "Werkproces Code"
+                        },
+                        "werkprocesLabel": {
+                            "type": "string",
+                            "description": "Human-readable label of the werkproces being assessed.",
+                            "title": "Werkproces Label"
+                        },
+                        "assessorId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Praktijkopleider",
+                            "description": "UUID of the Praktijkopleider who performed this assessment.",
+                            "title": "Assessor ID"
+                        },
+                        "assessedAt": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "date",
+                            "description": "Date the assessment was performed.",
+                            "title": "Assessed At"
+                        },
+                        "beoordeling": {
+                            "type": "string",
+                            "enum": [
+                                "nog-niet-competent",
+                                "competent"
+                            ],
+                            "description": "Workplace assessment outcome for this werkproces.",
+                            "title": "Beoordeling"
+                        },
+                        "toelichting": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Narrative explanation supporting the beoordeling.",
+                            "title": "Toelichting"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Assessment lifecycle state.",
+                            "enum": [
+                                "draft",
+                                "submitted",
+                                "confirmed"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "field": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "submit": {
+                                "from": [
+                                    "draft"
+                                ],
+                                "to": "submitted"
+                            },
+                            "confirm": {
+                                "from": [
+                                    "submitted"
+                                ],
+                                "to": "confirmed"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "BpvVisitReport": {
+                    "slug": "bpv-visit-report",
+                    "icon": "MapMarkerCheckOutline",
+                    "version": "0.1.0",
+                    "title": "BPV Visit Report",
+                    "description": "A visit or three-way-conversation report for one BpvPlacement, linked to the learner's LearnerProfile dossier via learnerRef. Declares a visitDueReminder notification off nextVisitDue, targeting the internal schoolCoachId (the praktijkopleider has no NC-reachable channel).",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "bpvPlacementId",
+                        "learnerRef",
+                        "visitDate",
+                        "visitKind",
+                        "schoolCoachId",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "bpvPlacementId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "BpvPlacement",
+                            "description": "UUID of the BpvPlacement this visit report belongs to.",
+                            "title": "BPV Placement ID"
+                        },
+                        "learnerRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "LearnerProfile",
+                            "description": "UUID of the learner's LearnerProfile object — the dossier link.",
+                            "title": "Learner Ref"
+                        },
+                        "visitDate": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Date the visit or three-way conversation took place.",
+                            "title": "Visit Date"
+                        },
+                        "visitKind": {
+                            "type": "string",
+                            "enum": [
+                                "voortgangsbezoek",
+                                "tussentijds-gesprek",
+                                "eindgesprek",
+                                "incident"
+                            ],
+                            "description": "Kind of visit or conversation recorded.",
+                            "title": "Visit Kind"
+                        },
+                        "attendees": {
+                            "type": "array",
+                            "description": "Attendees of the visit — praktijkopleider/other external attendees have no reliable NC uid, so each entry carries a free-text role + name instead of a user reference.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {
+                                        "type": "string",
+                                        "description": "Attendee's role (e.g. 'praktijkopleider', 'schoolCoach', 'learner').",
+                                        "title": "Attendee Role"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Attendee's name.",
+                                        "title": "Attendee Name"
+                                    }
+                                }
+                            },
+                            "title": "Attendees"
+                        },
+                        "schoolCoachId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the internal BPV-coordinator / docent-begeleider who logged this visit — the visitDueReminder recipient.",
+                            "title": "School Coach ID"
+                        },
+                        "narrative": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Free-text narrative of the visit or conversation.",
+                            "title": "Narrative"
+                        },
+                        "actionPoints": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Action points agreed during the visit.",
+                            "title": "Action Points"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Visit report lifecycle state.",
+                            "enum": [
+                                "draft",
+                                "finalized"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "field": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "finalize": {
+                                "from": [
+                                    "draft"
+                                ],
+                                "to": "finalized"
+                            }
+                        }
+                    },
+                    "x-openregister-calculations": {
+                        "nextVisitDue": {
+                            "type": "string",
+                            "materialise": true,
+                            "description": "visitDate plus a fixed 60-day cadence — the next visit / three-way-conversation due date. Same derived-field idiom as ActionItem.isOverdue (no TimedJob).",
+                            "expression": {
+                                "dateAdd": {
+                                    "date": {
+                                        "prop": "visitDate"
+                                    },
+                                    "amount": 60,
+                                    "unit": "days"
+                                }
+                            }
+                        }
+                    },
+                    "x-openregister-notifications": {
+                        "visitDueReminder": {
+                            "trigger": {
+                                "type": "scheduled",
+                                "intervalSec": 86400,
+                                "filter": {
+                                    "nextVisitDue": {
+                                        "operator": "olderThan",
+                                        "value": "PT0S"
+                                    }
+                                }
+                            },
+                            "enabled": true,
+                            "channels": [
+                                "nc-notification"
+                            ],
+                            "recipients": [
+                                {
+                                    "kind": "field",
+                                    "field": "schoolCoachId"
+                                }
+                            ],
+                            "subject": {
+                                "nl": "BPV-bezoek is aan de beurt",
+                                "en": "A BPV visit is due"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                }
         }
     }
 }

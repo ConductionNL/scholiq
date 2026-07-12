@@ -83,10 +83,11 @@ class PortalContributionProvider
      * @return array<int, string> The audience identifiers.
      *
      * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-access-is-a-direct-scope-portalcontributionprovider-audience
      */
     public function getAudiences(): array
     {
-        return ['student', 'parent'];
+        return ['student', 'parent', 'praktijkopleider'];
 
     }//end getAudiences()
 
@@ -130,6 +131,10 @@ class PortalContributionProvider
 
         if ($audience === 'parent') {
             return $this->parentContribution();
+        }
+
+        if ($audience === 'praktijkopleider') {
+            return $this->praktijkopleiderContribution();
         }
 
         // Any audience Scholiq does not serve → null (fail-closed; ADR-005).
@@ -457,4 +462,96 @@ class PortalContributionProvider
         ];
 
     }//end parentContribution()
+
+    /**
+     * Manifest for the `praktijkopleider` audience (the workplace supervisor conducting BPV).
+     *
+     * `subject.subjectRef` is the praktijkopleider's own `Praktijkopleider` object UUID — a
+     * DIRECT scope key on `BpvPlacement` (`praktijkopleiderId == subject.subjectRef`), unlike
+     * `parent`'s reverse one-hop join, because the placement literally belongs to that
+     * praktijkopleider (no join required). This follows the `student` shape (direct match,
+     * safe to ship create-actions), not the `parent` shape (no create yet, pending a
+     * cross-ref-validating writer). Both create-actions are `minTrust: substantial` — an
+     * official werkproces assessment and a POK signature both feed diploma-track evidence,
+     * the same trust floor `portal-parent` set for guardian actions over minor data.
+     *
+     * Field projection: the read collection excludes `schoolCoachId` (internal staff
+     * identity) and `leerbedrijfVerification.raw` (the SBB provider's raw payload may carry
+     * more than the erkenning status) — mirrors the staff-only-column drop table in
+     * portal-contribution/design.md.
+     *
+     * @return array<string, mixed> The praktijkopleider manifest.
+     *
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-access-is-a-direct-scope-portalcontributionprovider-audience
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-actions-never-trust-client-supplied-identity
+     */
+    private function praktijkopleiderContribution(): array
+    {
+        return [
+            'label'         => 'Scholiq',
+            'collections'   => [
+                [
+                    'id'         => 'poBpvPlacements',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'bpv-placement',
+                    'scopeField' => 'praktijkopleiderId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'label'      => 'My BPV placements',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'praktijkopleiderId',
+                        'learnerRef',
+                        'curriculumPlanId',
+                        'leerbedrijfName',
+                        'periodFrom',
+                        'periodTo',
+                        'lifecycle',
+                    ],
+                ],
+            ],
+            'actions'       => [
+                [
+                    'id'         => 'createWerkprocesAssessment',
+                    'type'       => 'create',
+                    'label'      => 'Submit a werkproces assessment',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'werkproces-assessment',
+                    'scopeField' => 'assessorId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'bpvPlacementId',
+                        'curriculumPlanId',
+                        'componentId',
+                        'kwalificatiedossierCode',
+                        'kerntaakCode',
+                        'werkprocesCode',
+                        'werkprocesLabel',
+                        'beoordeling',
+                        'toelichting',
+                    ],
+                ],
+                [
+                    'id'         => 'signPraktijkovereenkomst',
+                    'type'       => 'create',
+                    'label'      => 'Sign the praktijkovereenkomst',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'pok-signature',
+                    'scopeField' => 'signerId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'subjectId',
+                        'subjectVersion',
+                        'assuranceLevel',
+                        'method',
+                        'evidenceRef',
+                    ],
+                ],
+            ],
+            'notifications' => [],
+        ];
+
+    }//end praktijkopleiderContribution()
 }//end class
