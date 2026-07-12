@@ -4624,13 +4624,13 @@
                             "lockdownBrowser": {
                                 "type": "boolean",
                                 "default": false,
-                                "description": "Enable lockdown browser integration.",
+                                "description": "Enable lockdown browser integration. When nativeTestMode is set, requests browser Fullscreen API and logs exits as flags — not an OS-level kiosk client.",
                                 "title": "Lockdown Browser"
                             },
                             "recordWebcam": {
                                 "type": "boolean",
                                 "default": false,
-                                "description": "Enable webcam recording.",
+                                "description": "Enable webcam recording. Not applicable when nativeTestMode is set — native mode never requests camera/microphone access.",
                                 "title": "Record Webcam"
                             },
                             "flagReviewMode": {
@@ -4642,6 +4642,18 @@
                                 "default": "manual",
                                 "description": "Flag review mode. ai-assisted requires the AI feature with slug assessment-ai-proctor-review to be enabled in the central Hermiq governance register (ADR-005).",
                                 "title": "Flag Review Mode"
+                            },
+                            "nativeTestMode": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "Enables Scholiq's built-in browser-JS delivery hardening (fullscreen enforcement, focus-loss/tab-switch/navigation logging) instead of resolving an external ProvidesProctoring adapter via provider. Mutually exclusive with provider in practice — external provider wins if both are set (config-authoring error, not schema-enforced).",
+                                "title": "Native Test Mode"
+                            },
+                            "navigationLock": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "When nativeTestMode is set: warn on tab close/reload and log blocked back-navigation attempts as blocked-navigation flags.",
+                                "title": "Navigation Lock"
                             }
                         },
                         "title": "Proctoring Configuration"
@@ -5183,6 +5195,12 @@
                             "to": "error"
                         }
                     }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "user"
+                    ],
+                    "_comment": "secure-exam-test-mode: first change to ever write this schema — a learner's own browser (native test mode) or an external provider adapter creates the session, so create must be reachable by an authenticated user, not admin-only (contrast XapiStatement, which is admin-only pending a dedicated ingest controller). Object-level scoping (only the named learnerId) and field-level write RBAC on flags[].reviewDecision are NOT enforced here — known platform gap, tracked in design.md §4.2/§6."
                 },
                 "x-openregister-calculations": {
                     "pendingFlagCount": {

@@ -20,11 +20,19 @@ only.
 - **THEN** the configured adapter handles the session and the flag never auto-alters a result (EU AI Act
   Art. 14 human oversight)
 
+<!-- @e2e exclude Pre-existing external-provider path, unchanged by this proposal; no scholiq DOM surface
+     to drive without a live vendor adapter (the canonical assessment spec's own top-level note already
+     excludes this seam as pure backend/PHP-interface). -->
+
 #### Scenario: Native test mode does not require or resolve an external provider
 - **GIVEN** an Assessment with `proctoring.nativeTestMode: true` and no `provider` set
 - **WHEN** a learner starts the assessment
 - **THEN** no `ProvidesProctoring` implementation is resolved or required, and the assessment proceeds using
   only Scholiq's built-in browser-JS hardening
+
+<!-- @e2e exclude Negative assertion (no ProvidesProctoring resolved) verified by TakeAssessmentView.vue's
+     init() branch logic — there is no PHP adapter call in the native-mode branch to observe absence of at
+     runtime; a live vendor would be required to assert non-invocation against. -->
 
 ## ADDED Requirements
 
@@ -45,10 +53,16 @@ Annex III §3 scope precisely because it performs no such inference.
   than prevents circumvention, before any attempt is created
 - **AND** the learner must actively choose to start before an `AssessmentResult` is created
 
+<!-- @e2e tests/e2e/spec-coverage/secure-exam-test-mode.spec.ts -->
+
 #### Scenario: Native test mode never captures camera or microphone
 - **GIVEN** an Assessment with `proctoring.nativeTestMode: true`
 - **WHEN** the learner takes the assessment
 - **THEN** no camera or microphone permission is requested and no audio/video is captured at any point
+
+<!-- @e2e exclude Negative code-absence assertion — no getUserMedia/mediaDevices call exists anywhere in
+     TakeAssessmentView.vue (grep-verifiable); a live permission-prompt-absence check is flaky and
+     browser/instance-dependent, not a stable e2e assertion. -->
 
 ### Requirement: Native test-mode events log into the existing ProctoringSession review queue
 When native test mode is active, the system SHALL create a `ProctoringSession` (`provider:
@@ -67,11 +81,19 @@ Act Art. 14, same discipline as the external-provider path).
   `ProctoringSession.flags[]`
 - **AND** the flag never alters the `AssessmentResult`'s lifecycle, score, or `passed` value
 
+<!-- @e2e exclude Requires a seeded nativeTestMode Assessment plus a live Fullscreen API interaction
+     (browsers restrict programmatic fullscreen exit without a user gesture in automation) and a running
+     OpenRegister backend to observe the PUT round-trip. The append-flag PUT pattern itself is identical to
+     ProctoringReviewQueue.vue::recordDecision(), already relied on in production and unit-testable at the
+     schema level (tests/Unit/Settings/SecureExamTestModeTest.php). -->
+
 #### Scenario: Native test-mode sessions appear in the existing review queue unchanged
 - **GIVEN** a `ProctoringSession` created by native test mode with at least one pending flag
 - **WHEN** an invigilator opens `ProctoringReviewQueue`
 - **THEN** the session and its flags are listed exactly as an externally-provided session would be, and the
   invigilator's `allowed`/`annulled` decision is recorded the same way
+
+<!-- @e2e tests/e2e/spec-coverage/secure-exam-test-mode.spec.ts -->
 
 ### Requirement: Single-attempt window guard prevents concurrent duplicate attempts
 The system SHALL prevent a learner from having more than one non-terminal (`in-progress`) `AssessmentResult`
@@ -88,9 +110,21 @@ when one exists.
 - **THEN** the existing `in-progress` `AssessmentResult` is resumed and no second `AssessmentResult` is
   created
 
+<!-- @e2e exclude Requires a seeded in-progress AssessmentResult plus a reload-then-inspect-created-count
+     assertion against a live OpenRegister backend. The resume-vs-create branch logic
+     (getOrCreateResult()/checkExistingAttempt() in TakeAssessmentView.vue) is deterministic client-side
+     code, not environment-dependent DOM behaviour. -->
+
 #### Scenario: A second tab on the same device is blocked and logged
 - **GIVEN** a learner has an active native test-mode attempt open in one browser tab
 - **WHEN** the learner opens the same Assessment in a second tab in the same browser
 - **THEN** the second tab is blocked from rendering assessment items
 - **AND** a `concurrent-session-detected` flag with `severity: "high"` is appended to the `ProctoringSession`
   for review
+
+<!-- @e2e exclude Requires two concurrent browser contexts sharing the same origin's localStorage plus a
+     seeded native-mode attempt — out of scope for this M-sized change's lightweight smoke coverage,
+     consistent with how sibling specs (e.g. school-year-rollover) treat backend/concurrency-heavy
+     scenarios. The tab-lock heartbeat logic (acquireTabLock()/writeTabLock() in TakeAssessmentView.vue) is
+     deterministic client-side code. -->
+
