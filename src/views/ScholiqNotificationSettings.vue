@@ -10,7 +10,16 @@
  dispatcher honors each override (preference-off gate). No scholiq-local
  preference store — ADR-022 (apps consume OR abstractions).
 
+ Also surfaces a quiet-hours / delivery-window control, consuming whatever
+ preference shape the (not-yet-shipped, cross-repo) OpenRegister
+ `notification-delivery-windows` change exposes on this same endpoint family.
+ Until that engine change ships, the GET response simply omits `quietHours`
+ and the control degrades gracefully to its default (off) state; a PUT is
+ still attempted so the value is captured the moment the endpoint starts
+ honouring it — scholiq performs no local quiet-hours suppression itself.
+
  @spec openspec/changes/fix-dashboards-settings-notifications/specs/nextcloud-app/spec.md#requirement-per-user-notification-preferences-in-the-user-settings-dialog
+ @spec openspec/changes/grade-visibility-scheduling/specs/scholiq-notifications/spec.md#requirement-notification-delivery-must-honor-the-per-user-override-preference
 -->
 <template>
 	<div class="scholiq-notif-settings">
@@ -47,6 +56,44 @@
 
 			<p v-if="errorMessage" class="scholiq-notif-settings__error">
 				{{ errorMessage }}
+			</p>
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			v-if="!loading"
+			:name="t('scholiq', 'Quiet hours')"
+			:description="t('scholiq', 'Defer Scholiq notifications during a daily quiet-hours window. Reminders with a deadline still arrive early enough to land before the deadline passes.')">
+			<NcCheckboxRadioSwitch
+				type="switch"
+				:checked="quietHours.enabled"
+				:disabled="quietHoursSaving"
+				@update:checked="value => saveQuietHours({ ...quietHours, enabled: value })">
+				{{ t('scholiq', 'Enable quiet hours') }}
+			</NcCheckboxRadioSwitch>
+
+			<div v-if="quietHours.enabled" class="scholiq-notif-settings__quiet-hours-times">
+				<div class="scholiq-notif-settings__quiet-hours-field">
+					<label for="scholiq-quiet-hours-start">{{ t('scholiq', 'Start') }}</label>
+					<input
+						id="scholiq-quiet-hours-start"
+						type="time"
+						:value="quietHours.start"
+						:disabled="quietHoursSaving"
+						@change="event => saveQuietHours({ ...quietHours, start: event.target.value })">
+				</div>
+				<div class="scholiq-notif-settings__quiet-hours-field">
+					<label for="scholiq-quiet-hours-end">{{ t('scholiq', 'End') }}</label>
+					<input
+						id="scholiq-quiet-hours-end"
+						type="time"
+						:value="quietHours.end"
+						:disabled="quietHoursSaving"
+						@change="event => saveQuietHours({ ...quietHours, end: event.target.value })">
+				</div>
+			</div>
+
+			<p v-if="quietHoursHint" class="scholiq-notif-settings__hint">
+				{{ quietHoursHint }}
 			</p>
 		</NcSettingsSection>
 	</div>
@@ -98,6 +145,13 @@ export default {
 			items: [],
 			loading: true,
 			errorMessage: '',
+			// Quiet-hours / delivery-window preference. Populated from `data.quietHours`
+			// on the notification-preferences GET response when the cross-repo OR
+			// `notification-delivery-windows` dispatcher preference surface exposes it;
+			// defaults to "off" until then (DEFERRED_QUESTIONS #3, grade-visibility-scheduling).
+			quietHours: { enabled: false, start: '22:00', end: '07:00' },
+			quietHoursSaving: false,
+			quietHoursHint: '',
 		}
 	},
 
@@ -109,7 +163,13 @@ export default {
 		/**
 		 * Load the user's effective notification preferences from OpenRegister.
 		 *
+		 * Also reads an optional `quietHours` key off the same response — the
+		 * shape the (not-yet-shipped) OR `notification-delivery-windows` change
+		 * is expected to expose. Absent today, so the control simply keeps its
+		 * default (off) state until that engine change ships.
+		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/grade-visibility-scheduling/specs/scholiq-notifications/spec.md#requirement-notification-delivery-must-honor-the-per-user-override-preference
 		 */
 		async fetchPreferences() {
 			this.loading = true
@@ -129,6 +189,14 @@ export default {
 					subject: row.subject ?? null,
 					saving: false,
 				}))
+
+				if (data.quietHours && typeof data.quietHours === 'object') {
+					this.quietHours = {
+						enabled: data.quietHours.enabled === true,
+						start: data.quietHours.start || '22:00',
+						end: data.quietHours.end || '07:00',
+					}
+				}
 			} catch (error) {
 				this.errorMessage = this.t('scholiq', 'Could not load notification preferences.')
 				// eslint-disable-next-line no-console
@@ -181,6 +249,40 @@ export default {
 			}
 			return item.schema + ' · ' + item.notification
 		},
+
+		/**
+		 * Persist the quiet-hours / delivery-window preference through OpenRegister's
+		 * preference API — no scholiq-local persistence (ADR-022).
+		 *
+		 * The cross-repo OR `notification-delivery-windows` dispatcher preference
+		 * surface has not shipped yet, so today's endpoint only accepts a
+		 * `(schema, notification)` override body and rejects a quiet-hours-only
+		 * payload. This degrades gracefully: the chosen value is kept in the UI
+		 * and a neutral hint explains it is not yet enforced, rather than
+		 * surfacing a scary error for a feature that is genuinely not live yet.
+		 *
+		 * @param {object} next The next quiet-hours value `{enabled, start, end}`.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/grade-visibility-scheduling/specs/scholiq-notifications/spec.md#scenario-settings-panel-surfaces-the-quiet-hours-control
+		 */
+		async saveQuietHours(next) {
+			this.quietHours = next
+			this.quietHoursSaving = true
+			this.quietHoursHint = ''
+			try {
+				const url = generateUrl('/apps/openregister/api/notification-preferences')
+				await axios.put(url, { quietHours: next })
+			} catch (error) {
+				this.quietHoursHint = this.t(
+					'scholiq',
+					'Quiet hours are not yet enforced by your Nextcloud instance. Your preference is kept here and will take effect once support is enabled.',
+				)
+				// eslint-disable-next-line no-console
+				console.warn('[ScholiqNotificationSettings] saveQuietHours: delivery-window endpoint not yet available:', error)
+			} finally {
+				this.quietHoursSaving = false
+			}
+		},
 	},
 }
 </script>
@@ -205,5 +307,23 @@ export default {
 .scholiq-notif-settings__error {
 	margin-top: 8px;
 	color: var(--color-error);
+}
+
+.scholiq-notif-settings__quiet-hours-times {
+	display: flex;
+	gap: 16px;
+	margin-top: 8px;
+}
+
+.scholiq-notif-settings__quiet-hours-field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.scholiq-notif-settings__hint {
+	margin-top: 8px;
+	color: var(--color-text-maxcontrast);
+	font-size: 0.9em;
 }
 </style>

@@ -33,6 +33,20 @@ computation is unaffected by `visibleFrom` — it still recomputes at `publish`,
 - **AND** it has an `x-openregister-notifications.gradePublished` rule whose recipient is
   `{kind: "field", field: "learnerId"}`
 
+**Resolved (DEFERRED_QUESTIONS #1)**: OpenRegister's `scheduled` trigger does not support binding
+its fire time to a schema field — confirmed by inspecting the shipped engine
+(`ScheduledNotificationJob`/`ScheduledFilterEvaluator`): a `scheduled` rule only supports a
+60-second-minimum `intervalSec` poll plus an operator-aware `filter` map (`equals`, `notEquals`,
+`withinNext`, `olderThan`, evaluated against each object's live field data). The fallback path
+from DEFERRED_QUESTIONS #1 is therefore the implemented shape: `GradeEntry.gradePublished` and
+`GradeNotification.gradePublished` both declare `trigger: {type: "scheduled", intervalSec: 300,
+filter: {visibleFrom: {operator: "olderThan", value: "PT0S"}, ...}}` — `olderThan` with a
+zero-duration threshold matches exactly the entries whose `visibleFrom` has passed. `GradeEntry`'s
+filter additionally scopes on `lifecycle: "published"` so a `revised`/`concept` row is never
+matched. `GradeNotification.idempotencyKey` plus the dispatcher's own per-`(schema, notification,
+object)` dedup state (fingerprinted on the watched `visibleFrom` field) together prevent duplicate
+delivery across the 5-minute poll and across a re-publish that resolves an unchanged `visibleFrom`.
+
 #### Scenario: CurriculumPlan supplies the default visibility policy when a teacher does not override
 
 - **GIVEN** a `CurriculumPlan` with `gradeVisibilityPolicy: {mode: "nextSchoolDay", time: "10:00",
