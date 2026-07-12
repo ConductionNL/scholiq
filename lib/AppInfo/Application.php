@@ -34,6 +34,7 @@ use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Listener\ExemptionGrantHandler;
 use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
+use OCA\Scholiq\Listener\BsaProgressFlagHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -301,6 +302,20 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: FraudCaseDecisionHandler::class
+        );
+
+        // ADR-031 legitimate exception: GradeEntry.published → BsaTrajectory
+        // at-risk check → BsaProgressFlag creation bridge (bsa-study-progress-guard).
+        // Listens for the same event GradeRollupHandler reacts to (a learner's
+        // earned credits can only change when a GradeEntry publishes). Resolves
+        // the Programme(s) the published Course belongs to, evaluates every
+        // active BsaTrajectory in scope via BsaProgressEvaluator, and creates a
+        // BsaProgressFlag (open) when the learner falls below interimNormEcts
+        // once the interim-check window has opened. NOT a TimedJob (ADR-022);
+        // never auto-acts against the learner.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BsaProgressFlagHandler::class
         );
 
     }//end register()
