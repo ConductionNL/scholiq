@@ -28,11 +28,13 @@ use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
+use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
+use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
@@ -247,6 +249,24 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: RolloverExecutionHandler::class
+        );
+
+        // ADR-031 legitimate exception: BpvPlacement `checkLeerbedrijf` self-transition
+        // (→ sbb-verification-pending) → resolve the configured
+        // ProvidesLeerbedrijfVerification adapter (if any) and write the SBB
+        // erkend-leerbedrijf verification result back onto the placement.
+        // No provider configured is a no-op — Scholiq ships no bundled SBB adapter.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BpvLeerbedrijfVerificationHandler::class
+        );
+
+        // ADR-031 legitimate exception: WerkprocesAssessment `confirmed` transition →
+        // GradeEntry create/update bridge, matching GradeRollupHandler's cross-schema
+        // write-bridge shape. WerkprocesAssessment computes no final grade itself.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: WerkprocesGradeEmitHandler::class
         );
 
     }//end register()

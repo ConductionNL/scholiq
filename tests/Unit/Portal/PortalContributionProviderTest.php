@@ -79,6 +79,18 @@ class PortalContributionProviderTest extends TestCase
     ];
 
     /**
+     * A fully server-derived praktijkopleider (workplace supervisor) subject.
+     *
+     * @var array<string, mixed>
+     */
+    private const PRAKTIJKOPLEIDER_SUBJECT = [
+        'subjectRef'   => '33333333-3333-3333-3333-333333333333',
+        'audience'     => 'praktijkopleider',
+        'organisation' => '00000000-0000-0000-0000-000000000000',
+        'trust'        => 'substantial',
+    ];
+
+    /**
      * Set up the provider — direct construction, no dependencies by contract.
      *
      * @return void
@@ -106,15 +118,16 @@ class PortalContributionProviderTest extends TestCase
     }//end testClassIsPlainAndDependencyFree()
 
     /**
-     * getAudiences() (v2) returns exactly ['student','parent'] and getAudience()
-     * (v1 fallback) is one of them. The `parent` audience is re-enabled now that
-     * portaliq ships the reverse / scope-value `via` join (match: 'scopeField').
+     * getAudiences() (v2) returns exactly ['student','parent','praktijkopleider'] and
+     * getAudience() (v1 fallback) is one of them. The `parent` audience is re-enabled now
+     * that portaliq ships the reverse / scope-value `via` join (match: 'scopeField'), and
+     * `praktijkopleider` is the bpv-praktijkovereenkomst change's new third audience.
      *
      * @return void
      */
     public function testAudienceContract(): void
     {
-        $this->assertSame(['student', 'parent'], $this->provider->getAudiences());
+        $this->assertSame(['student', 'parent', 'praktijkopleider'], $this->provider->getAudiences());
         $this->assertSame('student', $this->provider->getAudience());
         $this->assertContains($this->provider->getAudience(), $this->provider->getAudiences());
 
@@ -122,8 +135,8 @@ class PortalContributionProviderTest extends TestCase
 
     /**
      * Unserved / absent audiences get null — fail-closed audience filtering.
-     * `student` and `parent` are served; everything else (and an empty subject)
-     * is null.
+     * `student`, `parent` and `praktijkopleider` are served; everything else (and an empty
+     * subject) is null.
      *
      * @return void
      */
@@ -135,8 +148,9 @@ class PortalContributionProviderTest extends TestCase
         $this->assertNull($this->provider->getContribution($teacher));
         $this->assertNull($this->provider->getContribution([]));
 
-        // `parent` is now a served audience — it returns a manifest, not null.
+        // `parent` and `praktijkopleider` are served audiences — they return a manifest, not null.
         $this->assertIsArray($this->provider->getContribution(self::PARENT_SUBJECT));
+        $this->assertIsArray($this->provider->getContribution(self::PRAKTIJKOPLEIDER_SUBJECT));
 
     }//end testGetContributionReturnsNullForUnservedSubjects()
 
@@ -361,6 +375,99 @@ class PortalContributionProviderTest extends TestCase
     }//end testParentShipsNoCreateActionPendingCrossRefValidation()
 
     /**
+     * The praktijkopleider manifest carries a single direct-scoped BpvPlacement read
+     * collection (praktijkopleiderId == subjectRef), field-projected to drop
+     * schoolCoachId and leerbedrijfVerification.raw.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-access-is-a-direct-scope-portalcontributionprovider-audience
+     */
+    public function testPraktijkopleiderManifestShape(): void
+    {
+        $manifest = $this->provider->getContribution(self::PRAKTIJKOPLEIDER_SUBJECT);
+
+        $this->assertIsArray($manifest);
+        $this->assertSame('Scholiq', $manifest['label']);
+        $this->assertSame([], $manifest['notifications']);
+
+        $collections = $manifest['collections'];
+        $this->assertCount(1, $collections);
+        $collection = $collections[0];
+
+        $this->assertSame('poBpvPlacements', $collection['id']);
+        $this->assertSame('scholiq', $collection['register']);
+        $this->assertSame('bpv-placement', $collection['schema']);
+        // Direct match — not a reverse `via` join like `parent`.
+        $this->assertSame('praktijkopleiderId', $collection['scopeField']);
+        $this->assertSame('praktijkopleiderId', $collection['scopeClaim']);
+        $this->assertArrayNotHasKey('via', $collection);
+        $this->assertSame('low', $collection['minTrust']);
+
+        foreach (['schoolCoachId', 'leerbedrijfVerification', 'leerbedrijfVerification.raw'] as $forbidden) {
+            $this->assertNotContains($forbidden, $collection['fields']);
+        }
+
+    }//end testPraktijkopleiderManifestShape()
+
+    /**
+     * Both praktijkopleider create-actions are `type: create`, direct-scope-stamped from
+     * `subject.subjectRef` (never the request body), `minTrust: substantial`, and whitelist
+     * only placement/kwalificatiedossier/beoordeling/signature-evidence fields — never a
+     * staff decision or an already-published grade/status field.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-actions-never-trust-client-supplied-identity
+     */
+    public function testPraktijkopleiderActionsAreDirectScopeStampedAndWhitelisted(): void
+    {
+        $manifest = $this->provider->getContribution(self::PRAKTIJKOPLEIDER_SUBJECT);
+        $actions  = $manifest['actions'];
+
+        $this->assertSame(['createWerkprocesAssessment', 'signPraktijkovereenkomst'], array_column($actions, 'id'));
+
+        $assessment = $actions[0];
+        $this->assertSame('create', $assessment['type']);
+        $this->assertSame('werkproces-assessment', $assessment['schema']);
+        $this->assertSame('assessorId', $assessment['scopeField']);
+        $this->assertSame('praktijkopleiderId', $assessment['scopeClaim']);
+        $this->assertSame('substantial', $assessment['minTrust']);
+        $this->assertSame(
+            [
+                'bpvPlacementId',
+                'curriculumPlanId',
+                'componentId',
+                'kwalificatiedossierCode',
+                'kerntaakCode',
+                'werkprocesCode',
+                'werkprocesLabel',
+                'beoordeling',
+                'toelichting',
+            ],
+            $assessment['fields']
+        );
+
+        $signature = $actions[1];
+        $this->assertSame('create', $signature['type']);
+        $this->assertSame('pok-signature', $signature['schema']);
+        $this->assertSame('signerId', $signature['scopeField']);
+        $this->assertSame('praktijkopleiderId', $signature['scopeClaim']);
+        $this->assertSame('substantial', $signature['minTrust']);
+        $this->assertSame(
+            ['subjectId', 'subjectVersion', 'assuranceLevel', 'method', 'evidenceRef'],
+            $signature['fields']
+        );
+
+        // Neither create lets the client set a staff/grade/status field.
+        foreach (['assessorId', 'signerId', 'lifecycle', 'signedAt'] as $forbidden) {
+            $this->assertNotContains($forbidden, $assessment['fields']);
+            $this->assertNotContains($forbidden, $signature['fields']);
+        }
+
+    }//end testPraktijkopleiderActionsAreDirectScopeStampedAndWhitelisted()
+
+    /**
      * Register-drift pin: every schema slug, scope field, whitelisted field and
      * `via` scope-field the manifest references MUST exist in the shipped
      * scholiq_register.json — proving the `portal-identity` refs are present and
@@ -394,8 +501,13 @@ class PortalContributionProviderTest extends TestCase
         $this->assertContains('submittedByRef', $propsBySlug['excuse-request'] ?? []);
         $this->assertContains('guardianRefs', $propsBySlug['learner-profile'] ?? []);
 
-        // Both audiences are served (parent is re-enabled); each yields a manifest.
-        foreach ([self::STUDENT_SUBJECT, self::PARENT_SUBJECT] as $subject) {
+        // The bpv-praktijkovereenkomst refs the praktijkopleider audience depends on.
+        $this->assertContains('praktijkopleiderId', $propsBySlug['bpv-placement'] ?? []);
+        $this->assertContains('assessorId', $propsBySlug['werkproces-assessment'] ?? []);
+        $this->assertContains('signerId', $propsBySlug['pok-signature'] ?? []);
+
+        // All three audiences are served; each yields a manifest.
+        foreach ([self::STUDENT_SUBJECT, self::PARENT_SUBJECT, self::PRAKTIJKOPLEIDER_SUBJECT] as $subject) {
             $manifest = $this->provider->getContribution($subject);
             $this->assertIsArray($manifest);
 

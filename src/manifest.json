@@ -208,6 +208,49 @@
 			]
 		},
 		{
+			"id": "GroupBpv",
+			"label": "BPV",
+			"icon": "icon-briefcase",
+			"order": 26,
+			"children": [
+				{
+					"id": "BpvPlacementsMenu",
+					"label": "Placements",
+					"icon": "icon-briefcase",
+					"route": "BpvPlacements",
+					"order": 10
+				},
+				{
+					"id": "PraktijkovereenkomstenMenu",
+					"label": "Praktijkovereenkomsten",
+					"icon": "icon-file",
+					"route": "Praktijkovereenkomsten",
+					"order": 20
+				},
+				{
+					"id": "WerkprocesAssessmentsMenu",
+					"label": "Werkproces assessments",
+					"icon": "icon-checkmark",
+					"route": "WerkprocesAssessments",
+					"order": 30
+				},
+				{
+					"id": "BpvVisitReportsMenu",
+					"label": "Visit reports",
+					"icon": "icon-calendar",
+					"route": "BpvVisitReports",
+					"order": 40
+				},
+				{
+					"id": "PraktijkopleidersMenu",
+					"label": "Praktijkopleiders",
+					"icon": "icon-contacts",
+					"route": "Praktijkopleiders",
+					"order": 50
+				}
+			]
+		},
+		{
 			"id": "MyTimetableMenu",
 			"label": "My timetable",
 			"icon": "icon-calendar",
@@ -6685,6 +6728,647 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "BpvPlacements",
+			"route": "/bpv/placements",
+			"type": "index",
+			"title": "BPV placements",
+			"config": {
+				"register": "scholiq",
+				"schema": "bpv-placement"
+			}
+		},
+		{
+			"id": "Praktijkopleiders",
+			"route": "/bpv/praktijkopleiders",
+			"type": "index",
+			"title": "Praktijkopleiders",
+			"config": {
+				"register": "scholiq",
+				"schema": "praktijkopleider"
+			}
+		},
+		{
+			"id": "Praktijkovereenkomsten",
+			"route": "/bpv/praktijkovereenkomsten",
+			"type": "index",
+			"title": "Praktijkovereenkomsten",
+			"config": {
+				"register": "scholiq",
+				"schema": "praktijkovereenkomst"
+			}
+		},
+		{
+			"id": "WerkprocesAssessments",
+			"route": "/bpv/werkproces-assessments",
+			"type": "index",
+			"title": "Werkproces assessments",
+			"config": {
+				"register": "scholiq",
+				"schema": "werkproces-assessment"
+			}
+		},
+		{
+			"id": "BpvVisitReports",
+			"route": "/bpv/visit-reports",
+			"type": "index",
+			"title": "BPV visit reports",
+			"config": {
+				"register": "scholiq",
+				"schema": "bpv-visit-report"
+			}
+		},
+		{
+			"id": "BpvPlacementDetail",
+			"route": "/bpv/placements/:id",
+			"type": "detail",
+			"title": "BPV placement",
+			"config": {
+				"register": "scholiq",
+				"schema": "bpv-placement",
+				"_note": "A BpvPlacement is the learner \u2194 leerbedrijf match for one BPV period \u2014 the hub record for the bpv-praktijkovereenkomst capability. Body leads with the placement data (8-wide, including leerbedrijfVerification.status so the coordinator sees the SBB gate state inline) and a Related panel resolving learner/programme/curriculum plan/praktijkopleider. Its Praktijkovereenkomst, werkproces assessments and visit reports render as related-index tables \u2014 the placement's living dossier. lifecycleActions renders the checkLeerbedrijf/confirm/activate/complete/terminate transition buttons declaratively (no custom code). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "bpv-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Briefcase"
+					},
+					{
+						"id": "bpv-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "bpv-pok",
+						"type": "object-list",
+						"title": "Praktijkovereenkomst",
+						"content": {
+							"register": "scholiq",
+							"schema": "praktijkovereenkomst",
+							"filter": {
+								"bpvPlacementId": "@objectId"
+							},
+							"sort": {
+								"field": "version",
+								"dir": "desc"
+							},
+							"limit": 10,
+							"columns": [
+								{
+									"key": "version",
+									"label": "Version"
+								},
+								{
+									"key": "periodFrom",
+									"label": "Period From"
+								},
+								{
+									"key": "periodTo",
+									"label": "Period To"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "PraktijkovereenkomstDetail",
+							"viewAllRoute": "Praktijkovereenkomsten",
+							"viewAllQuery": {
+								"bpvPlacementId": "@objectId"
+							},
+							"emptyText": "No praktijkovereenkomst found.",
+							"allowCreate": false
+						},
+						"icon": "FileDocument"
+					},
+					{
+						"id": "bpv-assessments",
+						"type": "object-list",
+						"title": "Werkproces assessments",
+						"content": {
+							"register": "scholiq",
+							"schema": "werkproces-assessment",
+							"filter": {
+								"bpvPlacementId": "@objectId"
+							},
+							"sort": {
+								"field": "id",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "werkprocesLabel",
+									"label": "Werkproces"
+								},
+								{
+									"key": "beoordeling",
+									"label": "Beoordeling"
+								},
+								{
+									"key": "assessedAt",
+									"label": "Assessed At"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "WerkprocesAssessmentDetail",
+							"viewAllRoute": "WerkprocesAssessments",
+							"viewAllQuery": {
+								"bpvPlacementId": "@objectId"
+							},
+							"emptyText": "No werkproces assessments found.",
+							"allowCreate": false
+						},
+						"icon": "ClipboardCheckOutline"
+					},
+					{
+						"id": "bpv-visits",
+						"type": "object-list",
+						"title": "Visit reports",
+						"content": {
+							"register": "scholiq",
+							"schema": "bpv-visit-report",
+							"filter": {
+								"bpvPlacementId": "@objectId"
+							},
+							"sort": {
+								"field": "visitDate",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "visitDate",
+									"label": "Visit Date"
+								},
+								{
+									"key": "visitKind",
+									"label": "Kind"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "BpvVisitReportDetail",
+							"viewAllRoute": "BpvVisitReports",
+							"viewAllQuery": {
+								"bpvPlacementId": "@objectId"
+							},
+							"emptyText": "No visit reports found.",
+							"allowCreate": false
+						},
+						"icon": "MapMarker"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bpv-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bpv-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "bpv-pok",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "4",
+						"widgetId": "bpv-assessments",
+						"gridX": 0,
+						"gridY": 9,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": true
+					},
+					{
+						"id": "5",
+						"widgetId": "bpv-visits",
+						"gridX": 6,
+						"gridY": 9,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PraktijkopleiderDetail",
+			"route": "/bpv/praktijkopleiders/:id",
+			"type": "detail",
+			"title": "Praktijkopleider",
+			"config": {
+				"register": "scholiq",
+				"schema": "praktijkopleider",
+				"_note": "A Praktijkopleider is the workplace supervisor's own identity anchor \u2014 a plain reference/identity object with no lifecycle (ADR-046: a person with no Nextcloud account by definition; `active` alone gates whether the portal identity is usable). Body leads with contact + leerbedrijf data 8-wide plus a Related panel showing the BpvPlacements this praktijkopleider is responsible for. No lifecycleActions (the schema has no lifecycle field). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "po-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AccountBoxOutline"
+					},
+					{
+						"id": "po-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "po-placements",
+						"type": "object-list",
+						"title": "BPV placements",
+						"content": {
+							"register": "scholiq",
+							"schema": "bpv-placement",
+							"filter": {
+								"praktijkopleiderId": "@objectId"
+							},
+							"sort": {
+								"field": "periodFrom",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "leerbedrijfName",
+									"label": "Leerbedrijf"
+								},
+								{
+									"key": "periodFrom",
+									"label": "Period From"
+								},
+								{
+									"key": "periodTo",
+									"label": "Period To"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "BpvPlacementDetail",
+							"viewAllRoute": "BpvPlacements",
+							"viewAllQuery": {
+								"praktijkopleiderId": "@objectId"
+							},
+							"emptyText": "No BPV placements found.",
+							"allowCreate": false
+						},
+						"icon": "Briefcase"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "po-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "po-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "po-placements",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PraktijkovereenkomstDetail",
+			"route": "/bpv/praktijkovereenkomsten/:id",
+			"type": "detail",
+			"title": "Praktijkovereenkomst",
+			"config": {
+				"register": "scholiq",
+				"schema": "praktijkovereenkomst",
+				"_note": "A Praktijkovereenkomst (POK) is the three-party work-placement agreement (WEB art. 7.2.8/7.2.9) for one BpvPlacement. Body leads with the POK terms/version data 8-wide (including isFullySigned so the coordinator sees the co-sign gate state inline) plus a Related panel resolving the governing BpvPlacement. Its PokSignatures render as a related-index \u2014 the append-only co-sign audit trail. lifecycleActions renders requestSignatures/activate/complete/terminate declaratively; activate is gated by PokActivationGuard. The student/school signing legs use the separate SignPokModal custom page; the praktijkopleider signs via the portal.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "pok-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FileDocument"
+					},
+					{
+						"id": "pok-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "pok-signatures",
+						"type": "object-list",
+						"title": "Signatures",
+						"content": {
+							"register": "scholiq",
+							"schema": "pok-signature",
+							"filter": {
+								"subjectId": "@objectId"
+							},
+							"sort": {
+								"field": "signedAt",
+								"dir": "asc"
+							},
+							"limit": 10,
+							"columns": [
+								{
+									"key": "signerRole",
+									"label": "Role"
+								},
+								{
+									"key": "signerId",
+									"label": "Signer"
+								},
+								{
+									"key": "signedAt",
+									"label": "Signed At"
+								},
+								{
+									"key": "assuranceLevel",
+									"label": "Assurance"
+								}
+							],
+							"emptyText": "No signatures recorded yet.",
+							"allowCreate": false
+						},
+						"icon": "FileSign"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pok-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pok-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "pok-signatures",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "WerkprocesAssessmentDetail",
+			"route": "/bpv/werkproces-assessments/:id",
+			"type": "detail",
+			"title": "Werkproces assessment",
+			"config": {
+				"register": "scholiq",
+				"schema": "werkproces-assessment",
+				"_note": "A WerkprocesAssessment is one workplace assessment against one werkproces of the kwalificatiedossier, for one BpvPlacement. Body leads with the assessment data 8-wide (kwalificatiedossier taxonomy + beoordeling) plus a Related panel resolving the BpvPlacement, CurriculumPlan and assessor (Praktijkopleider). lifecycleActions renders submit/confirm declaratively; confirming feeds a GradeEntry via WerkprocesGradeEmitHandler (no schema-level grade computation). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "wpa-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ClipboardCheckOutline"
+					},
+					{
+						"id": "wpa-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "wpa-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "wpa-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BpvVisitReportDetail",
+			"route": "/bpv/visit-reports/:id",
+			"type": "detail",
+			"title": "BPV visit report",
+			"config": {
+				"register": "scholiq",
+				"schema": "bpv-visit-report",
+				"_note": "A BpvVisitReport is a visit / three-way-conversation report for one BpvPlacement, linked to the learner's LearnerProfile dossier via learnerRef. Body leads with the visit data 8-wide (including nextVisitDue so the coordinator sees the reminder cadence inline) plus a Related panel resolving the BpvPlacement and learner. lifecycleActions renders finalize declaratively. The declared visitDueReminder notification targets schoolCoachId only (documented gap: the praktijkopleider has no NC-reachable channel). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "vr-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "MapMarker"
+					},
+					{
+						"id": "vr-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "vr-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "vr-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SignPokModal",
+			"route": "/bpv/praktijkovereenkomsten/:pokId/sign",
+			"type": "custom",
+			"title": "Sign praktijkovereenkomst",
+			"component": "CnSignatureCapture",
+			"_note": "Mounts CnSignatureCapture from @conduction/nextcloud-vue for the student/school signing legs of POK signing inside Scholiq's own UI (mirrors SignPlanModal). The praktijkopleider's signature is captured through the portaliq portal (signPraktijkovereenkomst action), not this page."
 		}
 	]
 }
