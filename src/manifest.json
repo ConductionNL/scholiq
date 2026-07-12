@@ -258,6 +258,59 @@
 			"order": 25
 		},
 		{
+			"id": "GroupConferences",
+			"label": "Parent conferences",
+			"icon": "icon-calendar",
+			"order": 27,
+			"children": [
+				{
+					"id": "BookConferenceSlotsMenu",
+					"label": "Book a conversation",
+					"icon": "icon-calendar",
+					"route": "BookConferenceSlotsView",
+					"order": 10,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["parent", "learner"]
+						}
+					}
+				},
+				{
+					"id": "ConferenceRoundsMenu",
+					"label": "Conference rounds",
+					"icon": "icon-calendar",
+					"route": "ConferenceRounds",
+					"order": 20
+				},
+				{
+					"id": "TeacherAvailabilitiesMenu",
+					"label": "Teacher availability",
+					"icon": "icon-calendar",
+					"route": "TeacherAvailabilities",
+					"order": 30
+				},
+				{
+					"id": "ConferenceScheduleBoardMenu",
+					"label": "Schedule board",
+					"icon": "icon-checkmark",
+					"route": "ConferenceScheduleBoard",
+					"order": 40,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "mentor", "principal"]
+						}
+					}
+				},
+				{
+					"id": "ConferenceReportsMenu",
+					"label": "Conference reports",
+					"icon": "icon-file-text",
+					"route": "ConferenceReports",
+					"order": 50
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -7369,6 +7422,386 @@
 			"title": "Sign praktijkovereenkomst",
 			"component": "CnSignatureCapture",
 			"_note": "Mounts CnSignatureCapture from @conduction/nextcloud-vue for the student/school signing legs of POK signing inside Scholiq's own UI (mirrors SignPlanModal). The praktijkopleider's signature is captured through the portaliq portal (signPraktijkovereenkomst action), not this page."
+		},
+		{
+			"id": "ConferenceRounds",
+			"route": "/conferences/rounds",
+			"type": "index",
+			"title": "Conference rounds",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-round"
+			}
+		},
+		{
+			"id": "ConferenceRoundDetail",
+			"route": "/conferences/rounds/:id",
+			"type": "detail",
+			"title": "Conference round",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-round",
+				"_note": "A ConferenceRound is one oudergesprekken-cyclus for a report period — an event/cycle archetype (scope, timing, booking window, invited learners). Body leads with round details (8-wide) and a Related panel. The generated ConferenceSlots for the round render as a wide related-index (the schedule). lifecycleActions expose send-invitations/open-booking/close-booking/generate/regenerate/complete/cancel as buttons. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "round-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Calendar"
+					},
+					{
+						"id": "round-slots",
+						"type": "object-list",
+						"title": "Conference slots",
+						"content": {
+							"register": "scholiq",
+							"schema": "conference-slot",
+							"filter": {
+								"conferenceRoundId": "@object.id"
+							},
+							"sort": {
+								"field": "startsAt",
+								"dir": "asc"
+							},
+							"limit": 50,
+							"columns": [
+								{
+									"key": "teacherId",
+									"label": "Teacher"
+								},
+								{
+									"key": "learnerId",
+									"label": "Learner"
+								},
+								{
+									"key": "startsAt",
+									"label": "Starts"
+								},
+								{
+									"key": "endsAt",
+									"label": "Ends"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Status"
+								}
+							],
+							"rowRoute": "ConferenceSlotDetail",
+							"viewAllRoute": "ConferenceSlots",
+							"viewAllQuery": {
+								"conferenceRoundId": "@object.id"
+							},
+							"emptyText": "No conference slots generated yet.",
+							"allowCreate": false
+						},
+						"icon": "CheckCircleOutline"
+					},
+					{
+						"id": "round-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "round-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "round-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "round-slots",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TeacherAvailabilities",
+			"route": "/conferences/availability",
+			"type": "index",
+			"title": "Teacher availability",
+			"config": {
+				"register": "scholiq",
+				"schema": "teacher-availability"
+			}
+		},
+		{
+			"id": "TeacherAvailabilityDetail",
+			"route": "/conferences/availability/:id",
+			"type": "detail",
+			"title": "Teacher availability",
+			"config": {
+				"register": "scholiq",
+				"schema": "teacher-availability",
+				"_note": "A TeacherAvailability is a teacher's declared free blocks for one ConferenceRound — a config/technical archetype consumed by ConferenceScheduleGenerator. Body leads with the blocks data (8-wide) and a Related panel resolving the ConferenceRound. No comms leaves. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ta-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Account"
+					},
+					{
+						"id": "ta-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ta-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ta-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ConferenceSlots",
+			"route": "/conferences/slots",
+			"type": "index",
+			"title": "Conference slots",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-slot"
+			}
+		},
+		{
+			"id": "ConferenceSlotDetail",
+			"route": "/conferences/slots/:id",
+			"type": "detail",
+			"title": "Conference slot",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-slot",
+				"_note": "A ConferenceSlot is one generated parent-teacher conversation appointment — a scheduled-occurrence archetype (mirrors Session). Body leads with the appointment details (8-wide) and a Related panel resolving the ConferenceRound and ConferenceSignup. lifecycleActions expose confirm/complete/markNoShow/cancel. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "slot-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Calendar"
+					},
+					{
+						"id": "slot-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "slot-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "slot-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ConferenceReports",
+			"route": "/conferences/reports",
+			"type": "index",
+			"title": "Conference reports",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-report"
+			}
+		},
+		{
+			"id": "ConferenceReportDetail",
+			"route": "/conferences/reports/:id",
+			"type": "detail",
+			"title": "Conference report",
+			"config": {
+				"register": "scholiq",
+				"schema": "conference-report",
+				"_note": "A ConferenceReport is the gespreksverslag recorded against a completed ConferenceSlot — append-only audit evidence, mirrors LearningPlanEvaluation. Body leads with the narrative/attendees (8-wide) and a Related panel resolving the ConferenceSlot and learner. lifecycleActions exposes record only (draft -> recorded); once recorded the object is immutable. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "report-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "report-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "report-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "report-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BookConferenceSlotsView",
+			"route": "/conferences/book",
+			"type": "custom",
+			"title": "Book a conversation",
+			"component": "BookConferenceSlotsView",
+			"_note": "The guardian/self conversation-slot picker (the 'custom view only where a manifest page can't render it' exception): a genuine calendar-grid UI over teacher availability, not a generic CRUD form. Lists booking-open ConferenceRounds the caller can book into, shows each requested teacher's remaining availability, creates a ConferenceSignup (draft) and triggers its submit transition (gated server-side by ConferenceSignupGuardianGuard)."
+		},
+		{
+			"id": "ConferenceScheduleBoard",
+			"route": "/conferences/schedule-board",
+			"type": "custom",
+			"title": "Conference schedule board",
+			"component": "ConferenceScheduleBoard",
+			"_note": "The coordinator's manual-override board (the 'custom view only where a manifest page can't render it' exception): lists waitlisted ConferenceSignups per round with the unmet teacher-request, a manual ConferenceSlot creation action, and a regenerate trigger. ConferenceScheduleGenerator (server-side) runs the greedy solver when regenerate fires."
 		}
 	]
 }

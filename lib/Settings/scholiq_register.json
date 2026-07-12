@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/.",
-        "version": "0.4.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/.",
+        "version": "0.5.0"
     },
     "x-openregister": {
         "type": "application",
@@ -8804,6 +8804,689 @@
                             "subject": {
                                 "nl": "BPV-bezoek is aan de beurt",
                                 "en": "A BPV visit is due"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "ConferenceRound": {
+                    "slug": "conference-round",
+                    "icon": "CalendarMultiselectOutline",
+                    "version": "0.1.0",
+                    "title": "Conference Round",
+                    "description": "One oudergesprekken-cyclus (parent-teacher conference round) for a report period: scope (cohorts, teachers), slot duration/buffer, and a booking window. Drives invitations, guardian/self signup, and the ConferenceScheduleGenerator's greedy conflict-free slot generation.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "name",
+                        "cohortIds",
+                        "teacherIds",
+                        "slotDurationMinutes",
+                        "bufferMinutes",
+                        "bookingOpensAt",
+                        "bookingClosesAt",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Human-readable round name, e.g. 'Oudergesprekken Q2 2026 — Onderbouw'.",
+                            "example": "Oudergesprekken Q2 2026 — Onderbouw",
+                            "title": "Round Name"
+                        },
+                        "cohortIds": {
+                            "type": "array",
+                            "description": "UUIDs of the Cohorts in scope for this conference round.",
+                            "items": {
+                                "type": "string",
+                                "format": "uuid",
+                                "$ref": "Cohort"
+                            },
+                            "title": "Cohort IDs"
+                        },
+                        "teacherIds": {
+                            "type": "array",
+                            "description": "Nextcloud user IDs of teachers eligible to hold conversations in this round.",
+                            "items": {
+                                "type": "string"
+                            },
+                            "title": "Teacher IDs"
+                        },
+                        "slotDurationMinutes": {
+                            "type": "integer",
+                            "default": 10,
+                            "description": "Length of a single conversation slot in minutes.",
+                            "title": "Slot Duration (Minutes)"
+                        },
+                        "bufferMinutes": {
+                            "type": "integer",
+                            "default": 0,
+                            "description": "Walking-time gap in minutes required between the end of one slot and the start of the next for the same teacher. Configurable per round (story 10056 AC).",
+                            "title": "Buffer Minutes"
+                        },
+                        "bookingOpensAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 timestamp from which guardians/self may submit ConferenceSignups.",
+                            "title": "Booking Opens At"
+                        },
+                        "bookingClosesAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 timestamp after which no further ConferenceSignups are accepted.",
+                            "title": "Booking Closes At"
+                        },
+                        "invitedLearnerIds": {
+                            "type": "array",
+                            "description": "Nextcloud user IDs of every learner invited to this round, computed once from cohortIds → each Cohort.learnerIds and persisted at the send-invitations transition (denormalised so the verified notification dialect's kind:field recipient can resolve it — see design.md).",
+                            "items": {
+                                "type": "string"
+                            },
+                            "title": "Invited Learner IDs"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Conference round lifecycle state. Managed by OR lifecycle engine.",
+                            "enum": [
+                                "draft",
+                                "invitations-sent",
+                                "booking-open",
+                                "booking-closed",
+                                "scheduled",
+                                "completed",
+                                "cancelled"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "property": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "send-invitations": {
+                                "from": "draft",
+                                "to": "invitations-sent"
+                            },
+                            "open-booking": {
+                                "from": "invitations-sent",
+                                "to": "booking-open"
+                            },
+                            "close-booking": {
+                                "from": "booking-open",
+                                "to": "booking-closed"
+                            },
+                            "generate": {
+                                "from": "booking-closed",
+                                "to": "scheduled"
+                            },
+                            "regenerate": {
+                                "from": "scheduled",
+                                "to": "scheduled"
+                            },
+                            "complete": {
+                                "from": "scheduled",
+                                "to": "completed"
+                            },
+                            "cancel": {
+                                "from": [
+                                    "draft",
+                                    "invitations-sent",
+                                    "booking-open",
+                                    "booking-closed",
+                                    "scheduled"
+                                ],
+                                "to": "cancelled"
+                            }
+                        }
+                    },
+                    "x-openregister-calculations": {
+                        "isBookingClosed": {
+                            "type": "boolean",
+                            "materialise": true,
+                            "description": "True once bookingClosesAt has passed. Same derived-field idiom as Session.isPast — informational only; NOTE this does NOT itself drive the booking-open → booking-closed lifecycle transition (the verified x-openregister-notifications dialect's `scheduled` trigger can only fire a notification, not a lifecycle transition — see the bookingAutoClosed notification below and the apply report's flagged conflict). A coordinator (or a future dedicated mechanism) must still invoke the close-booking transition explicitly.",
+                            "expression": {
+                                "lt": [
+                                    {
+                                        "prop": "bookingClosesAt"
+                                    },
+                                    "@now"
+                                ]
+                            }
+                        }
+                    },
+                    "x-openregister-notifications": {
+                        "invitationsSent": {
+                            "trigger": {
+                                "type": "transition",
+                                "action": "send-invitations"
+                            },
+                            "enabled": true,
+                            "channels": [
+                                "nc-notification"
+                            ],
+                            "recipients": [
+                                {
+                                    "kind": "field",
+                                    "field": "invitedLearnerIds"
+                                }
+                            ],
+                            "subject": {
+                                "nl": "Je bent uitgenodigd voor de oudergesprekken",
+                                "en": "You are invited to the parent-teacher conferences"
+                            }
+                        },
+                        "bookingAutoClosed": {
+                            "trigger": {
+                                "type": "scheduled",
+                                "intervalSec": 86400,
+                                "filter": {
+                                    "lifecycle": "booking-open",
+                                    "bookingClosesAt": {
+                                        "operator": "olderThan",
+                                        "value": "PT0S"
+                                    }
+                                }
+                            },
+                            "enabled": true,
+                            "channels": [
+                                "nc-notification"
+                            ],
+                            "recipients": [
+                                {
+                                    "kind": "groups",
+                                    "groups": [
+                                        "coordinator"
+                                    ]
+                                }
+                            ],
+                            "subject": {
+                                "nl": "Het boekingsvenster voor oudergesprekken is verstreken — sluit het venster handmatig af",
+                                "en": "The conference booking window has passed — close the booking window manually"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "TeacherAvailability": {
+                    "slug": "teacher-availability",
+                    "icon": "AccountClockOutline",
+                    "version": "0.1.0",
+                    "title": "Teacher Availability",
+                    "description": "A teacher's declared free blocks for one ConferenceRound. Consumed by ConferenceScheduleGenerator when the round transitions to generate/regenerate; locked afterwards to prevent a race between a late edit and a running solve.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "conferenceRoundId",
+                        "teacherId",
+                        "blocks",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "conferenceRoundId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "ConferenceRound",
+                            "description": "UUID of the ConferenceRound this availability applies to.",
+                            "title": "Conference Round ID"
+                        },
+                        "teacherId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the declaring teacher.",
+                            "title": "Teacher ID"
+                        },
+                        "blocks": {
+                            "type": "array",
+                            "description": "The teacher's free time blocks for this round, sliced by ConferenceScheduleGenerator into slotDurationMinutes candidate slots.",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "startsAt",
+                                    "endsAt"
+                                ],
+                                "properties": {
+                                    "startsAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "ISO 8601 start of the free block.",
+                                        "title": "Block Start"
+                                    },
+                                    "endsAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "ISO 8601 end of the free block.",
+                                        "title": "Block End"
+                                    }
+                                }
+                            },
+                            "title": "Availability Blocks"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Availability lifecycle state. Managed by OR lifecycle engine.",
+                            "enum": [
+                                "draft",
+                                "submitted",
+                                "locked"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "property": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "submit": {
+                                "from": "draft",
+                                "to": "submitted"
+                            },
+                            "lock": {
+                                "from": "submitted",
+                                "to": "locked"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "ConferenceSignup": {
+                    "slug": "conference-signup",
+                    "icon": "AccountArrowRightOutline",
+                    "version": "0.1.0",
+                    "title": "Conference Signup",
+                    "description": "A guardian's (or self, for an 18+ learner) request for conversation slots with one or more teachers in a ConferenceRound, in stated preference order. The submit transition is gated by ConferenceSignupGuardianGuard; a draft signup is never read by ConferenceScheduleGenerator.",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "conferenceRoundId",
+                        "learnerId",
+                        "requestedTeacherIds",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "conferenceRoundId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "ConferenceRound",
+                            "description": "UUID of the ConferenceRound this signup belongs to.",
+                            "title": "Conference Round ID"
+                        },
+                        "learnerId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the learner this signup is for.",
+                            "title": "Learner ID"
+                        },
+                        "learnerRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true,
+                            "$ref": "LearnerProfile",
+                            "description": "UUID reference to the LearnerProfile this signup is for — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset (fail-closed) until backfilled, matching the ExcuseRequest.learnerRef / GradeEntry.learnerRef convention.",
+                            "title": "Learner Ref"
+                        },
+                        "guardianId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Nextcloud user ID of the submitting guardian. Null for an 18+ self-signup (the learner submits for themselves).",
+                            "title": "Guardian ID"
+                        },
+                        "guardianRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true,
+                            "$ref": "LearnerProfile",
+                            "description": "UUID reference to the domain object that submitted this signup (the guardian's own LearnerProfile-linked identity for a parent submission, or the learner's own LearnerProfile for an 18+ self-signup) — the portal scope-stamp for parent-audience creates (ADR-046 A4), matching the ExcuseRequest.submittedByRef convention. Additive and optional; existing rows leave it unset.",
+                            "title": "Guardian Ref"
+                        },
+                        "requestedTeacherIds": {
+                            "type": "array",
+                            "description": "Nextcloud user IDs of the requested teachers, in the guardian's/learner's stated preference order. ConferenceScheduleGenerator walks this array in order for each signup.",
+                            "items": {
+                                "type": "string"
+                            },
+                            "title": "Requested Teacher IDs"
+                        },
+                        "notes": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Optional free-text note from the guardian/learner. Also used by ConferenceScheduleGenerator to record which requested teacher could not be met when a signup lands waitlisted.",
+                            "title": "Notes"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Signup lifecycle state. Managed by OR lifecycle engine.",
+                            "enum": [
+                                "draft",
+                                "submitted",
+                                "scheduled",
+                                "waitlisted",
+                                "cancelled"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "property": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "submit": {
+                                "from": "draft",
+                                "to": "submitted",
+                                "requires": [
+                                    "OCA\\Scholiq\\Lifecycle\\ConferenceSignupGuardianGuard"
+                                ]
+                            },
+                            "schedule": {
+                                "from": "submitted",
+                                "to": "scheduled"
+                            },
+                            "waitlist": {
+                                "from": "submitted",
+                                "to": "waitlisted"
+                            },
+                            "cancel": {
+                                "from": [
+                                    "submitted",
+                                    "scheduled",
+                                    "waitlisted"
+                                ],
+                                "to": "cancelled"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "ConferenceSlot": {
+                    "slug": "conference-slot",
+                    "icon": "CalendarCheckOutline",
+                    "version": "0.1.0",
+                    "title": "Conference Slot",
+                    "description": "One generated conversation appointment, written by ConferenceScheduleGenerator. Guaranteed conflict-free per teacher and per signup (no two ConferenceSlots for the same teacher or the same signup overlap).",
+                    "type": "object",
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "conferenceRoundId",
+                        "teacherId",
+                        "learnerId",
+                        "startsAt",
+                        "endsAt",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "conferenceRoundId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "ConferenceRound",
+                            "description": "UUID of the ConferenceRound this slot belongs to.",
+                            "title": "Conference Round ID"
+                        },
+                        "teacherId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the teacher holding this conversation.",
+                            "title": "Teacher ID"
+                        },
+                        "learnerId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the learner this conversation is about.",
+                            "title": "Learner ID"
+                        },
+                        "learnerRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true,
+                            "$ref": "LearnerProfile",
+                            "description": "UUID reference to the learner's LearnerProfile — additive, matching the ExcuseRequest.learnerRef convention. Unset until backfilled.",
+                            "title": "Learner Ref"
+                        },
+                        "signupId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true,
+                            "$ref": "ConferenceSignup",
+                            "description": "UUID of the ConferenceSignup this slot was generated for. Null for a coordinator hand-created slot.",
+                            "title": "Signup ID"
+                        },
+                        "startsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 start timestamp of the conversation.",
+                            "title": "Start Time"
+                        },
+                        "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 end timestamp of the conversation.",
+                            "title": "End Time"
+                        },
+                        "location": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Room code or online URL, mirrors Session.location.",
+                            "example": "Lokaal B-104",
+                            "title": "Location"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Slot lifecycle state. Managed by OR lifecycle engine.",
+                            "enum": [
+                                "proposed",
+                                "confirmed",
+                                "completed",
+                                "no-show",
+                                "cancelled"
+                            ],
+                            "default": "proposed",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "property": "lifecycle",
+                        "initial": "proposed",
+                        "transitions": {
+                            "confirm": {
+                                "from": "proposed",
+                                "to": "confirmed"
+                            },
+                            "complete": {
+                                "from": "confirmed",
+                                "to": "completed"
+                            },
+                            "markNoShow": {
+                                "from": "confirmed",
+                                "to": "no-show"
+                            },
+                            "cancel": {
+                                "from": [
+                                    "proposed",
+                                    "confirmed"
+                                ],
+                                "to": "cancelled"
+                            }
+                        }
+                    },
+                    "x-openregister-notifications": {
+                        "confirmed": {
+                            "trigger": {
+                                "type": "transition",
+                                "action": "confirm"
+                            },
+                            "enabled": true,
+                            "channels": [
+                                "nc-notification"
+                            ],
+                            "recipients": [
+                                {
+                                    "kind": "field",
+                                    "field": "learnerId"
+                                }
+                            ],
+                            "subject": {
+                                "nl": "Je oudergesprek is bevestigd",
+                                "en": "Your parent-teacher conversation is confirmed"
+                            }
+                        }
+                    },
+                    "x-openregister-seed": []
+                },
+                "ConferenceReport": {
+                    "slug": "conference-report",
+                    "icon": "NotebookOutline",
+                    "version": "0.1.0",
+                    "title": "Conference Report",
+                    "description": "A gespreksverslag (conversation report) recorded against a completed ConferenceSlot. Append-only — immutable audit evidence once recorded, mirroring LearningPlanEvaluation's shape so it joins the learner's queryable record set.",
+                    "type": "object",
+                    "appendOnly": true,
+                    "x-openregister": {
+                        "active": true,
+                        "hardDelete": false,
+                        "searchable": true
+                    },
+                    "required": [
+                        "conferenceSlotId",
+                        "learnerId",
+                        "teacherId",
+                        "recordedBy",
+                        "recordedAt",
+                        "tenant_id"
+                    ],
+                    "properties": {
+                        "conferenceSlotId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "ConferenceSlot",
+                            "description": "UUID of the completed ConferenceSlot this report was written for.",
+                            "title": "Conference Slot ID"
+                        },
+                        "learnerId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the learner this report is about.",
+                            "title": "Learner ID"
+                        },
+                        "learnerRef": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true,
+                            "$ref": "LearnerProfile",
+                            "description": "UUID reference to the learner's LearnerProfile — additive, matching the ExcuseRequest.learnerRef convention. Unset until backfilled; a future data-exchange follow-up can add ConferenceReport to the OSO dossier composer's field list via this ref.",
+                            "title": "Learner Ref"
+                        },
+                        "teacherId": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the teacher who recorded this report.",
+                            "title": "Teacher ID"
+                        },
+                        "narrative": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Free-text conversation narrative.",
+                            "title": "Narrative"
+                        },
+                        "attendeeIds": {
+                            "type": "array",
+                            "description": "Nextcloud user IDs of conversation attendees (learner, parents, teacher, etc.), mirrors LearningPlanEvaluation.attendeeIds.",
+                            "items": {
+                                "type": "string"
+                            },
+                            "title": "Attendee IDs"
+                        },
+                        "recordedBy": {
+                            "type": "string",
+                            "description": "Nextcloud user ID of the teacher/coordinator who recorded the report.",
+                            "title": "Recorded By"
+                        },
+                        "recordedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601 timestamp the report was recorded.",
+                            "title": "Recorded At"
+                        },
+                        "tenant_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Tenant identifier for multi-tenant isolation.",
+                            "title": "Tenant ID"
+                        },
+                        "lifecycle": {
+                            "type": "string",
+                            "description": "Report lifecycle state. Managed by OR lifecycle engine.",
+                            "enum": [
+                                "draft",
+                                "recorded"
+                            ],
+                            "default": "draft",
+                            "title": "Lifecycle State"
+                        }
+                    },
+                    "x-openregister-lifecycle": {
+                        "property": "lifecycle",
+                        "initial": "draft",
+                        "transitions": {
+                            "record": {
+                                "from": "draft",
+                                "to": "recorded"
+                            }
+                        }
+                    },
+                    "x-openregister-notifications": {
+                        "recorded": {
+                            "trigger": {
+                                "type": "transition",
+                                "action": "record"
+                            },
+                            "enabled": true,
+                            "channels": [
+                                "nc-notification"
+                            ],
+                            "recipients": [
+                                {
+                                    "kind": "field",
+                                    "field": "learnerId"
+                                }
+                            ],
+                            "subject": {
+                                "nl": "Het verslag van je oudergesprek is vastgelegd",
+                                "en": "Your parent-teacher conversation report has been recorded"
                             }
                         }
                     },
