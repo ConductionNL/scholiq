@@ -29,6 +29,7 @@ use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
+use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
@@ -267,6 +268,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: WerkprocesGradeEmitHandler::class
+        );
+
+        // ADR-031 legitimate exception: ConferenceRound `generate`/`regenerate` →
+        // ConferenceSlot generation bridge. Runs the greedy, submission-order,
+        // earliest-fit conflict-free slot-assignment algorithm (design.md) over
+        // submitted/locked TeacherAvailability and submitted/waitlisted
+        // ConferenceSignup rows for the round, writing ConferenceSlot objects.
+        // Not expressible as a schema declaration — a genuine allocation algorithm.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ConferenceScheduleGenerator::class
         );
 
     }//end register()

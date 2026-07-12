@@ -34,6 +34,10 @@ import LearningDashboard from './views/LearningDashboard.vue'
 import PeopleDashboard from './views/PeopleDashboard.vue'
 // personal-timetable: the signed-in user's own week view over Session objects.
 import MyTimetable from './views/MyTimetable.vue'
+// parent-evening-planner: the guardian/self conversation-slot picker and the
+// coordinator's manual-override / regenerate board.
+import BookConferenceSlotsView from './views/BookConferenceSlotsView.vue'
+import ConferenceScheduleBoard from './views/ConferenceScheduleBoard.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -65,6 +69,8 @@ const PANEL_WIDGET_META = {
 }
 
 export default {
+	BookConferenceSlotsView: page(BookConferenceSlotsView),
+	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
 	DashboardAdmin: page(DashboardAdmin),
 	DashboardTeacher: page(DashboardTeacher),
 	DashboardStudent: page(DashboardStudent),
