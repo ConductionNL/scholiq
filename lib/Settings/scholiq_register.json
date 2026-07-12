@@ -899,6 +899,14 @@
                         },
                         "title": "Programme IDs"
                     },
+                    "ectsCredits": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": 0,
+                        "description": "Bologna-style ECTS credit value this course/module contributes toward a learner's cumulative EC total. Additive field — existing rows leave it null. Only meaningful for level hbo|wo|mbo; po/vo/corporate courses never set it. A downstream credit-summing calculation (e.g. study-progress's BsaProgressEvaluator) MUST treat null as 0, not as an error.",
+                        "example": 6,
+                        "title": "ECTS Credits"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -7954,6 +7962,791 @@
                                 },
                                 "days"
                             ]
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "BsaTrajectory": {
+                "slug": "bsa-trajectory",
+                "icon": "ScaleBalance",
+                "version": "0.1.0",
+                "title": "BsaTrajectory",
+                "description": "The bindend studieadvies (BSA) norm configuration for a Programme + academicYear (optionally scoped to one Cohort). Carries the institution-set normEcts (no hardcoded default — the statutory ~30-EC floor was a paused, unenacted proposal per rijksoverheid.nl), the interim-check window (fixed-date for the HE 1-februari/studiefinanciering profile, relative-months for the MBO WEB art. 8.1.7a profile), and the pace-adjusted interimNormEcts used only for the ahead-of-guideline flag. Per-learner ectsEarned is computed by BsaProgressEvaluator and stamped onto BsaProgressFlag when a learner falls at risk (BsaTrajectory itself is a shared per-programme rule row, not a per-learner record — mirrors AttendanceThreshold).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "programmeId",
+                    "academicYear",
+                    "kind",
+                    "normEcts",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "programmeId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme this BSA trajectory governs.",
+                        "title": "Programme ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this trajectory applies to, e.g. '2026-2027'.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "he-eerstejaar-bsa",
+                            "mbo-studieadvies",
+                            "generic"
+                        ],
+                        "description": "Profile kind. he-eerstejaar-bsa is the HE first-year fixed-date/studiefinanciering profile; mbo-studieadvies is the WEB art. 8.1.7a relative-months profile; generic is either mode for non-statutory (e.g. corporate) trajectories.",
+                        "title": "Trajectory Kind"
+                    },
+                    "cohortId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "UUID of the Cohort this trajectory overrides for. Null = applies to all cohorts in the Programme + academicYear.",
+                        "title": "Cohort ID"
+                    },
+                    "normEcts": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Institution-set year-end credit norm (capped at the first-year credit total per rijksoverheid.nl). No schema default — a statutory floor was proposed and paused, never enacted; shipping a hardcoded value would misstate the law.",
+                        "title": "Year-End Credit Norm (EC)"
+                    },
+                    "window": {
+                        "type": "object",
+                        "description": "Interim-check window definition. mode selects which of the remaining fields apply, mirroring AttendanceThreshold.window's rolling-weeks/fixed-term duality.",
+                        "properties": {
+                            "mode": {
+                                "type": "string",
+                                "enum": [
+                                    "fixed-date",
+                                    "relative-months"
+                                ],
+                                "description": "Window mode. fixed-date = one calendar date per academic year (HE profile). relative-months = a number of months relative to referenceDate (MBO profile).",
+                                "title": "Window Mode"
+                            },
+                            "date": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date",
+                                "description": "Calendar date the interim check opens (used when mode is fixed-date). Institution-set — NOT hardcoded to 1 February; the legal driver is protecting studiefinanciering, which depends on the institution's own academic calendar.",
+                                "title": "Fixed Check Date"
+                            },
+                            "referenceDate": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date",
+                                "description": "The date afterMonths/notEarlierThanMonths count from when mode is relative-months (typically the cohort's own start date). Set explicitly — Cohort carries no start-date field to derive it from.",
+                                "title": "Relative Window Reference Date"
+                            },
+                            "afterMonths": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Months after referenceDate the interim check opens (used when mode is relative-months). WEB art. 8.1.7a: within 4 months of a one-year programme's start.",
+                                "title": "Months After Reference Date"
+                            },
+                            "notEarlierThanMonths": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Earliest number of months after referenceDate the check may open (used when mode is relative-months). WEB art. 8.1.7a: not earlier than 3 months.",
+                                "title": "Not Earlier Than Months"
+                            }
+                        },
+                        "title": "Interim Check Window"
+                    },
+                    "interimNormEcts": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": 0,
+                        "description": "Pace-adjusted threshold used only to flag 'at risk ahead of the guideline' at the interim check. Never gates the year-end decision — that always compares against normEcts.",
+                        "title": "Interim Credit Norm (EC)"
+                    },
+                    "onAtRisk": {
+                        "type": "object",
+                        "description": "Action to take when a learner is detected at risk ahead of the interim-check window.",
+                        "properties": {
+                            "notify": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "Whether to send notifications to notifyRoles.",
+                                "title": "Send Notification"
+                            },
+                            "notifyRoles": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Tenant roles to notify when a learner is flagged at risk.",
+                                "default": [
+                                    "study-advisor",
+                                    "exam-board"
+                                ],
+                                "title": "Notify Roles"
+                            },
+                            "createFlag": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "Whether to create a BsaProgressFlag when a learner is detected at risk.",
+                                "title": "Create Progress Flag"
+                            }
+                        },
+                        "default": {
+                            "notify": true,
+                            "notifyRoles": [
+                                "study-advisor",
+                                "exam-board"
+                            ],
+                            "createFlag": true
+                        },
+                        "title": "On At-Risk Detected"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "Lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "archive": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
+                        }
+                    }
+                },
+                "x-openregister-aggregations": {
+                    "passedFinalGrades": {
+                        "description": "Cross-schema aggregation: the learner's passed:true FinalGrades for a Course in this trajectory's Programme. Read by BsaProgressEvaluator (a per-learner PHP computation triggered by BsaProgressFlagHandler on GradeEntry.published — NOT auto-materialised on this shared per-programme row, since a single BsaTrajectory row cannot hold every learner's distinct ectsEarned value). Documents the same cross-schema-join shape FinalGrade.value already uses via GradeFormulaEvaluator.",
+                        "schema": "final-grade",
+                        "filters": {
+                            "programmeId": "@self.programmeId",
+                            "passed": true
+                        }
+                    }
+                },
+                "x-openregister-calculations": {
+                    "windowOpensAt": {
+                        "type": "string",
+                        "format": "date",
+                        "materialise": true,
+                        "description": "The interim-check window's opening date, resolved from window.mode. fixed-date resolves to window.date directly; relative-months resolves to window.referenceDate + window.afterMonths. Pure JSON-logic — reuses the @now-comparison idiom already exercised by Enrolment.isOverdue; no PHP engine for the date arithmetic itself.",
+                        "expression": {
+                            "case": [
+                                {
+                                    "when": {
+                                        "eq": [
+                                            {
+                                                "prop": "window.mode"
+                                            },
+                                            "fixed-date"
+                                        ]
+                                    },
+                                    "then": {
+                                        "prop": "window.date"
+                                    }
+                                },
+                                {
+                                    "when": {
+                                        "eq": [
+                                            {
+                                                "prop": "window.mode"
+                                            },
+                                            "relative-months"
+                                        ]
+                                    },
+                                    "then": {
+                                        "dateAdd": {
+                                            "date": {
+                                                "prop": "window.referenceDate"
+                                            },
+                                            "amount": {
+                                                "prop": "window.afterMonths"
+                                            },
+                                            "unit": "months"
+                                        }
+                                    }
+                                },
+                                {
+                                    "default": null
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "BsaProgressFlag": {
+                "slug": "bsa-progress-flag",
+                "icon": "FlagOutline",
+                "version": "0.1.0",
+                "title": "BsaProgressFlag",
+                "description": "Created when a learner's ectsEarned (computed by BsaProgressEvaluator) falls below their BsaTrajectory's interimNormEcts once the interim-check window has opened. appendOnly: true per ADR-008 (immutable audit evidence). Tracks the study-advisor's intervention and any resulting BsaWarning via its lifecycle. It NEVER auto-acts against the learner — human-in-the-loop throughout, mirroring AttendanceFlag.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "programmeId",
+                    "bsaTrajectoryId",
+                    "academicYear",
+                    "ectsEarned",
+                    "ectsRequiredAtCheck",
+                    "flaggedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner who fell below the interim norm.",
+                        "title": "Learner ID"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme in scope.",
+                        "title": "Programme ID"
+                    },
+                    "bsaTrajectoryId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "BsaTrajectory",
+                        "description": "UUID of the BsaTrajectory whose interim norm was crossed.",
+                        "title": "BSA Trajectory ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this flag applies to, copied from the BsaTrajectory at flag creation.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "ectsEarned": {
+                        "type": "number",
+                        "description": "The learner's ectsEarned at the moment of flagging, computed by BsaProgressEvaluator.",
+                        "title": "Credits Earned At Flag (EC)"
+                    },
+                    "ectsRequiredAtCheck": {
+                        "type": "number",
+                        "description": "The BsaTrajectory.interimNormEcts value at the moment of flagging.",
+                        "title": "Credits Required At Check (EC)"
+                    },
+                    "flaggedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp the flag was created.",
+                        "title": "Flagged At"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "in-handling",
+                            "warned",
+                            "resolved"
+                        ],
+                        "default": "open",
+                        "description": "Flag lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "startHandling": {
+                            "from": "open",
+                            "to": "in-handling"
+                        },
+                        "markWarned": {
+                            "from": "in-handling",
+                            "to": "warned"
+                        },
+                        "resolve": {
+                            "from": [
+                                "open",
+                                "in-handling",
+                                "warned"
+                            ],
+                            "to": "resolved"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "flagRaised": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "study-advisor",
+                                    "exam-board"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Een leerling loopt achter op het BSA-tempo",
+                            "en": "A learner is falling behind BSA pace"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "BsaWarning": {
+                "slug": "bsa-warning",
+                "icon": "AlertOutline",
+                "version": "0.1.0",
+                "title": "BsaWarning",
+                "description": "The formal early warning ('tijdige waarschuwing') required before a negative BSA decision can be defended on appeal. appendOnly: true per ADR-008; HMAC-signed at the drafted -> issued transition via BsaWarningSigningGuard, mirroring Attestation. Carries improvementPeriod and offeredGuidance (the 'sufficient study guidance' safeguard) and an optional personalCircumstancesNote.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "programmeId",
+                    "academicYear",
+                    "warningDate",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the warned learner.",
+                        "title": "Learner ID"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme in scope.",
+                        "title": "Programme ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this warning applies to.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "bsaProgressFlagId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "BsaProgressFlag",
+                        "description": "UUID of the BsaProgressFlag this warning follows up on, if any. Null when the warning is issued without a preceding flag.",
+                        "title": "BSA Progress Flag ID"
+                    },
+                    "warningDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Date the warning was drafted.",
+                        "title": "Warning Date"
+                    },
+                    "ectsEarnedAtWarning": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "The learner's ectsEarned at the moment the warning was drafted.",
+                        "title": "Credits Earned At Warning (EC)"
+                    },
+                    "ectsNormAtWarning": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "The governing BsaTrajectory.normEcts at the moment the warning was drafted.",
+                        "title": "Credit Norm At Warning (EC)"
+                    },
+                    "improvementPeriod": {
+                        "type": "object",
+                        "description": "The period the learner is given to improve before the year-end decision. Required (non-empty startDate/endDate) before this warning can be issued (BsaWarningSigningGuard).",
+                        "properties": {
+                            "startDate": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date",
+                                "description": "First date of the improvement period given to the learner.",
+                                "title": "Improvement Period Start"
+                            },
+                            "endDate": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date",
+                                "description": "Last date of the improvement period given to the learner.",
+                                "title": "Improvement Period End"
+                            }
+                        },
+                        "title": "Improvement Period"
+                    },
+                    "offeredGuidance": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text description of the study guidance offered to the learner — the 'sufficient study guidance' safeguard. Required non-empty before this warning can be issued (BsaWarningSigningGuard).",
+                        "title": "Offered Guidance"
+                    },
+                    "personalCircumstancesNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional note on personal circumstances considered (disability, family situation, student-council membership) at the time of warning.",
+                        "title": "Personal Circumstances Note"
+                    },
+                    "signature": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "HMAC-SHA256 signature computed by BsaWarningSigningGuard at the drafted -> issued transition.",
+                        "title": "HMAC Signature"
+                    },
+                    "signingKeyId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "OR tenant-key rotation ID used to compute the signature. Required for offline verification.",
+                        "title": "Signing Key ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "drafted",
+                            "issued",
+                            "acknowledged"
+                        ],
+                        "default": "drafted",
+                        "description": "Lifecycle state. Managed by OR's lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "drafted",
+                    "transitions": {
+                        "issue": {
+                            "from": "drafted",
+                            "to": "issued",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\BsaWarningSigningGuard"
+                        },
+                        "acknowledge": {
+                            "from": "issued",
+                            "to": "acknowledged"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "study-advisor",
+                        "exam-board"
+                    ],
+                    "_comment": "A learner MUST NOT be able to author their own warning (design.md Security/Privacy Posture)."
+                },
+                "x-openregister-notifications": {
+                    "issued": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "issue"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je hebt een formele BSA-waarschuwing ontvangen",
+                            "en": "You have received a formal BSA warning"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "BsaDecision": {
+                "slug": "bsa-decision",
+                "icon": "GavelOutline",
+                "version": "0.1.0",
+                "title": "BsaDecision",
+                "description": "The year-end bindend studieadvies (BSA) decision, with a full evidence trail (credits, norm, referenced warnings, personal circumstances, right to be heard) that survives an appeal (bezwaar). appendOnly: true per ADR-008; HMAC-signed at the drafted -> decided transition via BsaDecisionGuard, which structurally blocks any negative* decision without at least one issued BsaWarning for the same learner+programme+academicYear.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "programmeId",
+                    "academicYear",
+                    "decisionType",
+                    "decidedBy",
+                    "decisionDate",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this decision is about.",
+                        "title": "Learner ID"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme in scope.",
+                        "title": "Programme ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this decision applies to.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "decisionType": {
+                        "type": "string",
+                        "enum": [
+                            "positive",
+                            "negative",
+                            "negative-with-recommendation",
+                            "postponed"
+                        ],
+                        "description": "The BSA outcome. negative and negative-with-recommendation are subject to BsaDecisionGuard's warning requirement.",
+                        "title": "Decision Type"
+                    },
+                    "ectsAchieved": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "The learner's ectsEarned at the moment of decision.",
+                        "title": "Credits Achieved (EC)"
+                    },
+                    "ectsNormRequired": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "The governing BsaTrajectory.normEcts at the moment of decision.",
+                        "title": "Credit Norm Required (EC)"
+                    },
+                    "warningIds": {
+                        "type": "array",
+                        "description": "UUIDs of the BsaWarnings this decision's evidence trail references. Must include at least one issued warning for a negative* decisionType (BsaDecisionGuard).",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "BsaWarning"
+                        },
+                        "default": [],
+                        "title": "Warning IDs"
+                    },
+                    "personalCircumstancesConsidered": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether personal circumstances (disability, family situation, student-council membership) were considered before deciding.",
+                        "title": "Personal Circumstances Considered"
+                    },
+                    "personalCircumstancesNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text note on the personal circumstances considered, if any.",
+                        "title": "Personal Circumstances Note"
+                    },
+                    "studentHeardAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "When the student was heard before the decision — the hoorplicht (right to be heard) safeguard.",
+                        "title": "Student Heard At"
+                    },
+                    "studentResponse": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text summary of what the student said when heard.",
+                        "title": "Student Response"
+                    },
+                    "rationale": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The decision's rationale. Required (non-empty) for a negative* decisionType — enforced by BsaDecisionGuard, not by JSON Schema required, since the requirement is conditional on decisionType.",
+                        "title": "Rationale"
+                    },
+                    "decidedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the study-advisor/exam-board member who decided.",
+                        "title": "Decided By"
+                    },
+                    "decisionDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the decision was drafted.",
+                        "title": "Decision Date"
+                    },
+                    "signature": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "HMAC-SHA256 signature computed by BsaDecisionGuard at the drafted -> decided transition.",
+                        "title": "HMAC Signature"
+                    },
+                    "signingKeyId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "OR tenant-key rotation ID used to compute the signature. Required for offline verification.",
+                        "title": "Signing Key ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "drafted",
+                            "decided",
+                            "appealed",
+                            "upheld",
+                            "overturned"
+                        ],
+                        "default": "drafted",
+                        "description": "Lifecycle state. Managed by OR's lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "default": "drafted",
+                    "transitions": {
+                        "decide": {
+                            "from": "drafted",
+                            "to": "decided",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\BsaDecisionGuard"
+                        },
+                        "appeal": {
+                            "from": "decided",
+                            "to": "appealed"
+                        },
+                        "uphold": {
+                            "from": "appealed",
+                            "to": "upheld"
+                        },
+                        "overturn": {
+                            "from": "appealed",
+                            "to": "overturned"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "study-advisor",
+                        "exam-board"
+                    ],
+                    "_comment": "A learner MUST NOT be able to author their own decision (design.md Security/Privacy Posture)."
+                },
+                "x-property-rbac": {
+                    "_comment": "BSA decisions are sensitive academic-progress PII and the subject of a possible appeal. Learner sees own decision only; admin/study-advisor/exam-board see all. Mirrors FinalGrade's block.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "study-advisor"
+                            },
+                            {
+                                "role": "exam-board"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-notifications": {
+                    "decided": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "decide"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            },
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "study-advisor"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je studieadvies is vastgesteld",
+                            "en": "Your study advice decision has been recorded"
                         }
                     }
                 },

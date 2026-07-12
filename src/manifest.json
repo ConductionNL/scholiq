@@ -230,6 +230,42 @@
 			]
 		},
 		{
+			"id": "GroupStudyProgress",
+			"label": "Study progress (BSA)",
+			"icon": "icon-projects",
+			"order": 29,
+			"children": [
+				{
+					"id": "BsaRiskDashboardMenu",
+					"label": "Risk dashboard",
+					"icon": "icon-projects",
+					"route": "BsaRiskDashboard",
+					"order": 10
+				},
+				{
+					"id": "BsaTrajectoriesMenu",
+					"label": "Trajectories",
+					"icon": "icon-projects",
+					"route": "BsaTrajectories",
+					"order": 20
+				},
+				{
+					"id": "BsaWarningsMenu",
+					"label": "Warnings",
+					"icon": "icon-password",
+					"route": "BsaWarnings",
+					"order": 30
+				},
+				{
+					"id": "BsaDecisionsMenu",
+					"label": "Decisions",
+					"icon": "icon-password",
+					"route": "BsaDecisions",
+					"order": 40
+				}
+			]
+		},
+		{
 			"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
@@ -7868,6 +7904,402 @@
 				"schema": "fraud-case"
 			},
 			"_note": "exam-board-case-handling: FraudCase.x-property-rbac already fails closed server-side for anyone outside admin/examboard/accused/reporter; within that readable set, ExamCaseDossierView additionally withholds hearingRecords and decision-internal fields from anyone who is not the accused, the reporter, or an examboard member — an application-level UI convention, not server-enforced field RBAC (design.md §8)."
+		},
+		{
+			"id": "BsaTrajectories",
+			"route": "/study-progress/trajectories",
+			"type": "index",
+			"title": "BSA trajectories",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-trajectory"
+			}
+		},
+		{
+			"id": "BsaTrajectoryDetail",
+			"route": "/study-progress/trajectories/:id",
+			"type": "detail",
+			"title": "BSA trajectory",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-trajectory",
+				"_note": "bsa-study-progress-guard: a BsaTrajectory is the BSA norm config per Programme + academicYear (kind, normEcts, interim-check window, onAtRisk action) — a config/rule archetype, mirroring AttendanceThreshold. Body leads with the rule definition (8-wide) and a Related panel resolving the scoped Programme/Cohort. The BsaProgressFlags this rule has raised render as a wide related-index so a study-advisor sees its effect. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for rule-change history.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "bt-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ScaleBalance"
+					},
+					{
+						"id": "bt-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Raised flags",
+									"register": "scholiq",
+									"schema": "bsa-progress-flag",
+									"metric": "count",
+									"filter": {
+										"bsaTrajectoryId": "@objectId"
+									},
+									"route": "BsaProgressFlags"
+								}
+							]
+						}
+					},
+					{
+						"id": "bt-flags",
+						"type": "object-list",
+						"title": "Raised flags",
+						"content": {
+							"register": "scholiq",
+							"schema": "bsa-progress-flag",
+							"filter": {
+								"bsaTrajectoryId": "@objectId"
+							},
+							"sort": {
+								"field": "flaggedAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "learnerId",
+									"label": "Learner ID"
+								},
+								{
+									"key": "ectsEarned",
+									"label": "Credits Earned (EC)"
+								},
+								{
+									"key": "ectsRequiredAtCheck",
+									"label": "Credits Required (EC)"
+								},
+								{
+									"key": "flaggedAt",
+									"label": "Flagged At"
+								}
+							],
+							"rowRoute": "BsaProgressFlagDetail",
+							"viewAllRoute": "BsaProgressFlags",
+							"viewAllQuery": {
+								"bsaTrajectoryId": "@objectId"
+							},
+							"emptyText": "No raised flags found.",
+							"allowCreate": false
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "bt-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bt-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bt-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "bt-flags",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "bt-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BsaProgressFlags",
+			"route": "/study-progress/flags",
+			"type": "index",
+			"title": "BSA progress flags",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-progress-flag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "BsaProgressFlagDetail",
+			"route": "/study-progress/flags/:id",
+			"type": "detail",
+			"title": "BSA progress flag",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-progress-flag",
+				"readOnly": true,
+				"_note": "bsa-study-progress-guard: a BsaProgressFlag is a raised early-warning (learner, trajectory, ectsEarned vs. interim norm) — an alert/case archetype, mirroring AttendanceFlag. Body leads with the flag data (8-wide) and a Related panel resolving learner, programme and trajectory. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "bpf-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "bpf-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bpf-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bpf-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BsaWarnings",
+			"route": "/study-progress/warnings",
+			"type": "index",
+			"title": "BSA warnings",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-warning"
+			}
+		},
+		{
+			"id": "BsaWarningDetail",
+			"route": "/study-progress/warnings/:id",
+			"type": "detail",
+			"title": "BSA warning",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-warning",
+				"_note": "bsa-study-progress-guard: a BsaWarning is the formal, signed early-warning evidence record (improvementPeriod, offeredGuidance, personalCircumstancesNote, signature) required before a negative BSA decision can survive appeal — an append-only signed-evidence archetype, mirroring Attestation. Body leads with the warning fields (8-wide) and a Related panel resolving learner, programme and the originating flag. No comms leaves (no linkedTypes) — the x-openregister-notifications dialect handles the learner-facing notification on issue. Sidebar keeps metadata + audit-trail — the tamper-evidence trail is the whole point of a signed warning.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "bw-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "bw-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bw-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bw-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BsaDecisions",
+			"route": "/study-progress/decisions",
+			"type": "index",
+			"title": "BSA decisions",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-decision"
+			}
+		},
+		{
+			"id": "BsaDecisionDetail",
+			"route": "/study-progress/decisions/:id",
+			"type": "detail",
+			"title": "BSA decision",
+			"config": {
+				"register": "scholiq",
+				"schema": "bsa-decision",
+				"_note": "bsa-study-progress-guard: a BsaDecision is the year-end bindend studieadvies decision with a full evidence trail (credits, norm, warningIds, personal circumstances, hoorplicht, appeal sub-lifecycle) — an append-only signed-evidence + case archetype. BsaDecisionGuard structurally blocks a negative* decide transition without a logged issued BsaWarning. Body leads with the decision fields (8-wide) and a Related panel resolving learner, programme and referenced warnings. No comms leaves — x-openregister-notifications handles the learner/study-advisor notification on decide. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "bd-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Gavel"
+					},
+					{
+						"id": "bd-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bd-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bd-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BsaRiskDashboard",
+			"route": "/study-progress/risk-dashboard",
+			"type": "custom",
+			"title": "BSA risk dashboard",
+			"component": "BsaRiskDashboard",
+			"_note": "bsa-study-progress-guard (story bsa-risico-dashboard, 10071): the one genuine custom-view exception for study-progress — a coordinator/study-advisor view of open BsaProgressFlags against their trajectory's norm/window, with a link to draft a BsaWarning for a listed learner. Every other study-progress object is declarative index/detail pages."
 		}
 	]
 }
