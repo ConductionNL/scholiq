@@ -359,13 +359,6 @@
                         "expire": {
                             "from": "issued",
                             "to": "expired"
-                        },
-                        "issue": {
-                            "from": null,
-                            "to": "issued",
-                            "requires": [
-                                "OCA\\Scholiq\\Service\\CredentialSigningService"
-                            ]
                         }
                     }
                 },
@@ -385,13 +378,13 @@
                                 },
                                 null,
                                 {
-                                    "dateDiff": [
-                                        {
+                                    "dateDiff": {
+                                        "from": "now",
+                                        "to": {
                                             "prop": "expiresAt"
                                         },
-                                        "@now",
-                                        "days"
-                                    ]
+                                        "unit": "days"
+                                    }
                                 }
                             ]
                         }
@@ -459,7 +452,7 @@
                         "expression": {
                             "and": [
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "signature"
                                         },
@@ -467,7 +460,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "signature"
                                         },
@@ -475,7 +468,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "openbadges3Payload"
                                         },
@@ -499,7 +492,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "expiresAt"
                                         },
@@ -539,7 +532,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "expiresAt"
                                         },
@@ -579,7 +572,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "expiresAt"
                                         },
@@ -601,8 +594,7 @@
                 "x-openregister-notifications": {
                     "issuedToLearner": {
                         "trigger": {
-                            "type": "transition",
-                            "action": "issue"
+                            "type": "created"
                         },
                         "enabled": true,
                         "channels": [
@@ -913,9 +905,7 @@
                         "publish": {
                             "from": "draft",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\CoursePublishGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\CoursePublishGuard"
                         },
                         "archive": {
                             "from": "published",
@@ -927,17 +917,21 @@
                         }
                     }
                 },
+                "x-openregister-aggregate-refs": {
+                    "lessonCount": {
+                        "schema": "lesson",
+                        "metric": "count",
+                        "filters": {
+                            "courseId": "@self.id"
+                        }
+                    }
+                },
                 "x-openregister-calculations": {
                     "lessonCount": {
                         "type": "integer",
                         "materialise": true,
                         "expression": {
-                            "count": {
-                                "schema": "Lesson",
-                                "filter": {
-                                    "courseId": "@self.id"
-                                }
-                            }
+                            "prop": "@aggregate.lessonCount"
                         }
                     },
                     "isPublished": {
@@ -955,18 +949,18 @@
                 },
                 "x-openregister-aggregations": {
                     "enrolledLearners": {
+                        "from": "enrolment",
                         "metric": "count_distinct",
-                        "schema": "Enrolment",
                         "field": "learnerId",
-                        "filter": {
+                        "where": {
                             "courseId": "@self.id"
                         }
                     },
                     "completedLearners": {
+                        "from": "enrolment",
                         "metric": "count_distinct",
-                        "schema": "Enrolment",
                         "field": "learnerId",
-                        "filter": {
+                        "where": {
                             "courseId": "@self.id",
                             "lifecycle": "completed"
                         }
@@ -1273,11 +1267,6 @@
                         "title": "Tenant ID"
                     }
                 },
-                "x-openregister-lifecycle": {
-                    "property": "lifecycle",
-                    "initial": "stored",
-                    "transitions": {}
-                },
                 "x-openregister-authorization": {
                     "create": [
                         "admin"
@@ -1385,6 +1374,19 @@
                         "description": "UUID of the Cohort this enrolment is associated with. Null for individually enrolled learners not in a cohort.",
                         "title": "Cohort ID"
                     },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "active",
+                            "completed",
+                            "withdrawn",
+                            "failed"
+                        ],
+                        "default": "pending",
+                        "description": "Enrolment lifecycle state. Managed by the OR lifecycle engine; do not set directly.",
+                        "title": "Lifecycle State"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -1394,7 +1396,7 @@
                 },
                 "x-openregister-lifecycle": {
                     "field": "lifecycle",
-                    "default": "pending",
+                    "initial": "pending",
                     "transitions": {
                         "activate": {
                             "from": "pending",
@@ -1432,7 +1434,7 @@
                                     ]
                                 },
                                 {
-                                    "neq": [
+                                    "ne": [
                                         {
                                             "prop": "dueDate"
                                         },
@@ -1444,7 +1446,9 @@
                                         {
                                             "prop": "dueDate"
                                         },
-                                        "@now"
+                                        {
+                                            "now": []
+                                        }
                                     ]
                                 }
                             ]
@@ -1465,13 +1469,13 @@
                                 },
                                 null,
                                 {
-                                    "dateDiff": [
-                                        {
+                                    "dateDiff": {
+                                        "from": "now",
+                                        "to": {
                                             "prop": "dueDate"
                                         },
-                                        "@now",
-                                        "days"
-                                    ]
+                                        "unit": "days"
+                                    }
                                 }
                             ]
                         }
@@ -1480,37 +1484,37 @@
                         "type": "string",
                         "materialise": true,
                         "expression": {
-                            "case": [
+                            "if": [
                                 {
-                                    "when": {
-                                        "eq": [
-                                            {
-                                                "prop": "lifecycle"
-                                            },
-                                            "completed"
-                                        ]
-                                    },
-                                    "then": "completed"
+                                    "eq": [
+                                        {
+                                            "prop": "lifecycle"
+                                        },
+                                        "completed"
+                                    ]
                                 },
+                                "completed",
                                 {
-                                    "when": {
-                                        "prop": "isOverdue"
-                                    },
-                                    "then": "red"
-                                },
-                                {
-                                    "when": {
-                                        "lte": [
-                                            {
-                                                "prop": "daysRemaining"
-                                            },
-                                            7
-                                        ]
-                                    },
-                                    "then": "amber"
-                                },
-                                {
-                                    "default": "green"
+                                    "if": [
+                                        {
+                                            "prop": "isOverdue"
+                                        },
+                                        "red",
+                                        {
+                                            "if": [
+                                                {
+                                                    "lte": [
+                                                        {
+                                                            "prop": "daysRemaining"
+                                                        },
+                                                        7
+                                                    ]
+                                                },
+                                                "amber",
+                                                "green"
+                                            ]
+                                        }
+                                    ]
                                 }
                             ]
                         }
@@ -1746,7 +1750,7 @@
                 },
                 "x-openregister-lifecycle": {
                     "field": "lifecycle",
-                    "default": "draft",
+                    "initial": "draft",
                     "transitions": {
                         "publish": {
                             "from": "draft",
@@ -1760,12 +1764,12 @@
                 },
                 "x-openregister-aggregations": {
                     "mandatoryEnrolledCount": {
+                        "from": "enrolment",
                         "metric": "count",
-                        "schema": "Enrolment",
-                        "filter": {
+                        "where": {
                             "mandatory": true,
                             "regulationSlug": "@self.slug",
-                            "lifecycleIn": [
+                            "lifecycle": [
                                 "active",
                                 "completed",
                                 "failed"
@@ -1773,29 +1777,53 @@
                         }
                     },
                     "mandatoryCompletedCount": {
+                        "from": "enrolment",
                         "metric": "count",
-                        "schema": "Enrolment",
-                        "filter": {
+                        "where": {
                             "mandatory": true,
                             "regulationSlug": "@self.slug",
                             "lifecycle": "completed"
                         }
                     },
                     "attestationCount": {
+                        "from": "attestation",
                         "metric": "count",
-                        "schema": "Attestation",
-                        "filter": {
+                        "where": {
                             "regulationSlug": "@self.slug",
                             "lifecycle": "signed"
                         }
                     },
                     "validCredentialCount": {
+                        "from": "credential",
                         "metric": "count_distinct",
-                        "schema": "Credential",
                         "field": "learnerId",
-                        "filter": {
+                        "where": {
                             "regulationSlug": "@self.slug",
                             "lifecycle": "issued"
+                        }
+                    }
+                },
+                "x-openregister-aggregate-refs": {
+                    "mandatoryEnrolledCount": {
+                        "schema": "enrolment",
+                        "metric": "count",
+                        "filters": {
+                            "mandatory": true,
+                            "regulationSlug": "@self.slug",
+                            "lifecycle": [
+                                "active",
+                                "completed",
+                                "failed"
+                            ]
+                        }
+                    },
+                    "mandatoryCompletedCount": {
+                        "schema": "enrolment",
+                        "metric": "count",
+                        "filters": {
+                            "mandatory": true,
+                            "regulationSlug": "@self.slug",
+                            "lifecycle": "completed"
                         }
                     }
                 },
@@ -1809,20 +1837,20 @@
                                 {
                                     "gt": [
                                         {
-                                            "prop": "mandatoryEnrolledCount"
+                                            "prop": "@aggregate.mandatoryEnrolledCount"
                                         },
                                         0
                                     ]
                                 },
                                 {
-                                    "mul": [
+                                    "*": [
                                         {
-                                            "div": [
+                                            "/": [
                                                 {
-                                                    "prop": "mandatoryCompletedCount"
+                                                    "prop": "@aggregate.mandatoryCompletedCount"
                                                 },
                                                 {
-                                                    "prop": "mandatoryEnrolledCount"
+                                                    "prop": "@aggregate.mandatoryEnrolledCount"
                                                 }
                                             ]
                                         },
@@ -1838,35 +1866,33 @@
                         "materialise": true,
                         "description": "RAG status band: green ≥ ragAmberThreshold, amber ≥ ragRedThreshold, red < ragRedThreshold.",
                         "expression": {
-                            "case": [
+                            "if": [
                                 {
-                                    "when": {
-                                        "lt": [
-                                            {
-                                                "prop": "coveragePercent"
-                                            },
-                                            {
-                                                "prop": "ragRedThreshold"
-                                            }
-                                        ]
-                                    },
-                                    "then": "red"
+                                    "lt": [
+                                        {
+                                            "prop": "coveragePercent"
+                                        },
+                                        {
+                                            "prop": "ragRedThreshold"
+                                        }
+                                    ]
                                 },
+                                "red",
                                 {
-                                    "when": {
-                                        "lt": [
-                                            {
-                                                "prop": "coveragePercent"
-                                            },
-                                            {
-                                                "prop": "ragAmberThreshold"
-                                            }
-                                        ]
-                                    },
-                                    "then": "amber"
-                                },
-                                {
-                                    "default": "green"
+                                    "if": [
+                                        {
+                                            "lt": [
+                                                {
+                                                    "prop": "coveragePercent"
+                                                },
+                                                {
+                                                    "prop": "ragAmberThreshold"
+                                                }
+                                            ]
+                                        },
+                                        "amber",
+                                        "green"
+                                    ]
                                 }
                             ]
                         }
@@ -2025,7 +2051,7 @@
                 },
                 "x-openregister-lifecycle": {
                     "field": "lifecycle",
-                    "default": "drafted",
+                    "initial": "drafted",
                     "transitions": {
                         "sign": {
                             "from": "drafted",
@@ -2209,7 +2235,7 @@
                 },
                 "x-openregister-lifecycle": {
                     "field": "lifecycle",
-                    "default": "submitted",
+                    "initial": "submitted",
                     "transitions": {
                         "verify": {
                             "from": "submitted",
@@ -2478,6 +2504,25 @@
                         "description": "Organisational department for grouping and reporting.",
                         "title": "Department"
                     },
+                    "mergedInto": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
+                        "description": "UUID of the surviving LearnerProfile this profile was merged into. Set by the merge transition; null for active profiles.",
+                        "title": "Merged Into"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "merged",
+                            "deleted"
+                        ],
+                        "default": "active",
+                        "description": "Profile lifecycle state: active (in use), merged (duplicate merged into another profile; retained for audit), deleted (soft-deleted on offboarding; retained per AVG retention class until purge window expires). Managed by the OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -2486,44 +2531,19 @@
                     }
                 },
                 "x-openregister-lifecycle": {
-                    "initialState": "active",
-                    "states": {
-                        "active": {
-                            "description": "Profile is active for the learner."
-                        },
-                        "merged": {
-                            "description": "Profile merged into another LearnerProfile (e.g. duplicate SchoolID/ECK iD reconciliation); retained for audit + back-reference resolution."
-                        },
-                        "deleted": {
-                            "description": "Soft-deleted on offboarding; retained per AVG retention class until purge window expires."
-                        }
-                    },
-                    "transitions": [
-                        {
-                            "name": "merge",
+                    "field": "lifecycle",
+                    "initial": "active",
+                    "transitions": {
+                        "merge": {
                             "from": "active",
                             "to": "merged",
-                            "audit_event_type": "learner.profile.merged",
-                            "required": [
-                                "mergedInto"
-                            ],
                             "description": "Merges this profile into another LearnerProfile. The surviving profile is referenced via mergedInto."
                         },
-                        {
-                            "name": "delete",
+                        "delete": {
                             "from": "active",
                             "to": "deleted",
-                            "audit_event_type": "learner.profile.deleted",
                             "description": "Soft-deletes the profile on offboarding. Purge after retention class expires."
                         }
-                    ]
-                },
-                "x-openregister-calculations": {
-                    "primaryRole": {
-                        "type": "string",
-                        "materialise": true,
-                        "description": "Highest-priority Scholiq role for this learner, resolved by RoleSelector (admin group override + static priority map).",
-                        "requires": "OCA\\Scholiq\\Lifecycle\\RoleSelector"
                     }
                 },
                 "x-property-rbac": {
@@ -2647,9 +2667,7 @@
                         "publish": {
                             "from": "draft",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\ProgrammePublishGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ProgrammePublishGuard"
                         },
                         "archive": {
                             "from": "published",
@@ -2658,17 +2676,6 @@
                         "unarchive": {
                             "from": "archived",
                             "to": "draft"
-                        }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "courseCount": {
-                        "type": "integer",
-                        "materialise": true,
-                        "expression": {
-                            "count": {
-                                "prop": "courseIds"
-                            }
                         }
                     }
                 },
@@ -3047,9 +3054,7 @@
                         "activate": {
                             "from": "planned",
                             "to": "active",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\CohortMembershipGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\CohortMembershipGuard"
                         },
                         "complete": {
                             "from": "active",
@@ -3061,17 +3066,6 @@
                                 "completed"
                             ],
                             "to": "archived"
-                        }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "learnerCount": {
-                        "type": "integer",
-                        "materialise": true,
-                        "expression": {
-                            "count": {
-                                "prop": "learnerIds"
-                            }
                         }
                     }
                 },
@@ -3258,7 +3252,7 @@
                 },
                 "x-openregister-lifecycle": {
                     "field": "lifecycle",
-                    "default": "draft",
+                    "initial": "draft",
                     "transitions": {
                         "preview": {
                             "from": "draft",
@@ -3469,15 +3463,15 @@
                         "type": "integer",
                         "materialise": true,
                         "expression": {
-                            "dateDiff": [
-                                {
-                                    "prop": "endsAt"
-                                },
-                                {
+                            "dateDiff": {
+                                "from": {
                                     "prop": "startsAt"
                                 },
-                                "minutes"
-                            ]
+                                "to": {
+                                    "prop": "endsAt"
+                                },
+                                "unit": "minutes"
+                            }
                         }
                     },
                     "isPast": {
@@ -3488,7 +3482,9 @@
                                 {
                                     "prop": "endsAt"
                                 },
-                                "@now"
+                                {
+                                    "now": []
+                                }
                             ]
                         }
                     }
@@ -3700,7 +3696,7 @@
                     "maxPoints": {
                         "type": "number",
                         "nullable": true,
-                        "description": "Declared maximum possible score (sum of the top level across all criteria). Derived field; prefer x-openregister-calculations.computedMaxPoints.",
+                        "description": "Declared maximum possible score (sum of the top level across all criteria). Maintained by the rubric editor.",
                         "example": 100,
                         "title": "Maximum Points"
                     },
@@ -3740,27 +3736,6 @@
                         "reactivate": {
                             "from": "archived",
                             "to": "active"
-                        }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "criterionCount": {
-                        "type": "integer",
-                        "materialise": true,
-                        "expression": {
-                            "count": {
-                                "prop": "criteria"
-                            }
-                        }
-                    },
-                    "computedMaxPoints": {
-                        "type": "number",
-                        "materialise": true,
-                        "description": "Sum of the highest points level across all criteria.",
-                        "expression": {
-                            "sumMaxLevels": {
-                                "prop": "criteria"
-                            }
                         }
                     }
                 }
@@ -3923,9 +3898,7 @@
                         "publish": {
                             "from": "draft",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AssignmentPublishGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AssignmentPublishGuard"
                         },
                         "close": {
                             "from": "published",
@@ -3966,24 +3939,16 @@
                         "materialise": true,
                         "description": "Total number of Submission objects linked to this Assignment.",
                         "expression": {
-                            "countRelated": {
-                                "schema": "Submission",
-                                "joinOn": "assignmentId"
-                            }
+                            "prop": "@aggregate.submissionCount"
                         }
-                    },
-                    "gradedCount": {
-                        "type": "integer",
-                        "materialise": true,
-                        "description": "Number of Submissions with a non-null proposedGrade.",
-                        "expression": {
-                            "countRelated": {
-                                "schema": "Submission",
-                                "joinOn": "assignmentId",
-                                "where": {
-                                    "notNull": "proposedGrade"
-                                }
-                            }
+                    }
+                },
+                "x-openregister-aggregate-refs": {
+                    "submissionCount": {
+                        "schema": "submission",
+                        "metric": "count",
+                        "filters": {
+                            "assignmentId": "@self.id"
                         }
                     }
                 }
@@ -4123,9 +4088,7 @@
                         "submit": {
                             "from": "draft",
                             "to": "submitted",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\SubmissionWindowGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\SubmissionWindowGuard"
                         },
                         "return": {
                             "from": [
@@ -4160,8 +4123,8 @@
                         "materialise": true,
                         "description": "proposedGrade reduced by Assignment.latePenaltyPercent when isLate is true. Null before marking.",
                         "expression": {
-                            "if": {
-                                "condition": {
+                            "if": [
+                                {
                                     "eq": [
                                         {
                                             "prop": "lifecycle"
@@ -4169,18 +4132,18 @@
                                         "late"
                                     ]
                                 },
-                                "then": {
-                                    "multiply": [
+                                {
+                                    "*": [
                                         {
                                             "prop": "proposedGrade"
                                         },
                                         {
-                                            "subtract": [
+                                            "-": [
                                                 1,
                                                 {
-                                                    "divide": [
+                                                    "/": [
                                                         {
-                                                            "relatedProp": "assignment.latePenaltyPercent"
+                                                            "prop": "@ref.assignment.latePenaltyPercent"
                                                         },
                                                         100
                                                     ]
@@ -4189,11 +4152,18 @@
                                         }
                                     ]
                                 },
-                                "else": {
+                                {
                                     "prop": "proposedGrade"
                                 }
-                            }
+                            ]
                         }
+                    }
+                },
+                "x-openregister-references": {
+                    "assignment": {
+                        "schema": "assignment",
+                        "mode": "relatedObject",
+                        "field": "assignmentId"
                     }
                 },
                 "x-property-rbac": {
@@ -4294,14 +4264,21 @@
                         }
                     }
                 },
+                "x-openregister-aggregate-refs": {
+                    "itemCount": {
+                        "schema": "item",
+                        "metric": "count",
+                        "filters": {
+                            "itemBankId": "@self.id"
+                        }
+                    }
+                },
                 "x-openregister-calculations": {
                     "itemCount": {
                         "type": "integer",
-                        "description": "Number of items in this bank (length of itemIds array).",
+                        "description": "Number of Item objects in this bank (count of Items whose itemBankId references this bank).",
                         "expression": {
-                            "count": {
-                                "prop": "itemIds"
-                            }
+                            "prop": "@aggregate.itemCount"
                         }
                     }
                 }
@@ -4690,9 +4667,7 @@
                         "publish": {
                             "from": "draft",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AssessmentPublishGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AssessmentPublishGuard"
                         },
                         "close": {
                             "from": "published",
@@ -4708,34 +4683,11 @@
                     }
                 },
                 "x-openregister-calculations": {
-                    "itemCount": {
-                        "type": "integer",
-                        "description": "Number of item references in this assessment.",
-                        "expression": {
-                            "count": {
-                                "prop": "itemRefs"
-                            }
-                        }
-                    },
-                    "totalPoints": {
-                        "type": "number",
-                        "description": "Sum of all itemRefs[].points.",
-                        "expression": {
-                            "sum": {
-                                "map": [
-                                    {
-                                        "prop": "itemRefs"
-                                    },
-                                    "points"
-                                ]
-                            }
-                        }
-                    },
                     "isProctored": {
                         "type": "boolean",
                         "description": "True when proctoring configuration is non-null.",
                         "expression": {
-                            "neq": [
+                            "ne": [
                                 {
                                     "prop": "proctoring"
                                 },
@@ -4763,7 +4715,9 @@
                                                 {
                                                     "prop": "availableFrom"
                                                 },
-                                                "@now"
+                                                {
+                                                    "now": []
+                                                }
                                             ]
                                         }
                                     ]
@@ -4783,7 +4737,9 @@
                                                 {
                                                     "prop": "availableUntil"
                                                 },
-                                                "@now"
+                                                {
+                                                    "now": []
+                                                }
                                             ]
                                         }
                                     ]
@@ -4922,88 +4878,12 @@
                         "submit": {
                             "from": "in-progress",
                             "to": "submitted",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AssessmentScoringHandler"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AssessmentScoringHandler"
                         },
                         "grade": {
                             "from": "submitted",
                             "to": "graded",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AssessmentGradeGuard"
-                            ]
-                        }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "autoScore": {
-                        "type": "number",
-                        "description": "Sum of all responses[].autoScore (null scores treated as 0).",
-                        "expression": {
-                            "sum": {
-                                "map": [
-                                    {
-                                        "prop": "responses"
-                                    },
-                                    "autoScore"
-                                ]
-                            }
-                        }
-                    },
-                    "totalScore": {
-                        "type": "number",
-                        "description": "Sum of autoScore and all manualScores.",
-                        "expression": {
-                            "add": [
-                                {
-                                    "sum": {
-                                        "map": [
-                                            {
-                                                "prop": "responses"
-                                            },
-                                            "autoScore"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "sum": {
-                                        "map": [
-                                            {
-                                                "prop": "responses"
-                                            },
-                                            "manualScore"
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "passed": {
-                        "type": "boolean",
-                        "nullable": true,
-                        "description": "True when totalScore >= Assessment.passMark and scoringScheme is passMark. Null when not applicable.",
-                        "expression": {
-                            "if": [
-                                {
-                                    "eq": [
-                                        {
-                                            "prop": "lifecycle"
-                                        },
-                                        "graded"
-                                    ]
-                                },
-                                {
-                                    "gte": [
-                                        {
-                                            "prop": "totalScore"
-                                        },
-                                        {
-                                            "ref": "assessment.passMark"
-                                        }
-                                    ]
-                                },
-                                null
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AssessmentGradeGuard"
                         }
                     }
                 },
@@ -5201,55 +5081,6 @@
                         "user"
                     ],
                     "_comment": "secure-exam-test-mode: first change to ever write this schema — a learner's own browser (native test mode) or an external provider adapter creates the session, so create must be reachable by an authenticated user, not admin-only (contrast XapiStatement, which is admin-only pending a dedicated ingest controller). Object-level scoping (only the named learnerId) and field-level write RBAC on flags[].reviewDecision are NOT enforced here — known platform gap, tracked in design.md §4.2/§6."
-                },
-                "x-openregister-calculations": {
-                    "pendingFlagCount": {
-                        "type": "integer",
-                        "description": "Number of flags awaiting invigilator review.",
-                        "expression": {
-                            "count": {
-                                "filter": [
-                                    {
-                                        "prop": "flags"
-                                    },
-                                    {
-                                        "eq": [
-                                            {
-                                                "item": "reviewDecision"
-                                            },
-                                            "pending"
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "hasAnnulledFlag": {
-                        "type": "boolean",
-                        "description": "True when at least one flag has been annulled by an invigilator.",
-                        "expression": {
-                            "gt": [
-                                {
-                                    "count": {
-                                        "filter": [
-                                            {
-                                                "prop": "flags"
-                                            },
-                                            {
-                                                "eq": [
-                                                    {
-                                                        "item": "reviewDecision"
-                                                    },
-                                                    "annulled"
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                },
-                                0
-                            ]
-                        }
-                    }
                 }
             },
             "GradeScale": {
@@ -5395,12 +5226,6 @@
                             ],
                             "to": "archived"
                         }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "bandCount": {
-                        "description": "Number of bands defined on this scale.",
-                        "expression": "count(@.bands)"
                     }
                 }
             },
@@ -5617,9 +5442,7 @@
                         "publish": {
                             "from": "concept",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard"
-                            ],
+                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard",
                             "notifications": [
                                 "gradePublished"
                             ]
@@ -5631,9 +5454,7 @@
                         "republish": {
                             "from": "revised",
                             "to": "published",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard"
-                            ],
+                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard",
                             "notifications": [
                                 "gradePublished"
                             ]
@@ -5641,20 +5462,8 @@
                         "invalidate": {
                             "from": "concept",
                             "to": "invalidated",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\FraudCaseInvalidationGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseInvalidationGuard"
                         }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "effectiveWeight": {
-                        "description": "The per-entry weight if set, else the matching CurriculumPlan.components[].weight. Used by FinalGrade roll-up.",
-                        "expression": "coalesce(@.weight, lookup('curriculum-plan', @.curriculumPlanId, 'components', @.componentId, 'weight'))"
-                    },
-                    "pointsContributed": {
-                        "description": "Value multiplied by effectiveWeight — the raw contribution of this entry to the weighted sum.",
-                        "expression": "@.value * @.effectiveWeight"
                     }
                 },
                 "x-openregister-notifications": {
@@ -5819,27 +5628,14 @@
                 },
                 "x-openregister-aggregations": {
                     "publishedEntries": {
-                        "description": "Cross-schema aggregation: pull all published GradeEntries for this learner + curriculumPlan. Used as input to the formula evaluation.",
-                        "schema": "grade-entry",
-                        "filters": {
+                        "description": "Cross-schema aggregation: number of published GradeEntries for this learner + curriculumPlan. The full entry list consumed by the formula evaluation is queried by GradeRollupHandler in PHP.",
+                        "from": "grade-entry",
+                        "metric": "count",
+                        "where": {
                             "learnerId": "@self.learnerId",
                             "curriculumPlanId": "@self.curriculumPlanId",
                             "lifecycle": "published"
                         }
-                    }
-                },
-                "x-openregister-calculations": {
-                    "value": {
-                        "description": "Computed by GradeFormulaEvaluator using CurriculumPlan.formula over publishedEntries.",
-                        "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
-                    },
-                    "passed": {
-                        "description": "Boolean verdict from GradeFormulaEvaluator, accounting for passRules and GradeScale.passThreshold.",
-                        "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
-                    },
-                    "breakdown": {
-                        "description": "Per-period and per-component contribution breakdown from GradeFormulaEvaluator.",
-                        "engine": "OCA\\Scholiq\\Grading\\GradeFormulaEvaluator"
                     }
                 },
                 "x-openregister-triggers": {
@@ -6022,16 +5818,12 @@
                         "grant": {
                             "from": "in-assessment",
                             "to": "granted",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
                         },
                         "reject": {
                             "from": "in-assessment",
                             "to": "rejected",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ExemptionDecisionGuard"
                         },
                         "withdraw": {
                             "from": [
@@ -6398,9 +6190,7 @@
                         "scheduleHearing": {
                             "from": "reported",
                             "to": "hearing-scheduled",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\FraudCaseHearingGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseHearingGuard"
                         },
                         "holdHearing": {
                             "from": "hearing-scheduled",
@@ -6409,9 +6199,7 @@
                         "decide": {
                             "from": "heard",
                             "to": "decided",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\FraudCaseDecisionGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseDecisionGuard"
                         },
                         "dismiss": {
                             "from": [
@@ -6910,21 +6698,31 @@
                     }
                 },
                 "x-openregister-calculations": {
-                    "goalsMetCount": {
-                        "description": "Count of goals with status=met.",
-                        "expression": "goals[?status=='met'] | length(@)"
-                    },
-                    "goalsTotalCount": {
-                        "description": "Total number of goals.",
-                        "expression": "length(goals)"
-                    },
                     "nextReviewDue": {
+                        "type": "boolean",
                         "description": "True when nextReviewAt is not null and <= today.",
-                        "expression": "nextReviewAt != null && nextReviewAt <= today()"
-                    },
-                    "isFullySigned": {
-                        "description": "True when every required signer role (from template) has a Signature on this version with sufficient assurance. Evaluated by LearningPlanSignatureGuard on activate.",
-                        "expression": "computed"
+                        "expression": {
+                            "and": [
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "nextReviewAt"
+                                        },
+                                        null
+                                    ]
+                                },
+                                {
+                                    "lte": [
+                                        {
+                                            "prop": "nextReviewAt"
+                                        },
+                                        {
+                                            "now": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
                     }
                 }
             },
@@ -7295,19 +7093,35 @@
                         "expression": {
                             "if": [
                                 {
-                                    "in": [
+                                    "or": [
                                         {
-                                            "prop": "status"
+                                            "eq": [
+                                                {
+                                                    "prop": "status"
+                                                },
+                                                "present"
+                                            ]
                                         },
-                                        [
-                                            "present",
-                                            "late",
-                                            "left-early"
-                                        ]
+                                        {
+                                            "eq": [
+                                                {
+                                                    "prop": "status"
+                                                },
+                                                "late"
+                                            ]
+                                        },
+                                        {
+                                            "eq": [
+                                                {
+                                                    "prop": "status"
+                                                },
+                                                "left-early"
+                                            ]
+                                        }
                                     ]
                                 },
                                 {
-                                    "div": [
+                                    "/": [
                                         {
                                             "prop": "minutesAttended"
                                         },
@@ -7315,15 +7129,22 @@
                                     ]
                                 },
                                 {
-                                    "div": [
+                                    "/": [
                                         {
-                                            "ref": "session.durationMinutes"
+                                            "prop": "@ref.session.durationMinutes"
                                         },
                                         60
                                     ]
                                 }
                             ]
                         }
+                    }
+                },
+                "x-openregister-references": {
+                    "session": {
+                        "schema": "session",
+                        "mode": "relatedObject",
+                        "field": "sessionId"
                     }
                 },
                 "x-openregister-seed": []
@@ -7720,42 +7541,6 @@
                         }
                     }
                 },
-                "x-openregister-calculations": {
-                    "unexcusedLesuren": {
-                        "type": "number",
-                        "materialise": true,
-                        "description": "Rolling sum of unexcused lesuren for each learner in the threshold's scope and window. When this value reaches or exceeds `limit`, the threshold is crossed. Reuses the same calculatedChange mechanism as Regulation.ragStatus — NOT a TimedJob (ADR-022).",
-                        "expression": {
-                            "sum": {
-                                "schema": "AttendanceRecord",
-                                "field": "lesuren",
-                                "filter": {
-                                    "cohortId": "@self.cohortId",
-                                    "status": "absent-unexcused",
-                                    "markedAt": {
-                                        "gte": "@window.start",
-                                        "lte": "@window.end"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "isThresholdCrossed": {
-                        "type": "boolean",
-                        "materialise": true,
-                        "description": "True when unexcusedLesuren >= limit. Drives the onThresholdCrossed notification.",
-                        "expression": {
-                            "gte": [
-                                {
-                                    "prop": "unexcusedLesuren"
-                                },
-                                {
-                                    "prop": "limit"
-                                }
-                            ]
-                        }
-                    }
-                },
                 "x-openregister-notifications": {
                     "thresholdCrossed": {
                         "trigger": {
@@ -7927,9 +7712,7 @@
                         "report": {
                             "from": "in-handling",
                             "to": "reported",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\AttendanceFlagReportGuard"
-                            ]
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AttendanceFlagReportGuard"
                         },
                         "resolve": {
                             "from": [
@@ -7947,13 +7730,13 @@
                         "materialise": true,
                         "description": "Number of days since the flag was created (windowEnd as proxy). Helps the mentor dashboard sort by urgency.",
                         "expression": {
-                            "dateDiff": [
-                                "@now",
-                                {
+                            "dateDiff": {
+                                "from": {
                                     "prop": "windowEnd"
                                 },
-                                "days"
-                            ]
+                                "to": "now",
+                                "unit": "days"
+                            }
                         }
                     }
                 },
@@ -8448,17 +8231,13 @@
                         "approveDossier": {
                             "from": "pending-parent-review",
                             "to": "running",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\OsoDossierReviewGuard"
-                            ],
+                            "requires": "OCA\\Scholiq\\Lifecycle\\OsoDossierReviewGuard",
                             "description": "Parent approves the OSO dossier; job proceeds to running."
                         },
                         "run": {
                             "from": "queued",
                             "to": "running",
-                            "requires": [
-                                "OCA\\Scholiq\\Lifecycle\\DataExchangeRunGuard"
-                            ],
+                            "requires": "OCA\\Scholiq\\Lifecycle\\DataExchangeRunGuard",
                             "description": "Non-OSO jobs: direct queued → running. OSO jobs: blocked by DataExchangeRunGuard (must go via pending-parent-review → approveDossier)."
                         },
                         "succeed": {
@@ -8503,56 +8282,15 @@
                                 },
                                 null,
                                 {
-                                    "dateDiff": [
-                                        {
-                                            "prop": "finishedAt"
-                                        },
-                                        {
+                                    "dateDiff": {
+                                        "from": {
                                             "prop": "startedAt"
                                         },
-                                        "seconds"
-                                    ]
-                                }
-                            ]
-                        }
-                    },
-                    "successRate": {
-                        "type": "number",
-                        "materialise": true,
-                        "description": "Fraction of records accepted (recordsAccepted / recordsProcessed). Null until finished or if no records were processed.",
-                        "expression": {
-                            "if": [
-                                {
-                                    "eq": [
-                                        {
-                                            "prop": "result"
+                                        "to": {
+                                            "prop": "finishedAt"
                                         },
-                                        null
-                                    ]
-                                },
-                                null,
-                                {
-                                    "if": [
-                                        {
-                                            "eq": [
-                                                {
-                                                    "prop": "result.recordsProcessed"
-                                                },
-                                                0
-                                            ]
-                                        },
-                                        null,
-                                        {
-                                            "divide": [
-                                                {
-                                                    "prop": "result.recordsAccepted"
-                                                },
-                                                {
-                                                    "prop": "result.recordsProcessed"
-                                                }
-                                            ]
-                                        }
-                                    ]
+                                        "unit": "seconds"
+                                    }
                                 }
                             ]
                         }
@@ -9076,26 +8814,46 @@
                             }
                         }
                     },
+                    "x-openregister-aggregate-refs": {
+                        "studentSignatureCount": {
+                            "schema": "pok-signature",
+                            "metric": "count",
+                            "filters": {
+                                "subjectId": "@self.id",
+                                "subjectVersion": "@self.version",
+                                "signerRole": "student"
+                            }
+                        },
+                        "schoolSignatureCount": {
+                            "schema": "pok-signature",
+                            "metric": "count",
+                            "filters": {
+                                "subjectId": "@self.id",
+                                "subjectVersion": "@self.version",
+                                "signerRole": "school"
+                            }
+                        },
+                        "praktijkopleiderSignatureCount": {
+                            "schema": "pok-signature",
+                            "metric": "count",
+                            "filters": {
+                                "subjectId": "@self.id",
+                                "subjectVersion": "@self.version",
+                                "signerRole": "praktijkopleider"
+                            }
+                        }
+                    },
                     "x-openregister-calculations": {
                         "isFullySigned": {
                             "type": "boolean",
                             "materialise": true,
-                            "description": "True once a PokSignature exists for each of the three required roles (student, school, praktijkopleider) on this POK's current (subjectId, subjectVersion). A duplicate signature for the same role still counts as one distinct role toward the three. Gates PokActivationGuard's `activate` transition. NOTE: expressed with the countRelated idiom already used elsewhere in this register (e.g. Assignment.submissionCount); PokActivationGuard independently re-derives this same fact by querying PokSignature directly via ObjectService, which is the tested, authoritative enforcement — this field is the declarative read-surface for the frontend.",
+                            "description": "True once a PokSignature exists for each of the three required roles (student, school, praktijkopleider) on this POK's current (subjectId, subjectVersion). A duplicate signature for the same role still counts as one distinct role toward the three. Gates PokActivationGuard's `activate` transition. NOTE: expressed with x-openregister-aggregate-refs (one count per required role); PokActivationGuard independently re-derives this same fact by querying PokSignature directly via ObjectService, which is the tested, authoritative enforcement — this field is the declarative read-surface for the frontend.",
                             "expression": {
                                 "and": [
                                     {
                                         "gte": [
                                             {
-                                                "countRelated": {
-                                                    "schema": "PokSignature",
-                                                    "joinOn": "subjectId",
-                                                    "where": {
-                                                        "eq": [
-                                                            "signerRole",
-                                                            "student"
-                                                        ]
-                                                    }
-                                                }
+                                                "prop": "@aggregate.studentSignatureCount"
                                             },
                                             1
                                         ]
@@ -9103,16 +8861,7 @@
                                     {
                                         "gte": [
                                             {
-                                                "countRelated": {
-                                                    "schema": "PokSignature",
-                                                    "joinOn": "subjectId",
-                                                    "where": {
-                                                        "eq": [
-                                                            "signerRole",
-                                                            "school"
-                                                        ]
-                                                    }
-                                                }
+                                                "prop": "@aggregate.schoolSignatureCount"
                                             },
                                             1
                                         ]
@@ -9120,16 +8869,7 @@
                                     {
                                         "gte": [
                                             {
-                                                "countRelated": {
-                                                    "schema": "PokSignature",
-                                                    "joinOn": "subjectId",
-                                                    "where": {
-                                                        "eq": [
-                                                            "signerRole",
-                                                            "praktijkopleider"
-                                                        ]
-                                                    }
-                                                }
+                                                "prop": "@aggregate.praktijkopleiderSignatureCount"
                                             },
                                             1
                                         ]
@@ -9674,7 +9414,9 @@
                                     {
                                         "prop": "bookingClosesAt"
                                     },
-                                    "@now"
+                                    {
+                                        "now": []
+                                    }
                                 ]
                             }
                         }
@@ -9917,9 +9659,7 @@
                             "submit": {
                                 "from": "draft",
                                 "to": "submitted",
-                                "requires": [
-                                    "OCA\\Scholiq\\Lifecycle\\ConferenceSignupGuardianGuard"
-                                ]
+                                "requires": "OCA\\Scholiq\\Lifecycle\\ConferenceSignupGuardianGuard"
                             },
                             "schedule": {
                                 "from": "submitted",
