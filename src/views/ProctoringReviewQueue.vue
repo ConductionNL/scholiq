@@ -72,7 +72,7 @@
 						class="proctoring-review-queue__flag"
 						:class="'proctoring-review-queue__flag--' + flag.severity">
 						<div class="proctoring-review-queue__flag-info">
-							<span class="proctoring-review-queue__flag-kind">{{ flag.kind }}</span>
+							<span class="proctoring-review-queue__flag-kind">{{ flagKindLabel(flag.kind) }}</span>
 							<span class="proctoring-review-queue__flag-severity">{{ flag.severity }}</span>
 							<span class="proctoring-review-queue__flag-time">{{ formatDate(flag.occurredAt) }}</span>
 						</div>
@@ -190,6 +190,27 @@ export default {
 		 */
 		pendingCount(session) {
 			return (session.flags ?? []).filter((f) => f.reviewDecision === 'pending').length
+		},
+
+		/**
+		 * Human-readable label for a flag kind. Falls back to the raw kind value
+		 * for kinds this app has no label for (e.g. external-provider-specific
+		 * kinds like gaze-away/audio-event/object-detected) — the queue stays
+		 * generic for any provider, native or external.
+		 *
+		 * @param {string} kind Flag kind value
+		 * @return {string}
+		 * @spec openspec/changes/secure-exam-test-mode/specs/assessment/spec.md
+		 */
+		flagKindLabel(kind) {
+			const labels = {
+				'fullscreen-exit': this.t('scholiq', 'Fullscreen exit'),
+				'tab-hidden': this.t('scholiq', 'Tab switched or window minimised'),
+				'window-blur': this.t('scholiq', 'Window lost focus'),
+				'blocked-navigation': this.t('scholiq', 'Back-navigation attempt'),
+				'concurrent-session-detected': this.t('scholiq', 'Opened in a second tab or window'),
+			}
+			return labels[kind] ?? kind
 		},
 
 		/**
