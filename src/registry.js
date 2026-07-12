@@ -11,6 +11,7 @@
  */
 
 import ItemAuthorView from './views/ItemAuthorView.vue'
+import ExamCaseDossierView from './views/ExamCaseDossierView.vue'
 import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LessonPlayer from './views/LessonPlayer.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
@@ -74,6 +75,7 @@ export default {
 	DashboardAdmin: page(DashboardAdmin),
 	DashboardTeacher: page(DashboardTeacher),
 	DashboardStudent: page(DashboardStudent),
+	ExamCaseDossierView: page(ExamCaseDossierView),
 	GradeImpactDetail: page(GradeImpactDetail),
 	ItemAuthorView: page(ItemAuthorView),
 	LearningDashboard: page(LearningDashboard),

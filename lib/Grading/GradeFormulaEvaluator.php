@@ -386,12 +386,25 @@ class GradeFormulaEvaluator
     /**
      * Compute weighted average and breakdown from entries.
      *
+     * exam-board-case-handling: `sourceKind: exemption` entries are excluded
+     * from the `$weightedSum`/`$totalWeight` accumulation (both overall and
+     * per-period) — their `value` is always null and MUST NOT be cast to
+     * `0.0` and summed with full weight (the pre-existing bug this fix
+     * closes: `(float) ($entry['value'] ?? 0)` unconditionally would drag the
+     * average down for every exempted component). An exempted component
+     * still gets a `$componentBreakdown[$cid]` entry, shaped
+     * `{ exempt: true }` instead of `{ value, weight, contribution }`, so the
+     * roll-up UI can show *why* the component counts without a fabricated
+     * `value: 0`/`contribution: 0` pair that would visually read as "the
+     * learner scored zero here."
+     *
      * @param array<int, array>    $entries    The entries to average.
      * @param array<string, array> $components Component index.
      *
      * @return array{0: float|null, 1: array}
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
+     * @spec openspec/changes/exam-board-case-handling/specs/grading/spec.md#scenario-an-exemption-entry-does-not-corrupt-the-weighted-average
      */
     private function weightedAverage(array $entries, array $components): array
     {
@@ -401,10 +414,18 @@ class GradeFormulaEvaluator
         $componentBreakdown = [];
 
         foreach ($entries as $entry) {
+            $cid = $entry['componentId'] ?? '';
+
+            // exam-board-case-handling: an exemption entry has no numeric value —
+            // it satisfies its component without contributing to the weighted sum.
+            if (($entry['sourceKind'] ?? null) === 'exemption') {
+                $componentBreakdown[$cid] = ['exempt' => true];
+                continue;
+            }
+
             $value  = (float) ($entry['value'] ?? 0);
             $weight = $this->effectiveWeight(entry: $entry, components: $components);
             $period = (string) ($entry['period'] ?? 'unknown');
-            $cid    = $entry['componentId'] ?? '';
 
             $weightedSum += $value * $weight;
             $totalWeight += $weight;
@@ -425,7 +446,7 @@ class GradeFormulaEvaluator
         }//end foreach
 
         if ($totalWeight === 0.0) {
-            return [null, []];
+            return [null, $componentBreakdown];
         }
 
         $value = $weightedSum / $totalWeight;
@@ -478,18 +499,33 @@ class GradeFormulaEvaluator
         }
 
         // All-must-pass: every component's best must be >= its passRules threshold.
+        // exam-board-case-handling: a component whose best entry is sourceKind
+        // exemption has no numeric value to compare — the exam board's decision
+        // *is* the pass signal, so that component's rule is satisfied without a
+        // numeric check. Every other component's check is unaffected.
         if ($formula === 'all-must-pass' && empty($passRules) === false) {
             $bestByComponent = $this->bestOfNEntries(entries: $entries);
             $bestMap         = [];
             foreach ($bestByComponent as $entry) {
-                $bestMap[$entry['componentId'] ?? ''] = (float) ($entry['value'] ?? 0);
+                $bestMap[$entry['componentId'] ?? ''] = $entry;
             }
 
             foreach ($passRules as $rule) {
                 $ruleComponentId = $rule['componentId'] ?? '';
                 $ruleThreshold   = (float) ($rule['passThreshold'] ?? 0);
-                $bestValue       = $bestMap[$ruleComponentId] ?? null;
-                if ($bestValue === null || $bestValue < $ruleThreshold) {
+                $bestEntry       = $bestMap[$ruleComponentId] ?? null;
+
+                if ($bestEntry === null) {
+                    return false;
+                }
+
+                if (($bestEntry['sourceKind'] ?? null) === 'exemption') {
+                    // Satisfied by the exam board's decision — no numeric comparison.
+                    continue;
+                }
+
+                $bestValue = (float) ($bestEntry['value'] ?? 0);
+                if ($bestValue < $ruleThreshold) {
                     return false;
                 }
             }

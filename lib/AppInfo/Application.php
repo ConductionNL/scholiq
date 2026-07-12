@@ -32,6 +32,8 @@ use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
+use OCA\Scholiq\Listener\ExemptionGrantHandler;
+use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -279,6 +281,26 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: ConferenceScheduleGenerator::class
+        );
+
+        // ADR-031 legitimate exception: ExemptionCase `granted` → GradeEntry
+        // (sourceKind: exemption) create + publish bridge. Creates a GradeEntry
+        // with value:null and drives it through the *existing* publish transition
+        // so the standard audit trail and gradePublished notification fire
+        // unchanged, per exam-board-case-handling design §4.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ExemptionGrantHandler::class
+        );
+
+        // ADR-031 legitimate exception: FraudCase `decided` (verdict: fraud-proven)
+        // → contested GradeEntry.invalidate bridge. Only acts on a still-concept
+        // linked GradeEntry; a published entry is left untouched (defensive —
+        // FraudCaseBlockGuard should have prevented that state), per
+        // exam-board-case-handling design §4.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: FraudCaseDecisionHandler::class
         );
 
     }//end register()

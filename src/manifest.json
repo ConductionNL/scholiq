@@ -208,6 +208,28 @@
 			]
 		},
 		{
+			"id": "GroupExamBoard",
+			"label": "Exam board",
+			"icon": "icon-password",
+			"order": 28,
+			"children": [
+				{
+					"id": "ExemptionCasesMenu",
+					"label": "Exemption requests",
+					"icon": "icon-checkmark",
+					"route": "ExemptionCases",
+					"order": 10
+				},
+				{
+					"id": "FraudCasesMenu",
+					"label": "Fraud cases",
+					"icon": "icon-password",
+					"route": "FraudCases",
+					"order": 20
+				}
+			]
+		},
+		{
 			"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
@@ -7802,6 +7824,50 @@
 			"title": "Conference schedule board",
 			"component": "ConferenceScheduleBoard",
 			"_note": "The coordinator's manual-override board (the 'custom view only where a manifest page can't render it' exception): lists waitlisted ConferenceSignups per round with the unmet teacher-request, a manual ConferenceSlot creation action, and a regenerate trigger. ConferenceScheduleGenerator (server-side) runs the greedy solver when regenerate fires."
+		},
+		{
+			"id": "ExemptionCases",
+			"route": "/exam-board/exemptions",
+			"type": "index",
+			"title": "Exemption requests",
+			"config": {
+				"register": "scholiq",
+				"schema": "exemption-case"
+			}
+		},
+		{
+			"id": "ExemptionCaseDetail",
+			"route": "/exam-board/exemptions/:id",
+			"type": "custom",
+			"title": "Exemption request",
+			"component": "ExamCaseDossierView",
+			"config": {
+				"register": "scholiq",
+				"schema": "exemption-case"
+			},
+			"_note": "exam-board-case-handling: shared ExamCaseDossierView (the 'custom view only where a manifest page can't render it' exception) — a manifest detail page can render fields but not the accused/reporter-vs-examboard conditional withholding of hearing/decision internals this dossier needs for FraudCase; ExemptionCase reuses the same component (config.schema=exemption-case) for a consistent case-dossier layout even though it has no internal-detail withholding of its own."
+		},
+		{
+			"id": "FraudCases",
+			"route": "/exam-board/fraud-cases",
+			"type": "index",
+			"title": "Fraud cases",
+			"config": {
+				"register": "scholiq",
+				"schema": "fraud-case"
+			}
+		},
+		{
+			"id": "FraudCaseDetail",
+			"route": "/exam-board/fraud-cases/:id",
+			"type": "custom",
+			"title": "Fraud case",
+			"component": "ExamCaseDossierView",
+			"config": {
+				"register": "scholiq",
+				"schema": "fraud-case"
+			},
+			"_note": "exam-board-case-handling: FraudCase.x-property-rbac already fails closed server-side for anyone outside admin/examboard/accused/reporter; within that readable set, ExamCaseDossierView additionally withholds hearingRecords and decision-internal fields from anyone who is not the accused, the reporter, or an examboard member — an application-level UI convention, not server-enforced field RBAC (design.md §8)."
 		}
 	]
 }
