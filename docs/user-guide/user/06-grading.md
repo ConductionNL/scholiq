@@ -44,6 +44,14 @@ By the end you will have viewed all the grade entries for one learner on one cou
 
 The grade is published when: the **Final grade** row shows status *Published* with a signature timestamp, the learner sees it on their home view, and the course's *Grades* tab now lists one final grade per learner with no *Pending* rows.
 
+## Scheduled grade visibility
+
+By default, a grade entry's notification fires the moment you publish it, day or night. A school can opt into a quieter pattern instead: open **Curriculum → Curriculum plans**, edit the plan, and set **Grade visibility** to *Next school day* with a time (for example 10:00) and timezone. Every grade entry published under that plan then resolves its own **Visible from** timestamp automatically — the next non-weekend day at that time, or later the same day if you publish before the cutoff. You can still override the timestamp for a single entry as part of the publish action if you need it to notify immediately.
+
+While an entry is published but its visibility window hasn't opened yet, its lifecycle badge on the grade impact page reads **Scheduled** instead of **Published**, and no notification has gone out. Parents receive the same notification on the same schedule as the learner.
+
+Each user can also set a personal quiet-hours window (for example 22:00–07:00) under **Settings → Notifications**, so Scholiq notifications they'd otherwise receive during that window are deferred until it ends. Deadline reminders are declared with enough lead time that they still land before the deadline even after a quiet-hours deferral.
+
 ## Common issues
 
 | Symptom | Fix |

@@ -1562,7 +1562,11 @@
                             "type": "scheduled",
                             "intervalSec": 86400,
                             "filter": {
-                                "mandatory": true
+                                "mandatory": true,
+                                "dueDate": {
+                                    "operator": "withinNext",
+                                    "value": "P3D"
+                                }
                             }
                         },
                         "enabled": true,
@@ -1585,7 +1589,11 @@
                             "type": "scheduled",
                             "intervalSec": 86400,
                             "filter": {
-                                "mandatory": true
+                                "mandatory": true,
+                                "dueDate": {
+                                    "operator": "olderThan",
+                                    "value": "PT0S"
+                                }
                             }
                         },
                         "enabled": true,
@@ -2866,6 +2874,39 @@
                             }
                         },
                         "title": "Assessment Periods"
+                    },
+                    "gradeVisibilityPolicy": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Default scheduled-visibility policy applied to GradeEntry notifications published under this plan when a teacher does not explicitly override visibleFrom. Null resolves to mode 'immediate' — today's behaviour (notify as soon as a GradeEntry publishes) — so every existing CurriculumPlan is unaffected until a school opts in.",
+                        "properties": {
+                            "mode": {
+                                "type": "string",
+                                "description": "Visibility scheduling mode. 'immediate' = the resolved visibleFrom equals the publish moment. 'nextSchoolDay' = the resolved visibleFrom is the next non-weekend day at 'time' in 'timezone'.",
+                                "enum": [
+                                    "immediate",
+                                    "nextSchoolDay"
+                                ],
+                                "default": "immediate",
+                                "example": "nextSchoolDay",
+                                "title": "Visibility Mode"
+                            },
+                            "time": {
+                                "type": "string",
+                                "description": "Local time of day (HH:MM, 24h) at which deferred grades become visible. Only meaningful when mode is 'nextSchoolDay'.",
+                                "example": "10:00",
+                                "title": "Visibility Time"
+                            },
+                            "timezone": {
+                                "type": "string",
+                                "description": "IANA timezone identifier used to interpret 'time'. Only meaningful when mode is 'nextSchoolDay'.",
+                                "default": "Europe/Amsterdam",
+                                "example": "Europe/Amsterdam",
+                                "title": "Timezone"
+                            }
+                        },
+                        "title": "Grade Visibility Policy"
                     },
                     "lifecycle": {
                         "type": "string",
@@ -5483,6 +5524,13 @@
                         "description": "Optional free-text feedback or annotation from the grader.",
                         "title": "Grader Comment"
                     },
+                    "visibleFrom": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Earliest datetime at which this entry's gradePublished notification is eligible to fire. May be set explicitly by the teacher as a publish-time override; when left unset it is resolved server-side by GradeVisibilityResolver from the governing CurriculumPlan.gradeVisibilityPolicy at the moment the entry transitions to published. Null before first publish.",
+                        "title": "Visible From"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "description": "Tenant identifier for multi-tenancy isolation.",
@@ -5531,6 +5579,35 @@
                     "pointsContributed": {
                         "description": "Value multiplied by effectiveWeight — the raw contribution of this entry to the weighted sum.",
                         "expression": "@.value * @.effectiveWeight"
+                    }
+                },
+                "x-openregister-notifications": {
+                    "gradePublished": {
+                        "trigger": {
+                            "type": "scheduled",
+                            "intervalSec": 300,
+                            "filter": {
+                                "lifecycle": "published",
+                                "visibleFrom": {
+                                    "operator": "olderThan",
+                                    "value": "PT0S"
+                                }
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je cijfer is beschikbaar",
+                            "en": "Your grade is available"
+                        }
                     }
                 },
                 "x-property-rbac": {
@@ -7858,6 +7935,13 @@
                         "description": "Unique key for idempotent delivery (format: {sourceId}-parent-{recipient}).",
                         "title": "Idempotency Key"
                     },
+                    "visibleFrom": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Earliest datetime at which this parent notification is eligible to fire. Stamped by GradeRollupHandler from the resolved GradeEntry.visibleFrom at the moment this record is created, so parent notifications fire on the same schedule as the learner's.",
+                        "title": "Visible From"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -7868,7 +7952,14 @@
                 "x-openregister-notifications": {
                     "gradePublished": {
                         "trigger": {
-                            "type": "created"
+                            "type": "scheduled",
+                            "intervalSec": 300,
+                            "filter": {
+                                "visibleFrom": {
+                                    "operator": "olderThan",
+                                    "value": "PT0S"
+                                }
+                            }
                         },
                         "enabled": true,
                         "channels": [
