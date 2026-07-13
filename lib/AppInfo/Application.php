@@ -31,6 +31,7 @@ use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\AssessmentDrawResolver;
 use OCA\Scholiq\Listener\ItemAnalysisRecomputeHandler;
 use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
+use OCA\Scholiq\Listener\CohortTalkMembershipHandler;
 use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
@@ -451,6 +452,21 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: ItemAnalysisRecomputeHandler::class
+        );
+
+        // ADR-031 legitimate exception (talk-classroom-spaces): Enrolment
+        // activate/withdraw -> Cohort Talk conversation participant sync
+        // bridge. Cohort and Session both declare linkedTypes: ["talk"],
+        // consuming OpenRegister's existing TalkLinkService/TalkLinksController
+        // unchanged; the one genuinely new piece is keeping a Cohort's
+        // enrolled learners in sync with its linked conversation's
+        // participant list, an external-API bridge with a cross-object
+        // lookup (Enrolment.cohortId -> linked Talk rooms) not expressible
+        // as a schema declaration. Fails soft (no-op, logged) when Talk is
+        // unavailable or the Cohort has no room linked yet.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CohortTalkMembershipHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

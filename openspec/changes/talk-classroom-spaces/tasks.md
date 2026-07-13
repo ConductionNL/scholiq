@@ -2,7 +2,7 @@
 
 ## 1. Schema — school-structure delta
 
-- [ ] 1.1 Add `"linkedTypes": ["talk"]` to the `Cohort` schema in `lib/Settings/scholiq_register.json`
+- [x] 1.1 Add `"linkedTypes": ["talk"]` to the `Cohort` schema in `lib/Settings/scholiq_register.json`
   (`3128-3245` region), as a top-level key sibling to `properties`/`required` (mirrors
   `pipelinq/lib/Settings/pipelinq_register.json:73`'s placement). Purely additive — no new property, no
   migration.
@@ -11,7 +11,7 @@
     - Schema validates against OpenAPI 3.0.0 register conventions used elsewhere in the file
     - `Cohort` gains no new schema property; the room↔object link lives entirely in OpenRegister's own
       `openregister_talk_links` table
-- [ ] 1.2 Add `"linkedTypes": ["talk"]` to the `Session` schema in `lib/Settings/scholiq_register.json`
+- [x] 1.2 Add `"linkedTypes": ["talk"]` to the `Session` schema in `lib/Settings/scholiq_register.json`
   (`3505-3660` region), same placement convention as 1.1.
   - **spec_ref**: `specs/school-structure/spec.md#requirement-cohort-and-session-expose-a-nextcloud-talk-conversation-via-linkedtypes`
   - **acceptance_criteria**:
@@ -21,7 +21,7 @@
 
 ## 2. Backend — Cohort↔Talk participant sync
 
-- [ ] 2.1 Create `OCA\Scholiq\Listener\CohortTalkMembershipHandler`, an `IEventListener<ObjectTransitionedEvent>`
+- [x] 2.1 Create `OCA\Scholiq\Listener\CohortTalkMembershipHandler`, an `IEventListener<ObjectTransitionedEvent>`
   (mirror the class shape/docblock style of `lib/Listener/GradeRollupHandler.php` and
   `lib/Listener/ExcuseApprovalHandler.php`). Constructor injects
   `OCA\OpenRegister\Service\TalkLinkService` (cross-app, same pattern as `ObjectService` injection
@@ -32,7 +32,7 @@
       and the transition action is `activate` or `withdraw`, and `cohortId` is set on the object
     - Non-matching events are a fast no-op (same filter-in-handler shape as every other listener in
       `lib/AppInfo/Application.php`)
-- [ ] 2.2 Implement the `activate` path: call `TalkLinkService::isTalkAvailable()`; if false, log info and
+- [x] 2.2 Implement the `activate` path: call `TalkLinkService::isTalkAvailable()`; if false, log info and
   return. Otherwise call `TalkLinkService::getLinkedRooms($cohortUuid)`; if empty, log info and return.
   Otherwise, for each linked room, add `Enrolment.learnerId` as a Talk participant via Talk's
   `ParticipantService` (resolve the same defensive way `TalkLinkService::resolveParticipantService()`
@@ -43,12 +43,12 @@
       linked and Talk available
     - PHPUnit `CohortTalkMembershipHandlerTest::testActivateWithNoLinkedRoomIsNoop`
     - PHPUnit `CohortTalkMembershipHandlerTest::testActivateWithTalkUnavailableIsNoop`
-- [ ] 2.3 Implement the `withdraw` path: same guards, then remove `Enrolment.learnerId` as a participant
+- [x] 2.3 Implement the `withdraw` path: same guards, then remove `Enrolment.learnerId` as a participant
   from each linked room.
   - **spec_ref**: `specs/school-structure/spec.md#scenario-withdrawing-an-enrolment-removes-the-learner-from-the-cohorts-linked-conversation`
   - **acceptance_criteria**:
     - PHPUnit `CohortTalkMembershipHandlerTest::testWithdrawRemovesParticipant`
-- [ ] 2.4 Register `CohortTalkMembershipHandler` in `lib/AppInfo/Application.php` via
+- [x] 2.4 Register `CohortTalkMembershipHandler` in `lib/AppInfo/Application.php` via
   `$context->registerEventListener(event: ObjectTransitionedEvent::class, listener: CohortTalkMembershipHandler::class)`,
   with a docblock comment matching the existing ADR-031-exception style used for every other listener
   registration in that file (state the cross-object lookup + external-API-call reason).
@@ -58,7 +58,7 @@
 
 ## 3. Frontend — manifest widgets
 
-- [ ] 3.1 Add an `{"id":"cohort-talk","type":"integration","integrationId":"talk","title":"Class space","icon":"ChatOutline"}`
+- [x] 3.1 Add an `{"id":"cohort-talk","type":"integration","integrationId":"talk","title":"Class space","icon":"ChatOutline"}`
   widget to the `CohortDetail` page in `src/manifest.json`, placed in `layout` near the Related panel
   (mirror `larpingapp/src/manifest.json:409-427`'s widget/layout wiring). Update the page's `_note` to
   record the HARD RULE 1 exception and why (Cohort is the delivery-run archetype, not a catalog
@@ -67,7 +67,7 @@
   - **acceptance_criteria**:
     - Widget renders on `CohortDetail` for a user with access; degrades gracefully when Talk is disabled
       (no scholiq code needed — verify the existing `CnTalkCard` `degraded` branch covers it)
-- [ ] 3.2 Add an equivalent `{"id":"session-talk","type":"integration","integrationId":"talk","title":"Join call","icon":"VideoOutline"}`
+- [x] 3.2 Add an equivalent `{"id":"session-talk","type":"integration","integrationId":"talk","title":"Join call","icon":"VideoOutline"}`
   widget to the `SessionDetail` page in `src/manifest.json`, visible per the Session's existing RBAC to
   the teacher and enrolled learners. Update the page's `_note` similarly.
   - **spec_ref**: `specs/school-structure/spec.md#scenario-teacher-links-a-sessions-call-to-the-parent-cohorts-existing-conversation`
@@ -82,7 +82,7 @@
   linked shows no join action.
   - **spec_ref**: `specs/school-structure/spec.md#requirement-cohort-and-session-expose-a-nextcloud-talk-conversation-via-linkedtypes`
   - **acceptance_criteria**: all four scenarios pass against a live instance with Talk (`spreed`) enabled
-- [ ] 4.2 Write `tests/php/Listener/CohortTalkMembershipHandlerTest.php` covering the four PHPUnit cases
+- [x] 4.2 Write `tests/Unit/Listener/CohortTalkMembershipHandlerTest.php` covering the four PHPUnit cases
   referenced in tasks 2.2/2.3 (activate-adds, withdraw-removes, no-room-noop, talk-unavailable-noop), using
   mocked `TalkLinkService`/`ParticipantService` per the existing `hermiq/tests/Stubs/Talk/*` stub pattern.
   - **spec_ref**: `specs/school-structure/spec.md#requirement-enrolled-learners-sync-as-talk-room-participants-on-cohort-membership-changes`
@@ -90,7 +90,7 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Add a short note to `docs/ARCHITECTURE.md`'s Cohort/Session entries (or the relevant integrations
+- [x] 5.1 Add a short note to `docs/Integrations/index.md` (the relevant integrations
   section) documenting the `linkedTypes: ["talk"]` leaf and the cold-start participant-backfill limitation
   from `design.md` Decision 3.
   - **spec_ref**: `specs/school-structure/spec.md#requirement-cohort-and-session-expose-a-nextcloud-talk-conversation-via-linkedtypes`

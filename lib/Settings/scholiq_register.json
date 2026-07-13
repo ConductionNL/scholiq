@@ -3402,6 +3402,9 @@
                     "hardDelete": false,
                     "searchable": true
                 },
+                "linkedTypes": [
+                    "talk"
+                ],
                 "required": [
                     "name",
                     "period",
@@ -3779,6 +3782,9 @@
                     "hardDelete": false,
                     "searchable": true
                 },
+                "linkedTypes": [
+                    "talk"
+                ],
                 "required": [
                     "cohortId",
                     "title",
