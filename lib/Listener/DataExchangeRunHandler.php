@@ -62,6 +62,9 @@ use Psr\Log\LoggerInterface;
  * and records the result. Implements no wire protocols.
  *
  * @implements IEventListener<Event>
+ *
+ * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+ * @spec openspec/changes/verzuim-report-composer/tasks.md#task-3.1
  */
 class DataExchangeRunHandler implements IEventListener
 {
@@ -70,6 +73,15 @@ class DataExchangeRunHandler implements IEventListener
     private const JOB_SCHEMA       = 'data-exchange-job';
     private const MAPPING_PROFILE_SCHEMA = 'data-mapping-profile';
     private const COHORT_SCHEMA          = 'cohort';
+
+    /**
+     * Target that composes the verzuimloket dossier (attendance-flag +
+     * breachingRecordIds + interventions) instead of the flat fieldMappings
+     * export. Mirrors the "OSO dossier composer" pattern described in the
+     * data-exchange spec's "What" section.
+     */
+    private const LEERPLICHT_TARGET        = 'leerplicht';
+    private const ATTENDANCE_RECORD_SCHEMA = 'attendance-record';
 
     /**
      * The OpenConnector REST endpoint for triggering a source run.
@@ -430,8 +442,12 @@ class DataExchangeRunHandler implements IEventListener
         if ($profile === null || empty($profile['fieldMappings']) === true) {
             // No mapping: pass raw objects but strip PII fields (C3 — explicit unset).
             return array_map(
-                static function (array $obj): array {
+                function (array $obj) use ($target): array {
                     unset($obj['bsnEncrypted'], $obj['bsnHash'], $obj['email']);
+                    if ($target === self::LEERPLICHT_TARGET) {
+                        $obj = $this->composeLeerplichtDossier(record: $obj, flag: $obj);
+                    }
+
                     return $obj;
                 },
                 $objects
@@ -466,12 +482,118 @@ class DataExchangeRunHandler implements IEventListener
             // C3: always strip PII fields from the mapped record even when profile is present.
             unset($record['bsnEncrypted'], $record['bsnHash'], $record['email']);
 
+            // Verzuimloket dossier composer (target=leerplicht): assemble the report
+            // from the originating AttendanceFlag's breachingRecordIds + interventions,
+            // mirroring the "OSO dossier composer" pattern — not the bare flat mapping.
+            if ($target === self::LEERPLICHT_TARGET) {
+                $record = $this->composeLeerplichtDossier(record: $record, flag: $object);
+            }
+
             $payload[] = $record;
         }//end foreach
 
         return $payload;
 
     }//end buildPayload()
+
+    /**
+     * Compose the verzuimloket dossier for a leerplicht-target report.
+     *
+     * Mirrors the "OSO dossier composer" pattern described in the data-exchange
+     * spec's "What" section: assembles the dossier from the originating
+     * AttendanceFlag's own data plus its linked AttendanceRecords, rather than
+     * shipping only the flat scalar fields the DataMappingProfile.fieldMappings
+     * mechanism can express (it has no facility to resolve a $ref array into a
+     * nested payload section). `interventions` requires no extra resolution —
+     * it is already a plain property on the AttendanceFlag object queried by
+     * querySourceObjects, so it flows through untouched.
+     *
+     * Unlike the OSO/SWV dossiers, this composition does NOT gate on
+     * pending-parent-review (see DataExchangeRunGuard — it only blocks
+     * target=oso); the leerplicht report is a mandatory Leerplichtwet art. 21a
+     * report, not a discretionary transfer.
+     *
+     * @param array<string,mixed> $record The flat field-mapped (or pass-through)
+     *                                    record built so far.
+     * @param array<string,mixed> $flag   The source AttendanceFlag object.
+     *
+     * @return array<string,mixed> $record with breachingRecords + interventions appended.
+     *
+     * @spec openspec/changes/verzuim-report-composer/tasks.md#task-3.1
+     */
+    private function composeLeerplichtDossier(array $record, array $flag): array
+    {
+        $breachingRecordIds = $flag['breachingRecordIds'] ?? [];
+        if (is_array($breachingRecordIds) === false) {
+            $breachingRecordIds = [];
+        }
+
+        $record['breachingRecords'] = $this->resolveAttendanceRecords(
+            ids: $breachingRecordIds,
+            tenantId: (string) ($flag['tenant_id'] ?? '')
+        );
+
+        $interventions = $flag['interventions'] ?? [];
+        if (is_array($interventions) === false) {
+            $interventions = [];
+        }
+
+        $record['interventions'] = $interventions;
+
+        return $record;
+
+    }//end composeLeerplichtDossier()
+
+    /**
+     * Resolve a flag's breachingRecordIds to their full AttendanceRecord data.
+     *
+     * @param array<int,mixed> $ids      UUIDs of AttendanceRecords to resolve.
+     * @param string           $tenantId Tenant ID to enforce as a mandatory filter.
+     *
+     * @return array<int,array<string,mixed>> Resolved AttendanceRecord objects, PII-stripped.
+     *
+     * @spec openspec/changes/verzuim-report-composer/tasks.md#task-3.1
+     */
+    private function resolveAttendanceRecords(array $ids, string $tenantId): array
+    {
+        $records = [];
+
+        foreach ($ids as $id) {
+            if (is_string($id) === false || $id === '') {
+                continue;
+            }
+
+            $filters = ['id' => $id];
+            if ($tenantId !== '') {
+                $filters['tenant_id'] = $tenantId;
+            }
+
+            $results = $this->objectService->findAll(
+                [
+                    'register' => self::SCHOLIQ_REGISTER,
+                    'schema'   => self::ATTENDANCE_RECORD_SCHEMA,
+                    'filters'  => $filters,
+                    'limit'    => 1,
+                ]
+            );
+
+            if (empty($results) === true) {
+                continue;
+            }
+
+            $recordData = $results[0];
+            if (is_array($results[0]) === false) {
+                $recordData = $results[0]->jsonSerialize();
+            }
+
+            unset($recordData['bsnEncrypted'], $recordData['bsnHash'], $recordData['email']);
+
+            $records[] = $recordData;
+        }//end foreach
+
+        return $records;
+
+    }//end resolveAttendanceRecords()
 
     /**
      * Apply a named transform to a field value.
