@@ -33,6 +33,7 @@ use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
+use OCA\Scholiq\Listener\EnrolmentPrerequisiteListener;
 use OCA\Scholiq\Listener\ExemptionGrantHandler;
 use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
 use OCA\Scholiq\Listener\BsaProgressFlagHandler;
@@ -49,6 +50,7 @@ use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -382,6 +384,20 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatedEvent::class,
             listener: EngagementSignalHandler::class
+        );
+
+        // ADR-031 legitimate exception (adaptive-release-and-prerequisites):
+        // Enrolment prerequisite gate. Listens for OR's ObjectCreatingEvent on
+        // the enrolment schema and vetoes the create (stopPropagation) when the
+        // target Course's prerequisiteCourseIds are not all satisfied by a
+        // completed Enrolment the learner already holds. A requires-style
+        // x-openregister-lifecycle guard CANNOT enforce this — Enrolment has no
+        // transition into its initial `pending` state — so this is a raw
+        // creation-time hook, mirroring decidesk's SubmissionDeadlineListener /
+        // larpingapp's CharacterRequirementListener.
+        $context->registerEventListener(
+            event: ObjectCreatingEvent::class,
+            listener: EnrolmentPrerequisiteListener::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

@@ -638,7 +638,9 @@
 		"Lesson completions": "Lesson completions",
 		"Engagement scores": "Engagement scores",
 		"Engagement thresholds": "Engagement thresholds",
-		"Engagement flags": "Engagement flags"
+		"Engagement flags": "Engagement flags",
+		"This lesson is not available yet": "This lesson is not available yet",
+		"This lesson is not yet available to you.": "This lesson is not yet available to you."
 	},
 	"plurals": ""
 }

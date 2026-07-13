@@ -638,7 +638,9 @@
 		"Lesson completions": "Lesvoltooiingen",
 		"Engagement scores": "Betrokkenheidsscores",
 		"Engagement thresholds": "Betrokkenheidsdrempels",
-		"Engagement flags": "Betrokkenheidssignalen"
+		"Engagement flags": "Betrokkenheidssignalen",
+		"This lesson is not available yet": "Deze les is nog niet beschikbaar",
+		"This lesson is not yet available to you.": "Deze les is nog niet beschikbaar voor jou."
 	},
 	"plurals": ""
 }

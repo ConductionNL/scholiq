@@ -34,6 +34,21 @@
 			</NcEmptyContent>
 		</div>
 
+		<div v-else-if="isLocked" class="lesson-player__locked" role="alert">
+			<NcEmptyContent
+				:name="t('scholiq', 'This lesson is not available yet')"
+				:description="lockedDescription">
+				<template #icon>
+					<LockOutline />
+				</template>
+				<template #action>
+					<NcButton type="secondary" @click="goBack">
+						{{ t('scholiq', 'Back to course') }}
+					</NcButton>
+				</template>
+			</NcEmptyContent>
+		</div>
+
 		<article v-else class="lesson-player__content">
 			<header class="lesson-player__header">
 				<p v-if="course && course.title" class="lesson-player__course">
@@ -132,6 +147,7 @@ import { NcEmptyContent, NcButton } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
+import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 
 // learning-progress-and-analytics: contentTypes that do NOT emit xAPI
 // statements and therefore need the learner self-serve manual-completion
@@ -151,6 +167,7 @@ export default {
 		AlertCircleOutline,
 		ApplicationOutline,
 		BookOpenPageVariantOutline,
+		LockOutline,
 	},
 
 	props: {
@@ -184,6 +201,17 @@ export default {
 				completed: false,
 				saving: false,
 				error: '',
+			},
+			// adaptive-release-and-prerequisites: per-learner release-gate
+			// decision from LessonReleaseController::status(). `available`
+			// defaults true so a fetch failure never fails CLOSED and hides
+			// content that was always meant to be open — best-effort, mirrors
+			// checkExistingManualCompletion()'s own fail-open posture.
+			releaseStatus: {
+				checked: false,
+				available: true,
+				reason: '',
+				availableAt: null,
 			},
 		}
 	},
@@ -224,6 +252,33 @@ export default {
 		showManualCompleteAction() {
 			return MANUAL_COMPLETION_CONTENT_TYPES.includes(this.lesson?.contentType)
 		},
+
+		/**
+		 * True once the release-status check has run and reported this
+		 * lesson as unavailable to the current learner — renders the locked
+		 * state instead of any content type (adaptive-release-and-prerequisites).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/adaptive-release-and-prerequisites/specs/course-management/spec.md#requirement-lesson-declares-per-learner-release-conditions
+		 */
+		isLocked() {
+			return this.releaseStatus.checked && !this.releaseStatus.available
+		},
+
+		/**
+		 * Human-readable locked-state description: the unmet-condition reason
+		 * from the backend, plus a formatted unlock date when the gate is a
+		 * drip delay.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/adaptive-release-and-prerequisites/specs/course-management/spec.md#requirement-lesson-supports-drip-release-relative-to-each-learners-own-enrolment-date
+		 */
+		lockedDescription() {
+			if (this.releaseStatus.reason) {
+				return this.releaseStatus.reason
+			}
+			return this.t('scholiq', 'This lesson is not yet available to you.')
+		},
 	},
 
 	/**
@@ -246,6 +301,20 @@ export default {
 			this.error = e?.message ?? String(e)
 		} finally {
 			this.loading = false
+		}
+
+		if (this.lesson && !this.error) {
+			// adaptive-release-and-prerequisites: MUST resolve before
+			// rendering any contentType — checkReleaseStatus() itself never
+			// throws (best-effort, see its own doc).
+			await this.checkReleaseStatus()
+		}
+
+		if (this.isLocked) {
+			// Locked: do not initiate the manual-completion check or the LTI
+			// launch delegation call — the locked state renders instead of
+			// any content-type renderer.
+			return
 		}
 
 		if (this.showManualCompleteAction) {
@@ -307,6 +376,37 @@ export default {
 				// Best-effort — swallow, action defaults to "not completed".
 			} finally {
 				this.manualCompletion.checked = true
+			}
+		},
+
+		/**
+		 * Resolve the current learner's release-gate decision for this
+		 * lesson before rendering any content type (adaptive-release-and-
+		 * prerequisites). Best-effort — a failed lookup is swallowed and
+		 * defaults to `available: true` (fail-open, mirroring
+		 * checkExistingManualCompletion()'s own posture) so a transient
+		 * network error never hard-locks content that was always meant to
+		 * be open.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/adaptive-release-and-prerequisites/specs/course-management/spec.md#requirement-lesson-declares-per-learner-release-conditions
+		 */
+		async checkReleaseStatus() {
+			try {
+				const url = generateUrl('/apps/scholiq/api/lessons/' + this.lessonId + '/release-status')
+				const resp = await fetch(url, {
+					headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+				})
+				if (!resp.ok) return
+
+				const body = await resp.json()
+				this.releaseStatus.available = body?.available !== false
+				this.releaseStatus.reason = body?.reason ?? ''
+				this.releaseStatus.availableAt = body?.availableAt ?? null
+			} catch {
+				// Best-effort — swallow, defaults to available (fail-open).
+			} finally {
+				this.releaseStatus.checked = true
 			}
 		},
 
@@ -441,6 +541,7 @@ export default {
 
 .lesson-player__loading,
 .lesson-player__error,
+.lesson-player__locked,
 .lesson-player__placeholder {
 	display: flex;
 	align-items: center;
