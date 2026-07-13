@@ -28,7 +28,7 @@ Authoring of courses, modules, and lessons; cloning of templates; ordered learni
 - GIVEN an instructional designer opens a published course, WHEN they click "Clone for next year", THEN a draft copy is created with a new academic year tag and zero enrolments.
 - GIVEN a student opens the catalog, WHEN a course has unmet prerequisites, THEN the enrol button is disabled and the failing prerequisite is named in plain text.
 - GIVEN a programme committee approves a catalog change, WHEN approval is recorded, THEN the change becomes visible in OOAPI within 5 minutes.
-- GIVEN an HE administrator queries `/ooapi/v5/courses`, WHEN the request authenticates, THEN the response complies with OOAPI 5.0 and includes ECTS, language, and level fields.
+- GIVEN a `Course` transitions to `published`, WHEN the publication contract's field mapping is applied, THEN a `DataExchangeJob` (`target: ooapi-catalog`) carries the OOAPI 5.0 `course` resource fields (ECTS, language, level) to the catalog publication surface hosted by opencatalogi — Scholiq itself serves no `/ooapi/v5/*` endpoint.
 
 ## Requirements
 
@@ -41,12 +41,43 @@ The system MUST support Course → Module → Lesson hierarchy persisted as Open
 - **THEN** the system persists the Course → Module → Lesson hierarchy as related OpenRegister objects
 
 ### Requirement: Publish course catalog via OOAPI 5.0
-The system MUST publish the course catalog via OOAPI 5.0 endpoints.
 
-#### Scenario: Serve the catalog over OOAPI 5.0
-- **GIVEN** a published course catalog
-- **WHEN** an authenticated client requests `/ooapi/v5/courses`
-- **THEN** the system returns an OOAPI 5.0-compliant response including ECTS, language, and level fields
+The system MUST NOT serve OOAPI 5.0 endpoints itself. Instead it MUST define the OOAPI 5.0 catalog
+**publication contract**: (a) which objects are eligible for publication — `Course` and `Programme` with
+`lifecycle: published`, with `Cohort` representing a specific "run" of a course or programme; (b) the
+**field mapping** from Scholiq's objects to OOAPI 5.0 resources — `Course → course`, `Programme → program`,
+`Cohort → offering` — keyed to RIO `opleidingseenheid` / `aangeboden opleiding` identifiers where the
+institution has recorded them, and omitted otherwise; and (c) the **publication lifecycle** — a `publish`
+transition on `Course` or `Programme` MUST queue a `DataExchangeJob` (`direction: sync`,
+`target: ooapi-catalog`, per the `data-exchange` spec's delegation mechanism) so the catalog reflects the
+change, and an `archive` transition MUST queue the matching unpublish/removal sync. The public `/ooapi/v5/*`
+HTTP surface and the OOAPI 5.0 wire protocol are served by **opencatalogi**; the field-mapping adapter is
+hosted in **openconnector**. Scholiq implements neither.
+
+#### Scenario: Publishing a course queues a catalog-sync job, not a scholiq-served endpoint
+
+- **GIVEN** a `Course` with `lifecycle: draft` and its required OOAPI mapping fields populated (`code`,
+  `name`, `level`, `language`)
+- **WHEN** an instructional designer transitions it to `published`
+- **THEN** the system queues a `DataExchangeJob` with `direction: sync` and `target: ooapi-catalog` carrying
+  the OOAPI 5.0 `course` resource field mapping
+- **AND** Scholiq itself exposes no `/ooapi/v5/*` route — the catalog request is served by opencatalogi
+
+#### Scenario: Unpublishing removes the catalog entry
+
+- **GIVEN** a `Course` or `Programme` with `lifecycle: published`
+- **WHEN** it is archived
+- **THEN** the system queues a corresponding unpublish `DataExchangeJob` (`target: ooapi-catalog`) so the
+  opencatalogi-hosted OOAPI 5.0 catalog removes or deprecates the entry
+
+#### Scenario: Field mapping covers course, program, and offering resources keyed to RIO where available
+
+- **GIVEN** a `Programme` that aggregates `Course`s and a `Cohort` representing one specific run of a course
+- **WHEN** the publication contract's field mapping is applied
+- **THEN** the `Course` maps to the OOAPI `course` resource, the `Programme` maps to the OOAPI `program`
+  resource, and the `Cohort` maps to the OOAPI `offering` resource
+- **AND** each mapped resource carries its RIO `opleidingseenheid` / `aangeboden opleiding` identifier when
+  the source object has one, and omits the RIO identifier field otherwise
 
 ### Requirement: Run cmi5 + xAPI natively with SCORM shim
 The system MUST run cmi5 + xAPI content natively and SHOULD provide a SCORM 1.2/2004 compatibility shim.
