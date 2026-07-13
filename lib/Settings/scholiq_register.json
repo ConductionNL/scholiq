@@ -330,6 +330,44 @@
                         "description": "Public URL for unauthenticated credential verification.",
                         "title": "Verification URL"
                     },
+                    "walletOfferStatus": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "offered",
+                            "claimed",
+                            "revoked"
+                        ],
+                        "default": null,
+                        "description": "EUDI-wallet offer delivery state. Orthogonal to `lifecycle` (which describes the credential's own validity, not wallet delivery). Null until the credential has first been pushed to a wallet.",
+                        "title": "Wallet Offer Status"
+                    },
+                    "walletOfferedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when the credential was pushed to the EUDI wallet via the `offerToWallet` transition. Null until first pushed.",
+                        "title": "Wallet Offered At"
+                    },
+                    "walletClaimedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when openconnector reported the wallet holder claimed the offer. Null until claimed.",
+                        "title": "Wallet Claimed At"
+                    },
+                    "walletAttestationRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Opaque reference to the openconnector OpenID4VCI credential-offer/issuance session (the offer's UUID on openconnector's `eudi_credential_offer` object). Correlation key for claim sync-back and revocation propagation.",
+                        "title": "Wallet Attestation Reference"
+                    },
+                    "walletOfferError": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Last wallet-offer push or revocation-propagation failure message. Cleared on the next successful `offerToWallet`.",
+                        "title": "Wallet Offer Error"
+                    },
                     "lifecycle": {
                         "type": "string",
                         "enum": [
@@ -354,11 +392,26 @@
                     "transitions": {
                         "revoke": {
                             "from": "issued",
-                            "to": "revoked"
+                            "to": "revoked",
+                            "requires": "OCA\\Scholiq\\Service\\WalletRevocationPropagationService"
                         },
                         "expire": {
                             "from": "issued",
                             "to": "expired"
+                        },
+                        "offerToWallet": {
+                            "from": [
+                                "issued"
+                            ],
+                            "to": "issued",
+                            "requires": "OCA\\Scholiq\\Service\\WalletOfferDelegationService"
+                        },
+                        "recordWalletClaim": {
+                            "from": [
+                                "issued"
+                            ],
+                            "to": "issued",
+                            "requires": "OCA\\Scholiq\\Service\\WalletClaimSyncService"
                         }
                     }
                 },
