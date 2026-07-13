@@ -332,7 +332,43 @@ class Application extends App implements IBootstrap
             listener: BsaProgressFlagHandler::class
         );
 
+        $this->registerWalletOfferConcludedListener(context: $context);
+
     }//end register()
+
+    /**
+     * Register the openconnector wallet-claim listener.
+     *
+     * Scholiq delegates EUDI-wallet offer creation/revocation to
+     * openconnector's `eudi-wallet-credential-issuance` REST adapter
+     * ({@see \OCA\Scholiq\Service\WalletOfferDelegationService}). This
+     * listener would consume the terminal "wallet holder claimed the offer"
+     * signal, but as documented on
+     * {@see \OCA\Scholiq\Listener\WalletOfferConcludedListener}'s docblock,
+     * openconnector's merged adapter defines no such event — the
+     * `class_exists` guard below evaluates false today and this
+     * registration is a no-op. Kept `class_exists`-guarded by FQN string
+     * (not `::class`) so scholiq carries no hard compile-time dependency on
+     * the optional openconnector app, mirroring
+     * `procest\AppInfo\Application::registerDecisionListeners()`.
+     *
+     * @param IRegistrationContext $context Registration context.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/eudi-wallet-credential-push/specs/certification/spec.md#requirement-recordwalletclaim-transition-syncs-wallet-claim-status-back-onto-the-credential
+     */
+    private function registerWalletOfferConcludedListener(IRegistrationContext $context): void
+    {
+        if (class_exists('\\OCA\\OpenConnector\\Event\\WalletOfferConcludedEvent') === false) {
+            return;
+        }
+
+        $context->registerEventListener(
+            event: 'OCA\OpenConnector\Event\WalletOfferConcludedEvent',
+            listener: \OCA\Scholiq\Listener\WalletOfferConcludedListener::class
+        );
+    }//end registerWalletOfferConcludedListener()
 
     /**
      * Boot the application.
