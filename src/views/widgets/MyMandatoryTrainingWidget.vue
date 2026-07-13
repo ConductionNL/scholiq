@@ -4,7 +4,11 @@
 <!--
  MyMandatoryTrainingWidget — learner-home widget.
  Shows the current user's mandatory enrolments in lifecycle=pending or active,
- sorted by dueDate. Each row has a "Start" link to the course player.
+ sorted by dueDate. Each row has a "Start" link to the course player and, once
+ progressPercent is populated (learning-progress-and-analytics), a progress
+ bar — declarative reuse of Enrolment.progressPercent, no new custom view.
+
+ @spec openspec/changes/learning-progress-and-analytics/specs/enrolment/spec.md#scenario-progress-percentage-is-visible-on-the-learners-my-learning-dashboard
 -->
 <template>
 	<div class="my-training-widget">
@@ -28,6 +32,21 @@
 					<span v-if="enrolment.dueDate" class="my-training-widget__item-due">
 						{{ t('scholiq', 'Due') }}: {{ formatDate(enrolment.dueDate) }}
 					</span>
+					<div
+						v-if="enrolment.progressPercent !== null && enrolment.progressPercent !== undefined"
+						class="my-training-widget__progress"
+						role="progressbar"
+						:aria-valuenow="enrolment.progressPercent"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						:aria-label="t('scholiq', 'Progress: {percent}%', { percent: enrolment.progressPercent })">
+						<div class="my-training-widget__progress-track">
+							<div
+								class="my-training-widget__progress-fill"
+								:style="{ width: enrolment.progressPercent + '%' }" />
+						</div>
+						<span class="my-training-widget__progress-label">{{ enrolment.progressPercent }}%</span>
+					</div>
 				</div>
 				<a
 					class="my-training-widget__start-link"
@@ -181,6 +200,34 @@ export default {
 .my-training-widget__item-due {
 	font-size: 11px;
 	color: var(--color-text-maxcontrast);
+}
+
+.my-training-widget__progress {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 2px;
+}
+
+.my-training-widget__progress-track {
+	flex: 1;
+	height: 4px;
+	border-radius: 2px;
+	background-color: var(--color-border);
+	overflow: hidden;
+}
+
+.my-training-widget__progress-fill {
+	height: 100%;
+	background-color: var(--color-primary-element, var(--color-primary));
+	border-radius: 2px;
+}
+
+.my-training-widget__progress-label {
+	font-size: 10px;
+	color: var(--color-text-maxcontrast);
+	min-width: 28px;
+	text-align: right;
 }
 
 .my-training-widget__start-link {

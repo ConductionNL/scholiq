@@ -322,6 +322,59 @@
 			]
 		},
 		{
+			"id": "GroupStudentAnalytics",
+			"label": "Progress & analytics",
+			"icon": "icon-projects",
+			"order": 31,
+			"children": [
+				{
+					"id": "GroupTrendHeatmapMenu",
+					"label": "Group trend heat map",
+					"icon": "icon-projects",
+					"route": "GroupTrendHeatmap",
+					"order": 10,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "teacher"]
+						}
+					}
+				},
+				{
+					"id": "LessonCompletionsMenu",
+					"label": "Lesson completions",
+					"icon": "icon-checkmark",
+					"route": "LessonCompletions",
+					"order": 20
+				},
+				{
+					"id": "EngagementScoresMenu",
+					"label": "Engagement scores",
+					"icon": "icon-chart",
+					"route": "EngagementScores",
+					"order": 30
+				},
+				{
+					"id": "EngagementRiskThresholdsMenu",
+					"label": "Engagement thresholds",
+					"icon": "icon-toggle",
+					"route": "EngagementRiskThresholds",
+					"order": 40,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "EngagementRiskFlagsMenu",
+					"label": "Engagement flags",
+					"icon": "icon-password",
+					"route": "EngagementRiskFlags",
+					"order": 50
+				}
+			]
+		},
+		{
 			"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
@@ -9256,6 +9309,397 @@
 			"title": "Skills gap dashboard",
 			"component": "SkillsGapDashboard",
 			"_note": "competency-framework: the one genuine custom-view exception for the competency capability — a learner/manager view comparing required competencies (Programme.requiredCompetencyIds for the learner's enrolled programme(s), union Competency.requiredForRoles intersecting LearnerProfile.roles) against the learner's CompetencyAttainment rows, listing gaps. Every other competency object is declarative index/detail pages."
+		},
+		{
+			"id": "LessonCompletions",
+			"route": "/progress/lesson-completions",
+			"type": "index",
+			"title": "Lesson completions",
+			"config": {
+				"register": "scholiq",
+				"schema": "lesson-completion"
+			}
+		},
+		{
+			"id": "LessonCompletionDetail",
+			"route": "/progress/lesson-completions/:id",
+			"type": "detail",
+			"title": "Lesson completion",
+			"config": {
+				"register": "scholiq",
+				"schema": "lesson-completion",
+				"_note": "learning-progress-and-analytics: a LessonCompletion is a per-(learner, lesson) completion fact — no lifecycle. Body leads with the completion data (8-wide) and a Related panel resolving learner/lesson/course/enrolment. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "lc-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CheckCircleOutline"
+					},
+					{
+						"id": "lc-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "lc-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "lc-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EngagementScores",
+			"route": "/progress/engagement-scores",
+			"type": "index",
+			"title": "Engagement scores",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-score",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "EngagementScoreDetail",
+			"route": "/progress/engagement-scores/:id",
+			"type": "detail",
+			"title": "Engagement score",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-score",
+				"readOnly": true,
+				"_note": "learning-progress-and-analytics: an EngagementScore is a computed per-(learner, course) roll-up (activityCount, timeOnTaskMinutes, lastActivityAt, recencyDays, score) — an aggregate result, mirroring FinalGrade. Body leads with the score data (8-wide) and a Related panel resolving learner/course. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "es-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ChartLineVariant"
+					},
+					{
+						"id": "es-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "es-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "es-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EngagementRiskThresholds",
+			"route": "/progress/engagement-thresholds",
+			"type": "index",
+			"title": "Engagement thresholds",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-risk-threshold"
+			}
+		},
+		{
+			"id": "EngagementRiskThresholdDetail",
+			"route": "/progress/engagement-thresholds/:id",
+			"type": "detail",
+			"title": "Engagement threshold",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-risk-threshold",
+				"_note": "learning-progress-and-analytics: an EngagementRiskThreshold is a config/rule row (name, kind, scope, metric, limit, onAtRisk), mirroring AttendanceThreshold/BsaTrajectory. Body leads with the rule definition (8-wide) and a Related panel. The EngagementRiskFlags this rule has raised render as a wide related-index so a coordinator sees its effect. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for rule-change history.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ert-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "ert-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Raised flags",
+									"register": "scholiq",
+									"schema": "engagement-risk-flag",
+									"metric": "count",
+									"filter": {
+										"engagementRiskThresholdId": "@objectId"
+									},
+									"route": "EngagementRiskFlags"
+								}
+							]
+						}
+					},
+					{
+						"id": "ert-flags",
+						"type": "object-list",
+						"title": "Raised flags",
+						"content": {
+							"register": "scholiq",
+							"schema": "engagement-risk-flag",
+							"filter": {
+								"engagementRiskThresholdId": "@objectId"
+							},
+							"sort": {
+								"field": "flaggedAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "learnerId",
+									"label": "Learner ID"
+								},
+								{
+									"key": "metricValueAtFlag",
+									"label": "Metric Value"
+								},
+								{
+									"key": "flaggedAt",
+									"label": "Flagged At"
+								}
+							],
+							"rowRoute": "EngagementRiskFlagDetail",
+							"viewAllRoute": "EngagementRiskFlags",
+							"viewAllQuery": {
+								"engagementRiskThresholdId": "@objectId"
+							},
+							"emptyText": "No raised flags found.",
+							"allowCreate": false
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "ert-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ert-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ert-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "ert-flags",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "ert-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EngagementRiskFlags",
+			"route": "/progress/engagement-flags",
+			"type": "index",
+			"title": "Engagement risk flags",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-risk-flag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "EngagementRiskFlagDetail",
+			"route": "/progress/engagement-flags/:id",
+			"type": "detail",
+			"title": "Engagement risk flag",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-risk-flag",
+				"readOnly": true,
+				"_note": "learning-progress-and-analytics: an EngagementRiskFlag is a raised early-warning (learner, threshold, metric value at flag) — an alert/case archetype, mirroring BsaProgressFlag/AttendanceFlag. Body leads with the flag data (8-wide) and a Related panel resolving learner, course and threshold. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "erf-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FlagOutline"
+					},
+					{
+						"id": "erf-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "erf-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "erf-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "GroupTrendHeatmap",
+			"route": "/progress/group-trend-heatmap",
+			"type": "custom",
+			"title": "Group trend heat map",
+			"component": "GroupTrendHeatmap",
+			"_note": "learning-progress-and-analytics: the one genuine custom-view exception for the student-analytics capability — a teacher/admin cohort x period grade-trend heat map over EXISTING GradeEntry data (cohortId, gradedAt, period, value) via OpenRegister's existing list API. No new schema for the trend itself. Closes the dashboard capability spec's Acceptance Criteria claim of a skill-area heat map that had no implementation anywhere in src/views/** at HEAD."
 		}
 	]
 }

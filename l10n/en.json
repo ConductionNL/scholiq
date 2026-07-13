@@ -621,7 +621,24 @@
 		"Warning": "Warning",
 		"Withdraw": "Withdraw",
 		"month(s)": "month(s)",
-		"Exam board": "Exam board"
+		"Exam board": "Exam board",
+		"Group trend heat map": "Group trend heat map",
+		"Average published grade per cohort and grading period, sourced from existing grade data.": "Average published grade per cohort and grading period, sourced from existing grade data.",
+		"Loading grade trends...": "Loading grade trends...",
+		"No published grade entries found yet — the heat map will fill in as cohorts are graded.": "No published grade entries found yet — the heat map will fill in as cohorts are graded.",
+		"Cohort": "Cohort",
+		"Period {period}": "Period {period}",
+		"Failed to load grade trend data. Please try again.": "Failed to load grade trend data. Please try again.",
+		"Mark lesson complete": "Mark lesson complete",
+		"Failed to mark lesson complete (HTTP {status})": "Failed to mark lesson complete (HTTP {status})",
+		"Progress: {percent}%": "Progress: {percent}%",
+		"Open engagement flags": "Open engagement flags",
+		"Avg. engagement score": "Avg. engagement score",
+		"Progress & analytics": "Progress & analytics",
+		"Lesson completions": "Lesson completions",
+		"Engagement scores": "Engagement scores",
+		"Engagement thresholds": "Engagement thresholds",
+		"Engagement flags": "Engagement flags"
 	},
 	"plurals": ""
 }
