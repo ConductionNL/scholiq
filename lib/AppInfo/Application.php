@@ -29,6 +29,7 @@ use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
 use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
+use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
@@ -330,6 +331,22 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: BsaProgressFlagHandler::class
+        );
+
+        // ADR-031 legitimate exception: WerkprocesAssessment creation ->
+        // server-side competencyId resolution bridge, and GradeEntry.published /
+        // WerkprocesAssessment.confirmed -> CompetencyAttainment roll-up bridge
+        // (competency-framework). One class, registered against both OR event
+        // classes — handle() branches on instanceof. Mirrors GradeRollupHandler/
+        // WerkprocesGradeEmitHandler's cross-schema write-bridge shape; never a
+        // TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: CompetencyAttainmentRollupHandler::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CompetencyAttainmentRollupHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);
