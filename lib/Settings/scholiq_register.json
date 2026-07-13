@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/.",
-        "version": "0.6.1"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/.",
+        "version": "0.7.0"
     },
     "x-openregister": {
         "type": "application",
@@ -1082,7 +1082,7 @@
                     },
                     "contentRef": {
                         "type": "string",
-                        "description": "nc:files path, cmi5 launch URL, or LTI link",
+                        "description": "nc:files path or cmi5 launch URL for those content types. For contentType='lti', this MUST be the UUID of an LtiToolPlacement object, not a raw link — a static URL cannot carry a signed OIDC launch; the placement is resolved server-side and the actual launch is delegated to OpenConnector's lti-13-platform adapter.",
                         "example": "/Scholiq/tenant-uuid/course-uuid/cmi5/lesson-uuid/",
                         "title": "Content Reference"
                     },
@@ -1168,6 +1168,117 @@
                         "subject": {
                             "nl": "Les '{{title}}' is gepubliceerd",
                             "en": "Lesson '{{title}}' was published"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "LtiToolPlacement": {
+                "slug": "lti-tool-placement",
+                "icon": "ApplicationOutline",
+                "version": "0.1.0",
+                "title": "LtiToolPlacement",
+                "description": "Places an external LTI 1.3 tool inside a Course or Lesson. Stores only the reference to the corresponding lti_deployment registration living in OpenConnector's own register (cross-app, bare UUID — OR relations do not span registers/apps) plus the optional grading-component mapping an AGS score for this placement feeds. Scholiq never stores or handles the OIDC/JWT material itself — that lives entirely in OpenConnector's lti-13-platform adapter. Lifecycle: draft → active → retired.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "openconnectorDeploymentId",
+                    "launchMode",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "lessonId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Lesson",
+                        "description": "UUID of the Lesson this tool is placed in. Null for a course-level placement not tied to one lesson.",
+                        "title": "Lesson ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this tool is placed in. Null for a lesson-level placement.",
+                        "title": "Course ID"
+                    },
+                    "openconnectorDeploymentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The lti_deployment object identifier living in OpenConnector's own register (a separate app/register set). Deliberately a plain string, not a canonical $ref (ADR-062 rule 7 scopes $ref to relations within the same register set) — mirrors DataExchangeJob.connectorRunId's bare-string cross-app pattern.",
+                        "title": "OpenConnector Deployment ID"
+                    },
+                    "launchMode": {
+                        "type": "string",
+                        "description": "LTI launch message type for this placement.",
+                        "enum": [
+                            "resource-link",
+                            "deep-linking"
+                        ],
+                        "default": "resource-link",
+                        "example": "resource-link",
+                        "title": "Launch Mode"
+                    },
+                    "curriculumPlanId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "CurriculumPlan",
+                        "description": "UUID of the CurriculumPlan an AGS score for this placement feeds. Null when this placement does not feed grade passback.",
+                        "title": "Curriculum Plan ID"
+                    },
+                    "gradeEntryComponentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The CurriculumPlan.components[].componentId an AGS score for this placement feeds. Mirrors Assessment.gradeEntryComponentId's exact naming. Null when this placement does not feed grade passback.",
+                        "title": "Grade Entry Component ID"
+                    },
+                    "gradeScaleId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "GradeScale",
+                        "description": "UUID of the GradeScale used to normalise an incoming AGS score for this placement. Null when this placement does not feed grade passback.",
+                        "title": "Grade Scale ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Placement lifecycle state. Managed by OR lifecycle engine; do not set directly.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "retired"
+                        ],
+                        "default": "draft",
+                        "example": "draft",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "retire": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "retired"
                         }
                     }
                 },
@@ -5254,7 +5365,7 @@
             "GradeEntry": {
                 "slug": "grade-entry",
                 "icon": "ClipboardCheckOutline",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "GradeEntry",
                 "description": "One mark on one CurriculumPlan component for one learner. Starts as concept (editable); a teacher publishes it to notify the learner (and parents) and feed the FinalGrade roll-up. Once published, it can only move to revised (new value with audit trail). Not appendOnly — concept entries are editable; lifecycle enforces immutability once published.",
                 "type": "object",
@@ -5320,7 +5431,8 @@
                             "assessment-result",
                             "participation",
                             "manual",
-                            "exemption"
+                            "exemption",
+                            "lti-ags"
                         ],
                         "title": "Source Kind"
                     },
@@ -5363,6 +5475,20 @@
                         "$ref": "FraudCase",
                         "description": "UUID of a FraudCase contesting this mark, if any. When set, FraudCaseBlockGuard gates the publish/republish transitions and FraudCaseInvalidationGuard gates the invalidate transition.",
                         "title": "Fraud Case ID"
+                    },
+                    "ltiToolPlacementId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "LtiToolPlacement",
+                        "description": "UUID of the LtiToolPlacement that originated this mark (set when sourceKind=lti-ags).",
+                        "title": "LTI Tool Placement ID"
+                    },
+                    "ltiAgsResultId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The AGS resultId / CloudEvent message identifier for the score that originated this mark (set when sourceKind=lti-ags). Used as the idempotency key so a redelivered pull message cannot create a duplicate GradeEntry.",
+                        "title": "LTI AGS Result ID"
                     },
                     "value": {
                         "type": "number",

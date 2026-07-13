@@ -46,11 +46,36 @@ Component grades have to roll up into a final grade, and the roll-up rule belong
 
 ### Requirement: Persist grading domain objects in OpenRegister
 The system MUST persist `GradeScale`, `GradeEntry`, `FinalGrade` as OpenRegister objects. `GradeEntry` has `x-openregister-lifecycle` (concept → published → revised) and `x-openregister-notifications` keyed so a re-publish/backfill doesn't double-notify. `FinalGrade` is computed via `x-openregister-calculations` + cross-schema aggregation over the learner's published `GradeEntry`s, parameterised by the `CurriculumPlan.formula` + component weights.
+`GradeEntry.sourceKind` MUST include `lti-ags` alongside the existing `assignment-submission`,
+`assessment-result`, `participation`, and `manual` values, so a score received via LTI
+Assignment & Grade Services (AGS) passback carries an honest, traceable origin rather than being
+recorded as `manual`. When `sourceKind = lti-ags`, `GradeEntry` MUST carry `ltiToolPlacementId`
+(the originating `LtiToolPlacement`) and `ltiAgsResultId` (the AGS result/CloudEvent message
+identifier, used as an idempotency key so a redelivered event cannot create a duplicate
+`GradeEntry`).
 
 #### Scenario: Grading objects persisted in OpenRegister
 - **GIVEN** the grading domain schemas are registered
 - **WHEN** a `GradeEntry` is published for a learner
 - **THEN** `GradeScale`, `GradeEntry`, and `FinalGrade` are stored as OpenRegister objects and the `FinalGrade` is computed via `x-openregister-calculations` over the learner's published entries
+
+#### Scenario: An LTI AGS score creates a traceable concept GradeEntry
+
+- **GIVEN** a published `LtiToolPlacement` configured with `curriculumPlanId` and
+  `gradeEntryComponentId`, and an AGS score-received CloudEvent for its
+  `openconnectorDeploymentId`
+- **WHEN** the score is translated into a `GradeEntry`
+- **THEN** the entry is created with `sourceKind: 'lti-ags'`, `lifecycle: 'concept'`,
+  `ltiToolPlacementId` set to the originating placement, and `ltiAgsResultId` set to the AGS
+  result identifier
+- **AND** it is NOT recorded with `sourceKind: 'manual'`
+
+#### Scenario: A redelivered AGS message does not create a duplicate GradeEntry
+
+- **GIVEN** a `GradeEntry` already exists with a given `(ltiToolPlacementId, ltiAgsResultId)`
+  pair
+- **WHEN** the same AGS score-received message is processed again
+- **THEN** no second `GradeEntry` is created for that pair
 
 ### Requirement: Notification dispatch honours per-parent/per-18+-learner preference
 Notification dispatch MUST honour per-parent / per-18+-learner preference (instant vs daily digest), backed by a `NotificationPreference` schema or the existing OR notification-preference mechanism (whichever OR exposes).
@@ -82,7 +107,7 @@ Schema.org `Grade`; NL VO PTA/SE convention as a `CurriculumPlan` profile + `Gra
 
 ## Data Model
 
-All in OpenRegister. New: `GradeScale`, `GradeEntry`, `FinalGrade`, (`NotificationPreference` if OR doesn't already provide one). Consumes: `CurriculumPlan` (`school-structure`), `Submission` (`assignments`), `AssessmentResult` (`assessment`), `Session` (participation). One ADR-031 PHP exception: `GradeFormulaEvaluator` (only if a formula exceeds JSON-logic). See `docs/ARCHITECTURE.md`.
+All in OpenRegister. New: `GradeScale`, `GradeEntry`, `FinalGrade`, (`NotificationPreference` if OR doesn't already provide one). Consumes: `CurriculumPlan` (`school-structure`), `Submission` (`assignments`), `AssessmentResult` (`assessment`), `Session` (participation), `LtiToolPlacement` (`course-management` — cross-referenced as the source of `GradeEntry.ltiToolPlacementId` for `sourceKind: lti-ags`). One ADR-031 PHP exception: `GradeFormulaEvaluator` (only if a formula exceeds JSON-logic). See `docs/ARCHITECTURE.md`.
 
 ## Out of Scope
 

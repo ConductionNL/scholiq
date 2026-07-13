@@ -47,8 +47,50 @@
 				</p>
 			</header>
 
+			<section v-if="isLtiLesson" class="lesson-player__lti">
+				<div v-if="ltiLaunching" class="lesson-player__loading" aria-live="polite">
+					<span class="icon-loading" aria-hidden="true" />
+					<span>{{ t('scholiq', 'Starting external tool…') }}</span>
+				</div>
+
+				<NcEmptyContent
+					v-else-if="ltiError"
+					:name="t('scholiq', 'Could not start the external tool')"
+					:description="ltiError">
+					<template #icon>
+						<AlertCircleOutline />
+					</template>
+					<template #action>
+						<NcButton type="secondary" @click="launchLti">
+							{{ t('scholiq', 'Try again') }}
+						</NcButton>
+					</template>
+				</NcEmptyContent>
+
+				<div v-else-if="ltiLaunch && ltiLaunch.launchMode === 'deep-linking'" class="lesson-player__lti-frame-wrap">
+					<iframe
+						:name="ltiFrameName"
+						class="lesson-player__lti-frame"
+						:title="t('scholiq', 'External LTI tool')" />
+				</div>
+
+				<NcEmptyContent
+					v-else-if="ltiLaunch"
+					:name="t('scholiq', 'External tool opened in a new tab')"
+					:description="t('scholiq', 'If nothing opened, use the button below.')">
+					<template #icon>
+						<ApplicationOutline />
+					</template>
+					<template #action>
+						<NcButton type="secondary" @click="launchLti">
+							{{ t('scholiq', 'Open tool again') }}
+						</NcButton>
+					</template>
+				</NcEmptyContent>
+			</section>
+
 			<section
-				v-if="lesson && lesson.content"
+				v-else-if="lesson && lesson.content"
 				class="lesson-player__body"
 				v-html="sanitisedContent" />
 
@@ -77,6 +119,7 @@
 import { generateUrl } from '@nextcloud/router'
 import { NcEmptyContent, NcButton } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
+import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
 
 export default {
@@ -86,6 +129,7 @@ export default {
 		NcEmptyContent,
 		NcButton,
 		AlertCircleOutline,
+		ApplicationOutline,
 		BookOpenPageVariantOutline,
 	},
 
@@ -108,6 +152,11 @@ export default {
 			error: '',
 			course: null,
 			lesson: null,
+			// LTI launch delegation state (contentType === 'lti').
+			ltiLaunching: false,
+			ltiError: '',
+			ltiLaunch: null,
+			ltiFrameName: 'scholiq-lti-launch-frame',
 		}
 	},
 
@@ -123,6 +172,16 @@ export default {
 		 */
 		sanitisedContent() {
 			return this.lesson?.content ?? ''
+		},
+
+		/**
+		 * True when this lesson's content is an LTI 1.3 tool placement.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
+		 */
+		isLtiLesson() {
+			return this.lesson?.contentType === 'lti'
 		},
 	},
 
@@ -147,6 +206,10 @@ export default {
 		} finally {
 			this.loading = false
 		}
+
+		if (this.isLtiLesson) {
+			await this.launchLti()
+		}
 	},
 
 	methods: {
@@ -160,6 +223,78 @@ export default {
 			if (this.$router) {
 				this.$router.push({ name: 'CourseDetail', params: { id: this.courseId } }).catch(() => {})
 			}
+		},
+
+		/**
+		 * Delegate the LTI launch to the backend, which delegates to the
+		 * OpenConnector lti-13-platform adapter (opaque proxy — Scholiq
+		 * never inspects the id_token). `lesson.contentRef` names the
+		 * LtiToolPlacement UUID; the backend resolves it.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
+		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.2
+		 */
+		async launchLti() {
+			const placementId = this.lesson?.contentRef
+			if (!placementId) {
+				this.ltiError = this.t('scholiq', 'This lesson has no LTI tool placement configured.')
+				return
+			}
+
+			this.ltiLaunching = true
+			this.ltiError = ''
+			this.ltiLaunch = null
+
+			try {
+				const res = await fetch(
+					generateUrl('/apps/scholiq/api/lti-placements/' + placementId + '/launch'),
+					{ method: 'POST', headers: { requesttoken: window.OC?.requestToken ?? '' } },
+				)
+				const body = await res.json().catch(() => ({}))
+				if (!res.ok) {
+					throw new Error(body?.error || this.t('scholiq', 'Failed to start the tool (HTTP {status})', { status: res.status }))
+				}
+				if (!body?.formActionUrl || !body?.idToken) {
+					throw new Error(this.t('scholiq', 'OpenConnector returned an unexpected launch response.'))
+				}
+
+				this.ltiLaunch = body
+				this.$nextTick(() => this.submitLtiLaunchForm(body))
+			} catch (e) {
+				this.ltiError = e?.message ?? String(e)
+			} finally {
+				this.ltiLaunching = false
+			}
+		},
+
+		/**
+		 * Auto-submit an opaque LTI launch response as a real POST — an
+		 * id_token cannot be delivered via a GET navigation. New tab for
+		 * launchMode='resource-link', the in-page frame for 'deep-linking'.
+		 * Scholiq never reads or validates `idToken` — it is forwarded
+		 * exactly as OpenConnector returned it (design.md D5).
+		 *
+		 * @param {object} launch The opaque {formActionUrl, idToken, launchMode} response.
+		 * @return {void}
+		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
+		 */
+		submitLtiLaunchForm(launch) {
+			const form = document.createElement('form')
+			form.method = 'POST'
+			form.action = launch.formActionUrl
+			form.target = launch.launchMode === 'deep-linking' ? this.ltiFrameName : '_blank'
+			form.style.display = 'none'
+
+			const input = document.createElement('input')
+			input.type = 'hidden'
+			input.name = 'id_token'
+			input.value = launch.idToken
+			form.appendChild(input)
+
+			document.body.appendChild(form)
+			form.submit()
+			document.body.removeChild(form)
 		},
 	},
 }
@@ -200,6 +335,17 @@ export default {
 
 .lesson-player__body {
 	line-height: 1.6;
+}
+
+.lesson-player__lti-frame-wrap {
+	width: 100%;
+	min-height: 480px;
+}
+
+.lesson-player__lti-frame {
+	width: 100%;
+	min-height: 480px;
+	border: none;
 }
 
 .lesson-player__footer {

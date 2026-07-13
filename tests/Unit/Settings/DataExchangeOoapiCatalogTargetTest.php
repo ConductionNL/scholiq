@@ -97,13 +97,17 @@ class DataExchangeOoapiCatalogTargetTest extends TestCase
     /**
      * The register's own document version was patch-bumped for this doc-only
      * edit (design.md: "no migration — the field is already a free-text
-     * string").
+     * string"). Asserts the version is at least 0.6.1 (this change's own
+     * bump) rather than pinning an exact literal, so a later change's own
+     * version bump (e.g. lti-tool-placement's 0.7.0) does not regress this
+     * assertion — the description substring below is the actual doc-only
+     * content this test protects.
      *
      * @return void
      */
     public function testRegisterInfoVersionWasBumped(): void
     {
-        self::assertSame('0.6.1', $this->config['info']['version']);
+        self::assertGreaterThanOrEqual(0, version_compare($this->config['info']['version'], '0.6.1'));
         self::assertStringContainsString('ooapi-catalog', $this->config['info']['description']);
 
     }//end testRegisterInfoVersionWasBumped()

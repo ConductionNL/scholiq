@@ -402,7 +402,64 @@ outstanding.
 
 ---
 
-## 8. References
+## 8. LTI 1.3 tool placement (cross-repo)
+
+Scholiq does **not** implement any LTI protocol code — OIDC third-party-initiated login, `id_token`
+signing/verification, JWKS, or Assignment & Grade Services (AGS)/NRPS wire handling all live in
+OpenConnector's `lti-13-platform` adapter (`openconnector/openspec/changes/lti-13-platform/`).
+Scholiq's obligation is the **consuming-app contract** the adapter defines (REQ-LTI-010): model a
+placement inside a Course/Lesson, delegate the launch, and translate an AGS score CloudEvent into a
+`GradeEntry`. See `openspec/changes/lti-tool-placement/`.
+
+**Who owns what:**
+
+| Concern | Owner |
+|---|---|
+| `LtiToolPlacement` (which Lesson/Course, which grading component) | Scholiq (this contract) |
+| Launch delegation (`LtiToolPlacementController::launch`) | Scholiq — thin, opaque REST proxy, no LTI claim parsing |
+| OIDC login/launch, `id_token` signing/verification, JWKS, AGS/NRPS protocol | OpenConnector — **already shipped** for the Tool-role/inbound surface; the Platform-role launch-initiation REST wrapper this contract assumes is **not yet exposed** (see the "known gap" note below) |
+| AGS score → `GradeEntry` (via `LtiAgsScorePollJob`) | Scholiq (this contract) |
+| Grade destination mapping (`curriculumPlanId`/`gradeEntryComponentId`/`gradeScaleId`) | Scholiq, configured once per placement, never auto-derived from the LTI payload |
+
+**Admin bootstrap (once per tool placement), per REQ-LTI-010:**
+
+1. On the OpenConnector side, create an `lti_deployment` naming this Scholiq instance's launch-resolve
+   endpoint as `launchTargetUrl`. `gradeSink`/`rosterSource` are informational only — OpenConnector never
+   writes to Scholiq's register directly (REQ-LTI-007); grade passback flows through the CloudEvent +
+   poll job below instead. Note the returned `lti_deployment` UUID — it is the
+   `LtiToolPlacement.openconnectorDeploymentId` value.
+2. Still on OpenConnector, create an `event_subscription` filtered to
+   `type = 'nl.conduction.lti.ags.score.received'`, `style = 'pull'`. Set the resulting subscription UUID
+   as Scholiq's `scholiq.lti_ags_subscription_id` app-config value
+   (`occ config:app:set scholiq lti_ags_subscription_id --value=<uuid>`) — `LtiAgsScorePollJob` no-ops
+   until this is set.
+3. Set `scholiq.openconnector_api_token` (already required for `DataExchangeRunHandler`) and the new
+   `scholiq.openconnector_api_user` — an NC username, in a group authorized for OpenConnector's
+   `event.pull` action — as the app-password pair `LtiAgsScorePollJob` uses to authenticate its pull call
+   (`EventsController::pull()` requires an authenticated NC session + group authorization, not a bearer
+   token — see the class docblock on `LtiAgsScorePollJob` for the full auth-shape note).
+4. In Scholiq, create the `LtiToolPlacement` object (via the generic OpenRegister object-save path —
+   no dedicated create UI ships in this change) naming the `lessonId`/`courseId`, the
+   `openconnectorDeploymentId` from step 1, and, when grade passback is wanted, the
+   `curriculumPlanId`/`gradeEntryComponentId`/`gradeScaleId` triple. Set `Lesson.contentType = 'lti'` and
+   `Lesson.contentRef` to the new placement's UUID.
+
+**NRPS (roster) is explicitly out of scope** for this change (design.md Non-goals) — `lti_deployment
+.rosterSource` exists on the OpenConnector contract but Scholiq does not yet configure or consume it.
+Exposing Scholiq's `Enrolment`/`Cohort` membership through OpenConnector's ADR-008 register/schema read
+path is a real, separate follow-up.
+
+**Known gap (documented, not silently dropped):** `LtiToolPlacementController::launch()` calls an
+*assumed* OpenConnector REST endpoint for Platform-role launch initiation (REQ-LTI-006). Verified against
+OpenConnector HEAD at the time this change was built: the merged adapter exposes
+`LtiLaunchService::initiatePlatformLaunch()` only as an in-process PHP service method — no HTTP route
+wraps it (`appinfo/routes.php` in the OpenConnector repo covers only the Tool-role inbound surface).
+Until OpenConnector adds a thin REST wrapper around that method, the launch call in this contract 404s.
+The assumed request/response shape is documented on `LtiToolPlacementController::OPENCONNECTOR_LAUNCH_PATH`.
+
+---
+
+## 9. References
 
 - Hydra ADR-022: `hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md`
 - Hydra ADR-024: `hydra/openspec/architecture/adr-024-app-manifest.md`
