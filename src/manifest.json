@@ -2804,7 +2804,7 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "Cohort",
-				"_note": "A Cohort is a delivery group (a course/programme run for a set of learners in an academic year/period, mapped to an NC group). Body leads with cohort metadata (8-wide) and a Related panel resolving programme, course and NC group. The three things a cohort coordinator manages render as related-index rosters: scheduled Sessions, Enrolments (the roster) and Attendance flags (early-warning). No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"_note": "A Cohort is a delivery group (a course/programme run for a set of learners in an academic year/period, mapped to an NC group). Body leads with cohort metadata (8-wide) and a Related panel resolving programme, course and NC group. The three things a cohort coordinator manages render as related-index rosters: scheduled Sessions, Enrolments (the roster) and Attendance flags (early-warning). HARD RULE 1 exception (talk-classroom-spaces): Cohort is a delivery-run archetype, not a catalog definition, so it gains linkedTypes:[\"talk\"] and a persistent class-space widget consuming OpenRegister's existing TalkLinkService/TalkProvider unchanged — CohortTalkMembershipHandler keeps the linked conversation's participants in sync with active Enrolments. Course/Programme/CurriculumPlan keep zero comms leaves. Sidebar keeps metadata + audit-trail.",
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
@@ -3010,6 +3010,13 @@
 						"type": "related",
 						"title": "Related",
 						"icon": "LinkVariant"
+					},
+					{
+						"id": "cohort-talk",
+						"type": "integration",
+						"integrationId": "talk",
+						"title": "Class space",
+						"icon": "ChatOutline"
 					}
 				],
 				"layout": [
@@ -3084,6 +3091,15 @@
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
+					},
+					{
+						"id": "7",
+						"widgetId": "cohort-talk",
+						"gridX": 0,
+						"gridY": 16,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
 					}
 				],
 				"sidebar": {
@@ -3138,7 +3154,7 @@
 			"config": {
 				"register": "scholiq",
 				"schema": "Session",
-				"_note": "A Session is a scheduled teaching occurrence (start/end, location, tied to cohort/course/lesson, with materials and assignments). Body leads with session details (8-wide) and a Related panel resolving cohort/course/lesson. The attendance roster is the primary operational surface, so Attendance records render as a wide related-index; assigned work shows as an Assignments table. Session materials render as a Files leaf (handouts for the session). No calendar/email leaf: Session declares no linkedTypes despite being time-boxed (HARD RULE 1). Sidebar keeps metadata + audit-trail.",
+				"_note": "A Session is a scheduled teaching occurrence (start/end, location, tied to cohort/course/lesson, with materials and assignments). Body leads with session details (8-wide) and a Related panel resolving cohort/course/lesson. The attendance roster is the primary operational surface, so Attendance records render as a wide related-index; assigned work shows as an Assignments table. Session materials render as a Files leaf (handouts for the session). HARD RULE 1 exception (talk-classroom-spaces): a Session is a scheduled occurrence, not a catalog definition, so it gains linkedTypes:[\"talk\"] and a join-call widget — in practice a teacher links the parent Cohort's already-linked conversation (the common recurring-class path) or a fresh one-off room, via OR's existing picker/create UI unchanged. Sidebar keeps metadata + audit-trail.",
 				"lifecycleActions": {
 					"field": "lifecycle"
 				},
@@ -3285,6 +3301,13 @@
 						"integrationId": "files",
 						"title": "Session materials",
 						"icon": "FolderOutline"
+					},
+					{
+						"id": "session-talk",
+						"type": "integration",
+						"integrationId": "talk",
+						"title": "Join call",
+						"icon": "VideoOutline"
 					}
 				],
 				"layout": [
@@ -3349,6 +3372,15 @@
 						"gridY": 15,
 						"gridWidth": 12,
 						"gridHeight": 3,
+						"showTitle": false
+					},
+					{
+						"id": "7",
+						"widgetId": "session-talk",
+						"gridX": 0,
+						"gridY": 18,
+						"gridWidth": 12,
+						"gridHeight": 5,
 						"showTitle": false
 					}
 				],
