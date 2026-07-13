@@ -7,9 +7,14 @@
  * `leerplicht` target reaches `running` via the `run` transition (queued →
  * running) unconditionally, and is NEVER blocked the way `oso` is — the
  * richer verzuimloket dossier composition this change adds does NOT gate on
- * pending-parent-review. Guards this class's `target === self::OSO_TARGET`
- * condition against ever being broadened to match by dossier shape instead of
- * the literal target string.
+ * pending-parent-review. Guards this class's target-matching condition
+ * against ever being broadened to match by dossier shape instead of literal,
+ * explicitly-named target strings.
+ *
+ * Also covers zorgvraag-swv-tlv-chain tasks.md#task-4.4: `swv` is a second,
+ * explicitly-named OSO-format-dossier target that gates identically to `oso`
+ * (data-exchange spec "OSO-format dossier parent-review gate covers the SWV
+ * zorgvraag target too") — added to GATED_TARGETS, not inferred.
  *
  * @category Tests
  * @package  OCA\Scholiq\Tests\Unit\Lifecycle
@@ -94,4 +99,25 @@ class DataExchangeRunGuardTest extends TestCase
         self::assertTrue((new DataExchangeRunGuard())->check($context));
 
     }//end testBronRodTargetInQueuedIsAllowedToRun()
+
+    /**
+     * A swv-target job in `queued` is blocked — same gate as oso, per
+     * zorgvraag-swv-tlv-chain tasks.md#task-4.4 and the data-exchange spec's
+     * "OSO-format dossier parent-review gate covers the SWV zorgvraag target
+     * too" requirement.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.4
+     */
+    public function testSwvTargetInQueuedIsBlocked(): void
+    {
+        $context = [
+            'object' => ['id' => 'job-4', 'target' => 'swv'],
+            'from'   => 'queued',
+        ];
+
+        self::assertFalse((new DataExchangeRunGuard())->check($context));
+
+    }//end testSwvTargetInQueuedIsBlocked()
 }//end class

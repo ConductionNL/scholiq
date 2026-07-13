@@ -59,6 +59,12 @@
 			"schemaSlug": "credential",
 			"urlTemplate": "/apps/scholiq/#/credentials/{uuid}",
 			"displayName": "Credential"
+		},
+		{
+			"registerSlug": "scholiq",
+			"schemaSlug": "support-request",
+			"urlTemplate": "/apps/scholiq/#/support-requests/{uuid}",
+			"displayName": "Support request"
 		}
 	],
 	"menu": [
@@ -88,6 +94,13 @@
 					"icon": "icon-files",
 					"route": "LearningPlans",
 					"order": 30
+				},
+				{
+					"id": "SupportRequests",
+					"label": "Support requests",
+					"icon": "icon-comment",
+					"route": "SupportRequests",
+					"order": 35
 				},
 				{
 					"id": "Assignments",
@@ -5076,6 +5089,16 @@
 										"learningPlanId": "@objectId"
 									},
 									"route": "LearningPlanEvaluations"
+								},
+								{
+									"title": "Support requests",
+									"register": "scholiq",
+									"schema": "support-request",
+									"metric": "count",
+									"filter": {
+										"learningPlanId": "@objectId"
+									},
+									"route": "SupportRequests"
 								}
 							]
 						}
@@ -5126,6 +5149,45 @@
 						"icon": "LinkVariant"
 					},
 					{
+						"id": "lp-support-requests",
+						"type": "object-list",
+						"title": "Support requests (SWV chain)",
+						"content": {
+							"register": "scholiq",
+							"schema": "support-request",
+							"filter": {
+								"learningPlanId": "@objectId"
+							},
+							"sort": {
+								"field": "id",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "supportDomain",
+									"label": "Support Domain"
+								},
+								{
+									"key": "urgency",
+									"label": "Urgency"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Status"
+								}
+							],
+							"rowRoute": "SupportRequestDetail",
+							"viewAllRoute": "SupportRequests",
+							"viewAllQuery": {
+								"learningPlanId": "@objectId"
+							},
+							"emptyText": "No support requests found.",
+							"allowCreate": false
+						},
+						"icon": "HandshakeOutline"
+					},
+					{
 						"id": "lp-files",
 						"type": "integration",
 						"integrationId": "files",
@@ -5172,9 +5234,18 @@
 					},
 					{
 						"id": "5",
-						"widgetId": "lp-files",
+						"widgetId": "lp-support-requests",
 						"gridX": 0,
 						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": false
+					},
+					{
+						"id": "6",
+						"widgetId": "lp-files",
+						"gridX": 0,
+						"gridY": 14,
 						"gridWidth": 12,
 						"gridHeight": 3,
 						"showTitle": false
@@ -5420,6 +5491,369 @@
 			"title": "Learning plan editor",
 			"component": "CnRelationshipGraph",
 			"_note": "Mounts CnRelationshipGraph from @conduction/nextcloud-vue for the learning-plan editor (dependency-chain layout, drag-drop ordering, milestone scoring)."
+		},
+		{
+			"id": "SupportRequests",
+			"route": "/support-requests",
+			"type": "index",
+			"title": "Support requests",
+			"config": {
+				"register": "scholiq",
+				"schema": "support-request"
+			}
+		},
+		{
+			"id": "SupportRequestDetail",
+			"route": "/support-requests/:id",
+			"type": "detail",
+			"title": "Support request",
+			"config": {
+				"register": "scholiq",
+				"schema": "support-request",
+				"_note": "A SupportRequest is the zorgvraag (support/care request) raised from a pupil's dossier — the school-side start of the Wet passend onderwijs SWV chain (openspec/changes/zorgvraag-swv-tlv-chain). Submitting it auto-queues a DataExchangeJob (target: swv) that routes an OSO-format dossier to the samenwerkingsverband, gated by the same pending-parent-review step OsoDossierReviewView already renders for target: oso jobs — reused here, not duplicated. Body leads with the request data (8-wide) and a Related panel resolving the learner and optional LearningPlan; TLV applications and deliberation records tracing to this request render as wide related-index panels. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. Zorg data is the most sensitive category this app handles (design.md Security Considerations) — full-detail read is restricted to admin/principal plus the raising coordinator.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "sr-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "HandshakeOutline"
+					},
+					{
+						"id": "sr-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "TLV applications",
+									"register": "scholiq",
+									"schema": "tlv-application",
+									"metric": "count",
+									"filter": {
+										"supportRequestId": "@objectId"
+									},
+									"route": "TlvApplications"
+								},
+								{
+									"title": "Deliberation records",
+									"register": "scholiq",
+									"schema": "deliberation-record",
+									"metric": "count",
+									"filter": {
+										"supportRequestId": "@objectId"
+									},
+									"route": "DeliberationRecords"
+								}
+							]
+						}
+					},
+					{
+						"id": "sr-tlvs",
+						"type": "object-list",
+						"title": "TLV applications",
+						"content": {
+							"register": "scholiq",
+							"schema": "tlv-application",
+							"filter": {
+								"supportRequestId": "@objectId"
+							},
+							"sort": {
+								"field": "id",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "arrangementType",
+									"label": "Arrangement"
+								},
+								{
+									"key": "decision",
+									"label": "Decision"
+								},
+								{
+									"key": "validUntil",
+									"label": "Valid Until"
+								}
+							],
+							"rowRoute": "TlvApplicationDetail",
+							"viewAllRoute": "TlvApplications",
+							"viewAllQuery": {
+								"supportRequestId": "@objectId"
+							},
+							"emptyText": "No TLV applications found.",
+							"allowCreate": false
+						},
+						"icon": "FileSign"
+					},
+					{
+						"id": "sr-deliberations",
+						"type": "object-list",
+						"title": "Deliberation records",
+						"content": {
+							"register": "scholiq",
+							"schema": "deliberation-record",
+							"filter": {
+								"supportRequestId": "@objectId"
+							},
+							"sort": {
+								"field": "id",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "scheduledAt",
+									"label": "Scheduled At"
+								},
+								{
+									"key": "outcome",
+									"label": "Outcome"
+								}
+							],
+							"rowRoute": "DeliberationRecordDetail",
+							"viewAllRoute": "DeliberationRecords",
+							"viewAllQuery": {
+								"supportRequestId": "@objectId"
+							},
+							"emptyText": "No deliberation records found.",
+							"allowCreate": false
+						},
+						"icon": "AccountGroup"
+					},
+					{
+						"id": "sr-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "sr-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "sr-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "sr-tlvs",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "sr-deliberations",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "5",
+						"widgetId": "sr-related",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TlvApplications",
+			"route": "/tlv-applications",
+			"type": "index",
+			"title": "TLV applications",
+			"config": {
+				"register": "scholiq",
+				"schema": "tlv-application"
+			}
+		},
+		{
+			"id": "TlvApplicationDetail",
+			"route": "/tlv-applications/:id",
+			"type": "detail",
+			"title": "TLV application",
+			"config": {
+				"register": "scholiq",
+				"schema": "tlv-application",
+				"_note": "A TlvApplication is the toelaatbaarheidsverklaring (TLV) application tracing to a SupportRequest. Scholiq RECORDS the samenwerkingsverband's decision — it never adjudicates it (design.md Decisions 'TLV decision recorded, never adjudicated'); there is no approval/rejection logic in this app. validUntil drives a declared tlvExpiringSoon calculation (no PHP TimedJob). Body leads with the application data (8-wide) and a Related panel resolving the SupportRequest and its linked deliberation records. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "tlv-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FileSign"
+					},
+					{
+						"id": "tlv-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "tlv-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "tlv-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "DeliberationRecords",
+			"route": "/deliberation-records",
+			"type": "index",
+			"title": "Deliberation records",
+			"config": {
+				"register": "scholiq",
+				"schema": "deliberation-record"
+			}
+		},
+		{
+			"id": "DeliberationRecordDetail",
+			"route": "/deliberation-records/:id",
+			"type": "detail",
+			"title": "Deliberation record",
+			"config": {
+				"register": "scholiq",
+				"schema": "deliberation-record",
+				"readOnly": true,
+				"_note": "A DeliberationRecord is a structured, append-only record of a consultation round (parents, municipality, care partners, school, SWV coordinator) concerning a SupportRequest and/or TlvApplication. Carries the pupilVoice block first — heard/statementNote or waived/waiverReason — reflecting the 2025 Wet versterking positie ouders en leerlingen in passend onderwijs hoorrecht (insight 1145); the scheduled → recorded transition is HARD-BLOCKED by PupilVoiceGuard until pupilVoice is satisfied, so the Data widget below is the coordinator's only path to clear that gate — it cannot be missed without also being unable to finalise the record. appendOnly: true once recorded — readOnly here; a correction creates a new record referencing this one (correctsId), it never mutates it. Body leads with the full record data (8-wide, pupilVoice included) and a Related panel resolving the SupportRequest/TlvApplication and attendees. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "dr-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AccountGroup"
+					},
+					{
+						"id": "dr-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "dr-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 7,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "dr-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 7,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
 		},
 		{
 			"id": "AttendanceRecords",
@@ -6248,9 +6682,9 @@
 			"id": "OsoDossierReviewView",
 			"route": "/data-exchange/jobs/:id/oso-review",
 			"type": "custom",
-			"title": "OSO dossier review",
+			"title": "OSO-format dossier review",
 			"component": "CnStructuredDocReview",
-			"_note": "Mounts CnStructuredDocReview from @conduction/nextcloud-vue for the OSO dossier review (XML preview + validation + sign-off)."
+			"_note": "Mounts CnStructuredDocReview from @conduction/nextcloud-vue for the pending-parent-review dossier step of any OSO-format DataExchangeJob — the PO→VO overstapdossier (target: oso) AND the SWV zorgvraag care-request dossier (target: swv, openspec/changes/zorgvraag-swv-tlv-chain), reused unchanged per the data-exchange spec's 'OSO-format dossier parent-review gate covers the SWV zorgvraag target too' requirement. This view is generic by job :id, not target-filtered, so no manifest change was needed to extend it — DataExchangeJobDetail's lifecycleActions panel routes here for either target whenever the job's lifecycle is pending-parent-review. No new component was added."
 		},
 		{
 			"id": "LearnerProfiles",

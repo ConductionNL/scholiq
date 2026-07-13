@@ -4,10 +4,19 @@
  * Scholiq Data Exchange Run Guard
  *
  * Lifecycle guard for the DataExchangeJob schema's `queued → running`
- * transition (the `run` action). Enforces the OSO parent-review gate:
- * an OSO job must pass through `pending-parent-review` (approved by a
- * parent via `approveDossier`) before it may enter `running`. Direct
- * `queued → running` is blocked for OSO targets.
+ * transition (the `run` action). Enforces the OSO-format-dossier
+ * parent-review gate: a job whose composed dossier is OSO-format must pass
+ * through `pending-parent-review` (approved by a parent via `approveDossier`)
+ * before it may enter `running`. Direct `queued → running` is blocked for
+ * those targets.
+ *
+ * GATED_TARGETS is a literal, explicit allowlist of target strings — NOT an
+ * inference by dossier "richness" or composition shape (see
+ * DataExchangeRunGuardTest's guarding comment). `oso` (PO→VO overstapdossier)
+ * and `swv` (zorgvraag/TLV-chain dossier, openspec/changes/
+ * zorgvraag-swv-tlv-chain) are both OSO-format dossiers per the data-exchange
+ * spec's "OSO-format dossier parent-review gate covers the SWV zorgvraag
+ * target too" requirement — the SAME gate mechanism, not a parallel one.
  *
  * For all other targets the guard returns true unconditionally — the job
  * may proceed directly from `queued` to `running`.
@@ -33,6 +42,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+ * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.4
  */
 
 declare(strict_types=1);
@@ -42,24 +52,31 @@ namespace OCA\Scholiq\Lifecycle;
 /**
  * Guards the DataExchangeJob `queued → running` lifecycle transition.
  *
- * Blocks OSO jobs from jumping directly to `running`; they must first
- * pass through `pending-parent-review` and be approved via `approveDossier`.
+ * Blocks OSO-format-dossier jobs (oso, swv) from jumping directly to
+ * `running`; they must first pass through `pending-parent-review` and be
+ * approved via `approveDossier`.
  */
 class DataExchangeRunGuard
 {
 
     /**
-     * The OpenConnector target name that requires parent review before running.
+     * Literal, explicit allowlist of target strings whose composed dossier is
+     * OSO-format and therefore requires parent review before running.
+     * Adding a target here must be a deliberate, named decision — never
+     * inferred from dossier composition shape (DataExchangeRunGuardTest).
+     *
+     * @var string[]
      */
-    private const OSO_TARGET = 'oso';
+    private const GATED_TARGETS = ['oso', 'swv'];
 
     /**
      * Allow the `queued → running` transition.
      *
-     * For OSO targets: returns false when the job is still in `queued` state,
-     * because OSO jobs must enter `pending-parent-review` first and be
-     * approved via the `approveDossier` transition (which also leads to
-     * `running`, bypassing this guard via its own path).
+     * For gated targets (see GATED_TARGETS): returns false when the job is
+     * still in `queued` state, because these jobs must enter
+     * `pending-parent-review` first and be approved via the `approveDossier`
+     * transition (which also leads to `running`, bypassing this guard via its
+     * own path).
      *
      * For all other targets: returns true unconditionally.
      *
@@ -69,9 +86,10 @@ class DataExchangeRunGuard
      *                                               - 'from'       : current state (expected: 'queued')
      *                                               - 'to'         : 'running'
      *
-     * @return bool False for OSO jobs in queued state; true otherwise.
+     * @return bool False for gated-target jobs in queued state; true otherwise.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.4
      */
     public function check(array &$transitionContext): bool
     {
@@ -79,10 +97,10 @@ class DataExchangeRunGuard
         $target = $object['target'] ?? '';
         $from   = $transitionContext['from'] ?? '';
 
-        // OSO jobs must NOT move directly from queued to running.
+        // Gated-target jobs must NOT move directly from queued to running.
         // They must first enter pending-parent-review via the pendingParentReview
         // transition, and then proceed via approveDossier → running.
-        if ($target === self::OSO_TARGET && $from === 'queued') {
+        if (in_array($target, self::GATED_TARGETS, true) === true && $from === 'queued') {
             return false;
         }
 
