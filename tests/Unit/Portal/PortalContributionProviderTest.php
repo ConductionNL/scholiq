@@ -272,9 +272,9 @@ class PortalContributionProviderTest extends TestCase
         $this->assertSame([], $manifest['notifications']);
 
         $collections = $manifest['collections'];
-        $this->assertCount(3, $collections);
+        $this->assertCount(4, $collections);
         $this->assertSame(
-            ['parentGrades', 'parentAttendance', 'parentExcuseRequests'],
+            ['parentGrades', 'parentAttendance', 'parentExcuseRequests', 'parentReportCards'],
             array_column($collections, 'id')
         );
 
@@ -307,6 +307,16 @@ class PortalContributionProviderTest extends TestCase
             ['learnerRef', 'dateFrom', 'dateTo', 'reason', 'reasonKind', 'attachmentRef', 'lifecycle', 'decidedAt'],
             $byId['parentExcuseRequests']['fields']
         );
+        $this->assertSame(
+            ['learnerRef', 'reportPeriodId', 'subjectGrades', 'attendanceSummary', 'mentorComment', 'docudeskDocumentRef'],
+            $byId['parentReportCards']['fields']
+        );
+
+        // parentReportCards is server-side narrowed to published-to-parents only
+        // (report-card-composer's own "never draft/rapportvergadering-review/
+        // finalised" requirement) — the reader's singular `filter` key, applied
+        // BEFORE the scope filter (ContributionController::collection()).
+        $this->assertSame(['lifecycle' => 'published-to-parents'], $byId['parentReportCards']['filter']);
 
     }//end testParentManifestShape()
 

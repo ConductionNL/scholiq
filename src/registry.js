@@ -49,6 +49,12 @@ import MyTimetable from './views/MyTimetable.vue'
 // coordinator's manual-override / regenerate board.
 import BookConferenceSlotsView from './views/BookConferenceSlotsView.vue'
 import ConferenceScheduleBoard from './views/ConferenceScheduleBoard.vue'
+// report-card-composer: the rapportvergadering cohort-wide review grid
+// (mirrors GradebookView's "no manifest page can render a cohort grid"
+// precedent) — the ComposeReportPeriodModal dialog it hosts is imported
+// directly by the view itself, not registered here (a plain component, same
+// as procest's src/dialogs/*.vue shape, not a routed page).
+import RapportvergaderingReviewView from './views/RapportvergaderingReviewView.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -97,6 +103,7 @@ export default {
 	MyTimetable: page(MyTimetable),
 	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
+	RapportvergaderingReviewView: page(RapportvergaderingReviewView),
 	RegulationDetailPage: page(RegulationDetailPage),
 	RolloverWizard: page(RolloverWizard),
 	ScholiqCompliance: page(ScholiqCompliance),

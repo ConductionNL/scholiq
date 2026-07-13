@@ -124,6 +124,20 @@
 					"order": 60
 				},
 				{
+					"id": "ReportPeriodsMenu",
+					"label": "Report periods",
+					"icon": "icon-quota",
+					"route": "ReportPeriods",
+					"order": 62
+				},
+				{
+					"id": "ReportCardsMenu",
+					"label": "Report cards",
+					"icon": "icon-quota",
+					"route": "ReportCards",
+					"order": 64
+				},
+				{
 					"id": "LtiToolPlacementsMenu",
 					"label": "LTI tools",
 					"icon": "icon-external",
@@ -9946,6 +9960,216 @@
 			"title": "Group trend heat map",
 			"component": "GroupTrendHeatmap",
 			"_note": "learning-progress-and-analytics: the one genuine custom-view exception for the student-analytics capability — a teacher/admin cohort x period grade-trend heat map over EXISTING GradeEntry data (cohortId, gradedAt, period, value) via OpenRegister's existing list API. No new schema for the trend itself. Closes the dashboard capability spec's Acceptance Criteria claim of a skill-area heat map that had no implementation anywhere in src/views/** at HEAD."
+		},
+		{
+			"id": "ReportPeriods",
+			"route": "/report-periods",
+			"type": "index",
+			"title": "Report periods",
+			"config": {
+				"register": "scholiq",
+				"schema": "report-period"
+			}
+		},
+		{
+			"id": "ReportPeriodDetail",
+			"route": "/report-periods/:id",
+			"type": "detail",
+			"title": "Report period",
+			"config": {
+				"register": "scholiq",
+				"schema": "report-period",
+				"_note": "report-card-composer: a ReportPeriod is the school-wide term a periodic rapport is composed for (periodCode/academicYear/startDate/endDate/curriculumPlanIds/cohortIds/lockDate) — a config/scheduling archetype consumed by ReportCardComposer. Body leads with the period data (8-wide, includes the materialised isLocked calc) and a Related panel. lifecycleActions expose compose/archive declaratively; ReportPeriodComposeGuard blocks compose until isLocked. The richer compose confirmation (scope summary + lock-state explanation) lives in RapportvergaderingReviewView's ComposeReportPeriodModal, reached via the rapportvergadering review link. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "period-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CalendarRangeOutline"
+					},
+					{
+						"id": "period-cards",
+						"type": "object-list",
+						"title": "Report cards",
+						"content": {
+							"register": "scholiq",
+							"schema": "report-card",
+							"filter": {
+								"reportPeriodId": "@object.id"
+							},
+							"sort": {
+								"field": "learnerId",
+								"dir": "asc"
+							},
+							"limit": 50,
+							"columns": [
+								{
+									"key": "learnerId",
+									"label": "Learner"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Status"
+								},
+								{
+									"key": "composedAt",
+									"label": "Composed at"
+								}
+							],
+							"rowRoute": "ReportCardDetail",
+							"viewAllRoute": "ReportCards",
+							"viewAllQuery": {
+								"reportPeriodId": "@object.id"
+							},
+							"emptyText": "No report cards composed yet.",
+							"allowCreate": false
+						},
+						"icon": "FileChartOutline"
+					},
+					{
+						"id": "period-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "period-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "period-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "period-cards",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ReportCards",
+			"route": "/report-cards",
+			"type": "index",
+			"title": "Report cards",
+			"config": {
+				"register": "scholiq",
+				"schema": "report-card"
+			}
+		},
+		{
+			"id": "ReportCardDetail",
+			"route": "/report-cards/:id",
+			"type": "detail",
+			"title": "Report card",
+			"config": {
+				"register": "scholiq",
+				"schema": "report-card",
+				"_note": "report-card-composer: a ReportCard is one composed periodic rapport for one learner (subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode], attendanceSummary, teacher/mentor comments, fail-soft docudesk PDF-render state) — a document/record archetype. Body leads with the card data (8-wide, generic 'data' widget renders subjectGrades[]/attendanceSummary as-is, no content.fields allowlist needed per the DataMappingProfile.fieldMappings precedent) and a Related panel resolving the ReportPeriod/learner. lifecycleActions expose pullIntoReview/finalise/reopen/publishToParents/recompose/renderToPdf/rerenderToPdf declaratively — ReportCardFinaliseGuard/ReportCardReopenGuard/ReportCardVisibilityGuard enforce the review-then-publish gate server-side; the cohort-wide bulk review grid lives in the separate RapportvergaderingReviewView custom view. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "card-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FileChartOutline"
+					},
+					{
+						"id": "card-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "card-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "card-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "RapportvergaderingReviewView",
+			"route": "/report-periods/:id/review",
+			"type": "custom",
+			"title": "Rapportvergadering review",
+			"component": "RapportvergaderingReviewView",
+			"_note": "report-card-composer: the cohort-wide rapportvergadering review grid (one row per learner's ReportCard, one column per in-scope subject, inline teacherComment/mentorComment editing, finalise/reopen/publishToParents actions) — no manifest page can render a cohort grid, mirrors GradebookView's existing precedent for the same reason. Also hosts the ComposeReportPeriodModal confirmation dialog for a still-`open` ReportPeriod."
 		}
 	]
 }
