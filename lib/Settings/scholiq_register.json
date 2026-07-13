@@ -3495,6 +3495,20 @@
                                 }
                             ]
                         }
+                    },
+                    "sessionDayBucket": {
+                        "type": "integer",
+                        "materialise": true,
+                        "description": "Deterministic day-bucket number (whole calendar days since a fixed 1970-01-01 epoch) derived from startsAt, ignoring time-of-day. Two Sessions on the same calendar date share the same bucket value, so AttendanceFlag.schoolDaysSinceFlag can count DISTINCT school days via count_distinct on this field instead of on the raw startsAt date-time (which would overcount days with multiple sessions). Added because OpenRegister's declarative calculation DSL (verified at HEAD across this register: dateDiff/dateAdd/if/case/eq/ne/gt/gte/lt/lte/and/or/prop/now — no string-format or date-truncation primitive) exposes no direct date-truncation operator. See verzuim-report-composer design.md task 1.2.",
+                        "expression": {
+                            "dateDiff": {
+                                "from": "1970-01-01",
+                                "to": {
+                                    "prop": "startsAt"
+                                },
+                                "unit": "days"
+                            }
+                        }
                     }
                 },
                 "x-openregister-seed": []
@@ -7617,6 +7631,38 @@
                             "nl": "Er is een aanwezigheidsmelding voor je aangemaakt",
                             "en": "An attendance flag was raised for you"
                         }
+                    },
+                    "reportDeadlineOverdue": {
+                        "trigger": {
+                            "type": "calculatedChange",
+                            "field": "reportOverdue",
+                            "condition": {
+                                "eq": true
+                            },
+                            "previously": {
+                                "eq": false
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "mentorId"
+                            },
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Verzuimmelding is over de wettelijke 5-schooldagentermijn",
+                            "en": "Attendance flag has passed the statutory 5-school-day reporting deadline"
+                        }
                     }
                 },
                 "required": [
@@ -7690,6 +7736,45 @@
                         "description": "Nextcloud user ID of the learner's mentor, resolved from LearnerProfile.managerId at flag creation.",
                         "title": "Mentor ID"
                     },
+                    "interventions": {
+                        "type": "array",
+                        "description": "Append-only log of the school's handling history (mentor contact attempts, agreements reached, escalations) recorded while the flag is open/in-handling. Each addition MUST be a new audited version of the appendOnly flag (ADR-008) — never an in-place edit of a prior entry. Composed into the verzuimloket dossier alongside breachingRecordIds for target=leerplicht (see data-exchange spec).",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "recordedBy",
+                                "recordedAt",
+                                "note"
+                            ],
+                            "properties": {
+                                "recordedBy": {
+                                    "type": "string",
+                                    "description": "Nextcloud user ID of the mentor/coordinator who recorded this intervention.",
+                                    "title": "Recorded By"
+                                },
+                                "recordedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "ISO 8601 timestamp when this intervention was recorded.",
+                                    "title": "Recorded At"
+                                },
+                                "note": {
+                                    "type": "string",
+                                    "description": "Free-text description of the intervention (contact attempt, agreement reached, escalation).",
+                                    "title": "Note"
+                                },
+                                "lifecycleAtRecording": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "The flag's lifecycle state at the moment this intervention was recorded (e.g. open, in-handling). Null when not captured.",
+                                    "title": "Lifecycle At Recording"
+                                }
+                            },
+                            "title": "Intervention Entry"
+                        },
+                        "default": [],
+                        "title": "Interventions"
+                    },
                     "lifecycle": {
                         "type": "string",
                         "enum": [
@@ -7732,6 +7817,20 @@
                         }
                     }
                 },
+                "x-openregister-aggregations": {
+                    "schoolDaysSinceFlag": {
+                        "description": "Count of DISTINCT school days (calendar dates carrying >=1 scheduled Session, grouped via Session.sessionDayBucket to avoid overcounting multi-session days) on or after windowEnd — the statutory 5-school-day Leerplichtwet art. 21a reporting-deadline count. Vacation/closure weeks schedule no Sessions and so contribute zero, without a separate vacation calendar (see design.md 'Reuse Session occurrence' decision). ASSUMPTION (unverified against OpenRegister core, which is not present in this repo): the aggregation engine's `where` clause supports a range comparison ({gte: ...}) against a `@self.*` reference the same way `x-openregister-notifications.trigger.condition` does; flag for confirmation during review.",
+                        "from": "session",
+                        "metric": "count_distinct",
+                        "field": "sessionDayBucket",
+                        "where": {
+                            "tenant_id": "@self.tenant_id",
+                            "startsAt": {
+                                "gte": "@self.windowEnd"
+                            }
+                        }
+                    }
+                },
                 "x-openregister-calculations": {
                     "daysSinceFlag": {
                         "type": "integer",
@@ -7743,6 +7842,55 @@
                                     "prop": "windowEnd"
                                 },
                                 "to": "now",
+                                "unit": "days"
+                            }
+                        }
+                    },
+                    "reportOverdue": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "description": "True once the statutory 5-school-day reporting deadline (Leerplichtwet art. 21a) has been reached or passed while the flag has not yet reached reported/resolved. Computed directly from the vacation-aware schoolDaysSinceFlag aggregation, so closure weeks are correctly excluded from the count. Informational only — does NOT alter AttendanceFlagReportGuard's in-handling to reported transition gate.",
+                        "expression": {
+                            "and": [
+                                {
+                                    "gte": [
+                                        {
+                                            "prop": "schoolDaysSinceFlag"
+                                        },
+                                        5
+                                    ]
+                                },
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "lifecycle"
+                                        },
+                                        "reported"
+                                    ]
+                                },
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "lifecycle"
+                                        },
+                                        "resolved"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "reportDeadlineAt": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "materialise": true,
+                        "description": "Display estimate of the statutory reporting deadline: windowEnd + 7 calendar days. This is an INFORMATIONAL APPROXIMATION, not the authoritative signal — OpenRegister's declarative calculation DSL (verified at HEAD across this register: dateDiff/dateAdd/if/case/eq/ne/gt/gte/lt/lte/and/or/prop/now) exposes no operator to resolve 'the calendar date of the Nth matching related object', so it cannot itself skip a specific vacation week the way schoolDaysSinceFlag/reportOverdue do. reportOverdue (computed from the true vacation-aware school-day count) is the authoritative overdue signal and the one the reportDeadlineOverdue notification fires from; reportDeadlineAt is UI guidance only.",
+                        "expression": {
+                            "dateAdd": {
+                                "date": {
+                                    "prop": "windowEnd"
+                                },
+                                "amount": 7,
                                 "unit": "days"
                             }
                         }
@@ -8991,6 +9139,44 @@
                         "default": null,
                         "title": "Origin Flag ID"
                     },
+                    "municipalityFeedback": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "The municipality's case-handling route (MAS-route) for a leerplicht report, recorded by an authorised coordinator/admin once the municipality communicates it via the recordMunicipalityFeedback transition. Scholiq neither polls for nor infers this — it only records what it is told, mirroring TlvApplication.decision's 'record, don't adjudicate' posture (openspec/changes/zorgvraag-swv-tlv-chain/design.md).",
+                        "default": null,
+                        "properties": {
+                            "masRoute": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "The case-handling route (MAS-route) the municipality assigned this report to.",
+                                "default": null,
+                                "title": "MAS Route"
+                            },
+                            "receivedAt": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "date-time",
+                                "description": "ISO 8601 timestamp when the municipality's route decision was received. Stamped server-side by MunicipalityFeedbackGuard when not supplied.",
+                                "default": null,
+                                "title": "Received At"
+                            },
+                            "note": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Free-text note from the coordinator recording the municipality's feedback.",
+                                "default": null,
+                                "title": "Note"
+                            },
+                            "recordedBy": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Nextcloud user ID of the coordinator/admin who recorded this feedback. Always stamped by MunicipalityFeedbackGuard from the transition actor — never trusts a caller-supplied value.",
+                                "default": null,
+                                "title": "Recorded By"
+                            }
+                        },
+                        "title": "Municipality Feedback"
+                    },
                     "lifecycle": {
                         "type": "string",
                         "enum": [
@@ -9036,6 +9222,12 @@
                         "succeed": {
                             "from": "running",
                             "to": "succeeded"
+                        },
+                        "recordMunicipalityFeedback": {
+                            "from": "succeeded",
+                            "to": "succeeded",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\MunicipalityFeedbackGuard",
+                            "description": "Coordinator/admin records the municipality's MAS-route feedback for a succeeded leerplicht report. A self-loop transition (lifecycle stays succeeded) used solely to attach MunicipalityFeedbackGuard's role + target check to this field write — this register has no declarative field-scoped write-authorization extension yet (ADR-031 exception; see design.md Security Considerations). ASSUMPTION (unverified against OpenRegister core, which is not present in this repo): the lifecycle engine permits a from==to transition; flag for confirmation during review."
                         },
                         "partial": {
                             "from": "running",
