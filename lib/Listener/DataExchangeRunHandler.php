@@ -84,6 +84,20 @@ class DataExchangeRunHandler implements IEventListener
     private const ATTENDANCE_RECORD_SCHEMA = 'attendance-record';
 
     /**
+     * Target that composes the SWV zorgvraag care-request dossier from the
+     * originating SupportRequest's linked LearnerProfile + (optional)
+     * LearningPlan, mirroring the leerplicht dossier composer above and the
+     * OSO overstapdossier pattern the data-exchange spec describes. See
+     * composeSwvDossier() for the minimal-disclosure whitelist.
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
+     */
+    private const SWV_TARGET = 'swv';
+    private const SUPPORT_REQUEST_SCHEMA = 'support-request';
+    private const LEARNER_PROFILE_SCHEMA = 'learner-profile';
+    private const LEARNING_PLAN_SCHEMA   = 'learning-plan';
+
+    /**
      * The OpenConnector REST endpoint for triggering a source run.
      * Assumption documented in design: POST /apps/openconnector/api/sources/{name}/run
      * returns { runId, status, recordsProcessed, recordsAccepted, recordsRejected,
@@ -169,6 +183,7 @@ class DataExchangeRunHandler implements IEventListener
      * @return void
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
      */
     private function runJob(ObjectTransitionedEvent $event): void
     {
@@ -280,6 +295,14 @@ class DataExchangeRunHandler implements IEventListener
         );
         $this->transitionEngine->transition($jobId, $nextState);
 
+        // Once a swv-target job succeeds, the originating SupportRequest tracks
+        // through to routed-to-swv (learning-plan spec "SupportRequest tracks the
+        // routed job through to decision"). Best-effort: a missing/unresolvable
+        // SupportRequest does not fail the job — it is logged and skipped.
+        // The target/nextState applicability check lives inside the callee (not
+        // here) to keep this already-complex method's branching flat.
+        $this->routeSupportRequestToSwv(target: $target, nextState: $nextState, scope: $scope, tenantId: $jobTenantId);
+
         $this->logger->info(
             '[DataExchangeRunHandler] Job {id} → {state}. target={t}, processed={p}, accepted={a}, rejected={r}.',
             [
@@ -293,6 +316,78 @@ class DataExchangeRunHandler implements IEventListener
         );
 
     }//end runJob()
+
+    /**
+     * Transition the SupportRequest that originated a succeeded swv-target
+     * DataExchangeJob to `routed-to-swv`.
+     *
+     * No-ops for any target other than `swv` or any state other than
+     * `succeed` — callers may invoke this unconditionally after every job
+     * outcome; the applicability check lives here, not in the caller, to
+     * keep runJob()'s branching flat.
+     *
+     * Resolves the SupportRequest via `scope.filters.supportRequestId`
+     * (stamped by SupportRequestSubmitHandler when it queues the job).
+     *
+     * @param string              $target    The job's target slug.
+     * @param string              $nextState The lifecycle state the job just transitioned to.
+     * @param array<string,mixed> $scope     The job's scope (schema, filters, ...).
+     * @param string              $tenantId  Tenant ID to enforce as a mandatory filter.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/specs/learning-plan/spec.md#requirement-swv-routing-reuses-dataexchangejob-and-the-existing-pending-parent-review-gate
+     */
+    private function routeSupportRequestToSwv(string $target, string $nextState, array $scope, string $tenantId): void
+    {
+        if ($target !== self::SWV_TARGET || $nextState !== 'succeed') {
+            return;
+        }
+
+        $filters          = $scope['filters'] ?? [];
+        $supportRequestId = $filters['supportRequestId'] ?? null;
+
+        if (is_string($supportRequestId) === false || $supportRequestId === '') {
+            $this->logger->warning(
+                '[DataExchangeRunHandler] Succeeded swv job has no scope.filters.supportRequestId — cannot '
+                .'route the originating SupportRequest to routed-to-swv.'
+            );
+            return;
+        }
+
+        $idFilters = ['id' => $supportRequestId];
+        if ($tenantId !== '') {
+            $idFilters['tenant_id'] = $tenantId;
+        }
+
+        $results = $this->objectService->findAll(
+            [
+                'register' => self::SCHOLIQ_REGISTER,
+                'schema'   => self::SUPPORT_REQUEST_SCHEMA,
+                'filters'  => $idFilters,
+                'limit'    => 1,
+            ]
+        );
+
+        if (empty($results) === true) {
+            $this->logger->warning(
+                '[DataExchangeRunHandler] SupportRequest {id} not found — cannot route to routed-to-swv.',
+                ['id' => $supportRequestId]
+            );
+            return;
+        }
+
+        try {
+            $this->transitionEngine->transition($supportRequestId, 'routeToSwv');
+        } catch (\Throwable $e) {
+            $this->logger->warning(
+                '[DataExchangeRunHandler] Could not transition SupportRequest {id} to routed-to-swv: {msg}',
+                ['id' => $supportRequestId, 'msg' => $e->getMessage()]
+            );
+        }
+
+    }//end routeSupportRequestToSwv()
 
     /**
      * Load a DataMappingProfile by UUID.
@@ -408,9 +503,21 @@ class DataExchangeRunHandler implements IEventListener
      * When a target is listed here, a null profile (no data mapping) is a hard failure
      * rather than pass-through, to prevent unredacted PII from being shipped (C3).
      *
+     * Fixes a pre-existing mismatch: this list previously named 'oso-transfer',
+     * which is never an actual DataExchangeJob.target value (the real target
+     * string is 'oso' — see the "OSO transfer dossier" DataMappingProfile seed
+     * and DataExchangeJob.target's own description). That meant an 'oso' job
+     * with no configured profile silently fell through to the PII-stripped
+     * pass-through branch instead of hard-failing — a real gap for a
+     * discretionary, consent-gated transfer. Corrected here to 'oso' while
+     * adding 'swv' (openspec/changes/zorgvraag-swv-tlv-chain design.md
+     * "Minimal disclosure via DataMappingProfile whitelist, not object-level
+     * ACLs" — fail-closed: an unset profile MUST yield no export, never a
+     * wider one).
+     *
      * @var string[]
      */
-    private const MANDATORY_PROFILE_TARGETS = ['bron-rod', 'bron-vo', 'oso-transfer', 'edukoppeling'];
+    private const MANDATORY_PROFILE_TARGETS = ['bron-rod', 'bron-vo', 'oso', 'edukoppeling', 'swv'];
 
     /**
      * Build the payload array for OpenConnector from source objects and an optional mapping profile.
@@ -428,6 +535,7 @@ class DataExchangeRunHandler implements IEventListener
      * @throws \RuntimeException When the target requires a profile but none is configured.
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-14
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
      */
     private function buildPayload(array $objects, ?array $profile, string $target=''): array
     {
@@ -446,6 +554,10 @@ class DataExchangeRunHandler implements IEventListener
                     unset($obj['bsnEncrypted'], $obj['bsnHash'], $obj['email']);
                     if ($target === self::LEERPLICHT_TARGET) {
                         $obj = $this->composeLeerplichtDossier(record: $obj, flag: $obj);
+                    }
+
+                    if ($target === self::SWV_TARGET) {
+                        $obj = $this->composeSwvDossier(record: $obj, supportRequest: $obj);
                     }
 
                     return $obj;
@@ -487,6 +599,15 @@ class DataExchangeRunHandler implements IEventListener
             // mirroring the "OSO dossier composer" pattern — not the bare flat mapping.
             if ($target === self::LEERPLICHT_TARGET) {
                 $record = $this->composeLeerplichtDossier(record: $record, flag: $object);
+            }
+
+            // SWV zorgvraag dossier composer (target=swv): assemble the OSO-format
+            // care-request dossier from the originating SupportRequest's linked
+            // LearnerProfile + (optional) LearningPlan, same rationale as the
+            // leerplicht composer above — fieldMappings cannot resolve a $ref into
+            // a nested payload section.
+            if ($target === self::SWV_TARGET) {
+                $record = $this->composeSwvDossier(record: $record, supportRequest: $object);
             }
 
             $payload[] = $record;
@@ -543,6 +664,157 @@ class DataExchangeRunHandler implements IEventListener
         return $record;
 
     }//end composeLeerplichtDossier()
+
+    /**
+     * Compose the SWV zorgvraag care-request dossier for a swv-target job.
+     *
+     * Mirrors the "OSO dossier composer" pattern described in the
+     * data-exchange spec's "What" section and composeLeerplichtDossier()
+     * above: assembles the dossier from the originating SupportRequest's
+     * linked LearnerProfile and (when set) LearningPlan, rather than shipping
+     * only the flat scalar fields the DataMappingProfile.fieldMappings
+     * mechanism can express (it has no facility to resolve a $ref into a
+     * nested payload section).
+     *
+     * Minimal disclosure (openspec/changes/zorgvraag-swv-tlv-chain/design.md
+     * "Minimal disclosure via DataMappingProfile whitelist, not object-level
+     * ACLs"): both the `learner` and `learningPlanContext` sections below are
+     * built from an EXPLICIT field whitelist, never a full-object dump —
+     * `LearnerProfile.bsnEncrypted`/`bsnHash`/`email` are never read here, and
+     * the LearningPlan section carries only the fields the SWV needs as
+     * deliberation context (goals/support measures/kind/period), never
+     * internal linkage fields like templateId/cohortId/courseId/coordinatorId.
+     *
+     * Fail-closed: absent `learningPlanId` on the SupportRequest yields no
+     * `learningPlanContext` section at all (never a wider export); an
+     * unresolvable LearnerProfile yields a null `learner` section rather than
+     * inventing data.
+     *
+     * @param array<string,mixed> $record         The flat field-mapped record built so far.
+     * @param array<string,mixed> $supportRequest The source SupportRequest object.
+     *
+     * @return array<string,mixed> $record with learner + learningPlanContext appended.
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/specs/learning-plan/spec.md#requirement-minimal-disclosure-to-the-swv-via-a-field-whitelisting-datamappingprofile
+     */
+    private function composeSwvDossier(array $record, array $supportRequest): array
+    {
+        $learnerId = (string) ($supportRequest['learnerId'] ?? '');
+        $tenantId  = (string) ($supportRequest['tenant_id'] ?? '');
+
+        $record['learner'] = $this->resolveLearnerWhitelist(learnerId: $learnerId, tenantId: $tenantId);
+
+        $learningPlanId = $supportRequest['learningPlanId'] ?? null;
+        if (is_string($learningPlanId) === true && $learningPlanId !== '') {
+            $record['learningPlanContext'] = $this->resolveLearningPlanWhitelist(
+                learningPlanId: $learningPlanId,
+                tenantId: $tenantId
+            );
+        }
+
+        return $record;
+
+    }//end composeSwvDossier()
+
+    /**
+     * Resolve a learner's LearnerProfile to the minimal-disclosure whitelist
+     * of fields the OSO care-request dossier needs. NEVER includes
+     * bsnEncrypted, bsnHash, or email (design.md "No BSN exposure").
+     *
+     * @param string $learnerId NC user ID of the learner.
+     * @param string $tenantId  Tenant ID to enforce as a mandatory filter.
+     *
+     * @return array<string,mixed>|null Whitelisted learner fields, or null when unresolvable.
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
+     */
+    private function resolveLearnerWhitelist(string $learnerId, string $tenantId): ?array
+    {
+        if ($learnerId === '') {
+            return null;
+        }
+
+        $filters = ['ncUserId' => $learnerId];
+        if ($tenantId !== '') {
+            $filters['tenant_id'] = $tenantId;
+        }
+
+        $results = $this->objectService->findAll(
+            [
+                'register' => self::SCHOLIQ_REGISTER,
+                'schema'   => self::LEARNER_PROFILE_SCHEMA,
+                'filters'  => $filters,
+                'limit'    => 1,
+            ]
+        );
+
+        if (empty($results) === true) {
+            return null;
+        }
+
+        $profile = $results[0];
+        if (is_array($results[0]) === false) {
+            $profile = $results[0]->jsonSerialize();
+        }
+
+        // Explicit whitelist — never bsnEncrypted/bsnHash/email.
+        return [
+            'eckId'      => $profile['eckId'] ?? null,
+            'givenName'  => $profile['givenName'] ?? null,
+            'familyName' => $profile['familyName'] ?? null,
+            'birthDate'  => $profile['birthDate'] ?? null,
+            'schoolId'   => $profile['schoolId'] ?? null,
+        ];
+
+    }//end resolveLearnerWhitelist()
+
+    /**
+     * Resolve a LearningPlan to the minimal-disclosure whitelist of context
+     * fields the SWV needs for deliberation (goals/support measures/kind/
+     * period) — never internal linkage fields (templateId/cohortId/courseId/
+     * coordinatorId).
+     *
+     * @param string $learningPlanId UUID of the LearningPlan.
+     * @param string $tenantId       Tenant ID to enforce as a mandatory filter.
+     *
+     * @return array<string,mixed>|null Whitelisted plan context, or null when unresolvable.
+     *
+     * @spec openspec/changes/zorgvraag-swv-tlv-chain/tasks.md#task-4.5
+     */
+    private function resolveLearningPlanWhitelist(string $learningPlanId, string $tenantId): ?array
+    {
+        $filters = ['id' => $learningPlanId];
+        if ($tenantId !== '') {
+            $filters['tenant_id'] = $tenantId;
+        }
+
+        $results = $this->objectService->findAll(
+            [
+                'register' => self::SCHOLIQ_REGISTER,
+                'schema'   => self::LEARNING_PLAN_SCHEMA,
+                'filters'  => $filters,
+                'limit'    => 1,
+            ]
+        );
+
+        if (empty($results) === true) {
+            return null;
+        }
+
+        $plan = $results[0];
+        if (is_array($results[0]) === false) {
+            $plan = $results[0]->jsonSerialize();
+        }
+
+        return [
+            'kind'            => $plan['kind'] ?? null,
+            'period'          => $plan['period'] ?? null,
+            'goals'           => $plan['goals'] ?? [],
+            'supportMeasures' => $plan['supportMeasures'] ?? [],
+        ];
+
+    }//end resolveLearningPlanWhitelist()
 
     /**
      * Resolve a flag's breachingRecordIds to their full AttendanceRecord data.

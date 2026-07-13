@@ -38,6 +38,7 @@ use OCA\Scholiq\Listener\BsaProgressFlagHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
+use OCA\Scholiq\Listener\SupportRequestSubmitHandler;
 use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
@@ -242,6 +243,19 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: DataExchangeRunHandler::class
+        );
+
+        // ADR-031 legitimate exception: SupportRequest `submit` transition → auto-queue
+        // the SWV zorgvraag DataExchangeJob bridge. Mirrors AttendanceFlagCreationHandler's
+        // "queue a DataExchangeJob on this trigger" shape. Creates a DataExchangeJob
+        // (target: swv, scope.schema: support-request) in `queued`, advances it into
+        // `pending-parent-review` via TransitionEngine, and stamps the job id back onto
+        // the SupportRequest. Composition of the OSO-format dossier itself is handled by
+        // DataExchangeRunHandler's target switch when the job later transitions to
+        // `running` — this listener only creates and queues it.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SupportRequestSubmitHandler::class
         );
 
         // ADR-031 legitimate exception: RolloverPlan `previewed → executing`

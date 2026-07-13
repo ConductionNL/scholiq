@@ -6969,6 +6969,642 @@
                     }
                 }
             },
+            "SupportRequest": {
+                "slug": "support-request",
+                "icon": "HandHeartOutline",
+                "version": "0.1.0",
+                "title": "SupportRequest",
+                "description": "A zorgvraag (support/care request) raised from a pupil's dossier by a coordinator, signalling that a learner's needs may exceed what the school can provide alone. May precede a LearningPlan (OPP) or reference an existing one. Submitting it auto-queues a DataExchangeJob (target: swv) that routes an OSO-format care-request dossier to the regional samenwerkingsverband (SWV) for deliberation and a possible TlvApplication.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "raisedBy",
+                    "supportDomain",
+                    "description",
+                    "urgency",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this support request concerns.",
+                        "title": "Learner ID"
+                    },
+                    "learningPlanId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "LearningPlan",
+                        "description": "UUID of the LearningPlan (OPP) this request relates to. Nullable — a zorgvraag frequently precedes the OPP that follows from it, so the request must remain creatable without one.",
+                        "default": null,
+                        "title": "Learning Plan ID"
+                    },
+                    "raisedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the coordinator/IB'er who raised this request — same convention as LearningPlan.coordinatorId.",
+                        "title": "Raised By"
+                    },
+                    "supportDomain": {
+                        "type": "string",
+                        "description": "Plain-language area of the hulpvraag (e.g. 'gedrag', 'leren', 'sociaal-emotioneel').",
+                        "title": "Support Domain"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Narrative describing the support request.",
+                        "title": "Description"
+                    },
+                    "urgency": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high"
+                        ],
+                        "description": "Urgency of the support request.",
+                        "title": "Urgency"
+                    },
+                    "dataExchangeJobId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "DataExchangeJob",
+                        "description": "UUID of the DataExchangeJob (target: swv) auto-queued when this request is submitted. Null until submitted.",
+                        "default": null,
+                        "title": "Data Exchange Job ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "routed-to-swv",
+                            "in-deliberation",
+                            "decided",
+                            "closed"
+                        ],
+                        "default": "draft",
+                        "description": "Support-request lifecycle state.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "description": "Coordinator submits the request. Auto-queues a DataExchangeJob (target: swv, scope.schema: support-request) via SupportRequestSubmitHandler, which immediately advances the job into pending-parent-review."
+                        },
+                        "routeToSwv": {
+                            "from": "submitted",
+                            "to": "routed-to-swv",
+                            "description": "Set by DataExchangeRunHandler once the SWV DataExchangeJob succeeds — the dossier has been delivered."
+                        },
+                        "startDeliberation": {
+                            "from": "routed-to-swv",
+                            "to": "in-deliberation"
+                        },
+                        "decide": {
+                            "from": "in-deliberation",
+                            "to": "decided"
+                        },
+                        "close": {
+                            "from": "decided",
+                            "to": "closed"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "principal"
+                    ],
+                    "_comment": "Zorg data is the most sensitive category this app handles (openspec/changes/zorgvraag-swv-tlv-chain/design.md Security Considerations). LearnerProfile.roles has no dedicated zorgcoördinator/coordinator role today — a fleet-wide role addition is out of scope for this change — so creation is restricted to admin/principal at the declarative RBAC layer, the tightest posture available without inventing a role. Coordinator-level authorship is expressed via the raisedBy NC-user-id convention (same as LearningPlan.coordinatorId) rather than a role gate; object-level enforcement of that convention at create time is a known platform gap, same as documented for secure-exam-test-mode (lib/Settings/scholiq_register.json:5105)."
+                },
+                "x-property-rbac": {
+                    "_comment": "Full-detail read restricted to admin/principal plus the coordinator who raised the request (raisedBy match), per design.md Security Considerations. A future portal-contribution provider MUST field-project parent/pupil reads rather than reuse this block — explicitly out of scope for this change.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "principal"
+                            },
+                            {
+                                "match": {
+                                    "field": "raisedBy",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-notifications": {
+                    "supportRequestRouted": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "routeToSwv"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "raisedBy"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "De zorgvraag is doorgestuurd naar het samenwerkingsverband",
+                            "en": "The support request was routed to the samenwerkingsverband"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "TlvApplication": {
+                "slug": "tlv-application",
+                "icon": "FileCertificateOutline",
+                "version": "0.1.0",
+                "title": "TlvApplication",
+                "description": "The toelaatbaarheidsverklaring (TLV) application, tracing to the SupportRequest that triggered it. Scholiq records the samenwerkingsverband's (SWV) decision — it does not adjudicate it, per Wet passend onderwijs. validUntil drives a declared tlvExpiringSoon calculation (no PHP TimedJob).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "supportRequestId",
+                    "arrangementType",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "supportRequestId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "SupportRequest",
+                        "description": "UUID of the SupportRequest this TLV application traces to. A TLV always traces to a SupportRequest.",
+                        "title": "Support Request ID"
+                    },
+                    "arrangementType": {
+                        "type": "string",
+                        "description": "The requested special-education arrangement type.",
+                        "title": "Arrangement Type"
+                    },
+                    "swvCaseReference": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The SWV's own case reference number, set once known.",
+                        "default": null,
+                        "title": "SWV Case Reference"
+                    },
+                    "decision": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "approved",
+                            "rejected",
+                            "conditional",
+                            null
+                        ],
+                        "description": "The SWV's decision, recorded by a coordinator once received. Null until decided. Scholiq records this decision; it implements no logic that auto-approves, auto-rejects, or predicts it.",
+                        "default": null,
+                        "title": "Decision"
+                    },
+                    "validFrom": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "Start of the TLV validity period. Set only once the decision is recorded.",
+                        "default": null,
+                        "title": "Valid From"
+                    },
+                    "validUntil": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "End of the TLV validity period. Set only once the decision is recorded. Drives the declared tlvExpiringSoon calculation below.",
+                        "default": null,
+                        "title": "Valid Until"
+                    },
+                    "decisionDocumentRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reference to the OR file attachment carrying the SWV's decision document.",
+                        "default": null,
+                        "title": "Decision Document Reference"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "under-review",
+                            "decided",
+                            "expired"
+                        ],
+                        "default": "draft",
+                        "description": "TLV application lifecycle state.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted"
+                        },
+                        "startReview": {
+                            "from": "submitted",
+                            "to": "under-review"
+                        },
+                        "decide": {
+                            "from": "under-review",
+                            "to": "decided",
+                            "description": "Coordinator records the SWV's externally-issued decision (approved|rejected|conditional) plus validFrom/validUntil/decisionDocumentRef. No automated approval/rejection logic runs — the SWV is the sole deciding authority (design.md Decisions: 'TLV decision recorded, never adjudicated')."
+                        },
+                        "expire": {
+                            "from": "decided",
+                            "to": "expired"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "principal"
+                    ],
+                    "_comment": "Same tightest-posture rationale as SupportRequest (openspec/changes/zorgvraag-swv-tlv-chain/design.md Security Considerations) — zorg data, no dedicated coordinator role exists yet."
+                },
+                "x-property-rbac": {
+                    "_comment": "Full-detail read restricted to admin/principal per design.md Security Considerations. TlvApplication carries no raisedBy-equivalent field of its own (it traces to SupportRequest via supportRequestId), so a per-object coordinator-match read rule cannot be expressed declaratively here without denormalising a field — deferred alongside the future portal-contribution provider design.md already scopes out of this change.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "principal"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-calculations": {
+                    "daysUntilValidUntil": {
+                        "type": "integer",
+                        "materialise": true,
+                        "description": "Days remaining until validUntil. Null when validUntil is not set.",
+                        "expression": {
+                            "if": [
+                                {
+                                    "eq": [
+                                        {
+                                            "prop": "validUntil"
+                                        },
+                                        null
+                                    ]
+                                },
+                                null,
+                                {
+                                    "dateDiff": {
+                                        "from": "now",
+                                        "to": {
+                                            "prop": "validUntil"
+                                        },
+                                        "unit": "days"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "tlvExpiringSoon": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "description": "True when an approved TLV's validity period is within 30 days of expiring (and not yet expired). Declared calculation trigger — no PHP TimedJob (design.md Decisions).",
+                        "expression": {
+                            "and": [
+                                {
+                                    "eq": [
+                                        {
+                                            "prop": "decision"
+                                        },
+                                        "approved"
+                                    ]
+                                },
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "validUntil"
+                                        },
+                                        null
+                                    ]
+                                },
+                                {
+                                    "lte": [
+                                        {
+                                            "prop": "daysUntilValidUntil"
+                                        },
+                                        30
+                                    ]
+                                },
+                                {
+                                    "gt": [
+                                        {
+                                            "prop": "daysUntilValidUntil"
+                                        },
+                                        0
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "tlvDecisionReceived": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "decide"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Er is een TLV-besluit ontvangen van het samenwerkingsverband",
+                            "en": "A TLV decision was received from the samenwerkingsverband"
+                        }
+                    },
+                    "tlvExpiringSoon": {
+                        "trigger": {
+                            "type": "calculatedChange",
+                            "field": "tlvExpiringSoon",
+                            "condition": {
+                                "eq": true
+                            },
+                            "previously": {
+                                "eq": false
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Een toelaatbaarheidsverklaring verloopt binnen 30 dagen",
+                            "en": "A toelaatbaarheidsverklaring (TLV) expires within 30 days"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "DeliberationRecord": {
+                "slug": "deliberation-record",
+                "icon": "AccountGroupOutline",
+                "version": "0.1.0",
+                "title": "DeliberationRecord",
+                "description": "A structured, append-only record of a consultation round (parents, municipality, care partners, school, SWV coordinator) concerning a SupportRequest and/or TlvApplication. Carries a first-class pupilVoice block reflecting the 2025 Wet versterking positie ouders en leerlingen in passend onderwijs hoorrecht (insight 1145). Once recorded, immutable — a correction creates a new record referencing the one it supersedes rather than mutating it.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "attendees",
+                    "scheduledAt",
+                    "outcome",
+                    "pupilVoice",
+                    "tenant_id"
+                ],
+                "anyOf": [
+                    {
+                        "required": [
+                            "supportRequestId"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "tlvApplicationId"
+                        ]
+                    }
+                ],
+                "properties": {
+                    "supportRequestId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "SupportRequest",
+                        "description": "UUID of the SupportRequest this deliberation concerns. At least one of supportRequestId/tlvApplicationId is required.",
+                        "default": null,
+                        "title": "Support Request ID"
+                    },
+                    "tlvApplicationId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "TlvApplication",
+                        "description": "UUID of the TlvApplication this deliberation concerns. At least one of supportRequestId/tlvApplicationId is required.",
+                        "default": null,
+                        "title": "TLV Application ID"
+                    },
+                    "attendees": {
+                        "type": "array",
+                        "description": "Role-tagged attendees of this deliberation round.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "role"
+                            ],
+                            "properties": {
+                                "role": {
+                                    "type": "string",
+                                    "enum": [
+                                        "parent",
+                                        "pupil",
+                                        "municipality",
+                                        "care-partner",
+                                        "school",
+                                        "swv-coordinator"
+                                    ],
+                                    "description": "The attendee's role in the deliberation.",
+                                    "title": "Attendee Role"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Free-text name, for attendees not backed by an NC user account (e.g. a municipality or care-partner representative).",
+                                    "default": null,
+                                    "title": "Attendee Name"
+                                },
+                                "refId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "NC user ID or LearnerProfile UUID, for attendees who are Scholiq subjects.",
+                                    "default": null,
+                                    "title": "Attendee Reference ID"
+                                }
+                            }
+                        },
+                        "title": "Attendees"
+                    },
+                    "scheduledAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 datetime the deliberation round was/is scheduled for.",
+                        "title": "Scheduled At"
+                    },
+                    "recordedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 datetime the deliberation outcome was recorded. Null until recorded.",
+                        "default": null,
+                        "title": "Recorded At"
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "description": "Recommendation / conclusion of the deliberation round.",
+                        "title": "Outcome"
+                    },
+                    "pupilVoice": {
+                        "type": "object",
+                        "description": "The pupil's own voice, distinct from parent consent (2025 hoorrecht, insight 1145). A DeliberationRecord MUST NOT reach recorded unless heard is true or waived carries a non-empty waiverReason — enforced by PupilVoiceGuard.",
+                        "required": [
+                            "heard",
+                            "waived"
+                        ],
+                        "properties": {
+                            "heard": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "True when the pupil was directly heard.",
+                                "title": "Pupil Heard"
+                            },
+                            "statementNote": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "The pupil's own recorded statement, distinct from any parent Signature/consent recorded elsewhere on the chain.",
+                                "default": null,
+                                "title": "Pupil Statement Note"
+                            },
+                            "waived": {
+                                "type": "boolean",
+                                "default": false,
+                                "description": "True when directly hearing the pupil is not appropriate (e.g. very young children).",
+                                "title": "Hoorrecht Waived"
+                            },
+                            "waiverReason": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Required, non-empty reason when waived is true. Enforced by PupilVoiceGuard at the scheduled → recorded transition.",
+                                "default": null,
+                                "title": "Waiver Reason"
+                            }
+                        },
+                        "title": "Pupil Voice"
+                    },
+                    "correctsId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "DeliberationRecord",
+                        "description": "UUID of the prior DeliberationRecord this record corrects. Set only when this record is a correction of an earlier appendOnly record — the original is never mutated.",
+                        "default": null,
+                        "title": "Corrects Record ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "scheduled",
+                            "recorded"
+                        ],
+                        "default": "scheduled",
+                        "description": "Deliberation record lifecycle state. appendOnly: true once recorded.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "scheduled",
+                    "transitions": {
+                        "record": {
+                            "from": "scheduled",
+                            "to": "recorded",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\PupilVoiceGuard",
+                            "description": "Blocked unless pupilVoice.heard is true or pupilVoice.waived is true with a non-empty waiverReason (2025 hoorrecht, insight 1145)."
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "principal"
+                    ],
+                    "_comment": "Same tightest-posture rationale as SupportRequest (openspec/changes/zorgvraag-swv-tlv-chain/design.md Security Considerations)."
+                },
+                "x-property-rbac": {
+                    "_comment": "Full-detail read (including other attendees' coordinator/staff-only contributions) restricted to admin/principal per design.md Security Considerations. pupilVoice.statementNote MUST be pupil-visible where portal access exists — a future portal-contribution provider's field-projection concern, explicitly out of scope for this change (design.md).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "principal"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
             "AttendanceRecord": {
                 "x-openregister-processing": {
                     "code": "scholiq-attendance-leerplicht",
@@ -8710,7 +9346,7 @@
                     },
                     "target": {
                         "type": "string",
-                        "description": "Named OpenConnector connection: bron-rod | oso | leerplicht | surfconext | hr | or a custom name. This is a reference to an OpenConnector source/target configuration — Scholiq implements no wire protocol.",
+                        "description": "Named OpenConnector connection: bron-rod | oso | leerplicht | surfconext | hr | swv | or a custom name. This is a reference to an OpenConnector source/target configuration — Scholiq implements no wire protocol.",
                         "title": "OpenConnector Target"
                     },
                     "direction": {
@@ -8933,6 +9569,33 @@
                         "validationProfile": null,
                         "active": true,
                         "lifecycle": "active"
+                    },
+                    {
+                        "name": "SWV zorgvraag dossier",
+                        "target": "swv",
+                        "direction": "export",
+                        "sourceSchema": "support-request",
+                        "targetSchema": "OSO:CareRequestDossier",
+                        "fieldMappings": [
+                            {
+                                "scholiqField": "supportDomain",
+                                "targetField": "hulpvraagDomein",
+                                "transform": null
+                            },
+                            {
+                                "scholiqField": "description",
+                                "targetField": "hulpvraagOmschrijving",
+                                "transform": null
+                            },
+                            {
+                                "scholiqField": "urgency",
+                                "targetField": "urgentie",
+                                "transform": null
+                            }
+                        ],
+                        "validationProfile": "oso-care-request-v1",
+                        "active": true,
+                        "lifecycle": "active"
                     }
                 ]
             },
@@ -8993,7 +9656,7 @@
                     },
                     "target": {
                         "type": "string",
-                        "description": "Named OpenConnector connection (e.g. 'bron-rod', 'oso', 'leerplicht', 'surfconext', 'hr'). Scholiq implements no Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML wire code — all protocol logic lives in OpenConnector.",
+                        "description": "Named OpenConnector connection (e.g. 'bron-rod', 'oso', 'leerplicht', 'surfconext', 'hr', 'swv'). 'swv' routes a zorgvraag/TLV-chain dossier (learning-plan's SupportRequest) to the regional samenwerkingsverband (openconnector#753). Scholiq implements no Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML wire code — all protocol logic lives in OpenConnector.",
                         "title": "OpenConnector Target"
                     },
                     "mappingProfileId": {
@@ -9014,7 +9677,7 @@
                         "properties": {
                             "schema": {
                                 "type": "string",
-                                "description": "Slug of the Scholiq schema to export/import (e.g. 'learner-profile').",
+                                "description": "Slug of the Scholiq schema to export/import (e.g. 'learner-profile', 'support-request' for the target: swv zorgvraag dossier).",
                                 "title": "Schema"
                             },
                             "filters": {

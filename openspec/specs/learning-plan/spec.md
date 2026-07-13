@@ -96,4 +96,9 @@ All in OpenRegister. New: `LearningPlan`, `LearningPlanEvaluation`, `Signature`,
 - The DigiD / eIDAS authentication handshake itself (openconnector / NC auth — see `data-exchange`).
 - Sector-wide OPP analytics (launchpad).
 - Auto-generation of goals from assessment results (would be an `AiFeature` registration).
-- The samenwerkingsverband (collaboration-network) funding flow that some OPPs trigger — out of scope; a follow-up if a buyer needs it.
+- The samenwerkingsverband (SWV) zorgvraag/deliberation/TLV chain itself is now IN scope — see `SupportRequest`,
+  `TlvApplication`, `DeliberationRecord` above (`openspec/changes/zorgvraag-swv-tlv-chain`). Still out of scope:
+  the SWV's own funding/bekostiging administration for an issued arrangement (Scholiq records the TLV decision,
+  it does not administer the resulting funding flow), any TLV adjudication/decision-support logic (the SWV is
+  the sole deciding authority — see design.md "TLV decision recorded, never adjudicated"), and a
+  `portal-contribution` provider surfacing this chain to parents/pupils (deferred to a follow-up).
