@@ -121,6 +121,17 @@ Vrij en open source onder de EUPL-1.2-licentie.
         </post-migration>
     </repair-steps>
 
+    <background-jobs>
+        <!--
+            LTI AGS grade-passback poll (lti-tool-placement, design.md D2):
+            pulls pending nl.conduction.lti.ags.score.received CloudEvent
+            messages from OpenConnector's events-cloudevents pull surface and
+            creates concept GradeEntry rows. No-ops until an admin bootstraps
+            scholiq.lti_ags_subscription_id (see docs/ARCHITECTURE.md).
+        -->
+        <job>OCA\Scholiq\Cron\LtiAgsScorePollJob</job>
+    </background-jobs>
+
     <settings>
         <admin>OCA\Scholiq\Settings\AdminSettings</admin>
         <admin-section>OCA\Scholiq\Sections\SettingsSection</admin-section>

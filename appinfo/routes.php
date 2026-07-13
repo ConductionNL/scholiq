@@ -56,6 +56,15 @@ return [
         ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
         ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
 
+        // LTI 1.3 tool placement launch — delegates to OpenConnector's
+        // lti-13-platform Platform-role launch-initiation surface (opaque
+        // proxy, no LTI protocol code here). Any authenticated caller may
+        // launch a placement they can resolve; #[NoAdminRequired] +
+        // #[NoCSRFRequired] (state-changing but session-authenticated, no
+        // cross-site form target).
+        // Controller: LtiToolPlacementController (slug: ltiToolPlacement)
+        ['name' => 'ltiToolPlacement#launch', 'url' => '/api/lti-placements/{placementId}/launch', 'verb' => 'POST'],
+
         // Personal timetable — the caller's own sessions for a window, resolved
         // from cohort membership (teacher/learner) via ObjectService (RBAC-scoped).
         // Read-only; #[NoAdminRequired] (any signed-in user) + #[NoCSRFRequired] (GET read).

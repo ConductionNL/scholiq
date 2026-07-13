@@ -122,6 +122,13 @@
 					"icon": "icon-quota",
 					"route": "GradeEntries",
 					"order": 60
+				},
+				{
+					"id": "LtiToolPlacementsMenu",
+					"label": "LTI tools",
+					"icon": "icon-external",
+					"route": "LtiToolPlacements",
+					"order": 65
 				}
 			]
 		},
@@ -4600,6 +4607,83 @@
 						"gridX": 6,
 						"gridY": 5,
 						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LtiToolPlacements",
+			"route": "/courses/lti-placements",
+			"type": "index",
+			"title": "LTI tool placements",
+			"config": {
+				"register": "scholiq",
+				"schema": "lti-tool-placement"
+			}
+		},
+		{
+			"id": "LtiToolPlacementDetail",
+			"route": "/courses/lti-placements/:id",
+			"type": "detail",
+			"title": "LTI tool placement",
+			"config": {
+				"register": "scholiq",
+				"schema": "lti-tool-placement",
+				"_note": "An LtiToolPlacement names which lesson/course an external LTI 1.3 tool is placed into and, optionally, which grading component its AGS scores feed — a config archetype, same shape as GradeScale. Body leads with the placement definition (8-wide) and a Related panel resolving the Lesson/Course/CurriculumPlan/GradeScale it references. No comms leaves (no linkedTypes) — this is configuration, not a conversation. Sidebar keeps metadata + audit-trail for config-change history (openspec/changes/lti-tool-placement/tasks.md#task-3.3).",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ltip-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Web"
+					},
+					{
+						"id": "ltip-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ltip-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ltip-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
 						"gridHeight": 5,
 						"showTitle": false
 					}
