@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/.",
-        "version": "0.7.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/.",
+        "version": "0.8.0"
     },
     "x-openregister": {
         "type": "application",
@@ -201,7 +201,7 @@
                 },
                 "slug": "credential",
                 "icon": "CertificateOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Credential",
                 "description": "Verifiable Credential (W3C VC + Open Badges 3.0). Append-only compliance evidence; issued on enrolment completion; supports expiry detection with tiered reminders.",
                 "type": "object",
@@ -367,6 +367,17 @@
                         "nullable": true,
                         "description": "Last wallet-offer push or revocation-propagation failure message. Cleared on the next successful `offerToWallet`.",
                         "title": "Wallet Offer Error"
+                    },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) this issued credential attests the learner has attained — e.g. a diploma attesting every competency in its Programme's requiredCompetencyIds, or a microcredential attesting one leaf competency. Additive field — existing rows leave it empty; issuance logic is unchanged.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
                     },
                     "lifecycle": {
                         "type": "string",
@@ -809,7 +820,7 @@
             "Course": {
                 "slug": "course",
                 "icon": "FolderOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Course",
                 "description": "A course or training program (Schema.org Course). Lifecycle: draft → published → archived.",
                 "type": "object",
@@ -952,6 +963,17 @@
                         "example": 6,
                         "title": "ECTS Credits"
                     },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) this course teaches. Additive field — existing rows leave it empty.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -1079,7 +1101,7 @@
             "Lesson": {
                 "slug": "lesson",
                 "icon": "FileDocumentOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Lesson",
                 "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft → published → retired.",
                 "type": "object",
@@ -1148,11 +1170,22 @@
                     },
                     "learningObjectives": {
                         "type": "array",
-                        "description": "Learning objectives for this lesson",
+                        "description": "Learning objectives for this lesson, as free text. Superseded (not replaced) by competencyIds for anything that needs to roll up into a learner's CompetencyAttainment or be queried structurally — learningObjectives itself is not linked to the competency taxonomy and never rolls up; free text remains for anything competencyIds can't yet express.",
                         "items": {
                             "type": "string"
                         },
                         "title": "Learning Objectives"
+                    },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) this lesson teaches. Additive field — existing rows leave it empty.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
                     },
                     "mandatoryTraining": {
                         "type": "boolean",
@@ -2740,7 +2773,7 @@
             "Programme": {
                 "slug": "programme",
                 "icon": "SchoolOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Programme",
                 "description": "A named educational or training track (HBO-V bachelor, NIS2 board certification, vmbo-tl examenjaar). Aggregates courses, declares a credential to issue on completion, and points at one CurriculumPlan.",
                 "type": "object",
@@ -2813,6 +2846,17 @@
                         "$ref": "Credential",
                         "description": "UUID of the Credential template to issue on programme completion. Null = no auto-issuance.",
                         "title": "Credential Template ID"
+                    },
+                    "requiredCompetencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) a learner must attain to complete this programme — the 'required by Programme' half of the skills-gap view (the other half, 'required by role', is declared on Competency.requiredForRoles). Additive field — existing rows leave it empty.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Required Competency IDs"
                     },
                     "lifecycle": {
                         "type": "string",
@@ -3929,7 +3973,7 @@
             "Assignment": {
                 "slug": "assignment",
                 "icon": "ClipboardEditOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Assignment",
                 "description": "A deliverable that learners hand in: title, instructions, due date, rubric, and submission window. Belongs to a Course, Session, or both. Linked to a CurriculumPlan component to enable grade roll-up.",
                 "type": "object",
@@ -4057,6 +4101,17 @@
                         "description": "Pluggable plagiarism-check provider identifier (e.g. 'turnitin', 'ouriginal'). Resolved to OCA\\Scholiq\\Plagiarism\\ProvidesPlagiarismCheck at runtime. No built-in provider — hook only.",
                         "example": "turnitin",
                         "title": "Plagiarism Provider"
+                    },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) a graded Submission for this assignment provides evidence for. Additive field — existing rows leave it empty. When set, CompetencyAttainmentRollupHandler treats every listed competency as aligned when the resulting GradeEntry (sourceKind: assignment-submission) publishes.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
                     },
                     "lifecycle": {
                         "type": "string",
@@ -4472,7 +4527,7 @@
             "Item": {
                 "slug": "item",
                 "icon": "FileDocumentOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Item",
                 "description": "A QTI 3.0 assessment item. Canonical stored form is QTI 3.0; QTI 2.x and Common Cartridge items are converted on import by QtiImportService.",
                 "type": "object",
@@ -4541,6 +4596,17 @@
                         "default": [],
                         "description": "Subject or topic tags for cross-bank searching.",
                         "title": "Subject Tags"
+                    },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) this item covers, for cross-bank filtering alongside subjectTags. Additive field — existing rows leave it empty. NOT consumed by the competency capability's roll-up in this change: AssessmentResult produces one GradeEntry per attempt at Assessment grain, not per Item — authoring/analytics metadata only.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
                     },
                     "difficulty": {
                         "type": "number",
@@ -4639,7 +4705,7 @@
                 },
                 "slug": "assessment",
                 "icon": "ClipboardCheckOutline",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Assessment",
                 "description": "A structured test (toets, tentamen, examen, quiz) composed of items from an ItemBank with a scoring scheme, time limit, attempt policy, availability window, and optional proctoring. AI-assisted proctoring requires the high-risk AI feature to be registered and DPO-enabled in the central Hermiq governance app (ADR-005 DPO gate).",
                 "type": "object",
@@ -4826,6 +4892,17 @@
                         "nullable": true,
                         "description": "CurriculumPlan componentId for the GradeEntry feed (grading spec, forward-ref).",
                         "title": "Grade Entry Component ID"
+                    },
+                    "competencyIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Competency taxonomy nodes (competency capability) a graded AssessmentResult for this assessment provides evidence for, following the same shape as Assignment.competencyIds. Additive field — existing rows leave it empty.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Competency"
+                        },
+                        "title": "Competency IDs"
                     },
                     "tenant_id": {
                         "type": "string",
@@ -5854,6 +5931,439 @@
                             },
                             {
                                 "role": "examboard"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "CompetencyFramework": {
+                "slug": "competency-framework",
+                "icon": "SitemapOutline",
+                "version": "0.1.0",
+                "title": "CompetencyFramework",
+                "description": "A named competency/learning-outcome taxonomy (SBB kwalificatiedossier, SLO kerndoelen/eindtermen, ESCO, or school-defined) declaring its own ordered proficiency scale. Competency rows recurse under a CompetencyFramework via frameworkId. Lifecycle: draft → published → archived.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "sourceAuthority",
+                    "proficiencyLevels",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable framework name.",
+                        "example": "SBB Kwalificatiedossier ICT 2023",
+                        "title": "Framework Name"
+                    },
+                    "sourceAuthority": {
+                        "type": "string",
+                        "enum": [
+                            "sbb-kwalificatiedossier",
+                            "slo-kerndoelen",
+                            "slo-eindtermen",
+                            "esco",
+                            "school-defined",
+                            "other"
+                        ],
+                        "description": "Named source authority this framework's competencies are drawn from.",
+                        "title": "Source Authority"
+                    },
+                    "sourceRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "External dossier code, kerndoelenset id, or ESCO taxonomy URI this framework is sourced from.",
+                        "title": "Source Reference"
+                    },
+                    "edition": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The framework's own edition/jaarversie (e.g. '2023'), distinct from this schema's own OpenRegister `version`.",
+                        "title": "Edition"
+                    },
+                    "level": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Education or training level this framework applies to.",
+                        "enum": [
+                            "po",
+                            "vo",
+                            "mbo",
+                            "hbo",
+                            "wo",
+                            "corporate"
+                        ],
+                        "title": "Education Level"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Plain-language description of the framework's scope.",
+                        "title": "Framework Description"
+                    },
+                    "proficiencyLevels": {
+                        "type": "array",
+                        "minItems": 1,
+                        "description": "Ordered proficiency scale every Competency under this framework is measured against.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "levelId",
+                                "label",
+                                "order"
+                            ],
+                            "properties": {
+                                "levelId": {
+                                    "type": "string",
+                                    "description": "Stable identifier for this level (e.g. 'nog-niet-competent', 'competent').",
+                                    "title": "Level ID"
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "description": "Human-readable level descriptor.",
+                                    "title": "Level Label"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "description": "Ordinal position of this level in the scale, lowest to highest.",
+                                    "title": "Order"
+                                },
+                                "minPercent": {
+                                    "type": "number",
+                                    "nullable": true,
+                                    "minimum": 0,
+                                    "maximum": 100,
+                                    "description": "Minimum evidence percentage required to resolve to this level from GradeEntry-sourced evidence. Null when this level is only ever resolved via a direct label mapping (e.g. WerkprocesAssessment's beoordeling), never via a percentage threshold.",
+                                    "title": "Minimum Percent"
+                                }
+                            }
+                        },
+                        "title": "Proficiency Levels"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Framework lifecycle state. Managed by OR lifecycle engine; do not set directly.",
+                        "enum": [
+                            "draft",
+                            "published",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "publish": {
+                            "from": "draft",
+                            "to": "published"
+                        },
+                        "archive": {
+                            "from": "published",
+                            "to": "archived"
+                        },
+                        "unarchive": {
+                            "from": "archived",
+                            "to": "draft"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "Competency": {
+                "slug": "competency",
+                "icon": "TargetVariant",
+                "version": "0.1.0",
+                "title": "Competency",
+                "description": "A recursive node in a CompetencyFramework's taxonomy (kerntaak → werkproces, leerlijn → kerndoel, or any other two-or-more-level hierarchy) via parentId, mirroring Course.parentCourseId. A leaf Competency (isLeaf: true, childCount == 0) IS the learning outcome — no separate LearningOutcome schema exists. Lifecycle: draft → published → archived.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "frameworkId",
+                    "code",
+                    "title",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "frameworkId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "CompetencyFramework",
+                        "description": "UUID of the owning CompetencyFramework.",
+                        "title": "Framework ID"
+                    },
+                    "parentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Competency",
+                        "description": "UUID of the parent Competency. Makes Competency recursive — mirrors Course.parentCourseId. Null for top-level nodes (e.g. a kerntaak or leerlijn).",
+                        "title": "Parent Competency ID"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Framework-specific code for this node (e.g. an SBB kerntaak/werkproces code, or an SLO kerndoel code).",
+                        "title": "Code"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Human-readable title of this competency node.",
+                        "title": "Title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Plain-language description of what this competency covers.",
+                        "title": "Description"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Display order among sibling Competency nodes under the same parentId.",
+                        "title": "Order"
+                    },
+                    "requiredForRoles": {
+                        "type": "array",
+                        "default": [],
+                        "description": "LearnerProfile.roles values for which this competency is required — the 'required by role' half of the competency capability's skills-gap view.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "learner",
+                                "instructor",
+                                "hr",
+                                "manager",
+                                "compliance-officer",
+                                "admin",
+                                "mentor",
+                                "principal",
+                                "parent",
+                                "inspector"
+                            ]
+                        },
+                        "title": "Required For Roles"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Competency lifecycle state. Managed by OR lifecycle engine; do not set directly.",
+                        "enum": [
+                            "draft",
+                            "published",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "publish": {
+                            "from": "draft",
+                            "to": "published"
+                        },
+                        "archive": {
+                            "from": "published",
+                            "to": "archived"
+                        },
+                        "unarchive": {
+                            "from": "archived",
+                            "to": "draft"
+                        }
+                    }
+                },
+                "x-openregister-aggregate-refs": {
+                    "childCount": {
+                        "schema": "competency",
+                        "metric": "count",
+                        "filters": {
+                            "parentId": "@self.id"
+                        }
+                    }
+                },
+                "x-openregister-calculations": {
+                    "childCount": {
+                        "type": "integer",
+                        "materialise": true,
+                        "expression": {
+                            "prop": "@aggregate.childCount"
+                        }
+                    },
+                    "isLeaf": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "expression": {
+                            "eq": [
+                                {
+                                    "prop": "@aggregate.childCount"
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "CompetencyAttainment": {
+                "slug": "competency-attainment",
+                "icon": "TrophyOutline",
+                "version": "0.1.0",
+                "title": "CompetencyAttainment",
+                "description": "Calculated roll-up per learner per Competency. Recomputed whenever a competency-aligned GradeEntry (via Assignment/Assessment.competencyIds, resolved through Submission.assignmentId / AssessmentResult.assessmentId) publishes, or a WerkprocesAssessment with a resolved competencyId is confirmed. No lifecycle — it is fully derived. Read-only from the frontend. Mirrors FinalGrade's exact shape.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "learnerId",
+                    "competencyId",
+                    "frameworkId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this attainment row belongs to.",
+                        "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
+                    "competencyId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Competency",
+                        "description": "UUID of the Competency this row tracks attainment for.",
+                        "title": "Competency ID"
+                    },
+                    "frameworkId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "CompetencyFramework",
+                        "description": "UUID of the governing CompetencyFramework, denormalized from Competency.frameworkId for query convenience — exactly as FinalGrade.curriculumPlanId is.",
+                        "title": "Framework ID"
+                    },
+                    "proficiencyLevelId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Computed current level — matches a CompetencyFramework.proficiencyLevels[].levelId. Null before enough evidence has been interpretable against the framework's scale.",
+                        "title": "Proficiency Level ID"
+                    },
+                    "gradeEntryIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of GradeEntry rows contributing evidence to this attainment.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "GradeEntry"
+                        },
+                        "title": "Grade Entry IDs"
+                    },
+                    "assessmentResultIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of AssessmentResult rows contributing evidence to this attainment.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "AssessmentResult"
+                        },
+                        "title": "Assessment Result IDs"
+                    },
+                    "werkprocesAssessmentIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of WerkprocesAssessment rows contributing evidence to this attainment.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "WerkprocesAssessment"
+                        },
+                        "title": "Werkproces Assessment IDs"
+                    },
+                    "submissionIds": {
+                        "type": "array",
+                        "default": [],
+                        "description": "UUIDs of Submission rows contributing evidence to this attainment.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Submission"
+                        },
+                        "title": "Submission IDs"
+                    },
+                    "lastRecomputedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp of the last recompute triggered by contributing evidence.",
+                        "title": "Last Recomputed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-triggers": {
+                    "calculatedChange": {
+                        "description": "Recompute this CompetencyAttainment whenever a competency-aligned GradeEntry publishes or a WerkprocesAssessment with a resolved competencyId is confirmed. Implemented via CompetencyAttainmentRollupHandler listening on ObjectTransitionedEvent — NOT a TimedJob.",
+                        "handler": "OCA\\Scholiq\\Listener\\CompetencyAttainmentRollupHandler"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "wave-2 competency-framework: attainment rows are academic PII. Learner sees own rows; admin/hr/manager see all, grounded in dashboard/spec.md's named HR/manager audience.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "hr"
+                            },
+                            {
+                                "role": "manager"
                             },
                             {
                                 "match": {
@@ -10798,9 +11308,9 @@
                 "WerkprocesAssessment": {
                     "slug": "werkproces-assessment",
                     "icon": "ClipboardCheckOutline",
-                    "version": "0.1.0",
+                    "version": "0.2.0",
                     "title": "Werkproces Assessment",
-                    "description": "One workplace assessment against one werkproces of the kwalificatiedossier, for one BpvPlacement. A confirmed assessment emits or updates a GradeEntry for its curriculumPlanId/componentId via WerkprocesGradeEmitHandler — this schema computes no final grade itself.",
+                    "description": "One workplace assessment against one werkproces of the kwalificatiedossier, for one BpvPlacement. A confirmed assessment emits or updates a GradeEntry for its curriculumPlanId/componentId via WerkprocesGradeEmitHandler — this schema computes no final grade itself. competencyId (nullable, server-resolved) generalizes kwalificatiedossierCode/kerntaakCode/werkprocesCode into the competency capability's shared taxonomy; a confirmed assessment with a resolved competencyId also updates the learner's CompetencyAttainment via CompetencyAttainmentRollupHandler.",
                     "type": "object",
                     "x-openregister": {
                         "active": true,
@@ -10858,6 +11368,14 @@
                             "type": "string",
                             "description": "Human-readable label of the werkproces being assessed.",
                             "title": "Werkproces Label"
+                        },
+                        "competencyId": {
+                            "type": "string",
+                            "nullable": true,
+                            "format": "uuid",
+                            "$ref": "Competency",
+                            "description": "UUID of the Competency (competency capability) this assessment's werkprocesCode resolves to, matched server-side at creation time against a Competency.code under a CompetencyFramework with sourceAuthority: sbb-kwalificatiedossier. Never accepted as client input — including from the praktijkopleider portal action, whose field whitelist deliberately excludes this field. Remains null when no matching Competency is found; kwalificatiedossierCode/kerntaakCode/werkprocesCode/werkprocesLabel remain the sole record of what was assessed and confirmation is never blocked by an unresolved competencyId.",
+                            "title": "Competency ID"
                         },
                         "assessorId": {
                             "type": "string",

@@ -286,6 +286,42 @@
 			]
 		},
 		{
+			"id": "GroupCompetency",
+			"label": "Competencies",
+			"icon": "icon-clippy",
+			"order": 30,
+			"children": [
+				{
+					"id": "SkillsGapDashboardMenu",
+					"label": "Skills gap dashboard",
+					"icon": "icon-checkmark",
+					"route": "SkillsGapDashboard",
+					"order": 10
+				},
+				{
+					"id": "CompetencyFrameworksMenu",
+					"label": "Frameworks",
+					"icon": "icon-folder",
+					"route": "CompetencyFrameworks",
+					"order": 20
+				},
+				{
+					"id": "CompetenciesMenu",
+					"label": "Competencies",
+					"icon": "icon-clippy",
+					"route": "Competencies",
+					"order": 30
+				},
+				{
+					"id": "CompetencyAttainmentsMenu",
+					"label": "Attainment",
+					"icon": "icon-projects",
+					"route": "CompetencyAttainments",
+					"order": 40
+				}
+			]
+		},
+		{
 			"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
@@ -8818,6 +8854,408 @@
 			"title": "BSA risk dashboard",
 			"component": "BsaRiskDashboard",
 			"_note": "bsa-study-progress-guard (story bsa-risico-dashboard, 10071): the one genuine custom-view exception for study-progress — a coordinator/study-advisor view of open BsaProgressFlags against their trajectory's norm/window, with a link to draft a BsaWarning for a listed learner. Every other study-progress object is declarative index/detail pages."
+		},
+		{
+			"id": "CompetencyFrameworks",
+			"route": "/competencies/frameworks",
+			"type": "index",
+			"title": "Competency frameworks",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency-framework"
+			}
+		},
+		{
+			"id": "CompetencyFrameworkDetail",
+			"route": "/competencies/frameworks/:id",
+			"type": "detail",
+			"title": "Competency framework",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency-framework",
+				"_note": "competency-framework: a CompetencyFramework is a named taxonomy (SBB kwalificatiedossier, SLO kerndoelen/eindtermen, ESCO, or school-defined) declaring its own proficiencyLevels scale — a config archetype like GradeScale. Body leads with the framework definition including proficiencyLevels (8-wide) and a Related panel. The Competency nodes declared under this framework render as a related-index so a curriculum designer sees the taxonomy tree. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "cfw-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Sitemap"
+					},
+					{
+						"id": "cfw-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Competencies",
+									"register": "scholiq",
+									"schema": "competency",
+									"metric": "count",
+									"filter": {
+										"frameworkId": "@objectId"
+									},
+									"route": "Competencies"
+								}
+							]
+						}
+					},
+					{
+						"id": "cfw-competencies",
+						"type": "object-list",
+						"title": "Competencies",
+						"content": {
+							"register": "scholiq",
+							"schema": "competency",
+							"filter": {
+								"frameworkId": "@objectId"
+							},
+							"sort": {
+								"field": "order",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "code",
+									"label": "Code"
+								},
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "isLeaf",
+									"label": "Learning outcome"
+								}
+							],
+							"rowRoute": "CompetencyDetail",
+							"viewAllRoute": "Competencies",
+							"viewAllQuery": {
+								"frameworkId": "@objectId"
+							},
+							"emptyText": "No competencies found.",
+							"allowCreate": false
+						},
+						"icon": "Target"
+					},
+					{
+						"id": "cfw-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "cfw-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "cfw-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "cfw-competencies",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "cfw-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Competencies",
+			"route": "/competencies",
+			"type": "index",
+			"title": "Competencies",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency"
+			}
+		},
+		{
+			"id": "CompetencyDetail",
+			"route": "/competencies/:id",
+			"type": "detail",
+			"title": "Competency",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency",
+				"_note": "competency-framework: Competency is a recursive taxonomy node (mirrors Course.parentCourseId) — a leaf node (isLeaf: true) IS the learning outcome, no separate LearningOutcome schema. Body leads with the node's data (8-wide) and a Related panel resolving frameworkId/parentId. Child Competency nodes (sub-tree) and the CompetencyAttainment rows recorded against this node each render as a related-index for traceability. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "comp-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Target"
+					},
+					{
+						"id": "comp-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Sub-competencies",
+									"register": "scholiq",
+									"schema": "competency",
+									"metric": "count",
+									"filter": {
+										"parentId": "@objectId"
+									},
+									"route": "Competencies"
+								},
+								{
+									"title": "Attainment rows",
+									"register": "scholiq",
+									"schema": "competency-attainment",
+									"metric": "count",
+									"filter": {
+										"competencyId": "@objectId"
+									},
+									"route": "CompetencyAttainments"
+								}
+							]
+						}
+					},
+					{
+						"id": "comp-children",
+						"type": "object-list",
+						"title": "Sub-competencies",
+						"content": {
+							"register": "scholiq",
+							"schema": "competency",
+							"filter": {
+								"parentId": "@objectId"
+							},
+							"sort": {
+								"field": "order",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "code",
+									"label": "Code"
+								},
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "isLeaf",
+									"label": "Learning outcome"
+								}
+							],
+							"rowRoute": "CompetencyDetail",
+							"viewAllRoute": "Competencies",
+							"viewAllQuery": {
+								"parentId": "@objectId"
+							},
+							"emptyText": "No sub-competencies found — this is a leaf node (learning outcome).",
+							"allowCreate": false
+						},
+						"icon": "Target"
+					},
+					{
+						"id": "comp-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "comp-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "comp-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "comp-children",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "comp-related",
+						"gridX": 6,
+						"gridY": 5,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "CompetencyAttainments",
+			"route": "/competencies/attainments",
+			"type": "index",
+			"title": "Competency attainment",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency-attainment",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "CompetencyAttainmentDetail",
+			"route": "/competencies/attainments/:id",
+			"type": "detail",
+			"title": "Competency attainment",
+			"config": {
+				"register": "scholiq",
+				"schema": "competency-attainment",
+				"readOnly": true,
+				"_note": "competency-framework: a CompetencyAttainment is the computed roll-up outcome for a learner on a Competency (proficiencyLevelId plus four evidence-id arrays) — an aggregate result, mirrors FinalGrade's detail page exactly. Body leads with the attainment data (8-wide) and a Related panel resolving learner/competency/framework. No comms leaves (no linkedTypes). System-derived — no create/edit actions; sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "cattain-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Trophy"
+					},
+					{
+						"id": "cattain-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "cattain-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "cattain-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SkillsGapDashboard",
+			"route": "/competencies/skills-gap",
+			"type": "custom",
+			"title": "Skills gap dashboard",
+			"component": "SkillsGapDashboard",
+			"_note": "competency-framework: the one genuine custom-view exception for the competency capability — a learner/manager view comparing required competencies (Programme.requiredCompetencyIds for the learner's enrolled programme(s), union Competency.requiredForRoles intersecting LearnerProfile.roles) against the learner's CompetencyAttainment rows, listing gaps. Every other competency object is declarative index/detail pages."
 		}
 	]
 }
