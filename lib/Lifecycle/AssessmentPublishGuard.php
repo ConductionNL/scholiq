@@ -4,7 +4,12 @@
  * Scholiq Assessment Publish Guard
  *
  * Lifecycle guard for the Assessment schema's `publish` transition. Enforces that:
- * 1. The assessment has at least one item reference (itemRefs is non-empty).
+ * 1. The assessment has a resolvable item source: either itemRefs is non-empty
+ *    (itemSelectionMode `fixed`), or itemPoolConfig.itemBankId resolves to an
+ *    ItemBank with at least drawCount `published` Items across at least
+ *    drawCount DISTINCT variantGroupId groups, after applying the configured
+ *    subjectTags/difficulty filters (itemSelectionMode `random-draw`,
+ *    assessment-item-pools-and-analysis).
  * 2. When proctoring.flagReviewMode is `ai-assisted`, the high-risk AI feature
  *    with slug `assessment-ai-proctor-review` is registered and DPO-enabled in
  *    the central Hermiq governance register (EU AI Act, ADR-005 DPO gate).
@@ -48,6 +53,7 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Lifecycle;
 
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\Scholiq\Service\ItemPoolFilter;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
@@ -55,10 +61,14 @@ use Psr\Log\LoggerInterface;
  * Guards the Assessment `publish` transition.
  *
  * An Assessment may only be published when:
- * - It has at least one item reference (itemRefs is non-empty).
+ * - It has a resolvable item source: itemRefs is non-empty (fixed), or
+ *   itemPoolConfig resolves to enough distinct-variant-group Items
+ *   (random-draw).
  * - If proctoring.flagReviewMode is `ai-assisted`, the AI feature with slug
  *   `assessment-ai-proctor-review` is `enabled` in Hermiq's central governance
  *   register (ADR-005). Governance is delegated to Hermiq.
+ *
+ * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-publishing-an-assessment-requires-a-resolvable-item-source
  */
 class AssessmentPublishGuard
 {
@@ -84,9 +94,17 @@ class AssessmentPublishGuard
     private const AI_PROCTOR_SLUG = 'assessment-ai-proctor-review';
 
     /**
+     * OR schema slug for Item objects (assessment-item-pools-and-analysis).
+     */
+    private const ITEM_SCHEMA = 'item';
+
+    /**
      * Constructor.
      *
-     * @param ObjectService   $objectService OR object service for the Hermiq AI-feature lookup.
+     * @param ObjectService   $objectService OR object service for the Hermiq AI-feature lookup and,
+     *                                       since assessment-item-pools-and-analysis, the random-draw
+     *                                       item-pool resolvability check.
+     * @param ItemPoolFilter  $poolFilter    Pool filter/variant-grouping collaborator (assessment-item-pools-and-analysis).
      * @param IAppManager     $appManager    Used to tell "Hermiq absent" from "feature not enabled".
      * @param LoggerInterface $logger        PSR logger.
      *
@@ -94,6 +112,7 @@ class AssessmentPublishGuard
      */
     public function __construct(
         private readonly ObjectService $objectService,
+        private readonly ItemPoolFilter $poolFilter,
         private readonly IAppManager $appManager,
         private readonly LoggerInterface $logger,
     ) {
@@ -117,13 +136,9 @@ class AssessmentPublishGuard
      */
     public function check(array &$transitionContext): bool
     {
-        $object   = $transitionContext['object'] ?? [];
-        $itemRefs = $object['itemRefs'] ?? [];
+        $object = $transitionContext['object'] ?? [];
 
-        if (empty($itemRefs) === true) {
-            $this->logger->info(
-                '[AssessmentPublishGuard] Assessment has no itemRefs; blocking publish.'
-            );
+        if ($this->hasResolvableItemSource(assessment: $object) === false) {
             return false;
         }
 
@@ -170,4 +185,101 @@ class AssessmentPublishGuard
 
         return true;
     }//end check()
+
+    /**
+     * Whether the Assessment has a resolvable item source for publish.
+     *
+     * `itemSelectionMode: fixed` (the default) keeps the existing rule:
+     * itemRefs must be non-empty. `itemSelectionMode: random-draw` requires
+     * itemPoolConfig.itemBankId to resolve to at least drawCount `published`
+     * Items across at least drawCount DISTINCT variantGroupId groups, after
+     * applying the configured subjectTags/difficulty filters — mirroring the
+     * exact exclusivity rule AssessmentDrawResolver enforces at attempt time,
+     * so a "sufficient at publish" bank can never immediately produce a
+     * fail-closed empty draw.
+     *
+     * @param array<string,mixed> $assessment Assessment data.
+     *
+     * @return bool
+     *
+     * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-publishing-an-assessment-requires-a-resolvable-item-source
+     */
+    private function hasResolvableItemSource(array $assessment): bool
+    {
+        $itemSelectionMode = $assessment['itemSelectionMode'] ?? 'fixed';
+
+        if ($itemSelectionMode !== 'random-draw') {
+            $itemRefs = $assessment['itemRefs'] ?? [];
+            if (empty($itemRefs) === true) {
+                $this->logger->info(
+                    '[AssessmentPublishGuard] Assessment has no itemRefs; blocking publish.'
+                );
+                return false;
+            }
+
+            return true;
+        }
+
+        $poolConfig = $assessment['itemPoolConfig'] ?? null;
+        if (is_array($poolConfig) === false) {
+            $this->logger->info(
+                '[AssessmentPublishGuard] itemSelectionMode is random-draw but itemPoolConfig is not '
+                .'set; blocking publish.'
+            );
+            return false;
+        }
+
+        $itemBankId = $poolConfig['itemBankId'] ?? null;
+        $drawCount  = (int) ($poolConfig['drawCount'] ?? 0);
+        if ($itemBankId === null || $drawCount < 1) {
+            $this->logger->info(
+                '[AssessmentPublishGuard] itemPoolConfig is missing itemBankId or a valid drawCount; '
+                .'blocking publish.'
+            );
+            return false;
+        }
+
+        $distinctGroupCount = $this->countDistinctVariantGroups(poolConfig: $poolConfig, itemBankId: $itemBankId);
+
+        if ($distinctGroupCount < $drawCount) {
+            $this->logger->info(
+                '[AssessmentPublishGuard] ItemBank {bank} has only {found} distinct variant group(s) '
+                .'matching the configured filters, fewer than drawCount {drawCount}; blocking publish.',
+                ['bank' => $itemBankId, 'found' => $distinctGroupCount, 'drawCount' => $drawCount]
+            );
+            return false;
+        }
+
+        return true;
+
+    }//end hasResolvableItemSource()
+
+    /**
+     * Count the number of DISTINCT variantGroupId groups among `published`
+     * Items in the given bank matching the pool's subjectTags/difficulty
+     * filters. An Item with no variantGroupId counts as its own singleton
+     * group — delegates the filter/group logic to ItemPoolFilter, the SAME
+     * collaborator AssessmentDrawResolver draws from, so "sufficient at
+     * publish" and "resolvable at attempt time" can never disagree.
+     *
+     * @param array<string,mixed> $poolConfig itemPoolConfig (subjectTags, difficultyMin/Max).
+     * @param string              $itemBankId UUID of the ItemBank.
+     *
+     * @return int
+     */
+    private function countDistinctVariantGroups(array $poolConfig, string $itemBankId): int
+    {
+        $items = $this->objectService->findAll(
+            [
+                'register' => 'scholiq',
+                'schema'   => self::ITEM_SCHEMA,
+                'filters'  => ['itemBankId' => $itemBankId, 'lifecycle' => 'published'],
+            ]
+        );
+
+        $groups = $this->poolFilter->filterAndGroupByVariant(items: $items, poolConfig: $poolConfig);
+
+        return count($groups);
+
+    }//end countDistinctVariantGroups()
 }//end class

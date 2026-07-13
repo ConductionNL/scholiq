@@ -12,6 +12,8 @@
   - For `extendedText`: configure prompt only (no correctResponse — teacher scores).
   - Writes `qtiBody` (simplified QTI 3.0 XML) and `correctResponse` to the Item.
   - Loads existing Item data if a UUID is in the route.
+  - When editing an existing item, links to ItemAnalysisView (p-value,
+    item-total correlation, distractor bars — assessment-item-pools-and-analysis).
 
   Uses Options API + direct fetch calls (no custom Pinia store modules).
 
@@ -19,6 +21,7 @@
   Copyright (C) 2026 Conduction B.V.
 
   @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+  @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-item-and-assessment-statistics-are-read-restricted-to-staff-roles
 -->
 
 <template>
@@ -51,6 +54,12 @@
 				<h2 class="item-author__heading">
 					{{ id ? t('scholiq', 'Edit item') : t('scholiq', 'New item') }}
 				</h2>
+				<router-link
+					v-if="id"
+					class="item-author__analysis-link"
+					:to="`/assessments/items/${id}/analysis`">
+					{{ t('scholiq', 'View item statistics') }}
+				</router-link>
 			</header>
 
 			<!-- Title -->
@@ -468,10 +477,22 @@ export default {
 	padding: calc(var(--default-grid-baseline, 8px) * 2);
 }
 
+.item-author__header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: calc(var(--default-grid-baseline, 8px) * 2);
+}
+
 .item-author__heading {
 	font-size: var(--default-font-size, 15px);
 	font-weight: bold;
 	margin-bottom: calc(var(--default-grid-baseline, 8px) * 2);
+}
+
+.item-author__analysis-link {
+	font-size: 0.9em;
+	white-space: nowrap;
 }
 
 .item-author__field {

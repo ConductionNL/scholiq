@@ -3,10 +3,14 @@
   Custom page component for the TakeAssessmentView manifest page (type: custom).
 
   Timed test-taking surface for a learner to attempt an Assessment:
-  1. Fetch the Assessment (title, timeLimitMinutes, itemRefs, proctoring config).
-  2. Create an AssessmentResult in `in-progress` state.
+  1. Fetch the Assessment (title, timeLimitMinutes, proctoring config).
+  2. Create (or resume) an AssessmentResult in `in-progress` state, then re-fetch
+     it by id — AssessmentDrawResolver (server-side) resolves and persists
+     `drawnItemRefs`, the frozen item set/order/answer-option-order this
+     attempt presents, regardless of fixed/random-draw or shuffle settings.
   3. If the Assessment is proctored, show a placeholder notice (no concrete adapter ships).
-  4. Render each Item one at a time; record the learner's response.
+  4. Render each Item from drawnItemRefs one at a time (choice options in
+     drawnItemRefs[].optionOrder when present); record the learner's response.
   5. On submit: POST responses to the AssessmentResult and dispatch the `submit` transition
      (which triggers AssessmentScoringHandler auto-scoring on the OR side).
 
@@ -16,6 +20,7 @@
   Copyright (C) 2026 Conduction B.V.
 
   @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+  @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-every-assessmentresult-persists-a-frozen-server-resolved-snapshot-of-what-was-presented
 -->
 
 <template>
@@ -111,7 +116,7 @@
 					<p class="take-assessment__qti-body" v-html="extractPrompt(currentItem.qtiBody)" />
 					<ul class="take-assessment__options" role="radiogroup">
 						<li
-							v-for="option in extractChoices(currentItem.qtiBody)"
+							v-for="option in extractChoices(currentItem.qtiBody, currentItemOptionOrder)"
 							:key="option.id"
 							class="take-assessment__option">
 							<label>
@@ -211,6 +216,13 @@ export default {
 			items: [],
 			/** @type {string|null} */
 			resultId: null,
+			/**
+			 * Full AssessmentResult object (re-fetched after create — never
+			 * trusted from the POST response body, since AssessmentDrawResolver
+			 * populates drawnItemRefs as a follow-up write).
+			 * @type {object|null}
+			 */
+			result: null,
 			/** @type {number} */
 			currentItemIndex: 0,
 			/** @type {Record<string, unknown>} */
@@ -256,6 +268,21 @@ export default {
 			const item = this.currentItem
 			if (!item) return null
 			return this.responses[item.uuid] ?? null
+		},
+
+		/**
+		 * Server-resolved answer-option order for the current item, from
+		 * AssessmentResult.drawnItemRefs[].optionOrder (null when shuffle is
+		 * disabled or the item has no discrete choice identifiers).
+		 * @return {string[]|null}
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-per-attempt-item-order-and-answer-option-shuffle-are-independently-configurable
+		 */
+		currentItemOptionOrder() {
+			const item = this.currentItem
+			if (!item) return null
+			const drawnItemRefs = this.result?.drawnItemRefs ?? []
+			const ref = drawnItemRefs.find((r) => r.itemId === item.uuid)
+			return ref?.optionOrder ?? null
 		},
 
 		/**
@@ -339,6 +366,7 @@ export default {
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
 		 * @spec openspec/changes/secure-exam-test-mode/specs/assessment/spec.md
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-every-assessmentresult-persists-a-frozen-server-resolved-snapshot-of-what-was-presented
 		 */
 		async init(id) {
 			this.loading = true
@@ -346,7 +374,6 @@ export default {
 
 			try {
 				await this.loadAssessment(id)
-				await this.loadItems()
 
 				const proctoring = this.assessment?.proctoring ?? null
 
@@ -369,7 +396,11 @@ export default {
 					return
 				}
 
+				// Item pools and analysis: items are resolved from the server-side
+				// drawnItemRefs snapshot, which only exists once the AssessmentResult
+				// has been created — loadItems() MUST run after getOrCreateResult().
 				await this.getOrCreateResult(id)
+				await this.loadItems()
 				this.startTimer()
 			} catch (err) {
 				this.error = this.t('scholiq', 'Failed to load assessment. Please try again.')
@@ -400,14 +431,19 @@ export default {
 		},
 
 		/**
-		 * Fetch Item objects for all itemRefs on the assessment.
+		 * Fetch Item objects for every entry in AssessmentResult.drawnItemRefs —
+		 * the frozen, server-resolved snapshot of exactly which items (and, when
+		 * shuffleItemOrder is set, in which order) this attempt presents. Reads
+		 * drawnItemRefs instead of Assessment.itemRefs directly, since the
+		 * resolved set may differ from itemRefs (random-draw, or a shuffled
+		 * fixed list) — AssessmentDrawResolver populates it for EVERY attempt.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-every-assessmentresult-persists-a-frozen-server-resolved-snapshot-of-what-was-presented
 		 */
 		async loadItems() {
-			const itemRefs = this.assessment?.itemRefs ?? []
-			const itemIds = itemRefs.map((r) => r.itemId).filter(Boolean)
+			const drawnItemRefs = this.result?.drawnItemRefs ?? []
+			const itemIds = drawnItemRefs.map((r) => r.itemId).filter(Boolean)
 			if (itemIds.length === 0) {
 				this.items = []
 				return
@@ -467,6 +503,30 @@ export default {
 		},
 
 		/**
+		 * Re-fetch an AssessmentResult by id (GET). MUST run before loadItems()
+		 * reads drawnItemRefs — whether OR's ObjectCreatedEvent dispatch (which
+		 * AssessmentDrawResolver listens on to populate drawnItemRefs) completes
+		 * before the original POST response is serialized is an implementation
+		 * detail this view does not assume either way, so the create response
+		 * body is never trusted for drawnItemRefs.
+		 *
+		 * @param {string} resultId AssessmentResult UUID
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-item-draw-and-shuffle-resolution-runs-server-side-and-never-trusts-a-client-supplied-value
+		 */
+		async fetchResult(resultId) {
+			const url = generateUrl(`/apps/openregister/api/objects/scholiq/AssessmentResult/${resultId}`)
+			const resp = await fetch(url, {
+				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+			})
+			if (!resp.ok) {
+				throw new Error(`AssessmentResult fetch failed: ${resp.status}`)
+			}
+			const json = await resp.json()
+			this.result = json.object ?? json ?? {}
+		},
+
+		/**
 		 * Look up an existing non-terminal (`in-progress`) AssessmentResult for the
 		 * current learner and Assessment, mirroring the established fetch-all-then-
 		 * filter convention (`ProctoringReviewQueue.vue:loadSessions()`) — no field-
@@ -499,14 +559,18 @@ export default {
 		 * @param {string} assessmentId Assessment UUID
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secure-exam-test-mode/specs/assessment/spec.md
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-item-draw-and-shuffle-resolution-runs-server-side-and-never-trusts-a-client-supplied-value
 		 */
 		async getOrCreateResult(assessmentId) {
 			const existing = await this.checkExistingAttempt(assessmentId)
 			if (existing) {
 				this.resultId = existing.uuid ?? existing.id
-				return
+			} else {
+				await this.createResult(assessmentId)
 			}
-			await this.createResult(assessmentId)
+			// Always re-fetch by id — never trust drawnItemRefs from the create
+			// response body (design.md "Frontend consequence").
+			await this.fetchResult(this.resultId)
 		},
 
 		/**
@@ -569,6 +633,7 @@ export default {
 			this.loading = true
 			try {
 				await this.getOrCreateResult(this.assessmentId)
+				await this.loadItems()
 				this.startTimer()
 			} catch (err) {
 				this.error = this.t('scholiq', 'Failed to start assessment. Please try again.')
@@ -602,6 +667,7 @@ export default {
 
 				await this.createProctoringSession()
 				this.attachNativeHardening()
+				await this.loadItems()
 				this.startTimer()
 			} catch (err) {
 				this.error = this.t('scholiq', 'Failed to start assessment. Please try again.')
@@ -1057,13 +1123,18 @@ export default {
 
 		/**
 		 * Extract choice options from a QTI choice interaction XML body.
-		 * Returns an array of { id, label } objects.
+		 * Returns an array of { id, label } objects, in `optionOrder` when given
+		 * (the server-resolved AssessmentResult.drawnItemRefs[].optionOrder for
+		 * this item — present when shuffleAnswerOptions is enabled), falling
+		 * back to the qtiBody's declared order otherwise.
 		 *
 		 * @param {string} qtiBody Raw QTI XML body
+		 * @param {string[]|null} [optionOrder] Server-resolved identifier order, or null.
 		 * @return {Array<{id: string, label: string}>}
 		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-27
+		 * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-per-attempt-item-order-and-answer-option-shuffle-are-independently-configurable
 		 */
-		extractChoices(qtiBody) {
+		extractChoices(qtiBody, optionOrder = null) {
 			if (!qtiBody) return []
 			const parser = new DOMParser()
 			const doc = parser.parseFromString(qtiBody, 'text/xml')
@@ -1076,7 +1147,18 @@ export default {
 				})
 			}
 
-			return choices.length > 0 ? choices : [{ id: 'a', label: 'Option A' }, { id: 'b', label: 'Option B' }]
+			if (choices.length === 0) {
+				return [{ id: 'a', label: 'Option A' }, { id: 'b', label: 'Option B' }]
+			}
+
+			if (!optionOrder || optionOrder.length === 0) {
+				return choices
+			}
+
+			const byId = new Map(choices.map((choice) => [choice.id, choice]))
+			const ordered = optionOrder.map((id) => byId.get(id)).filter(Boolean)
+			const remaining = choices.filter((choice) => !optionOrder.includes(choice.id))
+			return ordered.length > 0 ? [...ordered, ...remaining] : choices
 		},
 	},
 }

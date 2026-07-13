@@ -11,6 +11,7 @@
  */
 
 import ItemAuthorView from './views/ItemAuthorView.vue'
+import ItemAnalysisView from './views/ItemAnalysisView.vue'
 import ExamCaseDossierView from './views/ExamCaseDossierView.vue'
 import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LessonPlayer from './views/LessonPlayer.vue'
@@ -88,6 +89,7 @@ export default {
 	ExamCaseDossierView: page(ExamCaseDossierView),
 	GradeImpactDetail: page(GradeImpactDetail),
 	GroupTrendHeatmap: page(GroupTrendHeatmap),
+	ItemAnalysisView: page(ItemAnalysisView),
 	ItemAuthorView: page(ItemAuthorView),
 	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
