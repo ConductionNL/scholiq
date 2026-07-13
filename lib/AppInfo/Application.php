@@ -45,6 +45,8 @@ use OCA\Scholiq\Listener\LessonProgressHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
+use OCA\Scholiq\Listener\ReportCardComposer;
+use OCA\Scholiq\Listener\ReportCardPublishHandler;
 use OCA\Scholiq\Listener\SupportRequestSubmitHandler;
 use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
@@ -304,6 +306,27 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: ConferenceScheduleGenerator::class
+        );
+
+        // ADR-031 legitimate exception: ReportPeriod `compose` transition →
+        // ReportCard composition bridge (report-card-composer), mirroring
+        // DataExchangeRunHandler::composeLeerplichtDossier()/
+        // composeSwvDossier()'s "assemble from multiple linked objects" shape
+        // — NOT the DataExchangeJob queue those methods live in. Also handles
+        // ReportCard's own `recompose` self-loop (single-learner re-run).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReportCardComposer::class
+        );
+
+        // ADR-031 legitimate exception: ReportCard `publishToParents` →
+        // ReportCardParentNotification fan-out bridge, mirroring
+        // GradeRollupHandler::fanOutParentNotifications()'s reasoning and
+        // shape exactly (OR's declarative notifications address a single
+        // field, not LearnerProfile.parentIds[]).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReportCardPublishHandler::class
         );
 
         // ADR-031 legitimate exception: ExemptionCase `granted` → GradeEntry

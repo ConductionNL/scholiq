@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/.",
-        "version": "0.10.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/.",
+        "version": "0.11.0"
     },
     "x-openregister": {
         "type": "application",
@@ -6496,13 +6496,14 @@
                     }
                 ],
                 "x-openregister-lifecycle": {
+                    "_comment": "report-card: publish/republish's requires guard is OCA\\Scholiq\\Lifecycle\\ReportPeriodLockGuard, which composes the original OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard check internally (constructor-injected, called first, unchanged behaviour) and then additionally blocks publishing into a locked report-card ReportPeriod's scope unless the actor holds admin/mentor/principal. requires is a single DI-tag string in this register's lifecycle engine (verified: OpenRegister's LifecycleAnnotationValidator rejects a non-string requires value) — there is no 'second requires entry' array shape to add alongside FraudCaseBlockGuard, so the guard composes rather than stacks.",
                     "property": "lifecycle",
                     "initial": "concept",
                     "transitions": {
                         "publish": {
                             "from": "concept",
                             "to": "published",
-                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportPeriodLockGuard",
                             "notifications": [
                                 "gradePublished"
                             ]
@@ -6514,7 +6515,7 @@
                         "republish": {
                             "from": "revised",
                             "to": "published",
-                            "requires": "OCA\\Scholiq\\Lifecycle\\FraudCaseBlockGuard",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportPeriodLockGuard",
                             "notifications": [
                                 "gradePublished"
                             ]
@@ -6724,6 +6725,628 @@
                         ]
                     }
                 }
+            },
+            "ReportPeriod": {
+                "slug": "report-period",
+                "icon": "CalendarRangeOutline",
+                "version": "0.1.0",
+                "title": "ReportPeriod",
+                "description": "The school-wide term a periodic report card (rapport) is composed for: name, academic year, a periodCode matching the same period identifier GradeEntry.period / CurriculumPlan.components[].period / FinalGrade.breakdown.periods keys already use, the window AttendanceRecord is summarised over, which CurriculumPlans (subjects) and Cohorts it covers, and a nullable lockDate after which ordinary grade publishing for that period is blocked (report-card spec).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "academicYear",
+                    "periodCode",
+                    "startDate",
+                    "endDate",
+                    "curriculumPlanIds",
+                    "cohortIds",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable report-period name.",
+                        "example": "Rapport 1",
+                        "title": "Period Name"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year in YYYY-YYYY format, same convention as Cohort.academicYear/BsaTrajectory.academicYear.",
+                        "example": "2025-2026",
+                        "title": "Academic Year"
+                    },
+                    "periodCode": {
+                        "type": "string",
+                        "description": "Period identifier MUST match GradeEntry.period, CurriculumPlan.components[].period, and the key used in FinalGrade.breakdown.periods — this is the join key the composer uses, not a new period-numbering scheme.",
+                        "example": "1",
+                        "title": "Period Code"
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Start date of the window AttendanceRecord (via its Session.startsAt) is summarised over.",
+                        "title": "Start Date"
+                    },
+                    "endDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "End date of the window AttendanceRecord (via its Session.startsAt) is summarised over.",
+                        "title": "End Date"
+                    },
+                    "curriculumPlanIds": {
+                        "type": "array",
+                        "description": "UUIDs of the CurriculumPlans (subjects) that count toward this report.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "CurriculumPlan"
+                        },
+                        "title": "Curriculum Plan IDs"
+                    },
+                    "cohortIds": {
+                        "type": "array",
+                        "description": "UUIDs of the Cohorts this period's report cards cover, same shape as ConferenceRound.cohortIds[].",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Cohort"
+                        },
+                        "title": "Cohort IDs"
+                    },
+                    "lockDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "default": null,
+                        "description": "Datetime after which ordinary teacher grade-publishing for this period is blocked (see isLocked below and grading's ReportPeriodLockGuard). Null = never locked.",
+                        "title": "Lock Date"
+                    },
+                    "attendanceIncluded": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether ReportCardComposer composes an attendanceSummary section for report cards in this period.",
+                        "title": "Attendance Included"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "composed",
+                            "archived"
+                        ],
+                        "default": "open",
+                        "description": "Period lifecycle state. open = still accepting grade changes / not yet composed; composed = ReportCards have been generated for every learner in scope; archived = retained, no longer active. Managed by the OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "compose": {
+                            "from": "open",
+                            "to": "composed",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportPeriodComposeGuard"
+                        },
+                        "archive": {
+                            "from": "composed",
+                            "to": "archived"
+                        }
+                    }
+                },
+                "x-openregister-calculations": {
+                    "isLocked": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "description": "True once lockDate is set AND has passed @now. Same lt/now idiom as ConferenceRound.isBookingClosed — informational/read directly by guards, NOT itself a lifecycle transition: a scheduled x-openregister-notifications trigger can only fire a notification, never drive a lifecycle transition (verified precedent: ConferenceRound.isBookingClosed's own description). ReportPeriodComposeGuard (compose) and grading's ReportPeriodLockGuard (GradeEntry.publish/republish) read this field directly via ObjectService.",
+                        "expression": {
+                            "and": [
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "lockDate"
+                                        },
+                                        null
+                                    ]
+                                },
+                                {
+                                    "lt": [
+                                        {
+                                            "prop": "lockDate"
+                                        },
+                                        {
+                                            "now": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "lockDatePassed": {
+                        "trigger": {
+                            "type": "scheduled",
+                            "intervalSec": 86400,
+                            "filter": {
+                                "lifecycle": "open",
+                                "lockDate": {
+                                    "operator": "olderThan",
+                                    "value": "PT0S"
+                                }
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "mentor",
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "De sluitingsdatum voor een rapportperiode is verstreken — start de samenstelling handmatig",
+                            "en": "A report period's lock date has passed — start composition manually"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "mentor",
+                        "principal"
+                    ],
+                    "_comment": "Tightest-posture pattern: no dedicated coordinator role exists in LearnerProfile.roles today (documented platform gap, same rationale as SupportRequest/TlvApplication/PupilVoice). Where a notification needs to reach 'the coordinator' this schema uses the already-precedented x-openregister-notifications kind:'groups' NC-group recipient shape above, not a fabricated RBAC role."
+                },
+                "x-property-rbac": {
+                    "_comment": "ReportPeriod is the school's scheduling config, not a learner/parent-readable document — staff-only, mirrors ReportCard's staff half.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "role": "principal"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ReportCard": {
+                "slug": "report-card",
+                "icon": "FileChartOutline",
+                "version": "0.1.0",
+                "title": "ReportCard",
+                "description": "One composed periodic report (rapport) per (learner, ReportPeriod): a snapshot of each in-scope subject's period average and pass/fail state (from FinalGrade.breakdown.periods[periodCode]), a per-subject teacher comment, an attendance summary, an overall mentor comment, and a forward-compatible competencyAttainment section. Composed by ReportCardComposer on ReportPeriod.compose; reviewed at the rapportvergadering; published to parents only once every contributing grade's own visibleFrom has passed.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "reportPeriodId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this report card belongs to.",
+                        "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
+                    "reportPeriodId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "ReportPeriod",
+                        "description": "UUID of the ReportPeriod this report card was composed for.",
+                        "title": "Report Period ID"
+                    },
+                    "cohortId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "Denormalised Cohort UUID for filtering, mirrors AttendanceRecord.cohortId.",
+                        "title": "Cohort ID"
+                    },
+                    "subjectGrades": {
+                        "type": "array",
+                        "default": [],
+                        "description": "One entry per in-scope CurriculumPlan with a matching period component, populated by ReportCardComposer from FinalGrade.breakdown.periods[periodCode]. A subject whose CurriculumPlan declares no component matching the ReportPeriod's periodCode contributes no row here (not an error).",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "curriculumPlanId"
+                            ],
+                            "properties": {
+                                "curriculumPlanId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "$ref": "CurriculumPlan",
+                                    "description": "UUID of the subject's CurriculumPlan.",
+                                    "title": "Curriculum Plan ID"
+                                },
+                                "courseId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "$ref": "Course",
+                                    "description": "UUID of the associated Course, when set on the source FinalGrade.",
+                                    "title": "Course ID"
+                                },
+                                "periodAverage": {
+                                    "type": "number",
+                                    "nullable": true,
+                                    "description": "The FinalGrade.breakdown.periods[periodCode] value for this subject at composition time.",
+                                    "title": "Period Average"
+                                },
+                                "passed": {
+                                    "type": "boolean",
+                                    "nullable": true,
+                                    "description": "The source FinalGrade.passed value for this subject at composition time.",
+                                    "title": "Passed"
+                                },
+                                "teacherComment": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Per-subject teacher comment, editable while the report card is in draft or rapportvergadering-review.",
+                                    "title": "Teacher Comment"
+                                },
+                                "sourceGradeEntryIds": {
+                                    "type": "array",
+                                    "default": [],
+                                    "description": "UUIDs of the published GradeEntries that contributed this subject's periodAverage, denormalised the same way AttendanceFlag.breachingRecordIds already is — so ReportCardVisibilityGuard can resolve each entry's visibleFrom without a second query hop.",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "$ref": "GradeEntry"
+                                    },
+                                    "title": "Source Grade Entry IDs"
+                                }
+                            }
+                        },
+                        "title": "Subject Grades"
+                    },
+                    "attendanceSummary": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Attendance aggregate over the ReportPeriod's [startDate, endDate] window, composed from AttendanceRecord when the governing ReportPeriod.attendanceIncluded is true. Null when attendanceIncluded is false.",
+                        "properties": {
+                            "presentCount": {
+                                "type": "integer",
+                                "description": "Number of AttendanceRecords with status=present.",
+                                "title": "Present Count"
+                            },
+                            "absentUnexcusedCount": {
+                                "type": "integer",
+                                "description": "Number of AttendanceRecords with status=absent-unexcused.",
+                                "title": "Absent Unexcused Count"
+                            },
+                            "absentExcusedCount": {
+                                "type": "integer",
+                                "description": "Number of AttendanceRecords with status=absent-excused.",
+                                "title": "Absent Excused Count"
+                            },
+                            "lateCount": {
+                                "type": "integer",
+                                "description": "Number of AttendanceRecords with status=late.",
+                                "title": "Late Count"
+                            },
+                            "leftEarlyCount": {
+                                "type": "integer",
+                                "description": "Number of AttendanceRecords with status=left-early.",
+                                "title": "Left Early Count"
+                            },
+                            "attendancePercent": {
+                                "type": "number",
+                                "nullable": true,
+                                "description": "(present + late + left-early) / total sessions in window, as a percentage. Null when the window has zero sessions.",
+                                "title": "Attendance Percent"
+                            }
+                        },
+                        "title": "Attendance Summary"
+                    },
+                    "mentorComment": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Overall mentor comment. Required (non-empty) before finalise (ReportCardFinaliseGuard).",
+                        "title": "Mentor Comment"
+                    },
+                    "competencyAttainment": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Forward-compatible placeholder only — no schema shape assumed beyond nullable. Populated by the sibling wave-2 competency-framework change if/when built; this schema and ReportCardComposer work correctly with it absent/null (not a hard dependency).",
+                        "title": "Competency Attainment"
+                    },
+                    "composedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp set by ReportCardComposer when subjectGrades/attendanceSummary were last (re)computed.",
+                        "title": "Composed At"
+                    },
+                    "docudeskRenderStatus": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "requested",
+                            "rendered",
+                            "failed"
+                        ],
+                        "default": null,
+                        "description": "PDF render delivery state, mirrors Credential.walletOfferStatus's shape. Null until renderToPdf is first triggered.",
+                        "title": "Docudesk Render Status"
+                    },
+                    "docudeskRequestedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp of the last renderToPdf/rerenderToPdf attempt.",
+                        "title": "Docudesk Requested At"
+                    },
+                    "docudeskDocumentRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Opaque reference to the rendered docudesk document, set on a successful render.",
+                        "title": "Docudesk Document Reference"
+                    },
+                    "docudeskRenderError": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Last PDF render failure message. Cleared on the next successful render. A render failure never blocks any ReportCard lifecycle transition (fail-soft by design).",
+                        "title": "Docudesk Render Error"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "rapportvergadering-review",
+                            "finalised",
+                            "published-to-parents"
+                        ],
+                        "default": "draft",
+                        "description": "Report card lifecycle state. draft = just composed, not yet under review; rapportvergadering-review = teacher/mentor comments being edited ahead of the deliberation meeting; finalised = locked pending publication; published-to-parents = visible in the parent portal. Managed by the OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "pullIntoReview": {
+                            "from": "draft",
+                            "to": "rapportvergadering-review"
+                        },
+                        "finalise": {
+                            "from": "rapportvergadering-review",
+                            "to": "finalised",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportCardFinaliseGuard"
+                        },
+                        "reopen": {
+                            "from": "finalised",
+                            "to": "rapportvergadering-review",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportCardReopenGuard"
+                        },
+                        "publishToParents": {
+                            "from": "finalised",
+                            "to": "published-to-parents",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ReportCardVisibilityGuard",
+                            "notifications": [
+                                "reportCardPublished"
+                            ]
+                        },
+                        "recompose": {
+                            "_comment": "Self-loop, same shape already proven live in this register by ConferenceRound.regenerate (scheduled -> scheduled, no requires) and Credential.offerToWallet/recordWalletClaim (issued -> issued, requires a Service class) — from==to self-loops are a verified, working OR lifecycle-engine pattern here, not an open question. No requires guard: ReportCardComposer is a Listener (ADR-031 event-driven bridge), not a check()-shaped guard/service — it reacts to this transition's ObjectTransitionedEvent (schema=report-card, action=recompose) the same way it reacts to ReportPeriod's compose transition, both registered in lib/AppInfo/Application.php.",
+                            "from": "draft",
+                            "to": "draft"
+                        },
+                        "renderToPdf": {
+                            "from": "finalised",
+                            "to": "finalised",
+                            "requires": "OCA\\Scholiq\\Service\\ReportCardPdfDelegationService"
+                        },
+                        "rerenderToPdf": {
+                            "from": "published-to-parents",
+                            "to": "published-to-parents",
+                            "requires": "OCA\\Scholiq\\Service\\ReportCardPdfDelegationService"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "reportCardPublished": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "publishToParents"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je rapport is beschikbaar",
+                            "en": "Your report card is available"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "mentor",
+                        "principal"
+                    ],
+                    "_comment": "Composer-created only in practice (ReportCardComposer via ObjectService, not the REST create endpoint); declarative create restriction still required per the tightest-posture pattern (no fabricated coordinator role — see ReportPeriod's identical rationale)."
+                },
+                "x-property-rbac": {
+                    "_comment": "Staff (admin/mentor/principal) see all; the learner sees their own report card, mirroring GradeEntry/FinalGrade's existing self-match shape exactly (no lifecycle gate at the RBAC layer, same posture those two schemas already have — the 'never before publication' promise is enforced by ReportCardVisibilityGuard at publishToParents and by the portal's parentReportCards collection filtering to published-to-parents only for guardians, not by this read RBAC). Guardian read is via the portal only, never a direct RBAC grant.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "role": "principal"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ReportCardParentNotification": {
+                "slug": "report-card-parent-notification",
+                "icon": "BellOutline",
+                "version": "0.1.0",
+                "title": "ReportCardParentNotification",
+                "description": "Append-only parent-notification record created by ReportCardPublishHandler when a ReportCard transitions to published-to-parents. Structurally identical to GradeNotification's shape and reason — OR's declarative notification system addresses a single field (learnerId), not LearnerProfile.parentIds[], so a PHP fan-out bridge is required (mirrors GradeRollupHandler's parent fan-out half exactly). A separate schema rather than widening GradeNotification.event's enum, because GradeNotification.sourceId is typed $ref: GradeEntry — reusing it for a ReportCard source would make that reference lie about what it points to.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": false
+                },
+                "required": [
+                    "event",
+                    "recipient",
+                    "sourceId",
+                    "learnerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "enum": [
+                            "reportCardPublished"
+                        ],
+                        "description": "Notification event type. Currently only 'reportCardPublished'.",
+                        "title": "Notification Event"
+                    },
+                    "recipient": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the notification recipient (parent).",
+                        "title": "Recipient"
+                    },
+                    "sourceId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "ReportCard",
+                        "description": "UUID of the source ReportCard that triggered this notification.",
+                        "title": "Source ID"
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner whose report card was published.",
+                        "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the LearnerProfile object whose report card was published — the portal inbox scoping key (ADR-046 A4). Additive and optional; existing rows leave it unset and stay invisible to the portal inbox (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
+                    "idempotencyKey": {
+                        "type": "string",
+                        "description": "Unique key for idempotent delivery (format: {sourceId}-parent-{recipient}).",
+                        "title": "Idempotency Key"
+                    },
+                    "visibleFrom": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Earliest datetime at which this parent notification is eligible to fire. Stamped by ReportCardPublishHandler at creation (now()), same scheduled/visibleFrom/olderThan PT0S dispatch mechanism as GradeNotification.",
+                        "title": "Visible From"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-notifications": {
+                    "reportCardPublished": {
+                        "trigger": {
+                            "type": "scheduled",
+                            "intervalSec": 300,
+                            "filter": {
+                                "visibleFrom": {
+                                    "operator": "olderThan",
+                                    "value": "PT0S"
+                                }
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "recipient"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuw rapport gepubliceerd voor {{learnerId}}",
+                            "en": "New report card published for {{learnerId}}"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
             },
             "CompetencyFramework": {
                 "slug": "competency-framework",

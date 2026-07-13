@@ -445,6 +445,34 @@ class PortalContributionProvider
                         'decidedAt',
                     ],
                 ],
+                [
+                    'id'         => 'parentReportCards',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'report-card',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'guardianRef',
+                    'via'        => $childJoin,
+                    'label'      => "My child's report cards",
+                    'listable'   => true,
+                    'minTrust'   => 'substantial',
+                    // Server-side lifecycle filter, mirroring report-card's own
+                    // "never draft/rapportvergadering-review/finalised" requirement —
+                    // a guardian must only ever see a published-to-parents ReportCard,
+                    // never one still under internal review. Key is singular `filter`
+                    // (ContributionController::collection() reads $collection['filter'],
+                    // applied by PortalObjectReader::readCollection() BEFORE the scope
+                    // filter, so it can only ever subset the guardian's own rows —
+                    // mirrors pipelinq's PortalContributionProvider's own `filter` usage).
+                    'filter'     => ['lifecycle' => 'published-to-parents'],
+                    'fields'     => [
+                        'learnerRef',
+                        'reportPeriodId',
+                        'subjectGrades',
+                        'attendanceSummary',
+                        'mentorComment',
+                        'docudeskDocumentRef',
+                    ],
+                ],
             ],
             // No parent create action yet. A guardian reporting an absence for
             // a child would supply the child `learnerRef` in the create body,
