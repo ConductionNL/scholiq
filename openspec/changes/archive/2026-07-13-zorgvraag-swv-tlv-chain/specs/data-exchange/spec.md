@@ -20,6 +20,8 @@ the existing OSO/Edukoppeling adapter scope rather than introducing a separate p
 - **THEN** Scholiq hands the payload to the OpenConnector `swv` source/target configuration
   (`openconnector#753`) and implements no wire protocol itself
 
+## ADDED Requirements
+
 ### Requirement: OSO-format dossier parent-review gate covers the SWV zorgvraag target too
 
 The `pending-parent-review` lifecycle gate MUST NOT be limited to the `target: oso` PO→VO overstap case.

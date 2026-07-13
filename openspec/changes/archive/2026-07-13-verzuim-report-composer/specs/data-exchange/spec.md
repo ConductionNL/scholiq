@@ -32,6 +32,8 @@ register).
 - **THEN** `municipalityFeedback` is set with the route, a timestamp, and the coordinator's note, without
   Scholiq inferring or automating the decision, and an unauthorised user cannot set this field
 
+## ADDED Requirements
+
 ### Requirement: Verzuimloket dossier composition mirrors the OSO dossier composer
 
 For `target: leerplicht`, the job MUST compose its payload the same way the OSO dossier composer does (see

@@ -72,6 +72,8 @@ this way, so the roll-up UI can show why the component counts.
 - **THEN** that component's `passRules` threshold is treated as satisfied without comparing the (null)
   exemption value against it, and `passed` is not forced to `false` solely because of that component
 
+## ADDED Requirements
+
 ### Requirement: `GradeEntry`/`FinalGrade` read access includes the exam-board role
 `GradeEntry.x-property-rbac.read` and `FinalGrade.x-property-rbac.read` MUST gain an `examboard` role
 alongside the existing `admin`/self-match (`learnerId`) `anyOf`, so an exam-board member can read the specific
@@ -83,8 +85,6 @@ school.
   `fraudCaseId` to a case they are handling
 - **WHEN** they request that `GradeEntry` or its `FinalGrade`
 - **THEN** `x-property-rbac.read`'s `examboard` role clause grants access
-
-## ADDED Requirements
 
 ### Requirement: `GradeEntry.invalidate` is a guarded terminal transition
 `GradeEntry` MUST gain a new terminal lifecycle state `invalidated` and a transition `invalidate` (`concept →

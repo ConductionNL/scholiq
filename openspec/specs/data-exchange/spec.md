@@ -40,18 +40,37 @@ An institution's data has to flow to and from external systems: a Dutch school's
 - GIVEN an incoming OSO dossier, WHEN a VO mentor imports it, THEN the matching `LearnerProfile` is updated (or created) and an audit entry records the import source.
 - GIVEN an `AttendanceThreshold` with `onCross` targeting `leerplicht`, WHEN a flag is created (see `attendance`), THEN a `DataExchangeJob` is auto-queued to the `leerplicht` target and the flag's lifecycle tracks it.
 - GIVEN any `DataExchangeJob`, WHEN it changes state, THEN an OR audit-trail entry is emitted and the produced artefact is attached to the job for retention.
-
 ## Requirements
-
 ### Requirement: Persist DataExchangeJob and DataMappingProfile in OpenRegister
-The system MUST persist `DataExchangeJob`, `DataMappingProfile` as OpenRegister objects with `x-openregister-lifecycle` (queued → running → succeeded | failed | partial; OSO adds pending-parent-review), `x-openregister-relations`, `x-openregister-notifications` (job-done alert), and audit-trail emission on every transition (ADR-008). `DataExchangeJob` artefacts MUST be OR file attachments.
+
+The system MUST persist `DataExchangeJob`, `DataMappingProfile` as OpenRegister objects with
+`x-openregister-lifecycle` (queued → running → succeeded | failed | partial; OSO adds
+pending-parent-review), `x-openregister-relations`, `x-openregister-notifications` (job-done alert), and
+audit-trail emission on every transition (ADR-008). `DataExchangeJob` artefacts MUST be OR file
+attachments. `DataExchangeJob` MUST additionally persist a nullable `municipalityFeedback` — the
+case-handling route (MAS-route) the municipality assigns a `leerplicht` report to, a received-at
+timestamp, and a free-text note — recorded by an authorised coordinator once the municipality communicates
+it. Scholiq records this feedback; it MUST NOT poll for, infer, or automate its ingestion (mirroring the
+existing "record, don't adjudicate" posture already applied to other externally-decided outcomes on this
+register).
 
 #### Scenario: Persist a job and emit audit on transition
+
 - **GIVEN** a `DataExchangeJob` request
 - **WHEN** the job is created and changes lifecycle state
-- **THEN** the system persists it as an OpenRegister object, emits an audit-trail entry on every transition, and attaches the produced artefact as an OR file attachment
+- **THEN** the system persists it as an OpenRegister object, emits an audit-trail entry on every
+  transition, and attaches the produced artefact as an OR file attachment
+
+#### Scenario: Coordinator records the municipality's route decision
+
+- **GIVEN** a succeeded `DataExchangeJob` with `target: leerplicht`
+- **WHEN** an authorised coordinator learns the municipality's case-handling route for the report and
+  records it
+- **THEN** `municipalityFeedback` is set with the route, a timestamp, and the coordinator's note, without
+  Scholiq inferring or automating the decision, and an unauthorised user cannot set this field
 
 ### Requirement: Delegate wire protocols to OpenConnector
+
 Scholiq MUST NOT implement Edukoppeling, StUF, OSO-XML, OOAPI, or SAML/OAuth attribute-release wire
 protocols. Those MUST be OpenConnector source/target configurations referenced by the `target` field,
 including a `ooapi-catalog` target used by `course-management`'s catalog-publication contract to sync
@@ -60,9 +79,11 @@ OpenConnector adapter issues: BRON/ROD, OSO PO→VO, leerplicht-Digikoppeling, S
 HR, OOAPI catalog.)
 
 #### Scenario: Delegate the wire send to OpenConnector
+
 - **GIVEN** a `DataExchangeJob` with a `target` referencing an OpenConnector connection
 - **WHEN** the job runs
-- **THEN** Scholiq hands the payload to the OpenConnector source/target configuration and implements no wire protocol itself
+- **THEN** Scholiq hands the payload to the OpenConnector source/target configuration and implements no
+  wire protocol itself
 
 #### Scenario: Course-management catalog publication delegates through the same DataExchangeJob mechanism
 
@@ -95,6 +116,39 @@ The frontend MUST be declarative: `src/manifest.json` pages for DataExchangeJob/
 - **GIVEN** the data-exchange frontend
 - **WHEN** it renders the DataExchangeJob/DataMappingProfile index and detail surfaces
 - **THEN** it is driven by `src/manifest.json` with the custom `RequestExportModal` and `OsoDossierReviewView` views and ships no PHP CRUD controllers
+
+### Requirement: Verzuimloket dossier composition mirrors the OSO dossier composer
+
+For `target: leerplicht`, the job MUST compose its payload the same way the OSO dossier composer does (see
+`attendance`'s "External authority reporting via DataExchangeJob"): from the originating `AttendanceFlag`
+plus its breaching `AttendanceRecord`s and `interventions` history — not the bare summary-field export the
+existing `Leerplicht notification export` `DataMappingProfile` currently ships. Unlike the OSO/SWV
+dossiers, this composition MUST NOT gate on `pending-parent-review`: it is a mandatory Leerplichtwet
+art. 21a report to the municipality, not a discretionary transfer requiring parent consent.
+
+#### Scenario: Verzuimloket dossier is composed like the OSO dossier, without a parent-review gate
+
+- **GIVEN** a `DataExchangeJob` with `target: leerplicht` auto-queued from an `AttendanceFlag`
+- **WHEN** the job composes its payload
+- **THEN** it assembles the dossier from the flag's breaching records and intervention history, and
+  proceeds toward `running` via the same non-OSO path other targets use, without entering
+  `pending-parent-review`
+
+### Requirement: OSO-format dossier parent-review gate covers the SWV zorgvraag target too
+
+The `pending-parent-review` lifecycle gate MUST NOT be limited to the `target: oso` PO→VO overstap case.
+Any `DataExchangeJob` whose composed dossier is OSO-format — including `target: swv` jobs composed from a
+`SupportRequest` (see `learning-plan`) — MUST pass through the identical `pending-parent-review` gate
+before the send proceeds. This MUST be the same lifecycle mechanism (`OsoDossierReviewGuard`-equivalent
+guard on the `approveDossier` transition), not a second, parallel review mechanism.
+
+#### Scenario: SWV zorgvraag dossier gated identically to the OSO overstap dossier
+
+- **GIVEN** a `DataExchangeJob` with `target: swv` whose OSO-format care-request dossier has been composed
+  from a `SupportRequest`
+- **WHEN** the job awaits review
+- **THEN** it enters `pending-parent-review` and does not leave the queue until parent approval is
+  recorded, using the same gate mechanism as the `target: oso` PO→VO overstap flow
 
 ## Standards
 
