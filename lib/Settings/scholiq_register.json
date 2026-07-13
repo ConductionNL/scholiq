@@ -4837,6 +4837,13 @@
                         "description": "IRT difficulty parameter in range 0..1. Null = not calibrated.",
                         "title": "IRT Difficulty"
                     },
+                    "variantGroupId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "description": "Groups Items that are interchangeable variants of the same underlying question (same competency, different wording/numbers/distractors). A random draw (AssessmentDrawResolver) MUST include at most one Item per variantGroupId in a single drawn set. Null = not part of a variant group.",
+                        "title": "Variant Group ID"
+                    },
                     "tenant_id": {
                         "type": "string",
                         "format": "uuid",
@@ -5006,6 +5013,124 @@
                         "default": [],
                         "description": "Items referenced from the ItemBank with per-assessment point overrides.",
                         "title": "Item References"
+                    },
+                    "itemSelectionMode": {
+                        "type": "string",
+                        "enum": [
+                            "fixed",
+                            "random-draw"
+                        ],
+                        "default": "fixed",
+                        "description": "fixed: itemRefs is used as-is (existing behaviour). random-draw: itemPoolConfig.drawCount items are drawn at attempt-creation time from the referenced ItemBank by AssessmentDrawResolver.",
+                        "title": "Item Selection Mode"
+                    },
+                    "itemPoolConfig": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Required when itemSelectionMode is random-draw. Declares the source ItemBank, how many items to draw, and optional filters. Ignored when itemSelectionMode is fixed.",
+                        "title": "Item Pool Configuration",
+                        "required": [
+                            "itemBankId",
+                            "drawCount"
+                        ],
+                        "properties": {
+                            "itemBankId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "$ref": "ItemBank",
+                                "description": "UUID of the ItemBank the draw is resolved from.",
+                                "title": "Item Bank ID"
+                            },
+                            "drawCount": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Number of items to draw per attempt.",
+                                "title": "Draw Count"
+                            },
+                            "subjectTags": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "default": [],
+                                "description": "Optional Item.subjectTags filter. Empty = no subject-tag filter.",
+                                "title": "Subject Tags Filter"
+                            },
+                            "difficultyMin": {
+                                "type": "number",
+                                "nullable": true,
+                                "minimum": 0,
+                                "maximum": 1,
+                                "description": "Optional lower bound (inclusive) on Item.difficulty. Null = no lower bound.",
+                                "title": "Minimum Difficulty"
+                            },
+                            "difficultyMax": {
+                                "type": "number",
+                                "nullable": true,
+                                "minimum": 0,
+                                "maximum": 1,
+                                "description": "Optional upper bound (inclusive) on Item.difficulty. Null = no upper bound.",
+                                "title": "Maximum Difficulty"
+                            }
+                        }
+                    },
+                    "shuffleItemOrder": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, the presentation order of the resolved item list (fixed or random-draw) is independently permuted per attempt by AssessmentDrawResolver.",
+                        "title": "Shuffle Item Order"
+                    },
+                    "shuffleAnswerOptions": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, the presentation order of each choice-bearing item's answer options is independently permuted per attempt by AssessmentDrawResolver, respecting QTI 3.0's fixed attribute on individual simpleChoice options.",
+                        "title": "Shuffle Answer Options"
+                    },
+                    "itemAnalysisConfig": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Per-Assessment override of ItemAnalysisService's minimum-sample-size and quality-threshold defaults. Null = use the schema defaults listed on each property below. A low-stakes formative quiz and a high-stakes tentamen can legitimately warrant different quality bars.",
+                        "title": "Item Analysis Configuration",
+                        "properties": {
+                            "minSampleSize": {
+                                "type": "integer",
+                                "default": 20,
+                                "minimum": 1,
+                                "description": "Minimum graded AssessmentResults referencing an item before pValue/itemTotalCorrelation/distractorAnalysis are computed instead of left null.",
+                                "title": "Minimum Sample Size (Item Statistics)"
+                            },
+                            "reliabilityMinSampleSize": {
+                                "type": "integer",
+                                "default": 30,
+                                "minimum": 1,
+                                "description": "Minimum graded AssessmentResults for the assessment before cronbachAlpha is computed instead of left null.",
+                                "title": "Minimum Sample Size (Reliability)"
+                            },
+                            "tooDifficultyBelow": {
+                                "type": "number",
+                                "default": 0.2,
+                                "minimum": 0,
+                                "maximum": 1,
+                                "description": "pValue below this value opens an ItemRevisionFlag with reason too-difficult.",
+                                "title": "Too-Difficult p-value Threshold"
+                            },
+                            "tooEasyAbove": {
+                                "type": "number",
+                                "default": 0.95,
+                                "minimum": 0,
+                                "maximum": 1,
+                                "description": "pValue above this value opens an ItemRevisionFlag with reason too-easy.",
+                                "title": "Too-Easy p-value Threshold"
+                            },
+                            "lowDiscriminationBelow": {
+                                "type": "number",
+                                "default": 0.1,
+                                "minimum": -1,
+                                "maximum": 1,
+                                "description": "itemTotalCorrelation below this value (and >= 0) opens an ItemRevisionFlag with reason low-discrimination; a negative value opens reason negative-discrimination instead.",
+                                "title": "Low-Discrimination Correlation Threshold"
+                            }
+                        }
                     },
                     "scoringScheme": {
                         "type": "string",
@@ -5360,6 +5485,41 @@
                         "description": "Per-item responses with auto and manual scores.",
                         "title": "Item Responses"
                     },
+                    "drawnItemRefs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "itemId",
+                                "points"
+                            ],
+                            "properties": {
+                                "itemId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "title": "Item ID",
+                                    "description": "UUID of an item presented in this attempt."
+                                },
+                                "points": {
+                                    "type": "number",
+                                    "title": "Points",
+                                    "description": "Points this item was worth in this attempt (itemRefs override for fixed; drawn Item.maxScore for random-draw)."
+                                },
+                                "optionOrder": {
+                                    "type": "array",
+                                    "nullable": true,
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "title": "Option Order",
+                                    "description": "QTI simpleChoice identifier values in presentation order, when shuffleAnswerOptions is true and the item exposes discrete choice identifiers. Null for essay/textEntry items or when shuffle is disabled."
+                                }
+                            }
+                        },
+                        "default": [],
+                        "description": "Frozen, server-resolved snapshot of exactly which items (and, when shuffled, which order and answer-option order) this attempt presented. Populated once, at creation, by AssessmentDrawResolver (an ObjectCreatedEvent listener) — NEVER client-set and NEVER recomputed afterward, so a review/appeal can reconstruct exactly what the learner saw regardless of later edits to the Assessment, ItemBank, or Item objects. Array position IS presentation order. Populated for every attempt, fixed or random-draw.",
+                        "title": "Drawn Item References"
+                    },
                     "startedAt": {
                         "type": "string",
                         "format": "date-time",
@@ -5440,6 +5600,355 @@
                         ]
                     }
                 }
+            },
+            "ItemStatistics": {
+                "slug": "item-statistics",
+                "icon": "ChartBoxOutline",
+                "version": "0.1.0",
+                "title": "ItemStatistics",
+                "description": "Classical-test-theory statistics for one Item within one Assessment (p-value, corrected item-total correlation, distractor analysis), computed by ItemAnalysisService from graded AssessmentResults and upserted by ItemAnalysisRecomputeHandler whenever a result for the assessment reaches graded. No lifecycle — fully derived, read-only. Do not set manually. Scoped per (itemId, assessmentId): the same item can behave differently across cohorts or when reused in a different assessment.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "itemId",
+                    "assessmentId",
+                    "sampleSize",
+                    "insufficientData",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "itemId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Item",
+                        "description": "UUID of the Item these statistics describe.",
+                        "title": "Item ID"
+                    },
+                    "assessmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Assessment",
+                        "description": "UUID of the Assessment this item was administered in.",
+                        "title": "Assessment ID"
+                    },
+                    "sampleSize": {
+                        "type": "integer",
+                        "description": "Number of graded AssessmentResults referencing this item for this assessment.",
+                        "title": "Sample Size"
+                    },
+                    "pValue": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": 0,
+                        "maximum": 1,
+                        "description": "Proportion of respondents who scored full marks on this item. Null when sampleSize is below the configured minSampleSize (default 20) — insufficientData is true in that case.",
+                        "title": "p-value (Difficulty)"
+                    },
+                    "itemTotalCorrelation": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": -1,
+                        "maximum": 1,
+                        "description": "Corrected item-total (item-rest) Pearson correlation: the item's per-respondent score vector against each respondent's total score computed EXCLUDING this item's own contribution. Null when sampleSize is below the configured minSampleSize.",
+                        "title": "Item-Total Correlation (Discrimination)"
+                    },
+                    "distractorAnalysis": {
+                        "type": "array",
+                        "nullable": true,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "optionId": {
+                                    "type": "string",
+                                    "title": "Option ID",
+                                    "description": "QTI simpleChoice identifier."
+                                },
+                                "selectedByHighGroup": {
+                                    "type": "integer",
+                                    "title": "Selected By High Group",
+                                    "description": "Number of top-27%-by-total-score respondents who selected this option."
+                                },
+                                "selectedByLowGroup": {
+                                    "type": "integer",
+                                    "title": "Selected By Low Group",
+                                    "description": "Number of bottom-27%-by-total-score respondents who selected this option."
+                                }
+                            }
+                        },
+                        "description": "Per-option selection counts split by the Kelley top/bottom 27% scoring groups, for choice-type items with a declared correctResponse. Null for non-choice items or when sampleSize is below the configured minSampleSize.",
+                        "title": "Distractor Analysis"
+                    },
+                    "insufficientData": {
+                        "type": "boolean",
+                        "description": "True when sampleSize is below the configured minSampleSize — pValue/itemTotalCorrelation/distractorAnalysis are null and MUST NOT be presented as reportable numbers.",
+                        "title": "Insufficient Data"
+                    },
+                    "computedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "ISO-8601 timestamp of the last recompute.",
+                        "title": "Computed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "assessment-item-pools-and-analysis: item difficulty/discrimination statistics MUST NOT be visible to learners — that data would let a learner infer which items are safe to guess on, undermining validity for everyone else. Staff-only, mirroring CompetencyAttainment's admin/teacher role-wide shape plus examboard (the WHW art. 7.13 accountable body).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "teacher"
+                            },
+                            {
+                                "role": "examboard"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "AssessmentReliability": {
+                "slug": "assessment-reliability",
+                "icon": "ChartBoxOutline",
+                "version": "0.1.0",
+                "title": "AssessmentReliability",
+                "description": "Cronbach's alpha internal-consistency reliability for one Assessment as a whole, computed by ItemAnalysisService from graded AssessmentResults and upserted by ItemAnalysisRecomputeHandler whenever a result for the assessment reaches graded. No lifecycle — fully derived, read-only. Do not set manually.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "assessmentId",
+                    "sampleSize",
+                    "itemCount",
+                    "insufficientData",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "assessmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Assessment",
+                        "description": "UUID of the Assessment this reliability figure describes.",
+                        "title": "Assessment ID"
+                    },
+                    "sampleSize": {
+                        "type": "integer",
+                        "description": "Number of graded AssessmentResults for this assessment.",
+                        "title": "Sample Size"
+                    },
+                    "itemCount": {
+                        "type": "integer",
+                        "description": "Number of distinct items scored across those results (k in the alpha formula).",
+                        "title": "Item Count"
+                    },
+                    "cronbachAlpha": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Internal-consistency reliability: alpha = (k/(k-1)) * (1 - sum(item variances) / total-score variance). Null when sampleSize is below the configured reliabilityMinSampleSize (default 30) or itemCount < 2 — insufficientData is true in that case.",
+                        "title": "Cronbach's Alpha"
+                    },
+                    "insufficientData": {
+                        "type": "boolean",
+                        "description": "True when sampleSize is below reliabilityMinSampleSize or itemCount < 2 — cronbachAlpha is null and MUST NOT be presented as a reportable number.",
+                        "title": "Insufficient Data"
+                    },
+                    "computedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "ISO-8601 timestamp of the last recompute.",
+                        "title": "Computed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "assessment-item-pools-and-analysis: same staff-only posture as ItemStatistics — an assessment's reliability figure MUST NOT be visible to learners.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "teacher"
+                            },
+                            {
+                                "role": "examboard"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ItemRevisionFlag": {
+                "slug": "item-revision-flag",
+                "icon": "FlagOutline",
+                "version": "0.1.0",
+                "title": "ItemRevisionFlag",
+                "description": "Created by ItemAnalysisRecomputeHandler when an ItemStatistics computation (with insufficientData false) crosses a configured quality threshold (too-difficult, too-easy, low-discrimination, negative-discrimination). appendOnly: true per ADR-008 (immutable audit evidence), mirroring AttendanceFlag/BsaProgressFlag/EngagementRiskFlag. A review signal ONLY — creation MUST NOT alter the flagged Item automatically. Routed to the examboard/admin groups, the same groups FraudCase notifications already use (WHW art. 7.13 toetscommissie/examencommissie authority).",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "x-openregister-notifications": {
+                    "flagRaised": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "examboard",
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Een item is gemarkeerd voor herziening",
+                            "en": "An item has been flagged for revision"
+                        }
+                    }
+                },
+                "required": [
+                    "itemId",
+                    "itemStatisticsId",
+                    "reason",
+                    "flaggedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "itemId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Item",
+                        "description": "UUID of the flagged Item.",
+                        "title": "Item ID"
+                    },
+                    "itemStatisticsId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "ItemStatistics",
+                        "description": "UUID of the ItemStatistics computation that triggered this flag.",
+                        "title": "Item Statistics ID"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "too-difficult",
+                            "too-easy",
+                            "low-discrimination",
+                            "negative-discrimination"
+                        ],
+                        "description": "Which quality threshold was crossed.",
+                        "title": "Reason"
+                    },
+                    "pValueAtFlag": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Snapshot of ItemStatistics.pValue at the moment this flag was raised.",
+                        "title": "p-value At Flag"
+                    },
+                    "itemTotalCorrelationAtFlag": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Snapshot of ItemStatistics.itemTotalCorrelation at the moment this flag was raised.",
+                        "title": "Item-Total Correlation At Flag"
+                    },
+                    "flaggedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp when this flag was raised.",
+                        "title": "Flagged At"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "acknowledged",
+                            "revised",
+                            "dismissed"
+                        ],
+                        "default": "open",
+                        "description": "Flag lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenancy isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "acknowledge": {
+                            "from": "open",
+                            "to": "acknowledged"
+                        },
+                        "revise": {
+                            "from": [
+                                "open",
+                                "acknowledged"
+                            ],
+                            "to": "revised"
+                        },
+                        "dismiss": {
+                            "from": [
+                                "open",
+                                "acknowledged"
+                            ],
+                            "to": "dismissed"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "assessment-item-pools-and-analysis: same staff-only posture as ItemStatistics/AssessmentReliability.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "teacher"
+                            },
+                            {
+                                "role": "examboard"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
             },
             "ProctoringSession": {
                 "slug": "proctoring-session",

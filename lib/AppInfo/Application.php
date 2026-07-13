@@ -28,6 +28,8 @@ use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
+use OCA\Scholiq\Listener\AssessmentDrawResolver;
+use OCA\Scholiq\Listener\ItemAnalysisRecomputeHandler;
 use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
 use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
@@ -398,6 +400,34 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectCreatingEvent::class,
             listener: EnrolmentPrerequisiteListener::class
+        );
+
+        // ADR-031 legitimate exception (assessment-item-pools-and-analysis):
+        // AssessmentResult creation -> server-side item-pool draw + shuffle
+        // resolution bridge. Listens for OR's ObjectCreatedEvent, filtered to
+        // schema `assessment-result`. Resolves and persists drawnItemRefs —
+        // never trusts a client-supplied value, mirroring the trust boundary
+        // AssessmentScoringHandler already enforces for autoScore. Populated
+        // for EVERY attempt (fixed or random-draw) so exam-board review/
+        // appeal always has a faithful reconstruction of what the learner saw.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: AssessmentDrawResolver::class
+        );
+
+        // ADR-031 legitimate exception (assessment-item-pools-and-analysis):
+        // AssessmentResult.graded -> ItemStatistics/AssessmentReliability
+        // recompute + ItemRevisionFlag creation bridge. Listens for the SAME
+        // ObjectTransitionedEvent<AssessmentResult, graded> GradeRollupHandler
+        // already reacts to (a sibling listener, not an edit to that class).
+        // The statistics themselves (p-value, corrected item-total
+        // correlation, distractor analysis, Cronbach's alpha) are computed by
+        // ItemAnalysisService — arithmetic that exceeds OR's declarative
+        // aggregation engine (design.md's aggregation-engine-insufficiency
+        // table). Never auto-alters the flagged Item.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ItemAnalysisRecomputeHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

@@ -246,6 +246,13 @@
 					"icon": "icon-password",
 					"route": "FraudCases",
 					"order": 20
+				},
+				{
+					"id": "ItemRevisionFlagsMenu",
+					"label": "Item revision flags",
+					"icon": "icon-flag",
+					"route": "ItemRevisionFlags",
+					"order": 30
 				}
 			]
 		},
@@ -4435,6 +4442,245 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "ItemStatisticsList",
+			"route": "/assessments/item-statistics",
+			"type": "index",
+			"title": "Item statistics",
+			"config": {
+				"register": "scholiq",
+				"schema": "item-statistics",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ItemStatisticsDetail",
+			"route": "/assessments/item-statistics/:id",
+			"type": "detail",
+			"title": "Item statistics",
+			"config": {
+				"register": "scholiq",
+				"schema": "item-statistics",
+				"readOnly": true,
+				"_note": "assessment-item-pools-and-analysis: ItemStatistics is a fully-derived CTT computation (p-value, item-total correlation, distractor analysis, insufficientData gate) for one Item within one Assessment, mirroring the FinalGrade 'no lifecycle, read-only' precedent. Body leads with the statistics data (8-wide) and a Related panel resolving the item and assessment. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "istat-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ChartBoxOutline"
+					},
+					{
+						"id": "istat-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "istat-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "istat-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "AssessmentReliabilityList",
+			"route": "/assessments/reliability",
+			"type": "index",
+			"title": "Assessment reliability",
+			"config": {
+				"register": "scholiq",
+				"schema": "assessment-reliability",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "AssessmentReliabilityDetail",
+			"route": "/assessments/reliability/:id",
+			"type": "detail",
+			"title": "Assessment reliability",
+			"config": {
+				"register": "scholiq",
+				"schema": "assessment-reliability",
+				"readOnly": true,
+				"_note": "assessment-item-pools-and-analysis: AssessmentReliability is a fully-derived Cronbach's-alpha computation for one Assessment, mirroring the FinalGrade 'no lifecycle, read-only' precedent. Body leads with the reliability data (8-wide) and a Related panel resolving the assessment. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "arel-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ChartBoxOutline"
+					},
+					{
+						"id": "arel-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "arel-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "arel-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ItemRevisionFlags",
+			"route": "/assessments/item-revision-flags",
+			"type": "index",
+			"title": "Item revision flags",
+			"config": {
+				"register": "scholiq",
+				"schema": "item-revision-flag",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "ItemRevisionFlagDetail",
+			"route": "/assessments/item-revision-flags/:id",
+			"type": "detail",
+			"title": "Item revision flag",
+			"config": {
+				"register": "scholiq",
+				"schema": "item-revision-flag",
+				"readOnly": true,
+				"_note": "assessment-item-pools-and-analysis: an ItemRevisionFlag is a raised quality-review signal (item, triggering statistics, reason) — an alert/case archetype, mirroring EngagementRiskFlag/BsaProgressFlag/AttendanceFlag. A review signal ONLY — it never alters the flagged Item automatically. Body leads with the flag data (8-wide) and a Related panel resolving the item and triggering ItemStatistics. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "irf-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FlagOutline"
+					},
+					{
+						"id": "irf-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "irf-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "irf-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ItemAnalysisView",
+			"route": "/assessments/items/:itemId/analysis",
+			"type": "custom",
+			"title": "Item analysis",
+			"component": "ItemAnalysisView",
+			"_note": "assessment-item-pools-and-analysis: renders ItemStatistics (p-value, item-total correlation, distractor bars) for an Item across the Assessments it appears in, and AssessmentReliability for an Assessment (via ?assessmentId= query param). No declarative chart/statistics-panel primitive exists in this register. Linked from ItemAuthorView.vue. Staff-only (RBAC enforced server-side via x-property-rbac; view also gates client-side)."
 		},
 		{
 			"id": "ProctoringSessions",
