@@ -27,31 +27,31 @@ return [
         ['name' => 'page#manifest',  'url' => '/api/manifest', 'verb' => 'GET'],
 
         // Public credential verification — no auth, per ADR-031 external-system contract.
-        // Controller: CredentialVerifyController (slug: credentialVerify)
+        // Controller: CredentialVerifyController (slug: credentialVerify).
         ['name' => 'credentialVerify#verify', 'url' => '/api/credentials/{id}/verify', 'verb' => 'GET'],
 
         // Admin key management — admin-only via #[AuthorizedAdminSetting], cryptographic operation (ADR-031).
-        // Controller: KeyAdminController (slug: keyAdmin)
+        // Controller: KeyAdminController (slug: keyAdmin).
         ['name' => 'keyAdmin#generateKey', 'url' => '/api/credentials/admin/generate-key', 'verb' => 'POST'],
         ['name' => 'keyAdmin#keyStatus',   'url' => '/api/credentials/admin/key-status',   'verb' => 'GET'],
 
         // Compliance audit-pack export — ZIP generation, user-invokable action (ADR-023: audit-pack.export).
-        // Controller: AuditPackExportController (slug: auditPackExport)
+        // Controller: AuditPackExportController (slug: auditPackExport).
         ['name' => 'auditPackExport#export', 'url' => '/api/compliance/audit/export', 'verb' => 'POST'],
 
         // QTI package import — user-invokable action (ADR-023: qti.import).
-        // Controller: QtiImportController (slug: qtiImport)
+        // Controller: QtiImportController (slug: qtiImport).
         ['name' => 'qtiImport#import', 'url' => '/api/assessment/qti-import', 'verb' => 'POST'],
 
         // School-year rollover wizard — proposal + side-effect-free preview,
         // authorized via the ADR-023 action matrix (rollover.plan).
-        // Controller: RolloverController (slug: rollover)
+        // Controller: RolloverController (slug: rollover).
         ['name' => 'rollover#proposeMapping', 'url' => '/api/rollover/propose', 'verb' => 'GET'],
         ['name' => 'rollover#preview',        'url' => '/api/rollover/{planId}/preview', 'verb' => 'POST'],
 
         // External-training multi-object actions — authorized via the ADR-023
         // action matrix (external-training.bulk-record / .issue-credential).
-        // Controller: ExternalTrainingController (slug: externalTraining)
+        // Controller: ExternalTrainingController (slug: externalTraining).
         ['name' => 'externalTraining#bulkRecord',      'url' => '/api/external-training/bulk',                  'verb' => 'POST'],
         ['name' => 'externalTraining#issueCredential', 'url' => '/api/external-training/{recordId}/credential', 'verb' => 'POST'],
         ['name' => 'externalTraining#learnerCoverage', 'url' => '/api/external-training/coverage',              'verb' => 'GET'],
@@ -62,19 +62,28 @@ return [
         // launch a placement they can resolve; #[NoAdminRequired] +
         // #[NoCSRFRequired] (state-changing but session-authenticated, no
         // cross-site form target).
-        // Controller: LtiToolPlacementController (slug: ltiToolPlacement)
+        // Controller: LtiToolPlacementController (slug: ltiToolPlacement).
         ['name' => 'ltiToolPlacement#launch', 'url' => '/api/lti-placements/{placementId}/launch', 'verb' => 'POST'],
+
+        // Adaptive release / drip scheduling — per-(item, learner) gate
+        // decision, not a pass-through CRUD read (adaptive-release-and-
+        // prerequisites). Any authenticated caller holding an Enrolment for
+        // the item's course (or staff) may read it; #[NoAdminRequired] +
+        // #[NoCSRFRequired] (GET read).
+        // Controller: LessonReleaseController (slug: lessonRelease).
+        ['name' => 'lessonRelease#status',           'url' => '/api/lessons/{lessonId}/release-status',         'verb' => 'GET'],
+        ['name' => 'lessonRelease#assessmentStatus', 'url' => '/api/assessments/{assessmentId}/release-status', 'verb' => 'GET'],
 
         // Personal timetable — the caller's own sessions for a window, resolved
         // from cohort membership (teacher/learner) via ObjectService (RBAC-scoped).
         // Read-only; #[NoAdminRequired] (any signed-in user) + #[NoCSRFRequired] (GET read).
-        // Controller: TimetableController (slug: timetable)
+        // Controller: TimetableController (slug: timetable).
         ['name' => 'timetable#mine', 'url' => '/api/timetable/mine', 'verb' => 'GET'],
 
         // Observability (ADR-006 / ADR-040) — AppHost generic controllers.
         // health#index → GenericHealthController (PUBLIC, declarative checks).
         ['name' => 'health#index',  'url' => '/api/health',  'verb' => 'GET'],
-        // metrics#index → GenericMetricsController (admin-only Prometheus text).
+        // Metrics#index → GenericMetricsController (admin-only Prometheus text).
         ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 
         // Settings (admin-only) — AppHost GenericSettingsController.
