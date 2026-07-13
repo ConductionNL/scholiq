@@ -362,7 +362,47 @@ scholiq/
 
 ---
 
-## 7. References
+## 7. OOAPI 5.0 catalog-publication contract (cross-repo)
+
+Scholiq does **not** serve `/ooapi/v5/*` itself — `course-management`'s "Publish course catalog via OOAPI
+5.0" requirement and `data-exchange`'s "Delegate wire protocols to OpenConnector" requirement both name
+OOAPI as a protocol Scholiq must not implement (see `openspec/changes/delegate-ooapi-to-opencatalogi/`,
+which resolved a prior self-contradiction between those two specs). Scholiq's obligation stops at the
+**publication contract**: which objects are eligible, how they map to OOAPI 5.0 resources, and the
+`DataExchangeJob` that carries the sync request. The public endpoint and the wire-format adapter are owned
+by other apps in the fleet.
+
+**Who owns what:**
+
+| Concern | Owner |
+|---|---|
+| Eligible objects (`Course`/`Programme` with `lifecycle: published`; `Cohort` as a course "run") | Scholiq (this contract) |
+| Field mapping (below) | Scholiq (this contract) |
+| Publish/archive → `DataExchangeJob` queuing (`direction: sync`, `target: ooapi-catalog`) | Scholiq's existing `lifecycle` + `DataExchangeJob` machinery |
+| Field-mapping adapter / `Synchronization` target | OpenConnector (`ooapi-catalog-publication`, tracked as a filed issue — not built in this repo) |
+| Public `/ooapi/v5/*` HTTP surface, faceting | OpenCatalogi — **already shipped**, see `opencatalogi/openspec/changes/ooapi-catalog-publication/` |
+
+**Field mapping (OOAPI 5.0 ↔ Scholiq ↔ RIO):**
+
+| OOAPI 5.0 resource | Scholiq object | Key Scholiq fields | RIO model (keyed when present) |
+|---|---|---|---|
+| `course` | `Course` | `code`, `name`, `name_nl`, `description`, `level`, `language` | `opleidingseenheid` |
+| `program` | `Programme` | `name`, `code`, `level`, `description`, `courseIds` | `aangeboden opleiding` |
+| `offering` | `Cohort` | `programmeId`/`courseId`, `period`, `academicYear`, `teacherIds`, `learnerIds` | `aangeboden opleiding` (per-run instance) |
+
+Neither `Course`, `Programme`, nor `Cohort` carries a RIO identifier field today — RIO keying is described as
+"when the institution has recorded one" because most PO/VO/MBO-corporate tenants have no RIO registration
+(RIO is HBO/WO-centric). Adding an optional `rioId`-style field is deferred to whichever change actually
+implements the OpenConnector adapter.
+
+This item was previously an undifferentiated "OOAPI 5.0 catalog publication" line in the course-management
+roadmap; it is now split three ways per the table above, with OpenCatalogi's third of the split already
+merged (`ooapi-catalog-publication`) and OpenConnector's `ooapi-catalog` `Synchronization` target
+outstanding.
+
+---
+
+## 8. References
 
 - Hydra ADR-022: `hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md`
 - Hydra ADR-024: `hydra/openspec/architecture/adr-024-app-manifest.md`
@@ -373,4 +413,7 @@ scholiq/
 - Schema source: `lib/Settings/scholiq_register.json`
 - Manifest source: `src/manifest.json`
 - Applied specs: `openspec/changes/` (6 directories)
+- OOAPI 5.0 catalog-publication contract: `openspec/changes/delegate-ooapi-to-opencatalogi/` (this repo,
+  spec-consistency only); `opencatalogi/openspec/changes/ooapi-catalog-publication/` (merged, opencatalogi
+  side)
 - Specs summary: `docs/SPECS.md`
