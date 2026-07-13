@@ -621,7 +621,24 @@
 		"Warning": "Waarschuwing",
 		"Withdraw": "Intrekken",
 		"month(s)": "maand(en)",
-		"Exam board": "Examencommissie"
+		"Exam board": "Examencommissie",
+		"Group trend heat map": "Groepstrend heatmap",
+		"Average published grade per cohort and grading period, sourced from existing grade data.": "Gemiddeld gepubliceerd cijfer per cohort en beoordelingsperiode, gebaseerd op bestaande cijfergegevens.",
+		"Loading grade trends...": "Cijfertrends laden...",
+		"No published grade entries found yet — the heat map will fill in as cohorts are graded.": "Nog geen gepubliceerde cijfers gevonden — de heatmap vult zich naarmate cohorten worden beoordeeld.",
+		"Cohort": "Cohort",
+		"Period {period}": "Periode {period}",
+		"Failed to load grade trend data. Please try again.": "Laden van cijfertrendgegevens mislukt. Probeer het opnieuw.",
+		"Mark lesson complete": "Les als voltooid markeren",
+		"Failed to mark lesson complete (HTTP {status})": "Les als voltooid markeren mislukt (HTTP {status})",
+		"Progress: {percent}%": "Voortgang: {percent}%",
+		"Open engagement flags": "Openstaande betrokkenheidssignalen",
+		"Avg. engagement score": "Gem. betrokkenheidsscore",
+		"Progress & analytics": "Voortgang & analyse",
+		"Lesson completions": "Lesvoltooiingen",
+		"Engagement scores": "Betrokkenheidsscores",
+		"Engagement thresholds": "Betrokkenheidsdrempels",
+		"Engagement flags": "Betrokkenheidssignalen"
 	},
 	"plurals": ""
 }

@@ -20,6 +20,15 @@ import RegulationDetailPage from './views/RegulationDetailPage.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
 import TakeAssessmentView from './views/TakeAssessmentView.vue'
 import ScholiqDashboards from './views/ScholiqDashboards.vue'
+// bsa-study-progress-guard / competency-framework: these two custom views
+// existed but were never added to this registry (a pre-existing gap
+// discovered while wiring learning-progress-and-analytics's own new custom
+// view below — both routes were unreachable at HEAD; fixed here alongside).
+import BsaRiskDashboard from './views/BsaRiskDashboard.vue'
+import SkillsGapDashboard from './views/SkillsGapDashboard.vue'
+// learning-progress-and-analytics: cohort x period grade-trend heat map —
+// the one genuine new custom view this change adds.
+import GroupTrendHeatmap from './views/GroupTrendHeatmap.vue'
 // Per-role dashboard route wrappers (group-gated menu items; replaces the
 // single role-switcher dashboard).
 import DashboardAdmin from './views/DashboardAdmin.vue'
@@ -71,12 +80,14 @@ const PANEL_WIDGET_META = {
 
 export default {
 	BookConferenceSlotsView: page(BookConferenceSlotsView),
+	BsaRiskDashboard: page(BsaRiskDashboard),
 	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
 	DashboardAdmin: page(DashboardAdmin),
 	DashboardTeacher: page(DashboardTeacher),
 	DashboardStudent: page(DashboardStudent),
 	ExamCaseDossierView: page(ExamCaseDossierView),
 	GradeImpactDetail: page(GradeImpactDetail),
+	GroupTrendHeatmap: page(GroupTrendHeatmap),
 	ItemAuthorView: page(ItemAuthorView),
 	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
@@ -90,6 +101,7 @@ export default {
 	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),
 	ScholiqSettings: page(ScholiqSettings),
+	SkillsGapDashboard: page(SkillsGapDashboard),
 	TakeAssessmentView: page(TakeAssessmentView),
 
 	// --- Shared library widgets registered under manifest widget keys (ADR-036). ---

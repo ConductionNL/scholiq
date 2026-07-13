@@ -105,6 +105,16 @@
 			</section>
 
 			<footer class="lesson-player__footer">
+				<NcButton
+					v-if="showManualCompleteAction"
+					type="primary"
+					:disabled="manualCompletion.completed || manualCompletion.saving"
+					@click="markLessonComplete">
+					{{ manualCompletion.completed ? t('scholiq', 'Completed') : t('scholiq', 'Mark lesson complete') }}
+				</NcButton>
+				<p v-if="manualCompletion.error" class="lesson-player__manual-complete-error" role="alert">
+					{{ manualCompletion.error }}
+				</p>
 				<NcButton type="secondary" @click="goBack">
 					{{ t('scholiq', 'Back to course') }}
 				</NcButton>
@@ -117,10 +127,20 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 import { generateUrl } from '@nextcloud/router'
+import { getCurrentUser } from '@nextcloud/auth'
 import { NcEmptyContent, NcButton } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
+
+// learning-progress-and-analytics: contentTypes that do NOT emit xAPI
+// statements and therefore need the learner self-serve manual-completion
+// path (progress-tracking spec "Learners can self-report completion of
+// non-xAPI content"). cmi5/scorm12/scorm2004 rely on the xAPI-sourced path
+// (LessonProgressHandler); lti delegates to an external tool launch, which
+// is a different render branch entirely (isLtiLesson) with no completion
+// action of its own here.
+const MANUAL_COMPLETION_CONTENT_TYPES = ['text', 'video', 'quiz']
 
 export default {
 	name: 'LessonPlayer',
@@ -157,6 +177,14 @@ export default {
 			ltiError: '',
 			ltiLaunch: null,
 			ltiFrameName: 'scholiq-lti-launch-frame',
+			// learning-progress-and-analytics: manual (source: manual)
+			// LessonCompletion self-report state for non-xAPI content types.
+			manualCompletion: {
+				checked: false,
+				completed: false,
+				saving: false,
+				error: '',
+			},
 		}
 	},
 
@@ -183,6 +211,19 @@ export default {
 		isLtiLesson() {
 			return this.lesson?.contentType === 'lti'
 		},
+
+		/**
+		 * True when this lesson's contentType does not emit xAPI statements
+		 * and the learner should see a self-serve "Mark lesson complete"
+		 * action, mirroring AssessmentResult's unrestricted self-serve create
+		 * posture (progress-tracking spec).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/learning-progress-and-analytics/specs/progress-tracking/spec.md#requirement-learners-can-self-report-completion-of-non-xapi-content
+		 */
+		showManualCompleteAction() {
+			return MANUAL_COMPLETION_CONTENT_TYPES.includes(this.lesson?.contentType)
+		},
 	},
 
 	/**
@@ -207,6 +248,13 @@ export default {
 			this.loading = false
 		}
 
+		if (this.showManualCompleteAction) {
+			// Best-effort — checkExistingManualCompletion() catches its own
+			// errors internally so a failed lookup never blocks the lesson
+			// from rendering (the action simply defaults to "not completed").
+			await this.checkExistingManualCompletion()
+		}
+
 		if (this.isLtiLesson) {
 			await this.launchLti()
 		}
@@ -222,6 +270,92 @@ export default {
 		goBack() {
 			if (this.$router) {
 				this.$router.push({ name: 'CourseDetail', params: { id: this.courseId } }).catch(() => {})
+			}
+		},
+
+		/**
+		 * Check whether the current learner already has a LessonCompletion
+		 * for this lesson (fetch-all-then-filter convention, mirroring
+		 * TakeAssessmentView.vue's checkExistingAttempt() — no field-filter
+		 * query parameter is assumed to exist server-side). Best-effort: a
+		 * failed lookup is swallowed so it never blocks the lesson from
+		 * rendering; the action simply defaults to "not completed".
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/learning-progress-and-analytics/specs/progress-tracking/spec.md#scenario-learner-marks-a-text-lesson-complete
+		 */
+		async checkExistingManualCompletion() {
+			try {
+				const currentUser = getCurrentUser()
+				const learnerId = currentUser?.uid ?? ''
+				if (!learnerId) return
+
+				const url = generateUrl('/apps/openregister/api/objects/scholiq/LessonCompletion?limit=100')
+				const resp = await fetch(url, {
+					headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+				})
+				if (!resp.ok) return
+
+				const json = await resp.json()
+				const results = json.results ?? json.objects ?? json ?? []
+				const existing = results.find(
+					(row) => row.learnerId === learnerId && row.lessonId === this.lessonId,
+				)
+
+				this.manualCompletion.completed = !!existing
+			} catch {
+				// Best-effort — swallow, action defaults to "not completed".
+			} finally {
+				this.manualCompletion.checked = true
+			}
+		},
+
+		/**
+		 * Self-report completion of this (non-xAPI-instrumented) lesson —
+		 * creates a LessonCompletion (source: manual) for the current
+		 * learner, mirroring AssessmentResult's unrestricted self-serve
+		 * create posture (progress-tracking spec).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/learning-progress-and-analytics/specs/progress-tracking/spec.md#scenario-learner-marks-a-text-lesson-complete
+		 */
+		async markLessonComplete() {
+			if (this.manualCompletion.completed || this.manualCompletion.saving) return
+
+			this.manualCompletion.saving = true
+			this.manualCompletion.error = ''
+
+			try {
+				const currentUser = getCurrentUser()
+				const learnerId = currentUser?.uid ?? ''
+
+				const url = generateUrl('/apps/openregister/api/objects/scholiq/LessonCompletion')
+				const resp = await fetch(url, {
+					method: 'POST',
+					headers: {
+						'OCS-APIREQUEST': 'true',
+						Accept: 'application/json',
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						learnerId,
+						lessonId: this.lessonId,
+						courseId: this.courseId,
+						source: 'manual',
+						completedAt: new Date().toISOString(),
+						tenant_id: this.lesson?.tenant_id ?? this.course?.tenant_id ?? '',
+					}),
+				})
+
+				if (!resp.ok) {
+					throw new Error(this.t('scholiq', 'Failed to mark lesson complete (HTTP {status})', { status: resp.status }))
+				}
+
+				this.manualCompletion.completed = true
+			} catch (e) {
+				this.manualCompletion.error = e?.message ?? String(e)
+			} finally {
+				this.manualCompletion.saving = false
 			}
 		},
 
@@ -351,6 +485,14 @@ export default {
 .lesson-player__footer {
 	margin-top: 32px;
 	display: flex;
+	align-items: center;
 	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.lesson-player__manual-complete-error {
+	color: var(--color-error);
+	margin: 0;
+	font-size: 0.9em;
 }
 </style>

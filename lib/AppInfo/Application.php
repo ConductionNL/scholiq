@@ -36,6 +36,9 @@ use OCA\Scholiq\Listener\DataExchangeRunHandler;
 use OCA\Scholiq\Listener\ExemptionGrantHandler;
 use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
 use OCA\Scholiq\Listener\BsaProgressFlagHandler;
+use OCA\Scholiq\Listener\EngagementSignalHandler;
+use OCA\Scholiq\Listener\EnrolmentProgressRollupHandler;
+use OCA\Scholiq\Listener\LessonProgressHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -347,6 +350,38 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CompetencyAttainmentRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics): xAPI
+        // completion statement -> per-lesson LessonCompletion upsert bridge.
+        // Listens for the SAME ObjectCreatedEvent<XapiStatement> XapiCompletionHandler
+        // already consumes — a sibling listener, NOT an edit to that class. No
+        // mandatoryTraining or last-lesson gate: every resolvable completed/passed
+        // statement produces or updates a LessonCompletion row.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: LessonProgressHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics):
+        // LessonCompletion creation -> Enrolment.progressPercent recompute bridge.
+        // Listens for ObjectCreatedEvent<LessonCompletion>; the DSL has no division
+        // operator (verified), mirrors FinalGrade/GradeRollupHandler's shape.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: EnrolmentProgressRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics): xAPI
+        // statement -> EngagementScore recompute + EngagementRiskThreshold check ->
+        // EngagementRiskFlag creation bridge. Listens for the SAME
+        // ObjectCreatedEvent<XapiStatement> LessonProgressHandler independently
+        // reacts to. Mirrors BsaProgressFlagHandler's combined evaluate-then-flag
+        // shape. Rule-based only — no AI/ML inference; never auto-acts against the
+        // learner.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: EngagementSignalHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

@@ -83,6 +83,12 @@
 					index-route="/cohorts"
 					:limit="6" />
 			</template>
+			<template #widget-kpi-engagement-score>
+				<KpiEngagementScoreWidget />
+			</template>
+			<template #widget-kpi-engagement-flags>
+				<KpiEngagementRiskFlagsWidget />
+			</template>
 
 			<!-- Student view -->
 			<template #widget-my-mandatory-training>
@@ -100,6 +106,8 @@ import KpiCohortsWidget from './widgets/KpiCohortsWidget.vue'
 import KpiLearnersWidget from './widgets/KpiLearnersWidget.vue'
 import KpiActiveEnrolmentsWidget from './widgets/KpiActiveEnrolmentsWidget.vue'
 import KpiOpenFlagsWidget from './widgets/KpiOpenFlagsWidget.vue'
+import KpiEngagementScoreWidget from './widgets/KpiEngagementScoreWidget.vue'
+import KpiEngagementRiskFlagsWidget from './widgets/KpiEngagementRiskFlagsWidget.vue'
 import ManageCoursesWidget from './widgets/ManageCoursesWidget.vue'
 import ManageCohortsWidget from './widgets/ManageCohortsWidget.vue'
 import ManageProgrammesWidget from './widgets/ManageProgrammesWidget.vue'
@@ -130,6 +138,8 @@ export default {
 		KpiLearnersWidget,
 		KpiActiveEnrolmentsWidget,
 		KpiOpenFlagsWidget,
+		KpiEngagementScoreWidget,
+		KpiEngagementRiskFlagsWidget,
 		ManageCoursesWidget,
 		ManageCohortsWidget,
 		ManageProgrammesWidget,
@@ -235,16 +245,23 @@ export default {
 		teacherConfig() {
 			return {
 				widgets: [
+					// learning-progress-and-analytics: declarative KPI tiles
+					// surfacing average EngagementScore.score and open
+					// EngagementRiskFlag counts — no new chart component.
+					{ id: 'kpi-engagement-score', title: this.t('scholiq', 'Avg. engagement score'), type: 'custom' },
+					{ id: 'kpi-engagement-flags', title: this.t('scholiq', 'Open engagement flags'), type: 'custom' },
 					{ id: 'teacher-courses', title: this.t('scholiq', 'My courses'), type: 'custom' },
 					{ id: 'teacher-assignments', title: this.t('scholiq', 'Assignments to grade'), type: 'custom' },
 					{ id: 'teacher-sessions', title: this.t('scholiq', 'Sessions to mark'), type: 'custom' },
 					{ id: 'teacher-cohorts', title: this.t('scholiq', 'My cohorts'), type: 'custom' },
 				],
 				layout: [
-					{ id: 1, widgetId: 'teacher-courses', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
-					{ id: 2, widgetId: 'teacher-assignments', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 4 },
-					{ id: 3, widgetId: 'teacher-sessions', gridX: 0, gridY: 4, gridWidth: 6, gridHeight: 4 },
-					{ id: 4, widgetId: 'teacher-cohorts', gridX: 6, gridY: 4, gridWidth: 6, gridHeight: 4 },
+					{ id: 1, widgetId: 'kpi-engagement-score', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
+					{ id: 2, widgetId: 'kpi-engagement-flags', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
+					{ id: 3, widgetId: 'teacher-courses', gridX: 0, gridY: 2, gridWidth: 6, gridHeight: 4 },
+					{ id: 4, widgetId: 'teacher-assignments', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
+					{ id: 5, widgetId: 'teacher-sessions', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
+					{ id: 6, widgetId: 'teacher-cohorts', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
 				],
 			}
 		},
