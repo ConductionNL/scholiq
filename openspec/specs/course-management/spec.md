@@ -29,9 +29,7 @@ Authoring of courses, modules, and lessons; cloning of templates; ordered learni
 - GIVEN a student opens the catalog, WHEN a course has unmet prerequisites, THEN the enrol button is disabled and the failing prerequisite is named in plain text.
 - GIVEN a programme committee approves a catalog change, WHEN approval is recorded, THEN the change becomes visible in OOAPI within 5 minutes.
 - GIVEN a `Course` transitions to `published`, WHEN the publication contract's field mapping is applied, THEN a `DataExchangeJob` (`target: ooapi-catalog`) carries the OOAPI 5.0 `course` resource fields (ECTS, language, level) to the catalog publication surface hosted by opencatalogi — Scholiq itself serves no `/ooapi/v5/*` endpoint.
-
 ## Requirements
-
 ### Requirement: Course/Module/Lesson hierarchy in OpenRegister
 The system MUST support Course → Module → Lesson hierarchy persisted as OpenRegister objects.
 
@@ -148,6 +146,33 @@ uses) rather than introducing a second cross-app authentication mechanism.
 - **THEN** the request carries the same bearer-token header shape
   `DataExchangeRunHandler::callOpenConnector()` already sends
 - **AND** no second, LTI-specific cross-app credential is introduced
+
+### Requirement: Course declares an ECTS credit value
+
+The `Course` object MUST support an `ectsCredits` field (nullable number, `minimum: 0`) declaring the
+Bologna-style credit value the course/module contributes toward a learner's cumulative EC total. The field
+MUST be additive — existing `Course` rows leave it `null` — and MUST NOT be required, since `po`/`vo`/
+`corporate` courses (which do not participate in ECTS-bearing programmes) never need to set it. Any
+consumer summing a learner's earned credits MUST treat a `null` `ectsCredits` as `0`, not as an error.
+
+#### Scenario: A course declares its ECTS value
+
+<!-- @e2e exclude Pure OpenRegister schema field; no scholiq DOM surface. Consumed by the study-progress capability's BsaProgressEvaluator, itself covered by PHPUnit as referenced in that spec. -->
+
+- **GIVEN** an HBO/WO course being authored
+- **WHEN** the instructional designer sets `ectsCredits` to a positive number
+- **THEN** the value persists on the `Course` object
+- **AND** it is available to any downstream credit-summing calculation (e.g. the `study-progress`
+  capability's `BsaProgressEvaluator`)
+
+#### Scenario: An existing course without a declared credit value defaults to zero for summation
+
+<!-- @e2e exclude Null-handling verified by the study-progress capability's BsaProgressEvaluatorTest; no scholiq DOM surface here. -->
+
+- **GIVEN** a pre-existing `Course` row with `ectsCredits` unset (`null`)
+- **WHEN** a downstream calculation sums a learner's earned credits across their passed courses
+- **THEN** that course contributes `0` EC to the total
+- **AND** the calculation does not error
 
 ## Standards
 SCORM, xAPI, cmi5, LTI 1.3, Common Cartridge, NL LOM, VDEX, OAI-PMH, OOAPI 5.0, Schema.org `Course` / `CourseInstance`, ECTS, Bologna. LTI 1.3 / LTI Advantage (Assignment & Grade Services, Deep Linking 2.0) protocol implementation lives entirely in openconnector's `lti-13-platform` adapter; Scholiq covers only the consuming-app placement and launch-delegation contract.

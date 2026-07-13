@@ -1,6 +1,6 @@
 # Certification — EUDI Wallet Credential Push Delta
 
-**Spec refs**: `certification`, ADR-041
+**Spec refs**: `certification`, ADR-022
 
 ## ADDED Requirements
 
@@ -33,12 +33,15 @@ The `Credential` schema MUST declare an `offerToWallet` `x-openregister-lifecycl
 on the existing `lifecycle` field (`from: ["issued"], to: "issued"`) so it never collides with the
 credential's own issued/revoked/expired meaning. The transition `requires`
 `OCA\Scholiq\Service\WalletOfferDelegationService`, built to the `check(array &$transitionContext): bool`
-hook contract `CredentialSigningService` already establishes. On invocation it dispatches a
-`WalletOfferRequestedEvent` (`class_exists`-guarded per ADR-041, failing closed when openconnector or the
-event class is absent). On a handled result it writes `walletOfferStatus=offered`,
-`walletOfferedAt=now`, `walletAttestationRef=<returned reference>`, and clears `walletOfferError`, into
-the transition context. On failure — including the guard failing closed — it sets `walletOfferError` and
-returns `false`, blocking the transition.
+hook contract `CredentialSigningService` already establishes. On invocation it POSTs the credential
+payload to openconnector's merged OpenID4VCI adapter endpoint `POST /api/eudi/credential-offers`
+(`EudiWalletController::createOffer`), over the same REST seam scholiq already uses for cross-app calls
+(`DataExchangeRunHandler::callOpenConnector()` — the `IClientService` + `IURLGenerator` + `IAppConfig`
+bearer shape, reusing the `scholiq.openconnector_api_token` config value), rather than an OpenRegister
+integration-registry leaf. It MUST fail closed: when openconnector is absent, returns a non-2xx, or the
+call throws, it sets `walletOfferError` and returns `false`, blocking the transition. On a 2xx response it
+writes `walletOfferStatus=offered`, `walletOfferedAt=now`, `walletAttestationRef=<returned reference>`, and
+clears `walletOfferError`.
 
 #### Scenario: Pushing an issued credential to the wallet records the offer
 
@@ -46,7 +49,7 @@ returns `false`, blocking the transition.
 
 - **GIVEN** a `Credential` with `lifecycle: "issued"` and `walletOfferStatus: null`
 - **WHEN** an authorized user triggers the `offerToWallet` transition and openconnector's OpenID4VCI
-  adapter accepts the offer
+  adapter accepts the offer (2xx)
 - **THEN** `walletOfferStatus` becomes `"offered"`, `walletOfferedAt` is set to the transition time,
   `walletAttestationRef` is set to the reference openconnector returned, `walletOfferError` is cleared,
   and `lifecycle` remains `"issued"`
@@ -57,7 +60,7 @@ returns `false`, blocking the transition.
 
 - **GIVEN** a `Credential` with `lifecycle: "issued"`
 - **WHEN** an authorized user triggers the `offerToWallet` transition and openconnector is absent or the
-  dispatched `WalletOfferRequestedEvent` is not handled
+  `POST /api/eudi/credential-offers` call returns a non-2xx or throws
 - **THEN** the transition is blocked (`lifecycle` stays `"issued"` and `walletOfferStatus` stays
   unchanged), `walletOfferError` is set to a description of the failure, and no partial wallet-offer state
   is written
@@ -65,20 +68,25 @@ returns `false`, blocking the transition.
 ### Requirement: recordWalletClaim transition syncs wallet-claim status back onto the Credential
 
 The `Credential` schema MUST declare a `recordWalletClaim` `x-openregister-lifecycle` transition, a
-self-loop on `lifecycle` (`from: ["issued"], to: "issued"`), invoked only by a new
-`WalletOfferConcludedListener` (`class_exists`-guarded on
-`\OCA\OpenConnector\Event\WalletOfferConcludedEvent`, registered in `lib/AppInfo/Application.php`) when
-openconnector reports the wallet holder claimed the offer — never a user-facing action. The transition
-`requires` `OCA\Scholiq\Service\WalletClaimSyncService`, which writes `walletOfferStatus=claimed` and
-`walletClaimedAt=now`.
+self-loop on `lifecycle` (`from: ["issued"], to: "issued"`), invoked only by the system when openconnector
+reports the wallet holder claimed the offer — never a user-facing action. The transition `requires`
+`OCA\Scholiq\Service\WalletClaimSyncService`, which writes `walletOfferStatus=claimed` and
+`walletClaimedAt=now`. The inbound trigger is `WalletOfferConcludedListener` (`lib/Listener/`), registered
+in `lib/AppInfo/Application.php` under a `class_exists` guard on
+`\OCA\OpenConnector\Event\WalletOfferConcludedEvent`. openconnector's merged adapter does not emit that
+event today (it fires a status callback only on `revoke`), so the listener is a fail-closed
+forward-compatibility shim that stays inert until a wallet-claim notification path is added on the
+openconnector side; the transition and `WalletClaimSyncService` are complete and unit-tested so the sync
+works the moment that trigger exists.
 
 #### Scenario: A claimed wallet offer updates the Credential's wallet-offer status
 
-<!-- @e2e exclude System-triggered by an inbound cross-app event; no scholiq DOM interaction to drive. Covered by WalletClaimSyncService + WalletOfferConcludedListener PHPUnit per tasks.md. -->
+<!-- @e2e exclude System-triggered by an inbound cross-app notification; no scholiq DOM interaction to drive. Covered by WalletClaimSyncService + WalletOfferConcludedListener PHPUnit per tasks.md. -->
 
 - **GIVEN** a `Credential` with `walletOfferStatus: "offered"` and a `walletAttestationRef` matching an
   outstanding wallet-offer session
-- **WHEN** openconnector dispatches a `WalletOfferConcludedEvent` reporting that session as claimed
+- **WHEN** openconnector notifies that the session was claimed and `WalletOfferConcludedListener` runs the
+  `recordWalletClaim` transition
 - **THEN** the matching `Credential`'s `walletOfferStatus` becomes `"claimed"` and `walletClaimedAt` is set
   to the claim time
 
@@ -88,10 +96,11 @@ The existing `revoke` transition (`from: "issued", to: "revoked"`) MUST gain a s
 `OCA\Scholiq\Service\WalletRevocationPropagationService`, so revoking a credential propagates to any
 outstanding wallet offer. This hook MUST be fail-soft by design: revoking a credential is the compliance
 action of record and MUST NOT be blocked by the wallet rail being unavailable. It fires only when
-`walletOfferStatus` is `"offered"` or `"claimed"` (nothing to revoke otherwise), dispatches a
-`WalletRevocationRequestedEvent` best-effort, catches `Throwable`, logs the failure, and always returns
-`true` so `revoke` proceeds regardless of wallet-rail outcome; on a successful propagation it also sets
-`walletOfferStatus=revoked`.
+`walletOfferStatus` is `"offered"` or `"claimed"` (nothing to revoke otherwise), calls openconnector's
+`POST /api/eudi/credential-offers/{id}/revoke` (`EudiWalletController::revoke`) best-effort over the same
+REST seam and bearer-token convention as the offer path, catches `Throwable`, logs the failure, and always
+returns `true` so `revoke` proceeds regardless of wallet-rail outcome; on a successful propagation it also
+sets `walletOfferStatus=revoked`.
 
 #### Scenario: Revoking a credential with an outstanding wallet offer propagates the revocation
 
@@ -108,41 +117,42 @@ action of record and MUST NOT be blocked by the wallet rail being unavailable. I
 
 - **GIVEN** a `Credential` with `lifecycle: "issued"` and `walletOfferStatus: "claimed"`
 - **WHEN** an authorized user triggers the `revoke` transition and openconnector is absent or the
-  `WalletRevocationRequestedEvent` dispatch throws
+  `POST /api/eudi/credential-offers/{id}/revoke` call throws
 - **THEN** `lifecycle` still becomes `"revoked"` (the compliance action of record is never blocked)
 - **AND** the failure is logged rather than surfaced as a transition error
 - **AND** `walletOfferStatus` is left unchanged (not set to `"revoked"`) since propagation did not
   succeed
 
-### Requirement: Cross-app wallet-offer event contract, scholiq side
+### Requirement: Cross-app wallet delegation over openconnector's REST adapter
 
-scholiq MUST define, as the producer, `WalletOfferRequestedEvent` and `WalletRevocationRequestedEvent`
-(`lib/Event/`), and, as the consumer, handle `WalletOfferConcludedEvent`, per the ADR-041 typed-event
-recipe — the sanctioned cross-app mechanism, not a REST call or an OpenRegister integration-registry leaf.
-Each event carries provenance (`sourceApp='scholiq'`, `subjectRegister`, `subjectSchema='Credential'`,
-`subjectId`), a `payload` (credential `kind`, `openbadges3Payload`, `edciPayload`, `learnerId`,
-`issuerDid`, `expiresAt`), an `externalReference` (the Credential UUID, for idempotency), a
-`correlationId`, and, on the request events, a synchronous result slot (`walletAttestationRef` +
-`handled`). This change defines the scholiq-side event classes and dispatch/listener wiring only; the
-OpenID4VCI wire protocol and issuance/sealing/revocation logic are out of scope and belong to a companion
-openconnector-side change.
+scholiq MUST delegate all EUDI-wallet wire operations to openconnector's merged OpenID4VCI adapter over
+REST, and MUST NOT implement any OpenID4VCI wire protocol, credential signing/sealing, or status-list
+logic itself. `WalletOfferDelegationService` and `WalletRevocationPropagationService` are the only
+egress points; both call `EudiWalletController` endpoints (`POST /api/eudi/credential-offers`,
+`POST /api/eudi/credential-offers/{id}/revoke`) using the `IClientService` + `IURLGenerator` + `IAppConfig`
+seam and the `scholiq.openconnector_api_token` bearer credential established by
+`DataExchangeRunHandler::callOpenConnector()`. The request payload MUST carry enough for openconnector to
+build a wallet offer: the credential `kind`, its `openbadges3Payload`/`edciPayload`, `learnerId`,
+`issuerDid`, `expiresAt`, and the Credential UUID as the idempotency `externalReference`. Where a first-
+class app-to-app auth handshake (consumer-JWT registration) or an inbound wallet-claim notification is
+required for full round-trip operation, those are documented follow-ups on the openconnector side, not
+scholiq responsibilities.
 
-#### Scenario: WalletOfferRequestedEvent carries enough payload for openconnector to build a wallet offer
+#### Scenario: The offer delegation call carries enough payload for openconnector to build a wallet offer
 
-<!-- @e2e exclude Cross-app event contract; no scholiq DOM surface. Covered by unit tests asserting the event's constructed shape per tasks.md. -->
+<!-- @e2e exclude Cross-app REST contract; no scholiq DOM surface. Covered by unit tests asserting the request body shape per tasks.md. -->
 
-- **GIVEN** the `offerToWallet` transition dispatches a `WalletOfferRequestedEvent` for a `Credential`
-- **WHEN** the event is constructed
-- **THEN** it carries `sourceApp='scholiq'`, `subjectSchema='Credential'`, `subjectId`, a `payload`
-  containing `kind`, `openbadges3Payload`, `edciPayload`, `learnerId`, `issuerDid`, and `expiresAt`, an
-  `externalReference` equal to the Credential's UUID, and a `correlationId`
+- **GIVEN** the `offerToWallet` transition invokes `WalletOfferDelegationService` for a `Credential`
+- **WHEN** the outbound `POST /api/eudi/credential-offers` request body is constructed
+- **THEN** it carries `subjectSchema='Credential'`, the credential UUID as `externalReference`, and a
+  payload containing `kind`, `openbadges3Payload`, `edciPayload`, `learnerId`, `issuerDid`, and
+  `expiresAt`
 
 #### Scenario: Absent openconnector fails closed rather than silently no-opping
 
-<!-- @e2e exclude Cross-app event contract failure path; no scholiq DOM surface. Covered by unit tests per tasks.md. -->
+<!-- @e2e exclude Cross-app REST contract failure path; no scholiq DOM surface. Covered by unit tests per tasks.md. -->
 
-- **GIVEN** openconnector's listener class for `WalletOfferRequestedEvent` does not exist on the running
-  instance
-- **WHEN** `WalletOfferDelegationService` attempts to dispatch the event
-- **THEN** the `class_exists` guard fails closed, the `offerToWallet` transition is blocked, and
-  `walletOfferError` is set to a message indicating the wallet integration is unavailable
+- **GIVEN** openconnector is not reachable on the running instance
+- **WHEN** `WalletOfferDelegationService` attempts the `POST /api/eudi/credential-offers` call
+- **THEN** the call fails closed, the `offerToWallet` transition is blocked, and `walletOfferError` is set
+  to a message indicating the wallet integration is unavailable

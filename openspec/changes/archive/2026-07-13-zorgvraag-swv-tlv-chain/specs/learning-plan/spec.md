@@ -3,6 +3,24 @@
 **Spec refs**: `learning-plan`, `data-exchange`, ADR-008 (immutable audit trail), ADR-022 (apps consume
 OR abstractions), ADR-031 (declarative notifications)
 
+## MODIFIED Requirements
+
+### Requirement: Frontend is declarative with named custom views
+
+The frontend MUST be declarative: `src/manifest.json` pages for `SupportRequest`/`TlvApplication`/
+`DeliberationRecord` index+detail, following the same `<Schema>s`/`<Schema>Detail` convention as the
+existing `LearningPlans`/`LearningPlanDetail` pages. The SWV dossier review step MUST reuse the existing
+`OsoDossierReviewView` custom view (`CnStructuredDocReview`) rather than introduce a new bespoke
+component. There MUST be no PHP CRUD controllers.
+
+#### Scenario: Pages are manifest-declared and reuse the existing dossier-review view
+
+- **GIVEN** the support-chain frontend is configured
+- **WHEN** the app renders `SupportRequest`/`TlvApplication`/`DeliberationRecord` screens and the SWV
+  dossier review step
+- **THEN** index/detail pages come from `src/manifest.json`, the dossier review step reuses the existing
+  `OsoDossierReviewView`, and there are no PHP CRUD controllers
+
 ## ADDED Requirements
 
 ### Requirement: Persist SupportRequest, TlvApplication, and DeliberationRecord domain objects in OpenRegister
@@ -153,19 +171,3 @@ and reflects that zorg (care/support) data is the most sensitive category this a
 - **WHEN** the dossier payload is built from `LearnerProfile`/`LearningPlan`/`SupportRequest` data
 - **THEN** only fields present in the `swv` `DataMappingProfile` whitelist appear in the payload — no
   field outside that whitelist reaches OpenConnector
-
-### Requirement: Frontend is declarative with named custom views
-
-The frontend MUST be declarative: `src/manifest.json` pages for `SupportRequest`/`TlvApplication`/
-`DeliberationRecord` index+detail, following the same `<Schema>s`/`<Schema>Detail` convention as the
-existing `LearningPlans`/`LearningPlanDetail` pages. The SWV dossier review step MUST reuse the existing
-`OsoDossierReviewView` custom view (`CnStructuredDocReview`) rather than introduce a new bespoke
-component. There MUST be no PHP CRUD controllers.
-
-#### Scenario: Pages are manifest-declared and reuse the existing dossier-review view
-
-- **GIVEN** the support-chain frontend is configured
-- **WHEN** the app renders `SupportRequest`/`TlvApplication`/`DeliberationRecord` screens and the SWV
-  dossier review step
-- **THEN** index/detail pages come from `src/manifest.json`, the dossier review step reuses the existing
-  `OsoDossierReviewView`, and there are no PHP CRUD controllers

@@ -3,7 +3,7 @@
 **Spec refs**: `course-management`; openconnector `lti-13-platform` (REQ-LTI-006, REQ-LTI-007,
 REQ-LTI-010 — cross-repo contract this delta consumes).
 
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Place an LTI 1.3 tool inside a lesson via a dedicated placement object
 

@@ -3,6 +3,19 @@ kind: code
 depends_on: []
 ---
 
+> **Implementation note (2026-07-13, at archive):** This proposal was authored around ADR-041's
+> typed-event recipe (scholiq dispatching `WalletOfferRequestedEvent`/`WalletRevocationRequestedEvent`).
+> During implementation openconnector's companion adapter (`eudi-wallet-credential-issuance`) shipped a
+> **REST** interface — `EudiWalletController` (`POST /api/eudi/credential-offers`, `.../{id}/revoke`) — not
+> an event listener. The delivered scholiq side therefore delegates over REST via
+> `WalletOfferDelegationService`/`WalletRevocationPropagationService` (reusing the
+> `scholiq.openconnector_api_token` seam from `DataExchangeRunHandler::callOpenConnector()`), and the
+> planned event classes were not built. `WalletOfferConcludedListener` is kept as a `class_exists`-guarded
+> forward-compat shim for a future inbound wallet-claim notification. The delta spec
+> (`specs/certification/spec.md`) and the shipped code are authoritative; the event-mechanism prose below
+> is retained as the original design rationale. Follow-ups: openconnector consumer-JWT auth + wallet-claim
+> trigger.
+
 ## Why
 
 Regulation (EU) 2024/1183 (eIDAS 2.0) requires every member state to offer at least one certified
