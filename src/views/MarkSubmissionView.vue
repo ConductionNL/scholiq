@@ -11,10 +11,22 @@
      then dispatch the `return` lifecycle transition.
   6. TODO(grading spec): emit GradeEntry once the grading spec is implemented.
 
+  peer-and-self-assessment: also fetches (read-only) the Submission's
+  PeerFeedbackSummary and the teacher's own SelfAssessment for context —
+  displayed in a read-only panel, never editable here. When
+  Assignment.peerReviewWeightPercent is set, a suggested blended score
+  (teacherScore x (1 - w) + PeerFeedbackSummary.averageScore x w) is shown
+  as a hint next to the teacher's own entry fields — display arithmetic
+  only; it NEVER pre-fills or alters proposedGrade (grade authority stays
+  with the teacher, per the assignments spec's "Marking a Submission emits
+  a GradeEntry" requirement).
+
   Talks only to OpenRegister's REST API:
     - GET  /api/objects/scholiq/Submission/:id
     - GET  /api/objects/scholiq/Assignment/:id
     - GET  /api/objects/scholiq/Rubric/:id
+    - GET  /api/objects/scholiq/PeerFeedbackSummary?filters[submissionId]=:id (read-only context)
+    - GET  /api/objects/scholiq/SelfAssessment?filters[submissionId]=:id (read-only context)
     - PUT  /api/objects/scholiq/Submission/:id
     - POST /api/objects/scholiq/Submission/:id/transition/return
 
@@ -24,6 +36,8 @@
   Copyright (C) 2026 Conduction B.V.
 
   @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-28
+  @spec openspec/changes/peer-and-self-assessment/specs/assignments/spec.md#scenario-marksubmissionview-shows-peer-and-self-assessment-as-read-only-context
+  @spec openspec/changes/peer-and-self-assessment/specs/assignments/spec.md#scenario-a-configured-peer-review-weight-only-suggests-never-writes-a-blended-score
 -->
 
 <template>
@@ -155,6 +169,60 @@
 					rows="5" />
 			</section>
 
+			<!--
+				Peer/self-assessment read-only context (peer-and-self-assessment).
+				Never editable here — grade authority stays with the teacher.
+			-->
+			<section
+				v-if="peerFeedbackSummary || selfAssessment"
+				class="mark-submission-view__peer-context"
+				aria-label="Peer and self-assessment context">
+				<h3>{{ t('scholiq', 'Peer & self-assessment context') }}</h3>
+
+				<div v-if="peerFeedbackSummary" class="mark-submission-view__peer-summary">
+					<p class="mark-submission-view__peer-summary-line">
+						{{ t('scholiq', '{count} peer review(s), average score {avg}', {
+							count: peerFeedbackSummary.reviewCount || 0,
+							avg: peerFeedbackSummary.averageScore != null ? peerFeedbackSummary.averageScore : t('scholiq', 'n/a'),
+						}) }}
+					</p>
+					<ul v-if="(peerFeedbackSummary.feedbackItems || []).length > 0" class="mark-submission-view__peer-items">
+						<li
+							v-for="(item, index) in peerFeedbackSummary.feedbackItems"
+							:key="index"
+							class="mark-submission-view__peer-item">
+							<span class="mark-submission-view__peer-item-reviewer">
+								{{ item.reviewerId ? item.reviewerId : t('scholiq', 'Anonymous reviewer') }}
+							</span>
+							<span v-if="item.comments" class="mark-submission-view__peer-item-comment">{{ item.comments }}</span>
+						</li>
+					</ul>
+				</div>
+
+				<div v-if="selfAssessment" class="mark-submission-view__self-summary">
+					<p class="mark-submission-view__self-summary-line">
+						{{ t('scholiq', 'Learner self-assessment score: {score}', {
+							score: selfAssessment.totalScore != null ? selfAssessment.totalScore : t('scholiq', 'n/a'),
+						}) }}
+					</p>
+					<p v-if="selfAssessment.comments" class="mark-submission-view__self-summary-comment">
+						{{ selfAssessment.comments }}
+					</p>
+				</div>
+
+				<!--
+					Advisory-only suggestion — display arithmetic, never written to
+					proposedGrade. Only shown when Assignment.peerReviewWeightPercent
+					is set AND a peer average score exists.
+				-->
+				<p v-if="blendedSuggestion != null" class="mark-submission-view__blended-suggestion">
+					{{ t('scholiq', 'Suggested blended score ({weight}% peer weight): {value}', {
+						weight: assignment.peerReviewWeightPercent,
+						value: blendedSuggestion,
+					}) }}
+				</p>
+			</section>
+
 			<!-- Actions -->
 			<div class="mark-submission-view__actions">
 				<button
@@ -213,6 +281,10 @@ export default {
 			feedbackText: '',
 			/** @type {number|null} */
 			manualGrade: null,
+			/** @type {object|null} Read-only peer-and-self-assessment context. */
+			peerFeedbackSummary: null,
+			/** @type {object|null} Read-only peer-and-self-assessment context. */
+			selfAssessment: null,
 			loading: false,
 			saving: false,
 			returned: false,
@@ -246,6 +318,30 @@ export default {
 			const penalty = this.assignment.latePenaltyPercent || 0
 			const grade = this.rubric ? this.computedScore : (this.manualGrade || 0)
 			return Math.round(grade * (1 - penalty / 100) * 100) / 100
+		},
+
+		/**
+		 * peer-and-self-assessment: advisory-only blended score suggestion —
+		 * `teacherScore x (1 - w) + PeerFeedbackSummary.averageScore x w` — shown
+		 * as display-only arithmetic next to the teacher's own entry fields.
+		 * Never written to `Submission.proposedGrade`; null (nothing shown) unless
+		 * `Assignment.peerReviewWeightPercent` is set AND a peer average score
+		 * exists.
+		 *
+		 * @return {number|null}
+		 * @spec openspec/changes/peer-and-self-assessment/specs/assignments/spec.md#scenario-a-configured-peer-review-weight-only-suggests-never-writes-a-blended-score
+		 */
+		blendedSuggestion() {
+			const weightPercent = this.assignment.peerReviewWeightPercent
+			const averageScore = this.peerFeedbackSummary ? this.peerFeedbackSummary.averageScore : null
+
+			if (weightPercent == null || averageScore == null) {
+				return null
+			}
+
+			const teacherScore = this.rubric ? this.computedScore : (this.manualGrade || 0)
+			const w = weightPercent / 100
+			return Math.round((teacherScore * (1 - w) + averageScore * w) * 100) / 100
 		},
 	},
 
@@ -286,6 +382,11 @@ export default {
 				if (this.assignment.rubricId) {
 					await this.loadRubric(this.assignment.rubricId)
 				}
+
+				// peer-and-self-assessment: read-only context, best-effort (a
+				// missing/unauthorized fetch just means the panel doesn't render).
+				await this.loadPeerFeedbackSummary(submissionId)
+				await this.loadSelfAssessment(submissionId)
 
 				// Pre-fill existing rubric scores if already partially marked
 				const existingScores = this.submission.rubricScores ?? []
@@ -368,6 +469,56 @@ export default {
 			}
 			const json = await resp.json()
 			this.rubric = json.object ?? json ?? null
+		},
+
+		/**
+		 * Fetch the Submission's PeerFeedbackSummary from OR (read-only context).
+		 * feedbackItems[].reviewerId is already server-computed as null when
+		 * blind/double-blind — this view renders whatever the server returns
+		 * without any client-side redaction of its own.
+		 *
+		 * @param {string} submissionId Submission UUID
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/peer-and-self-assessment/specs/assignments/spec.md#scenario-marksubmissionview-shows-peer-and-self-assessment-as-read-only-context
+		 */
+		async loadPeerFeedbackSummary(submissionId) {
+			const url = generateUrl(
+				`/apps/openregister/api/objects/scholiq/PeerFeedbackSummary?filters[submissionId]=${submissionId}&limit=1`,
+			)
+			const resp = await fetch(url, {
+				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+			})
+			if (!resp.ok) {
+				// Non-fatal — the panel simply doesn't render this section.
+				return
+			}
+			const json = await resp.json()
+			const results = json.results ?? json.objects ?? (Array.isArray(json) ? json : [])
+			this.peerFeedbackSummary = results.length > 0 ? results[0] : null
+		},
+
+		/**
+		 * Fetch the learner's SelfAssessment for this Submission from OR
+		 * (read-only context).
+		 *
+		 * @param {string} submissionId Submission UUID
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/peer-and-self-assessment/specs/assignments/spec.md#scenario-marksubmissionview-shows-peer-and-self-assessment-as-read-only-context
+		 */
+		async loadSelfAssessment(submissionId) {
+			const url = generateUrl(
+				`/apps/openregister/api/objects/scholiq/SelfAssessment?filters[submissionId]=${submissionId}&limit=1`,
+			)
+			const resp = await fetch(url, {
+				headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' },
+			})
+			if (!resp.ok) {
+				// Non-fatal — the panel simply doesn't render this section.
+				return
+			}
+			const json = await resp.json()
+			const results = json.results ?? json.objects ?? (Array.isArray(json) ? json : [])
+			this.selfAssessment = results.length > 0 ? results[0] : null
 		},
 
 		/**
@@ -672,6 +823,43 @@ export default {
 	padding: 8px;
 	resize: vertical;
 	font-family: inherit;
+}
+
+.mark-submission-view__peer-context {
+	margin-bottom: calc(var(--default-grid-baseline, 8px) * 3);
+	padding: var(--default-grid-baseline, 8px);
+	border: 1px dashed var(--color-border);
+	border-radius: 4px;
+	background: var(--color-background-hover);
+}
+
+.mark-submission-view__peer-items {
+	list-style: none;
+	padding: 0;
+	margin: var(--default-grid-baseline, 8px) 0 0;
+}
+
+.mark-submission-view__peer-item {
+	display: flex;
+	flex-direction: column;
+	padding: 4px 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.mark-submission-view__peer-item-reviewer {
+	font-weight: bold;
+	font-size: 0.85em;
+	color: var(--color-text-maxcontrast);
+}
+
+.mark-submission-view__self-summary {
+	margin-top: var(--default-grid-baseline, 8px);
+}
+
+.mark-submission-view__blended-suggestion {
+	margin-top: var(--default-grid-baseline, 8px);
+	font-style: italic;
+	color: var(--color-text-maxcontrast);
 }
 
 .mark-submission-view__actions {

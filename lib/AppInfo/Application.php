@@ -43,6 +43,7 @@ use OCA\Scholiq\Listener\BsaProgressFlagHandler;
 use OCA\Scholiq\Listener\EngagementSignalHandler;
 use OCA\Scholiq\Listener\EnrolmentProgressRollupHandler;
 use OCA\Scholiq\Listener\LessonProgressHandler;
+use OCA\Scholiq\Listener\PeerFeedbackAggregator;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -467,6 +468,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CohortTalkMembershipHandler::class
+        );
+
+        // ADR-031 legitimate exception (peer-and-self-assessment): PeerReview
+        // `released` -> PeerFeedbackSummary recompute bridge (reviewCount,
+        // averageScore, and the anonymity-projected feedbackItems[].reviewerId).
+        // Mirrors GradeRollupHandler's "recompute on publish" shape — this
+        // register's x-openregister-aggregations vocabulary is count/count_distinct
+        // only and cannot conditionally redact a field per matching row.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PeerFeedbackAggregator::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

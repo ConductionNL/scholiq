@@ -80,6 +80,13 @@ return [
         // Controller: TimetableController (slug: timetable).
         ['name' => 'timetable#mine', 'url' => '/api/timetable/mine', 'verb' => 'GET'],
 
+        // Peer review reviewer allocation — genuine batch-matching business logic
+        // (peer-and-self-assessment), authorized by an explicit per-object check
+        // (admin or a teacher on the Assignment's own Cohort), NOT the ADR-023
+        // action matrix or a bare authenticated-user gate.
+        // Controller: PeerReviewController (slug: peerReview).
+        ['name' => 'peerReview#allocate', 'url' => '/api/peer-review/{assignmentId}/allocate', 'verb' => 'POST'],
+
         // Observability (ADR-006 / ADR-040) — AppHost generic controllers.
         // health#index → GenericHealthController (PUBLIC, declarative checks).
         ['name' => 'health#index',  'url' => '/api/health',  'verb' => 'GET'],
