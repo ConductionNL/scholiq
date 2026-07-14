@@ -3940,7 +3940,7 @@
 			"title": "Peer reviews",
 			"config": {
 				"register": "scholiq",
-				"schema": "PeerReview",
+				"schema": "peer-review",
 				"filter": {
 					"assignmentId": "@route.assignmentId"
 				}
@@ -3953,7 +3953,7 @@
 			"title": "Peer review",
 			"config": {
 				"register": "scholiq",
-				"schema": "PeerReview",
+				"schema": "peer-review",
 				"_note": "A PeerReview is one reviewer's rubric-based assessment of another learner's Submission (peer-and-self-assessment) — a result/score record, mirroring Submission's own detail-page archetype. Body leads with the rubric scores + comments (8-wide) and a Related panel resolving the assignment/submission. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. x-property-rbac restricts read to admin/reviewer-self — the submission's author can never open this page directly; they read peer feedback through the PeerFeedbackSummary panel on their Submission's detail page instead.",
 				"lifecycleActions": {
 					"field": "lifecycle"
@@ -4028,7 +4028,7 @@
 			"title": "Self-assessments",
 			"config": {
 				"register": "scholiq",
-				"schema": "SelfAssessment",
+				"schema": "self-assessment",
 				"filter": {
 					"assignmentId": "@route.assignmentId"
 				}
@@ -4041,7 +4041,7 @@
 			"title": "Self-assessment",
 			"config": {
 				"register": "scholiq",
-				"schema": "SelfAssessment",
+				"schema": "self-assessment",
 				"_note": "A SelfAssessment is a learner's own rubric-based assessment of their own Submission (peer-and-self-assessment) — a result/score record. Body leads with the rubric scores + comments (8-wide) and a Related panel resolving the assignment/submission. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. x-property-rbac restricts read to admin/learner-self.",
 				"lifecycleActions": {
 					"field": "lifecycle"
@@ -4116,7 +4116,7 @@
 			"title": "Peer feedback summaries",
 			"config": {
 				"register": "scholiq",
-				"schema": "PeerFeedbackSummary",
+				"schema": "peer-feedback-summary",
 				"readOnly": true,
 				"filter": {
 					"assignmentId": "@route.assignmentId"
@@ -4130,7 +4130,7 @@
 			"title": "Peer feedback summary",
 			"config": {
 				"register": "scholiq",
-				"schema": "PeerFeedbackSummary",
+				"schema": "peer-feedback-summary",
 				"readOnly": true,
 				"_note": "PeerFeedbackSummary is a computed, read-only aggregate of a Submission's released PeerReviews (peer-and-self-assessment) — the only surface a submission's author reads peer feedback through; feedbackItems[].reviewerId is server-computed as null when the governing Assignment's peerReviewAnonymity is blind/double-blind. Mirrors FinalGrade's own read-only detail-page archetype. Body leads with the aggregate data (8-wide) and a Related panel resolving the submission/assignment. No lifecycle (fully derived). No comms leaves.",
 				"widgets": [

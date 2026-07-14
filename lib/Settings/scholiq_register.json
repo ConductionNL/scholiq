@@ -5079,15 +5079,18 @@
                                         "properties": {
                                             "criterionId": {
                                                 "type": "string",
-                                                "title": "Criterion ID"
+                                                "title": "Criterion ID",
+                                                "description": "The Rubric criterion this peer score applies to."
                                             },
                                             "levelId": {
                                                 "type": "string",
-                                                "title": "Level ID"
+                                                "title": "Level ID",
+                                                "description": "The Rubric level the reviewer selected for this criterion."
                                             },
                                             "points": {
                                                 "type": "number",
-                                                "title": "Points Awarded"
+                                                "title": "Points Awarded",
+                                                "description": "Points the reviewer awarded for this criterion, per the selected level."
                                             }
                                         }
                                     },
