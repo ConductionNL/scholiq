@@ -44,6 +44,8 @@ use OCA\Scholiq\Listener\EngagementSignalHandler;
 use OCA\Scholiq\Listener\EnrolmentProgressRollupHandler;
 use OCA\Scholiq\Listener\LessonProgressHandler;
 use OCA\Scholiq\Listener\PeerFeedbackAggregator;
+use OCA\Scholiq\Lifecycle\PortfolioShareGrantHandler;
+use OCA\Scholiq\Listener\PortfolioGradeEmitHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
@@ -479,6 +481,28 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: PeerFeedbackAggregator::class
+        );
+
+        // ADR-031 legitimate exception (eportfolio): Portfolio `graded` transition →
+        // concept GradeEntry create + back-link bridge, mirroring
+        // GradeRollupHandler::handleAssessmentResultGraded()/WerkprocesGradeEmitHandler's
+        // existing cross-schema write-bridge shape exactly. Portfolio computes no
+        // final grade itself.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PortfolioGradeEmitHandler::class
+        );
+
+        // ADR-031 legitimate exception (eportfolio): PortfolioShare `grant` transition
+        // (draft -> active) -> native NC Files read-only share creation for
+        // sharedWithKind=teacher, via OCP\Share\IManager. The same class is ALSO
+        // referenced as the transition's `requires:` guard in scholiq_register.json
+        // (self-grant block) — this registration only wires its IEventListener half;
+        // praktijkopleider/external-assessor visibility is served declaratively by
+        // PortalContributionProvider, not by this listener.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PortfolioShareGrantHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

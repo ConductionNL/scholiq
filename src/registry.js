@@ -57,6 +57,11 @@ import ConferenceScheduleBoard from './views/ConferenceScheduleBoard.vue'
 // directly by the view itself, not registered here (a plain component, same
 // as procest's src/dialogs/*.vue shape, not a routed page).
 import RapportvergaderingReviewView from './views/RapportvergaderingReviewView.vue'
+// eportfolio: the learner's evidence-picker portfolio builder and the
+// teacher/praktijkopleider/external-assessor read-only review + grading
+// surface — the two named custom views the eportfolio spec permits.
+import PortfolioBuilder from './views/PortfolioBuilder.vue'
+import PortfolioReviewView from './views/PortfolioReviewView.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -105,6 +110,8 @@ export default {
 	MyTimetable: page(MyTimetable),
 	PeerReviewMarkingView: page(PeerReviewMarkingView),
 	PeopleDashboard: page(PeopleDashboard),
+	PortfolioBuilder: page(PortfolioBuilder),
+	PortfolioReviewView: page(PortfolioReviewView),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	RapportvergaderingReviewView: page(RapportvergaderingReviewView),
 	RegulationDetailPage: page(RegulationDetailPage),

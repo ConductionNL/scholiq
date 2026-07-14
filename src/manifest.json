@@ -439,6 +439,49 @@
 			]
 		},
 		{
+			"id": "GroupPortfolio",
+			"label": "Portfolios",
+			"icon": "icon-briefcase",
+			"order": 27,
+			"children": [
+				{
+					"id": "PortfoliosMenu",
+					"label": "Portfolios",
+					"icon": "icon-briefcase",
+					"route": "Portfolios",
+					"order": 10
+				},
+				{
+					"id": "PortfolioTemplatesMenu",
+					"label": "Portfolio templates",
+					"icon": "icon-clippy",
+					"route": "PortfolioTemplates",
+					"order": 20
+				},
+				{
+					"id": "PortfolioEntriesMenu",
+					"label": "Portfolio entries",
+					"icon": "icon-file",
+					"route": "PortfolioEntries",
+					"order": 30
+				},
+				{
+					"id": "PortfolioSharesMenu",
+					"label": "Portfolio shares",
+					"icon": "icon-shared",
+					"route": "PortfolioShares",
+					"order": 40
+				},
+				{
+					"id": "ExternalAssessorsMenu",
+					"label": "External assessors",
+					"icon": "icon-contacts",
+					"route": "ExternalAssessors",
+					"order": 50
+				}
+			]
+		},
+		{
 			"id": "MyTimetableMenu",
 			"label": "My timetable",
 			"icon": "icon-calendar",
@@ -10446,6 +10489,497 @@
 			"title": "Rapportvergadering review",
 			"component": "RapportvergaderingReviewView",
 			"_note": "report-card-composer: the cohort-wide rapportvergadering review grid (one row per learner's ReportCard, one column per in-scope subject, inline teacherComment/mentorComment editing, finalise/reopen/publishToParents actions) — no manifest page can render a cohort grid, mirrors GradebookView's existing precedent for the same reason. Also hosts the ComposeReportPeriodModal confirmation dialog for a still-`open` ReportPeriod."
+		},
+		{
+			"id": "PortfolioTemplates",
+			"route": "/eportfolio/templates",
+			"type": "index",
+			"title": "Portfolio templates",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-template"
+			}
+		},
+		{
+			"id": "Portfolios",
+			"route": "/eportfolio/portfolios",
+			"type": "index",
+			"title": "Portfolios",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio"
+			}
+		},
+		{
+			"id": "PortfolioEntries",
+			"route": "/eportfolio/entries",
+			"type": "index",
+			"title": "Portfolio entries",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-entry"
+			}
+		},
+		{
+			"id": "ExternalAssessors",
+			"route": "/eportfolio/external-assessors",
+			"type": "index",
+			"title": "External assessors",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-assessor"
+			}
+		},
+		{
+			"id": "PortfolioShares",
+			"route": "/eportfolio/shares",
+			"type": "index",
+			"title": "Portfolio shares",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-share"
+			}
+		},
+		{
+			"id": "PortfolioTemplateDetail",
+			"route": "/eportfolio/templates/:id",
+			"type": "detail",
+			"title": "Portfolio template",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-template",
+				"_note": "eportfolio: a teacher-authored structure (sections[]/criteria[], mirroring LearningPlanTemplate.sections + Rubric.criteria combined) a course-bound Portfolio can be instantiated from. Body leads with the template data 8-wide (name/kind/description/rubricId; sections[] renders as-is via the generic 'data' widget, no content.fields allowlist needed) plus a Related panel resolving the optional Rubric. lifecycleActions renders activate/archive/reactivate declaratively. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "pt-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ClipboardList"
+					},
+					{
+						"id": "pt-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pt-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pt-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PortfolioDetail",
+			"route": "/eportfolio/portfolios/:id",
+			"type": "detail",
+			"title": "Portfolio",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio",
+				"_note": "eportfolio: the container a learner curates evidence into. kind discriminates personal (draft/active/archived only) from course-bound (adds submitted/graded). Body leads with the portfolio data 8-wide (kind/templateId/courseId/curriculumPlanId/title/dueAt/gradeValue/gradeEntryId) plus a Related panel resolving the LearnerProfile/PortfolioTemplate/Course/CurriculumPlan/GradeEntry. Its PortfolioEntry rows render as a related-index — the portfolio's evidence dossier. lifecycleActions renders activate/submit/grade/archive/reactivate declaratively (submit is gated server-side by PortfolioSubmissionGuard). PortfolioBuilder.vue and PortfolioReviewView.vue (custom views, linked from here) are the learner's/teacher's respective working surfaces for entry curation and grading. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "portfolio-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Briefcase"
+					},
+					{
+						"id": "portfolio-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "portfolio-entries",
+						"type": "object-list",
+						"title": "Evidence entries",
+						"content": {
+							"register": "scholiq",
+							"schema": "portfolio-entry",
+							"filter": {
+								"portfolioId": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "evidenceKind",
+									"label": "Evidence kind"
+								},
+								{
+									"key": "sectionId",
+									"label": "Section"
+								}
+							],
+							"rowRoute": "PortfolioEntryDetail",
+							"viewAllRoute": "PortfolioEntries",
+							"viewAllQuery": {
+								"portfolioId": "@objectId"
+							},
+							"emptyText": "No evidence entries yet.",
+							"allowCreate": false
+						},
+						"icon": "FileDocument"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "portfolio-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "portfolio-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "portfolio-entries",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PortfolioEntryDetail",
+			"route": "/eportfolio/entries/:id",
+			"type": "detail",
+			"title": "Portfolio entry",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-entry",
+				"_note": "eportfolio: one evidence item — references, never copies, exactly one existing object per evidenceKind. No lifecycle of its own (mirrors SelfAssessment). Body leads with the entry data 8-wide (evidenceKind + whichever per-kind reference field is set + reflectionText/sectionId/criterionId/competencyId) plus a Related panel resolving the parent Portfolio and the referenced Submission/WerkprocesAssessment/ExternalTrainingRecord/Credential/Competency. No lifecycleActions. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "pe-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FileDocument"
+					},
+					{
+						"id": "pe-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pe-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pe-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ExternalAssessorDetail",
+			"route": "/eportfolio/external-assessors/:id",
+			"type": "detail",
+			"title": "External assessor",
+			"config": {
+				"register": "scholiq",
+				"schema": "external-assessor",
+				"_note": "eportfolio: a non-BPV external assessor's own identity anchor — a plain reference/identity object with no lifecycle (ADR-046: a person with no Nextcloud account by definition; active alone gates whether the portal identity is usable), structurally identical to Praktijkopleider. Body leads with contact data 8-wide plus a Related panel showing the PortfolioShare grants naming this assessor. No lifecycleActions. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "ea-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Account"
+					},
+					{
+						"id": "ea-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "ea-shares",
+						"type": "object-list",
+						"title": "Portfolio shares",
+						"content": {
+							"register": "scholiq",
+							"schema": "portfolio-share",
+							"filter": {
+								"sharedWithExternalAssessorId": "@objectId"
+							},
+							"sort": {
+								"field": "expiresAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "portfolioId",
+									"label": "Portfolio"
+								},
+								{
+									"key": "expiresAt",
+									"label": "Expires"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "PortfolioShareDetail",
+							"viewAllRoute": "PortfolioShares",
+							"viewAllQuery": {
+								"sharedWithExternalAssessorId": "@objectId"
+							},
+							"emptyText": "No portfolio shares found.",
+							"allowCreate": false
+						},
+						"icon": "HandshakeOutline"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ea-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ea-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "ea-shares",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PortfolioShareDetail",
+			"route": "/eportfolio/shares/:id",
+			"type": "detail",
+			"title": "Portfolio share",
+			"config": {
+				"register": "scholiq",
+				"schema": "portfolio-share",
+				"_note": "eportfolio: a single, revocable, read-only grant of a learner's Portfolio (or a selection of its PortfolioEntry rows) to a teacher/praktijkopleider/external-assessor. Append-only audit trail (lifecycle: draft -> active -> revoked). Body leads with the grant data 8-wide (sharedWithKind + whichever per-kind recipient field is set, entryIds, expiresAt, sharedBy) plus a Related panel resolving the Portfolio/Praktijkopleider/ExternalAssessor. lifecycleActions renders grant/revoke declaratively — grant is gated server-side by PortfolioShareGrantHandler's self-grant guard, and on success creates the native NC Files share for sharedWithKind=teacher. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ps-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "HandshakeOutline"
+					},
+					{
+						"id": "ps-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ps-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ps-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PortfolioBuilder",
+			"route": "/eportfolio/portfolios/:id/build",
+			"type": "custom",
+			"title": "Build portfolio",
+			"component": "PortfolioBuilder",
+			"_note": "eportfolio: the learner's evidence-picker surface — assembles a Portfolio's PortfolioEntry rows by referencing an existing Submission/WerkprocesAssessment/ExternalTrainingRecord/Credential/NC file or writing a free-text reflection, never by typing a raw UUID. Drives the `submit` transition once every PortfolioTemplate-required section has evidence; surfaces PortfolioSubmissionGuard's refusal inline. No manifest declarative page can render a cross-schema evidence picker, mirrors MarkSubmissionView's existing precedent for the same reason."
+		},
+		{
+			"id": "PortfolioReviewView",
+			"route": "/eportfolio/portfolios/:id/review",
+			"type": "custom",
+			"title": "Review portfolio",
+			"component": "PortfolioReviewView",
+			"_note": "eportfolio: the read-only review surface for a shared or owned Portfolio's entries (resolving and displaying the referenced Submission/WerkprocesAssessment/ExternalTrainingRecord/Credential/NC file per entry), plus — for the grading teacher of a course-bound Portfolio in submitted state only — a gradeValue entry field and the `grade` transition. No manifest declarative page can render cross-schema entry resolution, mirrors MarkSubmissionView's existing precedent for the same reason."
 		}
 	]
 }

@@ -2,7 +2,7 @@
 
 ## 1. Schema — eportfolio capability
 
-- [ ] 1.1 Add `PortfolioTemplate` to `lib/Settings/scholiq_register.json`: `name`, `kind`
+- [x] 1.1 Add `PortfolioTemplate` to `lib/Settings/scholiq_register.json`: `name`, `kind`
   (`personal | course-bound`), `description` (nullable), `sections[]` (`sectionId`, `label`, `order`,
   `helpText` nullable, `criteria[]`: `criterionId`, `label`, `description`, `competencyCode` nullable,
   `competencyLabel` nullable — mirrors `LearningPlanTemplate.sections` + `Rubric.criteria` combined),
@@ -12,7 +12,7 @@
   - **acceptance_criteria**:
     - Schema validates against the OpenAPI 3.0.0 register conventions used elsewhere in the file
     - `sections[].criteria[]` shape matches `Rubric.criteria[]`'s field names for consistency
-- [ ] 1.2 Add `Portfolio`: `learnerId` (NC uid) + `learnerRef` (nullable `$ref: LearnerProfile`, additive,
+- [x] 1.2 Add `Portfolio`: `learnerId` (NC uid) + `learnerRef` (nullable `$ref: LearnerProfile`, additive,
   `portal-identity` convention), `kind` (`personal | course-bound`), `templateId` (nullable
   `$ref: PortfolioTemplate`), `courseId`/`curriculumPlanId` (nullable `$ref`, set only when
   `kind: course-bound`), `curriculumPlanComponentId` (nullable string, mirrors
@@ -27,7 +27,7 @@
   - **acceptance_criteria**:
     - `kind` enum has exactly `personal`/`course-bound`; one `x-openregister-lifecycle` block serves both
     - `x-property-rbac` mirrors `Submission`'s block (`admin` + self `learnerId` match)
-- [ ] 1.3 Add `PortfolioEntry`: `portfolioId` (`$ref: Portfolio`, required), `title`, `evidenceKind`
+- [x] 1.3 Add `PortfolioEntry`: `portfolioId` (`$ref: Portfolio`, required), `title`, `evidenceKind`
   (`file | submission | werkproces-assessment | external-training-record | credential | reflection`,
   required), `attachmentRef` (nullable string, mirrors `Submission.attachmentRefs`'s untyped NC-file
   shape), `submissionId` (nullable `$ref: Submission`), `werkprocesAssessmentId` (nullable
@@ -41,13 +41,13 @@
     - Exactly one per-kind reference field is a `$ref`-typed `format: uuid` property per `evidenceKind`
       value that needs one; none of them is a single polymorphic `$ref`
     - `attachmentRef` carries no `$ref` (mirrors `Submission.attachmentRefs`)
-- [ ] 1.4 Add `ExternalAssessor`: `givenName`, `familyName`, `email`, `organisationName` (nullable),
+- [x] 1.4 Add `ExternalAssessor`: `givenName`, `familyName`, `email`, `organisationName` (nullable),
   `active` (bool, default true), `tenant_id`. No `x-openregister-lifecycle` — structurally identical to
   `Praktijkopleider`.
   - **spec_ref**: `specs/eportfolio/spec.md#requirement-persist-e-portfolio-domain-objects-in-openregister`
   - **acceptance_criteria**:
     - Field shape matches `Praktijkopleider`'s (minus the leerbedrijf-specific fields)
-- [ ] 1.5 Add `PortfolioShare` (`appendOnly: true`): `portfolioId` (`$ref: Portfolio`, required),
+- [x] 1.5 Add `PortfolioShare` (`appendOnly: true`): `portfolioId` (`$ref: Portfolio`, required),
   `entryIds` (nullable array of `format: uuid` strings, no `$ref` — a selection of the same portfolio's
   own `PortfolioEntry` ids), `sharedWithKind` (`teacher | praktijkopleider | external-assessor`,
   required), `sharedWithTeacherId` (nullable string, NC uid), `sharedWithPraktijkopleiderId` (nullable
@@ -63,7 +63,7 @@
 
 ## 2. Schema — grading delta
 
-- [ ] 2.1 Add `portfolio` to `GradeEntry.sourceKind`'s enum (alongside the existing six values) and add
+- [x] 2.1 Add `portfolio` to `GradeEntry.sourceKind`'s enum (alongside the existing six values) and add
   `portfolioId` (nullable `$ref: Portfolio`) to `GradeEntry`, matching the shape `ltiToolPlacementId`/
   `exemptionCaseId` already established. Purely additive; existing rows leave it null.
   - **spec_ref**: `specs/grading/spec.md#requirement-persist-grading-domain-objects-in-openregister`
@@ -73,7 +73,7 @@
 
 ## 3. Backend — guards, listeners
 
-- [ ] 3.1 Add `OCA\Scholiq\Lifecycle\PortfolioSubmissionGuard` (SPDX; `@spec` tag): on `Portfolio.submit`,
+- [x] 3.1 Add `OCA\Scholiq\Lifecycle\PortfolioSubmissionGuard` (SPDX; `@spec` tag): on `Portfolio.submit`,
   when `templateId` is set, verifies every `PortfolioTemplate.sections[].sectionId` has at least one
   linked `PortfolioEntry` (matched by `sectionId`); blocks the transition if any required section has no
   evidence. Allows unconditionally when `templateId` is null. Mirrors `SubmissionWindowGuard`'s
@@ -82,7 +82,7 @@
   - **acceptance_criteria**:
     - Unit tests cover: missing-section-evidence blocked; every-section-covered allowed; no-template
       allowed unconditionally
-- [ ] 3.2 Add `OCA\Scholiq\Listener\PortfolioGradeEmitHandler` (SPDX; mirrors
+- [x] 3.2 Add `OCA\Scholiq\Listener\PortfolioGradeEmitHandler` (SPDX; mirrors
   `GradeRollupHandler::handleAssessmentResultGraded()` exactly): `IEventListener` on
   `ObjectTransitionedEvent`, `register=scholiq`, `schema=portfolio`, `to=graded`. Skips if
   `Portfolio.gradeEntryId` already set. Otherwise resolves the governing `CurriculumPlan`'s
@@ -95,7 +95,7 @@
     - Unit tests cover: concept GradeEntry created with correct sourceKind/portfolioId/value on first
       `graded` transition; no duplicate created when `gradeEntryId` is already set
       (`testNoDuplicateWhenGradeEntryIdAlreadySet`)
-- [ ] 3.3 Add `OCA\Scholiq\Lifecycle\PortfolioShareGrantHandler` (SPDX; mirrors
+- [x] 3.3 Add `OCA\Scholiq\Lifecycle\PortfolioShareGrantHandler` (SPDX; mirrors
   `WerkprocesGradeEmitHandler`'s event-listener shape): `IEventListener` on `ObjectTransitionedEvent`,
   `register=scholiq`, `schema=portfolio-share`, `to=active`. Also enforces (as a `requires:` guard on the
   same `grant` transition, since `x-property-rbac`/`x-openregister-authorization` cannot express a
@@ -113,7 +113,7 @@
 
 ## 4. Backend — portal contribution extension
 
-- [ ] 4.1 Extend `lib/Portal/PortalContributionProvider.php`'s existing `praktijkopleiderContribution()`
+- [x] 4.1 Extend `lib/Portal/PortalContributionProvider.php`'s existing `praktijkopleiderContribution()`
   with one new collection (`poSharedPortfolios`), direct-matched
   (`scopeField: 'sharedWithPraktijkopleiderId'`, `scopeClaim: 'praktijkopleiderId'`, mirroring
   `poBpvPlacements`'s existing shape) over `portfolio-share`, resolving to field-projected
@@ -123,7 +123,7 @@
   - **acceptance_criteria**:
     - Unit tests cover: a praktijkopleider with an active, unscoped `PortfolioShare` reads the whole
       portfolio field-projected; a revoked share resolves no rows
-- [ ] 4.2 Add `external-assessor` as a fourth `PortalContributionProvider` audience: one more
+- [x] 4.2 Add `external-assessor` as a fourth `PortalContributionProvider` audience: one more
   `getAudiences()` value, one more `getContribution()` branch, a new `externalAssessorContribution()`
   method direct-matching `PortfolioShare.sharedWithExternalAssessorId == subject.subjectRef` for the grant
   collection, then resolving matched `portfolioId`s into field-projected `Portfolio`/`PortfolioEntry`
@@ -138,13 +138,13 @@
 
 ## 5. Frontend
 
-- [ ] 5.1 Add `src/manifest.json` index/detail pages for `PortfolioTemplate`, `Portfolio`,
+- [x] 5.1 Add `src/manifest.json` index/detail pages for `PortfolioTemplate`, `Portfolio`,
   `PortfolioEntry`, `ExternalAssessor`, `PortfolioShare` (list/create/edit/detail per the standard
   declarative pattern used by `bpv`/`grading`).
   - **spec_ref**: `specs/eportfolio/spec.md#requirement-frontend-is-declarative-with-two-named-custom-views`
   - **acceptance_criteria**:
     - Pages render seeded objects; no PHP CRUD controller added
-- [ ] 5.2 Add `src/views/PortfolioBuilder.vue`: the learner assembles a `Portfolio`'s entries by picking
+- [x] 5.2 Add `src/views/PortfolioBuilder.vue`: the learner assembles a `Portfolio`'s entries by picking
   from their own existing `Submission`s/`WerkprocesAssessment`s/`ExternalTrainingRecord`s/`Credential`s
   (dropdown/search pickers, no free-text UUID entry) or an NC file (Files-app file picker), or writes a
   free-text reflection. Drives the `submit` transition once required sections have evidence. Strings via
@@ -156,7 +156,7 @@
       creates the correctly-shaped `PortfolioEntry`
     - `submit` is disabled/blocked in the UI when a required section has no evidence, and the underlying
       `PortfolioSubmissionGuard` refusal is surfaced to the learner
-- [ ] 5.3 Add `src/views/PortfolioReviewView.vue`: read-only rendering of a shared or owned portfolio's
+- [x] 5.3 Add `src/views/PortfolioReviewView.vue`: read-only rendering of a shared or owned portfolio's
   entries (resolving and displaying the referenced `Submission`/`WerkprocesAssessment`/
   `ExternalTrainingRecord`/`Credential`/NC file per entry), plus — for the grading teacher of a
   `course-bound` portfolio in `submitted` state only — a `gradeValue` entry field and the `grade`
@@ -169,13 +169,13 @@
 
 ## 6. Tests and docs
 
-- [ ] 6.1 PHPUnit for `PortfolioSubmissionGuard`, `PortfolioGradeEmitHandler`, `PortfolioShareGrantHandler`,
+- [x] 6.1 PHPUnit for `PortfolioSubmissionGuard`, `PortfolioGradeEmitHandler`, `PortfolioShareGrantHandler`,
   and the `PortalContributionProvider` extensions, per the acceptance criteria in tasks 3.1–4.2 (minimum
   75% coverage for new code per ADR-008).
   - **spec_ref**: all `eportfolio` requirements; `specs/grading/spec.md`
   - **acceptance_criteria**:
     - All PHPUnit test names referenced in the spec scenarios exist and pass
-- [ ] 6.2 Add `tests/e2e/spec-coverage/eportfolio.spec.ts` (Playwright): a learner creates a personal
+- [x] 6.2 Add `tests/e2e/spec-coverage/eportfolio.spec.ts` (Playwright): a learner creates a personal
   portfolio and a course-bound portfolio from a template, adds entries via the evidence picker (at least
   one `submission` and one `reflection` entry), submits the course-bound portfolio, and the grading
   teacher reviews and grades it in `PortfolioReviewView.vue`.
@@ -183,14 +183,14 @@
     `<!-- @e2e tests/e2e/spec-coverage/eportfolio.spec.ts -->`
   - **acceptance_criteria**:
     - Test passes against a seeded dev instance; matches every `@e2e` reference in the spec scenarios
-- [ ] 6.3 Add Dutch and English translations for all new i18n keys (ADR-005/ADR-025).
+- [x] 6.3 Add Dutch and English translations for all new i18n keys (ADR-005/ADR-025).
   - **spec_ref**: all `eportfolio` requirements
   - **acceptance_criteria**:
     - No hardcoded strings in `PortfolioBuilder.vue`/`PortfolioReviewView.vue`; `nl`/`en` both populated
 
 ## 7. Verify
 
-- [ ] 7.1 `openspec validate eportfolio --strict` clean; PHPUnit green for all new PHP classes; Playwright
+- [x] 7.1 `openspec validate eportfolio --strict` clean; PHPUnit green for all new PHP classes; Playwright
   `eportfolio.spec.ts` green; no dangling `$ref`s in the register JSON (all five new schemas plus
   `GradeEntry.portfolioId` resolve within the same register); `PortfolioSubmissionGuard` and
   `PortfolioShareGrantHandler`'s guard behaviours re-verified against seeded fixtures (missing-section
