@@ -16,6 +16,8 @@ import ExamCaseDossierView from './views/ExamCaseDossierView.vue'
 import GradeImpactDetail from './views/GradeImpactDetail.vue'
 import LessonPlayer from './views/LessonPlayer.vue'
 import MarkSubmissionView from './views/MarkSubmissionView.vue'
+import PeerReviewMarkingView from './views/PeerReviewMarkingView.vue'
+import SelfAssessmentView from './views/SelfAssessmentView.vue'
 import ProctoringReviewQueue from './views/ProctoringReviewQueue.vue'
 import RegulationDetailPage from './views/RegulationDetailPage.vue'
 import ScholiqSettings from './views/ScholiqSettings.vue'
@@ -101,6 +103,7 @@ export default {
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
 	MyTimetable: page(MyTimetable),
+	PeerReviewMarkingView: page(PeerReviewMarkingView),
 	PeopleDashboard: page(PeopleDashboard),
 	ProctoringReviewQueue: page(ProctoringReviewQueue),
 	RapportvergaderingReviewView: page(RapportvergaderingReviewView),
@@ -110,6 +113,7 @@ export default {
 	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),
 	ScholiqSettings: page(ScholiqSettings),
+	SelfAssessmentView: page(SelfAssessmentView),
 	SkillsGapDashboard: page(SkillsGapDashboard),
 	TakeAssessmentView: page(TakeAssessmentView),
 

@@ -2,7 +2,7 @@
 
 ## 1. Schema — Assignment delta
 
-- [ ] 1.1 Add `peerReviewEnabled` (boolean, default `false`), `selfAssessmentEnabled` (boolean, default
+- [x] 1.1 Add `peerReviewEnabled` (boolean, default `false`), `selfAssessmentEnabled` (boolean, default
   `false`), `peerReviewersPerSubmission` (integer, nullable, minimum 1, default 2),
   `peerReviewAnonymity` (enum `open|blind|double-blind`, default `blind`), `peerReviewAllocationStrategy`
   (enum `round-robin|random|manual`, default `round-robin`), `peerReviewDueAt` (nullable date-time),
@@ -13,7 +13,7 @@
   - **acceptance_criteria**:
     - Existing `Assignment` rows validate unchanged (new fields absent/default)
     - Every new property has an English `title` + `description`
-- [ ] 1.2 Extend `AssignmentPublishGuard` (`OCA\Scholiq\Lifecycle\AssignmentPublishGuard`,
+- [x] 1.2 Extend `AssignmentPublishGuard` (`OCA\Scholiq\Lifecycle\AssignmentPublishGuard`,
   `lib/Settings/scholiq_register.json:4087`): on `draft → published`, additionally block when
   `peerReviewEnabled` or `selfAssessmentEnabled` is `true` and `rubricId` is unset.
   - **spec_ref**: `specs/assignments/spec.md#scenario-publish-is-blocked-when-peerself-assessment-is-enabled-without-a-rubric`
@@ -23,7 +23,7 @@
 
 ## 2. Schema — new objects
 
-- [ ] 2.1 Add `PeerReview` to `lib/Settings/scholiq_register.json`: `assignmentId` ($ref `Assignment`),
+- [x] 2.1 Add `PeerReview` to `lib/Settings/scholiq_register.json`: `assignmentId` ($ref `Assignment`),
   `submissionId` ($ref `Submission`), `reviewerId` (string), `rubricScores` (array, `{criterionId, levelId,
   points}[]`, same item shape as `Submission.rubricScores`), `totalScore` (nullable number), `comments`
   (nullable string), `lifecycle` (`assigned|submitted|released`, default `assigned`), `tenant_id`.
@@ -37,7 +37,7 @@
     - Schema validates against OpenAPI 3.0.0 register conventions used elsewhere in the file
     - `x-property-rbac.read` matches the fixed admin/reviewer-self shape exactly (not conditioned on
       `peerReviewAnonymity`)
-- [ ] 2.2 Add `SelfAssessment` to `lib/Settings/scholiq_register.json`: `assignmentId` ($ref `Assignment`),
+- [x] 2.2 Add `SelfAssessment` to `lib/Settings/scholiq_register.json`: `assignmentId` ($ref `Assignment`),
   `submissionId` ($ref `Submission`), `learnerId` (string), `timing`
   (`before-submission|after-submission`), `rubricScores` (same shape as 2.1), `totalScore` (nullable
   number), `comments` (nullable string), `lifecycle` (`draft|submitted`, default `draft`), `tenant_id`.
@@ -50,7 +50,7 @@
     - Schema validates against OpenAPI 3.0.0 register conventions used elsewhere in the file
     - `learnerId` documented as required to be one of the linked `Submission.learnerIds` (enforced by the
       guard in task 3.3, not JSON Schema)
-- [ ] 2.3 Add `PeerFeedbackSummary` to `lib/Settings/scholiq_register.json`: `x-openregister.readOnly: true`;
+- [x] 2.3 Add `PeerFeedbackSummary` to `lib/Settings/scholiq_register.json`: `x-openregister.readOnly: true`;
   `submissionId` ($ref `Submission`), `assignmentId` ($ref `Assignment`), `reviewCount` (nullable integer),
   `averageScore` (nullable number), `feedbackItems` (array of `{comments, rubricScores, reviewerId}`,
   `reviewerId` nullable), `lastComputedAt` (nullable date-time), `tenant_id`.
@@ -66,7 +66,7 @@
 
 ## 3. Backend — allocation, aggregation, guard
 
-- [ ] 3.1 Add `OCA\Scholiq\PeerReview\PeerReviewAllocationService` (SPDX docblock; `@spec` tag): resolves the
+- [x] 3.1 Add `OCA\Scholiq\PeerReview\PeerReviewAllocationService` (SPDX docblock; `@spec` tag): resolves the
   reviewer pool as the `learnerIds` of all Submissions for a given `assignmentId`, excludes each
   Submission's own `learnerIds` from its candidate reviewers, and creates `PeerReview` rows (`assigned`) per
   `peerReviewAllocationStrategy` (`round-robin`: deterministic cyclic assignment ordered by `submittedAt`
@@ -78,7 +78,7 @@
     - Unit tests cover: round-robin assigns exactly `peerReviewersPerSubmission` reviewers per Submission
       excluding self; random excludes self; manual creates nothing; re-running allocate() is a no-op once
       every Submission has its full complement; group-submission Submissions exclude every group member
-- [ ] 3.2 Add `OCA\Scholiq\Controller\PeerReviewController::allocate(string $assignmentId)`: explicit auth
+- [x] 3.2 Add `OCA\Scholiq\Controller\PeerReviewController::allocate(string $assignmentId)`: explicit auth
   attribute, per-object authorization (caller is `admin` or holds write access to the Assignment's
   Course/Cohort — not a bare authenticated-user check), route in `appinfo/routes.php`. Delegates to
   `PeerReviewAllocationService`.
@@ -86,7 +86,7 @@
   - **acceptance_criteria**:
     - Unauthorized caller (not admin, no Course/Cohort write access) receives a 403
     - Route registered; controller method exists and matches the route target
-- [ ] 3.3 Add `OCA\Scholiq\Lifecycle\RubricScoresCompletionGuard` (SPDX): shared by `PeerReview.submit` and
+- [x] 3.3 Add `OCA\Scholiq\Lifecycle\RubricScoresCompletionGuard` (SPDX): shared by `PeerReview.submit` and
   `SelfAssessment.submit`; blocks the transition unless `rubricScores` covers every `criterionId` in the
   linked Assignment's `Rubric`; for `SelfAssessment`, additionally blocks if `learnerId` is not one of the
   linked `Submission.learnerIds`.
@@ -94,7 +94,7 @@
   - **acceptance_criteria**:
     - Unit tests cover: incomplete rubric coverage blocked (both schemas); complete coverage allowed (both
       schemas); `SelfAssessment` with `learnerId` not in `Submission.learnerIds` blocked
-- [ ] 3.4 Add `OCA\Scholiq\Listener\PeerFeedbackAggregator` (SPDX; mirrors `GradeRollupHandler`'s shape):
+- [x] 3.4 Add `OCA\Scholiq\Listener\PeerFeedbackAggregator` (SPDX; mirrors `GradeRollupHandler`'s shape):
   listens for `PeerReview` transitioning to `released`, recomputes the linked Submission's
   `PeerFeedbackSummary` — `reviewCount`, `averageScore` (mean of `released` `PeerReview.totalScore`), and
   `feedbackItems` (one per `released` `PeerReview`: `comments`, `rubricScores`, and `reviewerId` set to
@@ -107,13 +107,13 @@
 
 ## 4. Frontend
 
-- [ ] 4.1 Add `src/manifest.json` index/detail pages for `PeerReview`, `SelfAssessment`, and
+- [x] 4.1 Add `src/manifest.json` index/detail pages for `PeerReview`, `SelfAssessment`, and
   `PeerFeedbackSummary` (list/detail per the standard declarative pattern used by `assignments`' existing
   objects).
   - **spec_ref**: `specs/assignments/spec.md#requirement-frontend-is-declarative-with-named-custom-views`
   - **acceptance_criteria**:
     - Pages render seeded objects; no PHP CRUD controller added beyond the allocation endpoint
-- [ ] 4.2 Add `src/views/PeerReviewMarkingView.vue`: a reviewer scores their assigned `PeerReview` against
+- [x] 4.2 Add `src/views/PeerReviewMarkingView.vue`: a reviewer scores their assigned `PeerReview` against
   the linked Assignment's Rubric and submits; when `Assignment.peerReviewAnonymity: double-blind`, the view
   MUST NOT display the Submission's learner identity anywhere. Strings via `t()`; data via the OpenRegister
   object API; any `NcSelect` carries `inputLabel`.
@@ -122,12 +122,12 @@
     - Renders the Rubric's criteria/levels for scoring; submit blocked client-side until every criterion is
       scored (server-side enforced by `RubricScoresCompletionGuard` regardless)
     - No learner identity field rendered when `peerReviewAnonymity: double-blind`
-- [ ] 4.3 Add `src/views/SelfAssessmentView.vue`: a learner scores their own Submission against the linked
+- [x] 4.3 Add `src/views/SelfAssessmentView.vue`: a learner scores their own Submission against the linked
   Rubric, shown before or after submission per `Assignment.selfAssessmentTiming`.
   - **spec_ref**: `specs/assignments/spec.md#requirement-self-assessment-lets-a-learner-score-their-own-submission-against-the-assignments-rubric`
   - **acceptance_criteria**:
     - Renders at the configured timing; submit transitions `SelfAssessment` to `submitted`
-- [ ] 4.4 Extend the existing `MarkSubmissionView.vue`: add a read-only `PeerFeedbackSummary`/
+- [x] 4.4 Extend the existing `MarkSubmissionView.vue`: add a read-only `PeerFeedbackSummary`/
   `SelfAssessment` context panel; when `Assignment.peerReviewWeightPercent` is set, display a suggested
   blended score (`teacherScore × (1 − w) + averageScore × w`) as a hint, never pre-filling
   `Submission.proposedGrade`.
@@ -138,7 +138,7 @@
 
 ## 5. Tests and docs
 
-- [ ] 5.1 PHPUnit for `PeerReviewAllocationService`, `RubricScoresCompletionGuard`, `PeerFeedbackAggregator`,
+- [x] 5.1 PHPUnit for `PeerReviewAllocationService`, `RubricScoresCompletionGuard`, `PeerFeedbackAggregator`,
   the extended `AssignmentPublishGuard`, and `PeerReviewController::allocate()` per the acceptance criteria
   in tasks 1.2 and 3.1–3.4 (minimum 75% coverage for new code per ADR-009).
   - **spec_ref**: all requirements added/modified in this change
@@ -152,7 +152,7 @@
   - **spec_ref**: `specs/assignments/spec.md#scenario-blind-and-double-blind-hide-reviewer-identity-in-the-feedback-summary`
   - **acceptance_criteria**:
     - Test passes against a seeded dev instance
-- [ ] 5.3 Add Dutch and English translations for all new i18n keys (ADR-005), including the
+- [x] 5.3 Add Dutch and English translations for all new i18n keys (ADR-005), including the
   `PeerReview.assigned` notification subject.
   - **spec_ref**: all requirements added/modified in this change
   - **acceptance_criteria**:

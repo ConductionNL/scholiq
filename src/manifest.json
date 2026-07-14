@@ -3931,7 +3931,251 @@
 			"type": "custom",
 			"title": "Mark submission",
 			"component": "MarkSubmissionView",
-			"_note": "Grading UI (rubric scores, inline feedback, attachments). Lib gap: grading workflow widget."
+			"_note": "Grading UI (rubric scores, inline feedback, attachments). Lib gap: grading workflow widget. peer-and-self-assessment: gains a read-only PeerFeedbackSummary/SelfAssessment context panel and, when peerReviewWeightPercent is set, an advisory-only blended-score suggestion — never pre-fills proposedGrade."
+		},
+		{
+			"id": "PeerReviews",
+			"route": "/assignments/:assignmentId/peer-reviews",
+			"type": "index",
+			"title": "Peer reviews",
+			"config": {
+				"register": "scholiq",
+				"schema": "PeerReview",
+				"filter": {
+					"assignmentId": "@route.assignmentId"
+				}
+			}
+		},
+		{
+			"id": "PeerReviewDetail",
+			"route": "/assignments/:assignmentId/peer-reviews/:id",
+			"type": "detail",
+			"title": "Peer review",
+			"config": {
+				"register": "scholiq",
+				"schema": "PeerReview",
+				"_note": "A PeerReview is one reviewer's rubric-based assessment of another learner's Submission (peer-and-self-assessment) — a result/score record, mirroring Submission's own detail-page archetype. Body leads with the rubric scores + comments (8-wide) and a Related panel resolving the assignment/submission. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. x-property-rbac restricts read to admin/reviewer-self — the submission's author can never open this page directly; they read peer feedback through the PeerFeedbackSummary panel on their Submission's detail page instead.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "pr-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AccountSwitchOutline"
+					},
+					{
+						"id": "pr-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pr-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pr-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PeerReviewMarkingView",
+			"route": "/assignments/:assignmentId/peer-reviews/:id/mark",
+			"type": "custom",
+			"title": "Complete peer review",
+			"component": "PeerReviewMarkingView",
+			"_note": "Reviewer's rubric-scoring UI for an assigned PeerReview (peer-and-self-assessment). Lib gap: peer-review marking workflow widget — mirrors MarkSubmissionView's own genuine-UI justification. When the governing Assignment's peerReviewAnonymity is double-blind, this view withholds the reviewed Submission's learner identity from its own display (a UI convention, not a server-enforced guarantee — see design.md 'Anonymity Enforcement')."
+		},
+		{
+			"id": "SelfAssessments",
+			"route": "/assignments/:assignmentId/self-assessments",
+			"type": "index",
+			"title": "Self-assessments",
+			"config": {
+				"register": "scholiq",
+				"schema": "SelfAssessment",
+				"filter": {
+					"assignmentId": "@route.assignmentId"
+				}
+			}
+		},
+		{
+			"id": "SelfAssessmentDetail",
+			"route": "/assignments/:assignmentId/self-assessments/:id",
+			"type": "detail",
+			"title": "Self-assessment",
+			"config": {
+				"register": "scholiq",
+				"schema": "SelfAssessment",
+				"_note": "A SelfAssessment is a learner's own rubric-based assessment of their own Submission (peer-and-self-assessment) — a result/score record. Body leads with the rubric scores + comments (8-wide) and a Related panel resolving the assignment/submission. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. x-property-rbac restricts read to admin/learner-self.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "sa-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AccountCheckOutline"
+					},
+					{
+						"id": "sa-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "sa-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "sa-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SelfAssessmentView",
+			"route": "/assignments/:assignmentId/submissions/:id/self-assessment",
+			"type": "custom",
+			"title": "Self-assessment",
+			"component": "SelfAssessmentView",
+			"_note": "Learner's rubric self-scoring UI for their own Submission, shown before-submission/after-submission/both per Assignment.selfAssessmentTiming (peer-and-self-assessment). Lib gap: self-assessment workflow widget — mirrors MarkSubmissionView's own genuine-UI justification."
+		},
+		{
+			"id": "PeerFeedbackSummaries",
+			"route": "/assignments/:assignmentId/peer-feedback-summaries",
+			"type": "index",
+			"title": "Peer feedback summaries",
+			"config": {
+				"register": "scholiq",
+				"schema": "PeerFeedbackSummary",
+				"readOnly": true,
+				"filter": {
+					"assignmentId": "@route.assignmentId"
+				}
+			}
+		},
+		{
+			"id": "PeerFeedbackSummaryDetail",
+			"route": "/assignments/:assignmentId/peer-feedback-summaries/:id",
+			"type": "detail",
+			"title": "Peer feedback summary",
+			"config": {
+				"register": "scholiq",
+				"schema": "PeerFeedbackSummary",
+				"readOnly": true,
+				"_note": "PeerFeedbackSummary is a computed, read-only aggregate of a Submission's released PeerReviews (peer-and-self-assessment) — the only surface a submission's author reads peer feedback through; feedbackItems[].reviewerId is server-computed as null when the governing Assignment's peerReviewAnonymity is blind/double-blind. Mirrors FinalGrade's own read-only detail-page archetype. Body leads with the aggregate data (8-wide) and a Related panel resolving the submission/assignment. No lifecycle (fully derived). No comms leaves.",
+				"widgets": [
+					{
+						"id": "pfs-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "MessageTextOutline"
+					},
+					{
+						"id": "pfs-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pfs-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pfs-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": []
+				}
+			}
 		},
 		{
 			"id": "ItemBanks",

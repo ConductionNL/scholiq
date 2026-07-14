@@ -4200,7 +4200,7 @@
             "Assignment": {
                 "slug": "assignment",
                 "icon": "ClipboardEditOutline",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "Assignment",
                 "description": "A deliverable that learners hand in: title, instructions, due date, rubric, and submission window. Belongs to a Course, Session, or both. Linked to a CurriculumPlan component to enable grade roll-up.",
                 "type": "object",
@@ -4339,6 +4339,74 @@
                             "$ref": "Competency"
                         },
                         "title": "Competency IDs"
+                    },
+                    "peerReviewEnabled": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, PeerReviewAllocationService may allocate reviewers for this Assignment's Submissions and the PeerReviewMarkingView surface becomes reachable. Additive — existing rows default to false (peer review off).",
+                        "title": "Peer Review Enabled"
+                    },
+                    "selfAssessmentEnabled": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, learners are prompted for a SelfAssessment against this Assignment's Rubric per selfAssessmentTiming. Additive — existing rows default to false (self-assessment off).",
+                        "title": "Self-Assessment Enabled"
+                    },
+                    "peerReviewersPerSubmission": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": 1,
+                        "default": 2,
+                        "description": "Number of reviewers PeerReviewAllocationService assigns per Submission. Ignored when peerReviewAllocationStrategy is manual.",
+                        "title": "Peer Reviewers Per Submission"
+                    },
+                    "peerReviewAnonymity": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "blind",
+                            "double-blind"
+                        ],
+                        "default": "blind",
+                        "description": "Controls whether feedbackItems[].reviewerId is populated on this Assignment's PeerFeedbackSummary rows (open) or computed as null (blind/double-blind) by PeerFeedbackAggregator. double-blind additionally asks PeerReviewMarkingView to withhold the reviewee's identity — a UI convention only, not server-enforced (see design.md 'Anonymity Enforcement').",
+                        "title": "Peer Review Anonymity"
+                    },
+                    "peerReviewAllocationStrategy": {
+                        "type": "string",
+                        "enum": [
+                            "round-robin",
+                            "random",
+                            "manual"
+                        ],
+                        "default": "round-robin",
+                        "description": "Strategy PeerReviewAllocationService applies when allocating reviewers. manual is a no-op — the teacher creates PeerReview rows by hand.",
+                        "title": "Peer Review Allocation Strategy"
+                    },
+                    "peerReviewDueAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Display-only deadline for completing an allocated PeerReview. A soft deadline — no lifecycle guard in this change blocks a late peer review, unlike Submission.dueAt.",
+                        "title": "Peer Review Due At"
+                    },
+                    "peerReviewWeightPercent": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": 0,
+                        "maximum": 100,
+                        "description": "Advisory-only display weight (0-100). When set, MarkSubmissionView shows a suggested blended score (teacherScore x (1 - w) + PeerFeedbackSummary.averageScore x w) next to the teacher's own entry fields. Pure display arithmetic in the Vue component — never written to Submission.proposedGrade or any GradeEntry.",
+                        "title": "Peer Review Weight (%)"
+                    },
+                    "selfAssessmentTiming": {
+                        "type": "string",
+                        "enum": [
+                            "before-submission",
+                            "after-submission",
+                            "both"
+                        ],
+                        "default": "after-submission",
+                        "description": "When a learner is prompted to complete a SelfAssessment relative to their Submission's own draft -> submitted transition.",
+                        "title": "Self-Assessment Timing"
                     },
                     "lifecycle": {
                         "type": "string",
@@ -4649,6 +4717,421 @@
                                 }
                             }
                         ]
+                    }
+                }
+            },
+            "PeerReview": {
+                "slug": "peer-review",
+                "icon": "AccountSwitchOutline",
+                "version": "0.1.0",
+                "title": "PeerReview",
+                "description": "One reviewer's rubric-based assessment of another learner's Submission. Created by PeerReviewAllocationService (or a teacher's manual creation) — a reviewer never authors their own row, only transitions an allocated one. Lifecycle assigned -> submitted -> released; once released, PeerFeedbackAggregator folds it into the Submission's PeerFeedbackSummary. Peer scores never write Submission.rubricScores/proposedGrade or a GradeEntry — see the assignments spec's grade-authority requirement.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "assignmentId",
+                    "submissionId",
+                    "reviewerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "assignmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Assignment",
+                        "description": "UUID of the Assignment this peer review is for.",
+                        "title": "Assignment ID"
+                    },
+                    "submissionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Submission",
+                        "description": "UUID of the Submission being reviewed.",
+                        "title": "Submission ID"
+                    },
+                    "reviewerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the reviewing learner. Never one of the reviewed Submission's own learnerIds (enforced by PeerReviewAllocationService's self-exclusion rule).",
+                        "title": "Reviewer ID"
+                    },
+                    "rubricScores": {
+                        "type": "array",
+                        "description": "Reviewer's per-criterion marking against the Assignment's Rubric. Same item shape as Submission.rubricScores.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "criterionId",
+                                "levelId",
+                                "points"
+                            ],
+                            "properties": {
+                                "criterionId": {
+                                    "type": "string",
+                                    "description": "Matches Rubric.criteria[].criterionId.",
+                                    "title": "Criterion ID"
+                                },
+                                "levelId": {
+                                    "type": "string",
+                                    "description": "Matches Rubric.criteria[].levels[].levelId.",
+                                    "title": "Level ID"
+                                },
+                                "points": {
+                                    "type": "number",
+                                    "description": "Points awarded for this criterion (from the selected level).",
+                                    "title": "Points Awarded"
+                                }
+                            }
+                        },
+                        "title": "Rubric Scores"
+                    },
+                    "totalScore": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of rubricScores[].points. Null before the reviewer submits.",
+                        "title": "Total Score"
+                    },
+                    "comments": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reviewer's free-text feedback for the Submission's author.",
+                        "title": "Comments"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "PeerReview lifecycle state. Managed by OR lifecycle engine.",
+                        "enum": [
+                            "assigned",
+                            "submitted",
+                            "released"
+                        ],
+                        "default": "assigned",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "assigned",
+                    "transitions": {
+                        "submit": {
+                            "from": "assigned",
+                            "to": "submitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\RubricScoresCompletionGuard"
+                        },
+                        "release": {
+                            "from": "submitted",
+                            "to": "released"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin"
+                    ],
+                    "_comment": "A reviewer MUST NOT be able to author their own PeerReview row — only PeerReviewAllocationService (running with admin-equivalent context) or a teacher's manual creation may create one; a reviewer only ever transitions an allocated row (design.md 'PeerReview')."
+                },
+                "x-openregister-notifications": {
+                    "assigned": {
+                        "trigger": {
+                            "type": "transition",
+                            "action": "create"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "reviewerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je hebt een peer review om te voltooien",
+                            "en": "You have a peer review to complete"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Anonymity Enforcement (design.md): this rule is FIXED and independent of Assignment.peerReviewAnonymity — the submission's author can never read a raw PeerReview row, regardless of anonymity mode. The author instead reads PeerFeedbackSummary, whose feedbackItems[].reviewerId is server-computed as null when blind/double-blind.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "reviewerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "SelfAssessment": {
+                "slug": "self-assessment",
+                "icon": "AccountCheckOutline",
+                "version": "0.1.0",
+                "title": "SelfAssessment",
+                "description": "A learner's own rubric-based assessment of their own Submission, shown before-submission, after-submission, or both per Assignment.selfAssessmentTiming. Lifecycle draft -> submitted. Self-assessment scores never write Submission.rubricScores/proposedGrade or a GradeEntry — see the assignments spec's grade-authority requirement.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "assignmentId",
+                    "submissionId",
+                    "learnerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "assignmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Assignment",
+                        "description": "UUID of the Assignment this self-assessment is for.",
+                        "title": "Assignment ID"
+                    },
+                    "submissionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Submission",
+                        "description": "UUID of the learner's own Submission being self-assessed.",
+                        "title": "Submission ID"
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the self-assessing learner. MUST be one of the linked Submission's own learnerIds (enforced by RubricScoresCompletionGuard).",
+                        "title": "Learner ID"
+                    },
+                    "timing": {
+                        "type": "string",
+                        "enum": [
+                            "before-submission",
+                            "after-submission"
+                        ],
+                        "description": "Whether this self-assessment was completed before or after the linked Submission's own draft -> submitted transition.",
+                        "title": "Timing"
+                    },
+                    "rubricScores": {
+                        "type": "array",
+                        "description": "Learner's per-criterion self-marking against the Assignment's Rubric. Same item shape as Submission.rubricScores.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "criterionId",
+                                "levelId",
+                                "points"
+                            ],
+                            "properties": {
+                                "criterionId": {
+                                    "type": "string",
+                                    "description": "Matches Rubric.criteria[].criterionId.",
+                                    "title": "Criterion ID"
+                                },
+                                "levelId": {
+                                    "type": "string",
+                                    "description": "Matches Rubric.criteria[].levels[].levelId.",
+                                    "title": "Level ID"
+                                },
+                                "points": {
+                                    "type": "number",
+                                    "description": "Points awarded for this criterion (from the selected level).",
+                                    "title": "Points Awarded"
+                                }
+                            }
+                        },
+                        "title": "Rubric Scores"
+                    },
+                    "totalScore": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of rubricScores[].points. Null before the learner submits.",
+                        "title": "Total Score"
+                    },
+                    "comments": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Learner's free-text reflection on their own work.",
+                        "title": "Comments"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "SelfAssessment lifecycle state. Managed by OR lifecycle engine.",
+                        "enum": [
+                            "draft",
+                            "submitted"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\RubricScoresCompletionGuard"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Mirrors GradeEntry's learner-self pattern: a learner reads only their own self-assessment; admins see all.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            "PeerFeedbackSummary": {
+                "slug": "peer-feedback-summary",
+                "icon": "MessageTextOutline",
+                "version": "0.1.0",
+                "title": "PeerFeedbackSummary",
+                "description": "Computed, read-only aggregate of a Submission's released PeerReviews — one row per Submission. The only surface a submission's author reads peer feedback through (Anonymity Enforcement, design.md): feedbackItems[].reviewerId is computed as null when Assignment.peerReviewAnonymity is blind/double-blind, populated when open. Recomputed by PeerFeedbackAggregator whenever a linked PeerReview transitions to released. No lifecycle — fully derived, mirrors FinalGrade.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "submissionId",
+                    "assignmentId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "submissionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Submission",
+                        "description": "UUID of the Submission this summary aggregates feedback for.",
+                        "title": "Submission ID"
+                    },
+                    "assignmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Assignment",
+                        "description": "UUID of the governing Assignment (source of peerReviewAnonymity).",
+                        "title": "Assignment ID"
+                    },
+                    "reviewCount": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Number of released PeerReviews for this Submission. Derived — do not set manually.",
+                        "title": "Review Count"
+                    },
+                    "averageScore": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Mean of released PeerReview.totalScore for this Submission. Null before any PeerReview has released. Derived — do not set manually.",
+                        "title": "Average Score"
+                    },
+                    "feedbackItems": {
+                        "type": "array",
+                        "description": "One entry per released PeerReview. reviewerId is null when Assignment.peerReviewAnonymity is blind/double-blind — the server-enforced anonymity guarantee (design.md 'Anonymity Enforcement'). Derived — do not set manually.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "comments": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "The reviewer's free-text comments.",
+                                    "title": "Comments"
+                                },
+                                "rubricScores": {
+                                    "type": "array",
+                                    "description": "The reviewer's per-criterion scores, same shape as PeerReview.rubricScores.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "criterionId": {
+                                                "type": "string",
+                                                "title": "Criterion ID"
+                                            },
+                                            "levelId": {
+                                                "type": "string",
+                                                "title": "Level ID"
+                                            },
+                                            "points": {
+                                                "type": "number",
+                                                "title": "Points Awarded"
+                                            }
+                                        }
+                                    },
+                                    "title": "Rubric Scores"
+                                },
+                                "reviewerId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Reviewer's Nextcloud user ID. Null when peerReviewAnonymity is blind/double-blind; populated when open.",
+                                    "title": "Reviewer ID"
+                                }
+                            }
+                        },
+                        "title": "Feedback Items"
+                    },
+                    "lastComputedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp of the last recompute triggered by a PeerReview release.",
+                        "title": "Last Computed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-aggregations": {
+                    "reviewCount": {
+                        "description": "Cross-schema aggregation: number of released PeerReviews for this Submission. The full review list consumed by averageScore/feedbackItems computation is queried by PeerFeedbackAggregator in PHP.",
+                        "from": "peer-review",
+                        "metric": "count",
+                        "where": {
+                            "submissionId": "@self.submissionId",
+                            "lifecycle": "released"
+                        }
+                    }
+                },
+                "x-openregister-triggers": {
+                    "calculatedChange": {
+                        "description": "Recompute this PeerFeedbackSummary whenever a PeerReview for this submissionId transitions to released. Implemented via PeerFeedbackAggregator listening on ObjectTransitionedEvent — NOT a TimedJob.",
+                        "handler": "OCA\\Scholiq\\Listener\\PeerFeedbackAggregator"
                     }
                 }
             },
