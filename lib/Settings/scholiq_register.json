@@ -6836,7 +6836,8 @@
                             "participation",
                             "manual",
                             "exemption",
-                            "lti-ags"
+                            "lti-ags",
+                            "portfolio"
                         ],
                         "title": "Source Kind"
                     },
@@ -6893,6 +6894,14 @@
                         "nullable": true,
                         "description": "The AGS resultId / CloudEvent message identifier for the score that originated this mark (set when sourceKind=lti-ags). Used as the idempotency key so a redelivered pull message cannot create a duplicate GradeEntry.",
                         "title": "LTI AGS Result ID"
+                    },
+                    "portfolioId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Portfolio",
+                        "description": "UUID of the Portfolio that originated this mark (set when sourceKind=portfolio, by PortfolioGradeEmitHandler).",
+                        "title": "Portfolio ID"
                     },
                     "value": {
                         "type": "number",
@@ -14634,7 +14643,677 @@
                         }
                     },
                     "x-openregister-seed": []
-                }
+                },
+            "PortfolioTemplate": {
+                "slug": "portfolio-template",
+                "icon": "ClipboardListOutline",
+                "version": "0.1.0",
+                "title": "PortfolioTemplate",
+                "description": "Teacher-authored structure that pre-structures a course-bound Portfolio: ordered sections, each with criteria the learner must evidence, mirroring LearningPlanTemplate.sections's ordered-section shape combined with Rubric.criteria's criterion shape. An optional rubricId lets the governing teacher apply course-bound scoring when reviewing a Portfolio built from this template. Lifecycle: draft → active → archived (mirrors LearningPlanTemplate).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "kind",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable template name, e.g. 'BPV kwalificatiedossier portfolio 2026'.",
+                        "title": "Template Name"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "personal",
+                            "course-bound"
+                        ],
+                        "description": "Portfolio flavour this template pre-structures — mirrors Portfolio.kind.",
+                        "title": "Portfolio Kind"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional longer description of the template's purpose and use.",
+                        "title": "Template Description"
+                    },
+                    "sections": {
+                        "type": "array",
+                        "description": "Ordered sections a Portfolio built from this template must evidence.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "sectionId",
+                                "label",
+                                "order",
+                                "criteria"
+                            ],
+                            "properties": {
+                                "sectionId": {
+                                    "type": "string",
+                                    "description": "Stable identifier for this section.",
+                                    "title": "Section ID"
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "description": "Display label for this section.",
+                                    "title": "Section Label"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "description": "Display order of this section within the template.",
+                                    "title": "Section Order"
+                                },
+                                "helpText": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Optional guidance text shown to the learner filling in this section.",
+                                    "title": "Help Text"
+                                },
+                                "criteria": {
+                                    "type": "array",
+                                    "description": "Criteria the learner must evidence within this section.",
+                                    "items": {
+                                        "type": "object",
+                                        "required": [
+                                            "criterionId",
+                                            "label",
+                                            "description"
+                                        ],
+                                        "properties": {
+                                            "criterionId": {
+                                                "type": "string",
+                                                "description": "Stable identifier for this criterion.",
+                                                "title": "Criterion ID"
+                                            },
+                                            "label": {
+                                                "type": "string",
+                                                "description": "Display label for the criterion.",
+                                                "title": "Criterion Label"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "description": "What the learner must evidence to satisfy this criterion.",
+                                                "title": "Criterion Description"
+                                            },
+                                            "competencyId": {
+                                                "type": "string",
+                                                "nullable": true,
+                                                "format": "uuid",
+                                                "$ref": "Competency",
+                                                "description": "UUID of the Competency (competency capability) this criterion evidences. competency-framework is merged at HEAD, so this is a real $ref rather than the free-text competencyCode/competencyLabel fields this change's spec assumed before that capability existed — see design.md.",
+                                                "title": "Competency ID"
+                                            }
+                                        }
+                                    },
+                                    "title": "Section Criteria"
+                                }
+                            }
+                        },
+                        "title": "Portfolio Sections"
+                    },
+                    "rubricId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Rubric",
+                        "description": "UUID of an optional Rubric the grading teacher applies when reviewing a course-bound Portfolio built from this template.",
+                        "title": "Rubric ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Template lifecycle state.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "archive": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "Portfolio": {
+                "slug": "portfolio",
+                "icon": "BriefcaseOutline",
+                "version": "0.1.0",
+                "title": "Portfolio",
+                "description": "The container a learner curates evidence into — references, never copies, an NC file, a Submission, a WerkprocesAssessment, an ExternalTrainingRecord, a Credential, or a free-text reflection via its PortfolioEntry rows. Two flavours share one schema via kind: personal (spans the whole study, never submitted for grading) and course-bound (instantiated from a PortfolioTemplate as a graded course task). A single x-openregister-lifecycle serves both flavours — a personal portfolio simply never calls submit/grade.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "kind",
+                    "title",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner who owns this portfolio.",
+                        "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the LearnerProfile object — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset and stay invisible to the portal (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "personal",
+                            "course-bound"
+                        ],
+                        "description": "Portfolio flavour. personal spans the whole study and is never submitted for grading; course-bound is instantiated from a PortfolioTemplate as a graded course task.",
+                        "title": "Portfolio Kind"
+                    },
+                    "templateId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "PortfolioTemplate",
+                        "description": "UUID of the governing PortfolioTemplate. Null for a personal portfolio, and for a course-bound portfolio a teacher assigned without a template.",
+                        "title": "Template ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this portfolio is a graded task for. Set only when kind=course-bound.",
+                        "title": "Course ID"
+                    },
+                    "curriculumPlanId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "CurriculumPlan",
+                        "description": "UUID of the CurriculumPlan this portfolio's grade contributes to. Set only when kind=course-bound.",
+                        "title": "Curriculum Plan ID"
+                    },
+                    "curriculumPlanComponentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Stable componentId from the parent CurriculumPlan.components array that this portfolio scores, mirroring Assignment.curriculumPlanComponentId. Set only when kind=course-bound.",
+                        "title": "Curriculum Plan Component ID"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Human-readable title of this portfolio.",
+                        "title": "Title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional longer description of this portfolio's purpose.",
+                        "title": "Description"
+                    },
+                    "dueAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Optional due date for a course-bound portfolio's submission.",
+                        "title": "Due At"
+                    },
+                    "gradeValue": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Teacher-entered grade, mirrors Submission.proposedGrade. A portfolio's evidence is heterogeneous, so this is entered directly by the grading teacher rather than computed from a uniform rubric.",
+                        "title": "Grade Value"
+                    },
+                    "gradeEntryId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "GradeEntry",
+                        "description": "UUID of the GradeEntry created by PortfolioGradeEmitHandler when this portfolio transitions to graded. Read-only from this schema's perspective.",
+                        "title": "Grade Entry ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Portfolio lifecycle state. Covers both flavours: personal uses draft/active/archived only; course-bound additionally uses submitted/graded.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "submitted",
+                            "graded",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "submit": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "submitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\PortfolioSubmissionGuard"
+                        },
+                        "grade": {
+                            "from": "submitted",
+                            "to": "graded"
+                        },
+                        "archive": {
+                            "from": [
+                                "active",
+                                "graded"
+                            ],
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "eportfolio: a portfolio holds a learner's own evidence — mirrors Submission/AssessmentResult exactly. Learner sees own portfolios; admins see all. Portal/share-derived teacher/praktijkopleider/external-assessor reads are served by PortalContributionProvider and NC Files sharing, not by widening this block (design.md Security/RBAC Posture).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "PortfolioEntry": {
+                "slug": "portfolio-entry",
+                "icon": "FileDocumentOutline",
+                "version": "0.1.0",
+                "title": "PortfolioEntry",
+                "description": "One evidence item in a Portfolio. References — never copies — exactly one existing object per evidenceKind via its own nullable, typed $ref field (the GradeEntry.sourceKind per-kind-field shape), or carries a free-text reflection. No lifecycle of its own — a plain child record.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "portfolioId",
+                    "learnerId",
+                    "title",
+                    "evidenceKind",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "portfolioId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Portfolio",
+                        "description": "UUID of the Portfolio this entry belongs to.",
+                        "title": "Portfolio ID"
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this entry belongs to, denormalized from the parent Portfolio.learnerId for RBAC/query convenience — mirrors SelfAssessment's own learnerId field, which duplicates data also reachable via its submissionId parent link.",
+                        "title": "Learner ID"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Human-readable title of this evidence item.",
+                        "title": "Title"
+                    },
+                    "evidenceKind": {
+                        "type": "string",
+                        "enum": [
+                            "file",
+                            "submission",
+                            "werkproces-assessment",
+                            "external-training-record",
+                            "credential",
+                            "reflection"
+                        ],
+                        "description": "The kind of evidence this entry carries. Exactly one of the per-kind fields below resolves the referenced object for every kind except reflection, which carries reflectionText only.",
+                        "title": "Evidence Kind"
+                    },
+                    "attachmentRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "OpenRegister file attachment reference (nc:files path or OR attachment ID), mirroring Submission.attachmentRefs's untyped NC-file shape. The app does NOT store file bytes. Set when evidenceKind=file.",
+                        "title": "Attachment Reference"
+                    },
+                    "submissionId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Submission",
+                        "description": "UUID of the referenced Submission. Set when evidenceKind=submission.",
+                        "title": "Submission ID"
+                    },
+                    "werkprocesAssessmentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "WerkprocesAssessment",
+                        "description": "UUID of the referenced WerkprocesAssessment. Set when evidenceKind=werkproces-assessment.",
+                        "title": "Werkproces Assessment ID"
+                    },
+                    "externalTrainingRecordId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "ExternalTrainingRecord",
+                        "description": "UUID of the referenced ExternalTrainingRecord. Set when evidenceKind=external-training-record.",
+                        "title": "External Training Record ID"
+                    },
+                    "credentialId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Credential",
+                        "description": "UUID of the referenced Credential. Set when evidenceKind=credential.",
+                        "title": "Credential ID"
+                    },
+                    "reflectionText": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The learner's own reflection text. Required when evidenceKind=reflection; may also accompany any other kind.",
+                        "title": "Reflection Text"
+                    },
+                    "sectionId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Matches the governing PortfolioTemplate.sections[].sectionId this entry evidences, when the parent Portfolio is templated.",
+                        "title": "Section ID"
+                    },
+                    "criterionId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Matches the governing PortfolioTemplate.sections[].criteria[].criterionId this entry evidences, when the parent Portfolio is templated.",
+                        "title": "Criterion ID"
+                    },
+                    "competencyId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Competency",
+                        "description": "UUID of the Competency (competency capability) this entry evidences. competency-framework is merged at HEAD, so this is a real $ref rather than the free-text competencyCode/competencyLabel fields this change's spec assumed before that capability existed — see design.md.",
+                        "title": "Competency ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "allOf": [
+                    {
+                        "_comment": "eportfolio: reflectionText is required when evidenceKind=reflection (the entry's sole content in that case) and optional alongside any other kind. Mirrors GradeEntry's if/then conditional-requiredness-by-discriminator shape.",
+                        "if": {
+                            "properties": {
+                                "evidenceKind": {
+                                    "const": "reflection"
+                                }
+                            },
+                            "required": [
+                                "evidenceKind"
+                            ]
+                        },
+                        "then": {
+                            "required": [
+                                "reflectionText"
+                            ]
+                        }
+                    }
+                ],
+                "x-property-rbac": {
+                    "_comment": "eportfolio: mirrors SelfAssessment's learner-self pattern via the denormalized learnerId field above. Learner sees own entries; admins see all. Portal/share-derived reads are served by PortalContributionProvider and NC Files sharing, not by widening this block.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ExternalAssessor": {
+                "slug": "external-assessor",
+                "icon": "AccountTieOutline",
+                "version": "0.1.0",
+                "title": "ExternalAssessor",
+                "description": "A non-BPV external assessor granted read-only portfolio access. A plain reference/identity object with no OpenRegister lifecycle — a person with no Nextcloud account by definition, structurally identical to Praktijkopleider (ADR-046 premise). This object's own UUID is the portal identity anchor. `active` alone gates whether the portal identity is usable.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "givenName",
+                    "familyName",
+                    "email",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "givenName": {
+                        "type": "string",
+                        "description": "Given name of the external assessor.",
+                        "example": "Kees",
+                        "title": "Given Name"
+                    },
+                    "familyName": {
+                        "type": "string",
+                        "description": "Family name of the external assessor.",
+                        "example": "Jansen",
+                        "title": "Family Name"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Contact email address of the external assessor — used for out-of-band (non-Scholiq) communication, since no NC-reachable notification channel exists for this role.",
+                        "title": "Email Address"
+                    },
+                    "organisationName": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Name of the organisation the external assessor represents, if any.",
+                        "title": "Organisation Name"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether this external assessor's portal identity is currently usable. False retires the identity without deleting the audit trail.",
+                        "title": "Active"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "PortfolioShare": {
+                "slug": "portfolio-share",
+                "icon": "ShareVariantOutline",
+                "version": "0.1.0",
+                "title": "PortfolioShare",
+                "description": "A single, revocable, read-only grant of a learner's Portfolio (or a selection of its PortfolioEntry rows) to a teacher, a BPV praktijkopleider, or an external assessor. Append-only audit trail of who was granted access and when (lifecycle: draft → active → revoked). On grant (draft → active), PortfolioShareGrantHandler creates a native Nextcloud Files share for sharedWithKind=teacher; praktijkopleider/external-assessor visibility is served declaratively by PortalContributionProvider.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "portfolioId",
+                    "sharedWithKind",
+                    "sharedBy",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "portfolioId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Portfolio",
+                        "description": "UUID of the Portfolio being shared.",
+                        "title": "Portfolio ID"
+                    },
+                    "entryIds": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "UUIDs of a selection of the same Portfolio's own PortfolioEntry rows (not a copy). Null means the whole portfolio.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "title": "Entry IDs"
+                    },
+                    "sharedWithKind": {
+                        "type": "string",
+                        "enum": [
+                            "teacher",
+                            "praktijkopleider",
+                            "external-assessor"
+                        ],
+                        "description": "Which kind of recipient this grant targets. Exactly one of the per-kind reference fields below is set.",
+                        "title": "Shared With Kind"
+                    },
+                    "sharedWithTeacherId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the teacher recipient. Set when sharedWithKind=teacher.",
+                        "title": "Shared With Teacher ID"
+                    },
+                    "sharedWithPraktijkopleiderId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Praktijkopleider",
+                        "description": "UUID of the recipient Praktijkopleider. Set when sharedWithKind=praktijkopleider.",
+                        "title": "Shared With Praktijkopleider ID"
+                    },
+                    "sharedWithExternalAssessorId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "ExternalAssessor",
+                        "description": "UUID of the recipient ExternalAssessor. Set when sharedWithKind=external-assessor.",
+                        "title": "Shared With External Assessor ID"
+                    },
+                    "sharedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the person who created this grant (the portfolio's own learner, or admin/teacher-role staff). Never equal to the resolved recipient identity — enforced by PortfolioShareGrantHandler's guard.",
+                        "title": "Shared By"
+                    },
+                    "expiresAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "Optional expiry timestamp after which the grant is no longer honoured.",
+                        "title": "Expires At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Grant lifecycle state.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "revoked"
+                        ],
+                        "default": "draft",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "grant": {
+                            "from": "draft",
+                            "to": "active",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\PortfolioShareGrantHandler"
+                        },
+                        "revoke": {
+                            "from": "active",
+                            "to": "revoked"
+                        }
+                    }
+                },
+                "x-openregister-seed": [],
+                "appendOnly": true
+            }
         }
     }
 }

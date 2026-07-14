@@ -88,3 +88,12 @@ if (class_exists(\OCA\OpenRegister\Event\DeepLinkRegistrationEvent::class) === f
 if (class_exists(\OCA\OpenRegister\Service\TalkLinkService::class) === false) {
     include_once __DIR__.'/Stubs/Service/TalkLinkService.php';
 }
+
+// OC\Hooks\Emitter stub — loaded when the live Nextcloud server runtime (which ships
+// lib/private/Hooks/Emitter.php) is absent. OCP\Files\IRootFolder extends this OC-internal
+// (non-OCP) interface; the nextcloud/ocp Composer package only ships OCP\* definitions, so
+// mocking IRootFolder (PortfolioShareGrantHandlerTest, eportfolio) fails to resolve its full
+// interface hierarchy without this stub in a standalone `docker run php:8.3-cli` run.
+if (interface_exists(\OC\Hooks\Emitter::class) === false) {
+    include_once __DIR__.'/Stubs/Hooks/Emitter.php';
+}

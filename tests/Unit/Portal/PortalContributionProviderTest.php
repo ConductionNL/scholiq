@@ -91,6 +91,18 @@ class PortalContributionProviderTest extends TestCase
     ];
 
     /**
+     * A fully server-derived external-assessor (eportfolio) subject.
+     *
+     * @var array<string, mixed>
+     */
+    private const EXTERNAL_ASSESSOR_SUBJECT = [
+        'subjectRef'   => '44444444-4444-4444-4444-444444444444',
+        'audience'     => 'external-assessor',
+        'organisation' => '00000000-0000-0000-0000-000000000000',
+        'trust'        => 'low',
+    ];
+
+    /**
      * Set up the provider — direct construction, no dependencies by contract.
      *
      * @return void
@@ -118,16 +130,20 @@ class PortalContributionProviderTest extends TestCase
     }//end testClassIsPlainAndDependencyFree()
 
     /**
-     * getAudiences() (v2) returns exactly ['student','parent','praktijkopleider'] and
-     * getAudience() (v1 fallback) is one of them. The `parent` audience is re-enabled now
-     * that portaliq ships the reverse / scope-value `via` join (match: 'scopeField'), and
-     * `praktijkopleider` is the bpv-praktijkovereenkomst change's new third audience.
+     * getAudiences() (v2) returns exactly ['student','parent','praktijkopleider',
+     * 'external-assessor'] and getAudience() (v1 fallback) is one of them. The `parent`
+     * audience is re-enabled now that portaliq ships the reverse / scope-value `via` join
+     * (match: 'scopeField'); `praktijkopleider` is the bpv-praktijkovereenkomst change's third
+     * audience; `external-assessor` is the eportfolio change's fourth audience.
      *
      * @return void
      */
     public function testAudienceContract(): void
     {
-        $this->assertSame(['student', 'parent', 'praktijkopleider'], $this->provider->getAudiences());
+        $this->assertSame(
+            ['student', 'parent', 'praktijkopleider', 'external-assessor'],
+            $this->provider->getAudiences()
+        );
         $this->assertSame('student', $this->provider->getAudience());
         $this->assertContains($this->provider->getAudience(), $this->provider->getAudiences());
 
@@ -135,8 +151,8 @@ class PortalContributionProviderTest extends TestCase
 
     /**
      * Unserved / absent audiences get null — fail-closed audience filtering.
-     * `student`, `parent` and `praktijkopleider` are served; everything else (and an empty
-     * subject) is null.
+     * `student`, `parent`, `praktijkopleider` and `external-assessor` are served; everything
+     * else (and an empty subject) is null.
      *
      * @return void
      */
@@ -148,9 +164,11 @@ class PortalContributionProviderTest extends TestCase
         $this->assertNull($this->provider->getContribution($teacher));
         $this->assertNull($this->provider->getContribution([]));
 
-        // `parent` and `praktijkopleider` are served audiences — they return a manifest, not null.
+        // `parent`, `praktijkopleider` and `external-assessor` are served audiences — they
+        // return a manifest, not null.
         $this->assertIsArray($this->provider->getContribution(self::PARENT_SUBJECT));
         $this->assertIsArray($this->provider->getContribution(self::PRAKTIJKOPLEIDER_SUBJECT));
+        $this->assertIsArray($this->provider->getContribution(self::EXTERNAL_ASSESSOR_SUBJECT));
 
     }//end testGetContributionReturnsNullForUnservedSubjects()
 
@@ -402,7 +420,7 @@ class PortalContributionProviderTest extends TestCase
         $this->assertSame([], $manifest['notifications']);
 
         $collections = $manifest['collections'];
-        $this->assertCount(1, $collections);
+        $this->assertCount(2, $collections);
         $collection = $collections[0];
 
         $this->assertSame('poBpvPlacements', $collection['id']);
@@ -419,6 +437,71 @@ class PortalContributionProviderTest extends TestCase
         }
 
     }//end testPraktijkopleiderManifestShape()
+
+    /**
+     * eportfolio: the praktijkopleider audience gains exactly one new collection,
+     * `poSharedPortfolios` — direct-matched over `portfolio-share`
+     * (`sharedWithPraktijkopleiderId == subject.subjectRef`), mirroring `poBpvPlacements`'s
+     * shape, filtered to `lifecycle: active` so a revoked share resolves no rows. No change to
+     * the existing `poBpvPlacements` collection.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/eportfolio/specs/eportfolio/spec.md#requirement-bpv-praktijkopleider-and-external-assessor-sharing-reuse-the-adr-046-portal-audience-mechanism
+     */
+    public function testPraktijkopleiderGainsSharedPortfoliosCollection(): void
+    {
+        $manifest   = $this->provider->getContribution(self::PRAKTIJKOPLEIDER_SUBJECT);
+        $collection = $manifest['collections'][1];
+
+        $this->assertSame('poSharedPortfolios', $collection['id']);
+        $this->assertSame('scholiq', $collection['register']);
+        $this->assertSame('portfolio-share', $collection['schema']);
+        $this->assertSame('sharedWithPraktijkopleiderId', $collection['scopeField']);
+        $this->assertSame('praktijkopleiderId', $collection['scopeClaim']);
+        $this->assertArrayNotHasKey('via', $collection);
+        // A revoked share must resolve no rows.
+        $this->assertSame(['lifecycle' => 'active'], $collection['filter']);
+        $this->assertContains('portfolioId', $collection['fields']);
+        $this->assertContains('entryIds', $collection['fields']);
+
+    }//end testPraktijkopleiderGainsSharedPortfoliosCollection()
+
+    /**
+     * eportfolio: `external-assessor` mirrors `poSharedPortfolios`'s shape exactly, scoped by
+     * `sharedWithExternalAssessorId` instead, and ships zero create-actions (read-only per the
+     * brief).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/eportfolio/specs/eportfolio/spec.md#requirement-bpv-praktijkopleider-and-external-assessor-sharing-reuse-the-adr-046-portal-audience-mechanism
+     */
+    public function testExternalAssessorManifestShape(): void
+    {
+        $manifest = $this->provider->getContribution(self::EXTERNAL_ASSESSOR_SUBJECT);
+
+        $this->assertIsArray($manifest);
+        $this->assertSame('Scholiq', $manifest['label']);
+        $this->assertSame([], $manifest['notifications']);
+        // Read-only — zero create-actions.
+        $this->assertSame([], $manifest['actions']);
+
+        $collections = $manifest['collections'];
+        $this->assertCount(1, $collections);
+        $collection = $collections[0];
+
+        $this->assertSame('eaSharedPortfolios', $collection['id']);
+        $this->assertSame('scholiq', $collection['register']);
+        $this->assertSame('portfolio-share', $collection['schema']);
+        $this->assertSame('sharedWithExternalAssessorId', $collection['scopeField']);
+        $this->assertSame('externalAssessorId', $collection['scopeClaim']);
+        $this->assertArrayNotHasKey('via', $collection);
+        // A revoked share must resolve no rows.
+        $this->assertSame(['lifecycle' => 'active'], $collection['filter']);
+        $this->assertContains('portfolioId', $collection['fields']);
+        $this->assertContains('entryIds', $collection['fields']);
+
+    }//end testExternalAssessorManifestShape()
 
     /**
      * Both praktijkopleider create-actions are `type: create`, direct-scope-stamped from
@@ -516,8 +599,21 @@ class PortalContributionProviderTest extends TestCase
         $this->assertContains('assessorId', $propsBySlug['werkproces-assessment'] ?? []);
         $this->assertContains('signerId', $propsBySlug['pok-signature'] ?? []);
 
-        // All three audiences are served; each yields a manifest.
-        foreach ([self::STUDENT_SUBJECT, self::PARENT_SUBJECT, self::PRAKTIJKOPLEIDER_SUBJECT] as $subject) {
+        // The eportfolio refs the poSharedPortfolios/eaSharedPortfolios collections depend on.
+        $this->assertContains('sharedWithPraktijkopleiderId', $propsBySlug['portfolio-share'] ?? []);
+        $this->assertContains('sharedWithExternalAssessorId', $propsBySlug['portfolio-share'] ?? []);
+        $this->assertContains('portfolioId', $propsBySlug['portfolio-share'] ?? []);
+        $this->assertContains('entryIds', $propsBySlug['portfolio-share'] ?? []);
+
+        // All four audiences are served; each yields a manifest.
+        foreach (
+            [
+                self::STUDENT_SUBJECT,
+                self::PARENT_SUBJECT,
+                self::PRAKTIJKOPLEIDER_SUBJECT,
+                self::EXTERNAL_ASSESSOR_SUBJECT,
+            ] as $subject
+        ) {
             $manifest = $this->provider->getContribution($subject);
             $this->assertIsArray($manifest);
 
