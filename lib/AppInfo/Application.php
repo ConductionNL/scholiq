@@ -58,6 +58,10 @@ use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
 use OCA\Scholiq\Listener\EvaluationInvitationProvisioningHandler;
 use OCA\Scholiq\Listener\CourseEvaluationResponseSubmittedHandler;
 use OCA\Scholiq\Listener\CourseQualityScoreRollupHandler;
+use OCA\Scholiq\Listener\AdmissionsWaitlistPromoter;
+use OCA\Scholiq\Listener\ApplicationConversionHandler;
+use OCA\Scholiq\Listener\SubjectChoiceValidator;
+use OCA\Scholiq\Listener\SubjectChoiceEnrolmentBridge;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
@@ -565,6 +569,48 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: CourseQualityScoreRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // Application `withdrawn`/`rejected` FROM `placed` -> oldest-submittedAt
+        // waitlisted Application promotion bridge. Mirrors
+        // ConferenceScheduleGenerator's freed-resource-promotes-oldest shape;
+        // re-runs the normal `promote` transition (and therefore
+        // AdmissionsDecisionGuard's capacity branch) rather than writing the
+        // lifecycle field directly.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: AdmissionsWaitlistPromoter::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // Application `placed` -> LearnerProfile + Enrolment (source:
+        // admission) creation bridge, then drives the Application through its
+        // existing `convert` transition. NC user-account/LMS provisioning is
+        // explicitly NOT part of this bridge (design.md Non-Goals).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ApplicationConversionHandler::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // SubjectChoice `submitted` -> electiveRules/capacity validation
+        // bridge, writing `validated`/`needs-revision` (+ validationErrors[])
+        // directly, mirroring ConferenceScheduleGenerator's
+        // route-to-one-of-two-states shape rather than a `requires` guard.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SubjectChoiceValidator::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // SubjectChoice `approved -> locked` -> Enrolment (source:
+        // subject-choice) creation bridge, one per selected elective course
+        // not already enrolled. Mirrors ExcuseApprovalHandler's cross-schema
+        // write-bridge shape.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SubjectChoiceEnrolmentBridge::class
         );
 
     }//end register()
