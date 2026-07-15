@@ -110,6 +110,20 @@
 					"order": 40
 				},
 				{
+					"id": "SubjectChoicesMenu",
+					"label": "Subject choices",
+					"icon": "icon-checkmark",
+					"route": "SubjectChoices",
+					"order": 45
+				},
+				{
+					"id": "SubjectChoicePickerMenu",
+					"label": "Pick electives",
+					"icon": "icon-checkmark",
+					"route": "SubjectChoicePicker",
+					"order": 46
+				},
+				{
 					"id": "Assessments",
 					"label": "Assessments",
 					"icon": "icon-clippy",
@@ -143,6 +157,35 @@
 					"icon": "icon-external",
 					"route": "LtiToolPlacements",
 					"order": 65
+				}
+			]
+		},
+		{
+			"id": "GroupAdmissions",
+			"label": "Admissions",
+			"icon": "icon-add",
+			"order": 15,
+			"children": [
+				{
+					"id": "AdmissionsReviewBoardMenu",
+					"label": "Review board",
+					"icon": "icon-checkmark",
+					"route": "AdmissionsReviewBoard",
+					"order": 10
+				},
+				{
+					"id": "ApplicationsMenu",
+					"label": "Applications",
+					"icon": "icon-contacts",
+					"route": "Applications",
+					"order": 20
+				},
+				{
+					"id": "AdmissionsRoundsMenu",
+					"label": "Admissions rounds",
+					"icon": "icon-calendar",
+					"route": "AdmissionsRounds",
+					"order": 30
 				}
 			]
 		},
@@ -12074,6 +12117,274 @@
 "title": "Course quality report",
 "component": "CourseQualityReport",
 "_note": "course-evaluation: the one genuine custom-view exception for this capability (mirrors GroupTrendHeatmap/LeaderboardView's precedent) -- a coordinator/opleidingscommissie view of a course's CourseQualityScore trend over time, response rate, and raw free-text answers, with a link to draft an ImprovementAction. Own in-page Course (and optional teacher) picker, since the manifest router only auto-binds :route params (not ?query=) to props -- reached via the Course evaluation menu with no id required."
+		},
+		{
+			"id": "AdmissionsRounds",
+			"route": "/admissions/rounds",
+			"type": "index",
+			"title": "Admissions rounds",
+			"config": {
+				"register": "scholiq",
+				"schema": "admissions-round"
+			}
+		},
+		{
+			"id": "AdmissionsRoundDetail",
+			"route": "/admissions/rounds/:id",
+			"type": "detail",
+			"title": "Admissions round",
+			"config": {
+				"register": "scholiq",
+				"schema": "admissions-round",
+				"_note": "admissions-and-subject-choice: an AdmissionsRound is the intake norm config per Programme/level + academicYear (kind, applicationDeadline, mandatoryIntake, capacity) -- a config/rule archetype, mirroring BsaTrajectory/AttendanceThreshold. Body leads with the round definition (8-wide) and a Related panel resolving the scoped Programme. The Applications submitted into this round render as a wide related-index so a coordinator sees the round's intake at a glance. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ar-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Calendar"
+					},
+					{
+						"id": "ar-applications",
+						"type": "object-list",
+						"title": "Applications",
+						"content": {
+							"register": "scholiq",
+							"schema": "application",
+							"filter": {
+								"admissionsRoundId": "@objectId"
+							},
+							"sort": {
+								"field": "submittedAt",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "applicantGivenName",
+									"label": "Given name"
+								},
+								{
+									"key": "applicantFamilyName",
+									"label": "Family name"
+								},
+								{
+									"key": "lifecycle",
+									"label": "State"
+								},
+								{
+									"key": "submittedAt",
+									"label": "Submitted"
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ar-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "ar-applications",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 6
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Applications",
+			"route": "/admissions/applications",
+			"type": "index",
+			"title": "Applications",
+			"config": {
+				"register": "scholiq",
+				"schema": "application"
+			}
+		},
+		{
+			"id": "ApplicationDetail",
+			"route": "/admissions/applications/:id",
+			"type": "detail",
+			"title": "Application",
+			"config": {
+				"register": "scholiq",
+				"schema": "application",
+				"_note": "admissions-and-subject-choice: an Application is the aanmelding a coordinator scores through an intake conversation to a placed/waitlisted/rejected decision, gated by AdmissionsDecisionGuard. Body leads with applicant/guardian/decision data (8-wide) and a Related panel resolving the AdmissionsRound and Programme applied for. lifecycleActions expose submit/scheduleIntake/completeIntake/place/waitlist/reject/withdraw as buttons. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "app-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AccountBoxOutline"
+					},
+					{
+						"id": "app-related",
+						"type": "related",
+						"title": "Related"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "app-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "app-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "AdmissionsReviewBoard",
+			"route": "/admissions/review-board",
+			"type": "custom",
+			"title": "Admissions review board",
+			"component": "AdmissionsReviewBoard",
+			"_note": "admissions-and-subject-choice (task 5.2): the one genuine custom-view exception for admissions -- a coordinator's queue of Applications in intake-completed needing a decision, cross-referencing each Application against its round's deadline, kind, and remaining capacity (a join a generic list widget cannot express), with a link to record the decision. Every other Application/AdmissionsRound screen is a declarative manifest index/detail page."
+		},
+		{
+			"id": "SubjectChoices",
+			"route": "/subject-choice/choices",
+			"type": "index",
+			"title": "Subject choices",
+			"config": {
+				"register": "scholiq",
+				"schema": "subject-choice"
+			}
+		},
+		{
+			"id": "SubjectChoiceDetail",
+			"route": "/subject-choice/choices/:id",
+			"type": "detail",
+			"title": "Subject choice",
+			"config": {
+				"register": "scholiq",
+				"schema": "subject-choice",
+				"_note": "admissions-and-subject-choice: a SubjectChoice is a learner's vakkenpakket against a governing CurriculumPlan.electiveRules, gated by SubjectChoiceConsentGuard at submit and scored by SubjectChoiceValidator into validated/needs-revision. Body leads with the selection/consent/validationErrors data (8-wide) and a Related panel resolving the CurriculumPlan. lifecycleActions expose submit/revise/approve/lock as buttons. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "sc-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ClipboardCheckOutline"
+					},
+					{
+						"id": "sc-related",
+						"type": "related",
+						"title": "Related"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "sc-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "sc-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "SubjectChoicePicker",
+			"route": "/subject-choice/picker",
+			"type": "custom",
+			"title": "Pick electives",
+			"component": "SubjectChoicePicker",
+			"_note": "admissions-and-subject-choice (task 5.3): the one genuine custom-view exception for subject choice -- an interactive elective picker for a CurriculumPlan showing live feedback against minElectives/maxElectives, mandatory combinations, and remaining capacityByCourseId before submission, which a generic manifest form cannot render. Every other SubjectChoice screen is a declarative manifest index/detail page."
 		}
 	]
 }

@@ -1716,9 +1716,11 @@
                             "hr",
                             "bulk",
                             "migrated",
-                            "system"
+                            "system",
+                            "admission",
+                            "subject-choice"
                         ],
-                        "description": "Origin of the enrolment record.",
+                        "description": "Origin of the enrolment record. admission is stamped by ApplicationConversionHandler on Application placement; subject-choice is stamped by SubjectChoiceEnrolmentBridge when a SubjectChoice locks (admissions-and-subject-choice).",
                         "title": "Enrolment Source"
                     },
                     "managerId": {
@@ -2071,6 +2073,507 @@
                             }
                         ]
                     }
+                },
+                "x-openregister-seed": []
+            },
+            "AdmissionsRound": {
+                "slug": "admissions-round",
+                "icon": "CalendarMultiselectOutline",
+                "version": "0.1.0",
+                "title": "AdmissionsRound",
+                "description": "The norm configuration for one intake round, scoped to a Programme (or a whole level when programmeId is null) and academicYear — mirrors BsaTrajectory's role as the shared per-round rule row an Application-scoped guard/handler reads. kind selects which legal branch AdmissionsDecisionGuard applies (mbo-toelatingsrecht, vo-schooladvies-doorstroomtoets, or generic). applicationDeadline and capacity are institution-set with no hardcoded default, mirroring BsaTrajectory.normEcts/AttendanceThreshold's null-scoping precedent.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "kind",
+                    "level",
+                    "academicYear",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable round name, e.g. 'VO instroom 2026-2027'.",
+                        "example": "VO instroom 2026-2027",
+                        "title": "Round Name"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "mbo-toelatingsrecht",
+                            "vo-schooladvies-doorstroomtoets",
+                            "generic"
+                        ],
+                        "description": "Legal profile. mbo-toelatingsrecht applies the WEB toelatingsrecht safeguard (apply before applicationDeadline + complete mandatory intake ⇒ right to admission). vo-schooladvies-doorstroomtoets applies the upward schooladvies-adjustment rule. generic applies only the capacity branch.",
+                        "title": "Round Kind"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme this round admits into. Null = the round scopes every Programme at the declared level in the tenant, mirroring AttendanceThreshold.cohortId's null-scoping convention.",
+                        "title": "Programme ID"
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "po",
+                            "vo",
+                            "mbo",
+                            "hbo",
+                            "wo",
+                            "corporate"
+                        ],
+                        "description": "Education or training level this round admits into. Matches Programme.level.",
+                        "title": "Education Level"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this round applies to, e.g. '2026-2027'.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "applicationDeadline": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "Institution-set deadline by which an Application must be submitted for the mbo-toelatingsrecht safeguard to apply (e.g. the statutory 1 April date). No schema default — the deadline is institution/instance policy, not a Scholiq constant, mirroring BsaTrajectory.normEcts' identical reasoning. Null = no deadline is enforced by AdmissionsDecisionGuard's toelatingsrecht branch.",
+                        "title": "Application Deadline"
+                    },
+                    "mandatoryIntake": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether an intake conversation is mandatory before an Application can reach intake-completed. When true, AdmissionsDecisionGuard blocks the completeIntake transition until Application.intakeCompleted is true.",
+                        "title": "Mandatory Intake"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "nullable": true,
+                        "minimum": 0,
+                        "description": "Maximum number of placed/converted Applications this round admits. Null = uncapped. Counted live at decision time by AdmissionsDecisionGuard — not materialised on this row (mirrors BsaTrajectory's own 'no per-round running count' rejection in design.md, avoiding a race between concurrent placed transitions).",
+                        "title": "Capacity"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "open",
+                            "closed",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "Round lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "open": {
+                            "from": "draft",
+                            "to": "open"
+                        },
+                        "close": {
+                            "from": "open",
+                            "to": "closed"
+                        },
+                        "archive": {
+                            "from": "closed",
+                            "to": "archived"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "Application": {
+                "slug": "application",
+                "icon": "AccountPlusOutline",
+                "version": "0.1.0",
+                "title": "Application",
+                "description": "An aanmelding for a Programme — the pre-enrolment intake path for PO→VO, VO/HO→MBO, and generic admissions (Studielink/HE intake stays on Enrolment; this schema covers every other channel). Scored by a coordinator through an intake conversation to a placed/waitlisted/rejected decision, gated by AdmissionsDecisionGuard for the round's legal branch (kind on the referenced AdmissionsRound). On placement, ApplicationConversionHandler converts the Application into a LearnerProfile and Enrolment rows. guardianId/guardianRef copy ConferenceSignup's ADR-046 dual-identity pair verbatim — no second guardian-account mechanism is introduced.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "admissionsRoundId",
+                    "programmeId",
+                    "applicantGivenName",
+                    "applicantFamilyName",
+                    "submittedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "applicantGivenName": {
+                        "type": "string",
+                        "description": "First name of the applicant.",
+                        "title": "Applicant Given Name"
+                    },
+                    "applicantFamilyName": {
+                        "type": "string",
+                        "description": "Last name of the applicant.",
+                        "title": "Applicant Family Name"
+                    },
+                    "applicantBirthDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "Date of birth of the applicant, if known at intake.",
+                        "title": "Applicant Birth Date"
+                    },
+                    "priorSchool": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text name of the applicant's prior school or programme, if any.",
+                        "title": "Prior School"
+                    },
+                    "admissionsRoundId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "AdmissionsRound",
+                        "description": "UUID of the AdmissionsRound this application belongs to. Governs the applicationDeadline/mandatoryIntake/capacity checked by AdmissionsDecisionGuard.",
+                        "title": "Admissions Round ID"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme applied for. ApplicationConversionHandler bulk-enrols the learner into this Programme's courseIds on placement.",
+                        "title": "Programme ID"
+                    },
+                    "guardianId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the guardian, when the family already has an NC/LearnerProfile presence (e.g. a sibling application). Null for the common case of no existing Scholiq identity at intake time — reuses ConferenceSignup.guardianId's shape verbatim.",
+                        "title": "Guardian ID"
+                    },
+                    "guardianRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the guardian's own domain identity (ADR-046 A4) — the portal scope-stamp reused from ConferenceSignup.guardianRef, stamped onto the converted LearnerProfile.guardianRefs on placement. Additive and optional; null until the family is linked via the portal.",
+                        "title": "Guardian Ref"
+                    },
+                    "guardianGivenName": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text first name of the guardian, captured when no NC account or LearnerProfile exists yet.",
+                        "title": "Guardian Given Name"
+                    },
+                    "guardianFamilyName": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text last name of the guardian, captured when no NC account or LearnerProfile exists yet.",
+                        "title": "Guardian Family Name"
+                    },
+                    "guardianEmail": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "email",
+                        "description": "Free-text contact email of the guardian, captured when no NC account or LearnerProfile exists yet.",
+                        "title": "Guardian Email"
+                    },
+                    "guardianPhone": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text contact phone number of the guardian, captured when no NC account or LearnerProfile exists yet.",
+                        "title": "Guardian Phone"
+                    },
+                    "submittedAuthLevel": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "basic",
+                            "substantial",
+                            "high"
+                        ],
+                        "default": "none",
+                        "description": "eIDAS assurance level of the submission flow, reusing ExcuseRequest.submittedAuthLevel's shape verbatim. Defaults to 'none' — Application creation is staff-assisted (front desk / intake coordinator), not a DigiD-authenticated guardian flow, per design.md's Non-Goals.",
+                        "title": "Submission Assurance Level"
+                    },
+                    "requiredDocuments": {
+                        "type": "array",
+                        "description": "Required intake documents, each referencing an OpenRegister Material attachment — this app stores no file bytes of its own, reusing school-structure's established Material-reference rule.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "kind",
+                                "materialId"
+                            ],
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                        "schooladvies",
+                                        "doorstroomtoets-result",
+                                        "id-document",
+                                        "prior-report",
+                                        "medical-statement",
+                                        "other"
+                                    ],
+                                    "description": "Document category.",
+                                    "title": "Document Kind"
+                                },
+                                "materialId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "$ref": "Material",
+                                    "description": "UUID of the Material object carrying the OpenRegister file attachment.",
+                                    "title": "Material ID"
+                                }
+                            }
+                        },
+                        "default": [],
+                        "title": "Required Documents"
+                    },
+                    "intakeScheduledAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp the intake conversation is scheduled for. A plain date-time — no room/timetable conflict resolution, mirroring Session.location's 'just a string' posture.",
+                        "title": "Intake Scheduled At"
+                    },
+                    "intakeConductedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the coordinator who conducted the intake conversation.",
+                        "title": "Intake Conducted By"
+                    },
+                    "intakeNotes": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text notes from the intake conversation.",
+                        "title": "Intake Notes"
+                    },
+                    "intakeCompleted": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether the intake conversation has been recorded as held. AdmissionsDecisionGuard blocks the completeIntake transition when the round's mandatoryIntake is true and this is still false.",
+                        "title": "Intake Completed"
+                    },
+                    "studiekeuzeadviesGiven": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "MBO toelatingsrecht branch: whether the studiekeuzeadvies (study-choice advice) has been given. One of the three preconditions AdmissionsDecisionGuard checks before blocking a rejection.",
+                        "title": "Studiekeuzeadvies Given"
+                    },
+                    "studiekeuzeadviesGivenAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp the studiekeuzeadvies was given.",
+                        "title": "Studiekeuzeadvies Given At"
+                    },
+                    "schooladviesLevel": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "pro",
+                            "vmbo-bb",
+                            "vmbo-kb",
+                            "vmbo-gt",
+                            "havo",
+                            "vwo"
+                        ],
+                        "description": "VO branch: the primary school's preliminary schooladvies, on the shared low→high ordinal AdmissionsDecisionGuard compares against doorstroomtoetsLevel.",
+                        "title": "Schooladvies Level"
+                    },
+                    "doorstroomtoetsLevel": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "pro",
+                            "vmbo-bb",
+                            "vmbo-kb",
+                            "vmbo-gt",
+                            "havo",
+                            "vwo"
+                        ],
+                        "description": "VO branch: the doorstroomtoets result, on the same shared ordinal as schooladviesLevel.",
+                        "title": "Doorstroomtoets Level"
+                    },
+                    "schooladviesAdjustedLevel": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "pro",
+                            "vmbo-bb",
+                            "vmbo-kb",
+                            "vmbo-gt",
+                            "havo",
+                            "vwo"
+                        ],
+                        "description": "VO branch: the schooladvies after any upward adjustment. AdmissionsDecisionGuard requires this to equal doorstroomtoetsLevel when the toets outranks the original schooladviesLevel, unless adjustmentMotivation is given or the pro/vmbo-bb exemption applies.",
+                        "title": "Schooladvies Adjusted Level"
+                    },
+                    "adjustmentMotivation": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "VO branch: free-text motivation for NOT raising schooladviesAdjustedLevel to match a higher doorstroomtoetsLevel — the 'not in the pupil's best interest' exception. Non-empty satisfies AdmissionsDecisionGuard's adjustment requirement.",
+                        "title": "Adjustment Motivation"
+                    },
+                    "adviesNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "VO branch: free-text note for a combined advice (e.g. 'vmbo-gt/havo') recorded as its lower single-track value plus this note — combined advices are out of scope for the ordinal comparison itself.",
+                        "title": "Advies Note"
+                    },
+                    "decisionType": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "placed",
+                            "waitlisted",
+                            "rejected"
+                        ],
+                        "description": "The intake decision outcome. Mirrors the lifecycle state reached, kept as an explicit field for reporting stability across any future re-lifecycle.",
+                        "title": "Decision Type"
+                    },
+                    "decisionReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text reason for the decision. Required (non-empty) to reject an mbo-toelatingsrecht applicant who applied on time and completed a mandatory intake with a given studiekeuzeadvies — enforced by AdmissionsDecisionGuard, not by JSON Schema required, since the requirement is conditional on the round's kind.",
+                        "title": "Decision Reason"
+                    },
+                    "decidedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the coordinator who recorded the decision.",
+                        "title": "Decided By"
+                    },
+                    "decidedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp of the decision.",
+                        "title": "Decided At"
+                    },
+                    "convertedLearnerProfileId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
+                        "description": "UUID of the LearnerProfile created by ApplicationConversionHandler on placement. Null until converted.",
+                        "title": "Converted Learner Profile ID"
+                    },
+                    "convertedEnrolmentIds": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "UUIDs of the Enrolment rows created by ApplicationConversionHandler on placement, one per Programme.courseIds entry. Empty/null until converted.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Enrolment"
+                        },
+                        "default": [],
+                        "title": "Converted Enrolment IDs"
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp the application was submitted. Compared against AdmissionsRound.applicationDeadline by the toelatingsrecht branch, and used to order waitlist promotion oldest-first.",
+                        "title": "Submitted At"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "intake-scheduled",
+                            "intake-completed",
+                            "placed",
+                            "waitlisted",
+                            "rejected",
+                            "converted",
+                            "withdrawn"
+                        ],
+                        "default": "draft",
+                        "description": "Application lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted"
+                        },
+                        "scheduleIntake": {
+                            "from": "submitted",
+                            "to": "intake-scheduled"
+                        },
+                        "completeIntake": {
+                            "from": "intake-scheduled",
+                            "to": "intake-completed",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AdmissionsDecisionGuard"
+                        },
+                        "place": {
+                            "from": "intake-completed",
+                            "to": "placed",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AdmissionsDecisionGuard"
+                        },
+                        "waitlist": {
+                            "from": "intake-completed",
+                            "to": "waitlisted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AdmissionsDecisionGuard"
+                        },
+                        "reject": {
+                            "from": "intake-completed",
+                            "to": "rejected",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AdmissionsDecisionGuard"
+                        },
+                        "promote": {
+                            "from": "waitlisted",
+                            "to": "placed",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AdmissionsDecisionGuard",
+                            "description": "Driven by AdmissionsWaitlistPromoter when a placed Application for the same round transitions to withdrawn/rejected — promotes the oldest-submittedAt waitlisted Application, re-running AdmissionsDecisionGuard's capacity branch."
+                        },
+                        "convert": {
+                            "from": "placed",
+                            "to": "converted",
+                            "description": "Driven by ApplicationConversionHandler after it creates the LearnerProfile and Enrolment rows."
+                        },
+                        "withdraw": {
+                            "from": [
+                                "submitted",
+                                "intake-scheduled",
+                                "intake-completed",
+                                "waitlisted",
+                                "placed"
+                            ],
+                            "to": "withdrawn"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "user"
+                    ],
+                    "_comment": "admissions-and-subject-choice: first change to ever write this schema — an intake coordinator/front-desk staff member creates the Application on behalf of a family that usually has no NC account yet, so create must be reachable by an authenticated user, not admin-only. Mirrors secure-exam-test-mode's identical 'no dedicated intake-coordinator role today' rationale (lib/Settings/scholiq_register.json:6620). Object-level scoping (only the assigned coordinator/admin can decide) is a known platform gap, the same one already documented for secure-exam-test-mode and SupportRequest — not solved here, not silently ignored."
                 },
                 "x-openregister-seed": []
             },
@@ -3352,6 +3855,68 @@
                         },
                         "title": "Grade Visibility Policy"
                     },
+                    "electiveRules": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Elective-selection validation rules for this plan's electiveCourseIds, read by SubjectChoiceValidator when a SubjectChoice referencing this plan submits (admissions-and-subject-choice). Additive and nullable; every existing CurriculumPlan row remains valid with this unset (fail-closed — no rule is enforced until a school opts in).",
+                        "properties": {
+                            "minElectives": {
+                                "type": "integer",
+                                "nullable": true,
+                                "minimum": 0,
+                                "description": "Minimum number of electiveCourseIds a SubjectChoice must select. Null = no minimum.",
+                                "title": "Minimum Electives"
+                            },
+                            "maxElectives": {
+                                "type": "integer",
+                                "nullable": true,
+                                "minimum": 0,
+                                "description": "Maximum number of electiveCourseIds a SubjectChoice may select. Null = no maximum.",
+                                "title": "Maximum Electives"
+                            },
+                            "mandatoryCombinations": {
+                                "type": "array",
+                                "description": "Course-id sets that must be chosen together — a SubjectChoice selecting part of a set without the rest fails validation.",
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "$ref": "Course"
+                                    }
+                                },
+                                "default": [],
+                                "title": "Mandatory Combinations"
+                            },
+                            "mutuallyExclusive": {
+                                "type": "array",
+                                "description": "Course-id sets that cannot be chosen together — a SubjectChoice selecting more than one course from the same set fails validation.",
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "$ref": "Course"
+                                    }
+                                },
+                                "default": [],
+                                "title": "Mutually Exclusive Combinations"
+                            },
+                            "capacityByCourseId": {
+                                "type": "object",
+                                "nullable": true,
+                                "default": null,
+                                "description": "Map of courseId (UUID string key) to the maximum number of approved/locked SubjectChoice rows that may select it. Absent/null key = uncapped for that course.",
+                                "additionalProperties": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "title": "Capacity By Course ID"
+                            }
+                        },
+                        "title": "Elective Rules"
+                    },
                     "lifecycle": {
                         "type": "string",
                         "description": "Plan lifecycle state. Managed by OR lifecycle engine.",
@@ -3385,6 +3950,156 @@
                         "unarchive": {
                             "from": "archived",
                             "to": "draft"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "SubjectChoice": {
+                "slug": "subject-choice",
+                "icon": "FormatListCheckbox",
+                "version": "0.1.0",
+                "title": "SubjectChoice",
+                "description": "A learner's vakkenpakket (elective-course selection) against a governing CurriculumPlan's electiveRules. The submit transition is gated by SubjectChoiceConsentGuard (reapplies ConferenceSignupGuardianGuard's rule verbatim); a submitted choice is validated by SubjectChoiceValidator against electiveRules and sibling capacity before it can be approved; an approved→locked choice feeds Enrolment via SubjectChoiceEnrolmentBridge.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "curriculumPlanId",
+                    "academicYear",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this vakkenpakket is for.",
+                        "title": "Learner ID"
+                    },
+                    "learnerRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the LearnerProfile this choice is for — the portal-subject scoping key (ADR-046 A4). Distinct from learnerId, which is the Nextcloud user id. Additive and optional; existing rows leave it unset (fail-closed) until backfilled.",
+                        "title": "Learner Ref"
+                    },
+                    "curriculumPlanId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "CurriculumPlan",
+                        "description": "UUID of the governing CurriculumPlan. SubjectChoiceValidator reads this plan's electiveRules and sibling SubjectChoice rows referencing the same plan for capacity.",
+                        "title": "Curriculum Plan ID"
+                    },
+                    "programmeId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Programme",
+                        "description": "UUID of the Programme this vakkenpakket belongs to, if scoped to one.",
+                        "title": "Programme ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year this choice applies to, e.g. '2026-2027'.",
+                        "example": "2026-2027",
+                        "title": "Academic Year"
+                    },
+                    "selectedElectiveCourseIds": {
+                        "type": "array",
+                        "description": "UUIDs of the elective Course objects the learner selected, checked by SubjectChoiceValidator against the governing CurriculumPlan.electiveRules.",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Course"
+                        },
+                        "default": [],
+                        "title": "Selected Elective Course IDs"
+                    },
+                    "guardianConsentGiven": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether a guardian (or the learner themselves, if 18+) has consented to this selection. SubjectChoiceConsentGuard resolves the caller server-side at submit time; this field is a record of that consent, not the enforcement mechanism itself.",
+                        "title": "Guardian Consent Given"
+                    },
+                    "guardianConsentBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the guardian (or self) who gave consent.",
+                        "title": "Guardian Consent By"
+                    },
+                    "guardianConsentByRef": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true,
+                        "$ref": "LearnerProfile",
+                        "description": "UUID reference to the domain object that gave consent (ADR-046 A4), mirroring ExcuseRequest.submittedByRef's convention. Additive and optional; existing rows leave it unset.",
+                        "title": "Guardian Consent By Ref"
+                    },
+                    "validationErrors": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "Names of the electiveRules (or capacity) checks this choice failed, written by SubjectChoiceValidator when it routes the choice to needs-revision. Empty/null when validated.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "title": "Validation Errors"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "validated",
+                            "needs-revision",
+                            "approved",
+                            "locked"
+                        ],
+                        "default": "draft",
+                        "description": "Choice lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\SubjectChoiceConsentGuard"
+                        },
+                        "validate": {
+                            "from": "submitted",
+                            "to": "validated",
+                            "description": "Written directly by SubjectChoiceValidator (a listener, not a requires guard) when every electiveRules/capacity check passes."
+                        },
+                        "needsRevision": {
+                            "from": "submitted",
+                            "to": "needs-revision",
+                            "description": "Written directly by SubjectChoiceValidator when at least one electiveRules/capacity check fails; validationErrors names each unmet rule."
+                        },
+                        "revise": {
+                            "from": "needs-revision",
+                            "to": "draft"
+                        },
+                        "approve": {
+                            "from": "validated",
+                            "to": "approved"
+                        },
+                        "lock": {
+                            "from": "approved",
+                            "to": "locked"
                         }
                     }
                 },

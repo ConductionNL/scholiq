@@ -74,6 +74,14 @@ import LeaderboardView from './views/LeaderboardView.vue'
 // coordinator/opleidingscommissie view of a course's CourseQualityScore
 // trend over time, response rate, and raw free-text answers.
 import CourseQualityReport from './views/CourseQualityReport.vue'
+// admissions-and-subject-choice: the two genuine new custom views this
+// change adds — the coordinator's admissions review board (queue of
+// intake-completed Applications cross-referenced against their round's
+// deadline/kind/capacity) and the interactive vakkenpakket elective picker
+// with live electiveRules/capacity feedback; every other Application/
+// AdmissionsRound/SubjectChoice screen is a declarative manifest page.
+import AdmissionsReviewBoard from './views/AdmissionsReviewBoard.vue'
+import SubjectChoicePicker from './views/SubjectChoicePicker.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -105,6 +113,7 @@ const PANEL_WIDGET_META = {
 }
 
 export default {
+	AdmissionsReviewBoard: page(AdmissionsReviewBoard),
 	BookConferenceSlotsView: page(BookConferenceSlotsView),
 	BsaRiskDashboard: page(BsaRiskDashboard),
 	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
@@ -137,6 +146,7 @@ export default {
 	ScholiqSettings: page(ScholiqSettings),
 	SelfAssessmentView: page(SelfAssessmentView),
 	SkillsGapDashboard: page(SkillsGapDashboard),
+	SubjectChoicePicker: page(SubjectChoicePicker),
 	TakeAssessmentView: page(TakeAssessmentView),
 
 	// --- Shared library widgets registered under manifest widget keys (ADR-036). ---
