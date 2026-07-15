@@ -119,6 +119,19 @@ export default {
 			 * widget grid's `@object.<field>` filter tokens resolve.
 			 */
 			detailObjectContext: { value: null },
+			// Live-updates handle for the or-object-{uuid} subscription of
+			// the currently resolved regulation (nc-vue beta.212,
+			// liveUpdatesPlugin default-on). Managed by
+			// syncLiveSubscription(); liveKey is `${type}::${uuid}` so a
+			// re-resolve of the same object is a no-op. livePendingKey marks
+			// an in-flight subscribe so a concurrent same-key call doesn't
+			// double-subscribe; liveEpoch invalidates in-flight resolutions
+			// after a release (slug change / destroy).
+			liveHandle: null,
+			liveKey: '',
+			livePendingKey: '',
+			liveEpoch: 0,
+			liveUnwatch: null,
 		}
 	},
 
@@ -144,7 +157,118 @@ export default {
 		},
 	},
 
+	/**
+	 * Lifecycle hook: release the live object subscription on unmount.
+	 *
+	 * @return {void}
+	 * @spec openspec/specs/realtime-updates/spec.md
+	 */
+	beforeDestroy() {
+		this.releaseLiveSubscription()
+	},
+
 	methods: {
+		/**
+		 * Subscribe to live updates for the resolved regulation:
+		 * or-object-{uuid} via notify_push with visibility-gated polling
+		 * fallback. Events are refetch hints only — the liveUpdatesPlugin
+		 * re-runs fetchObject(type, uuid), which lands in the library
+		 * store's objects[type][uuid] cache; the watcher installed here
+		 * bridges that fresh data into `detailObjectContext.value.objectData`
+		 * so the provided context (and the widget grid reading it)
+		 * re-renders. Idempotent per (type, uuid); releases the previous
+		 * subscription when another regulation is resolved.
+		 *
+		 * @param {object} store The library object store instance.
+		 * @param {object} object The resolved regulation object.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/realtime-updates/spec.md
+		 */
+		async syncLiveSubscription(store, object) {
+			if (typeof store.subscribe !== 'function') {
+				return
+			}
+			// The push event key is or-object-{uuid} — prefer the uuid over
+			// a numeric id when both are present.
+			const uuid = (object['@self'] && object['@self'].uuid) ?? object.uuid ?? this.objectId
+			if (!uuid) {
+				this.releaseLiveSubscription()
+				return
+			}
+			const key = `${OBJECT_TYPE}::${uuid}`
+			if (this.liveHandle && this.liveKey === key) {
+				return
+			}
+			if (this.livePendingKey === key) {
+				// A subscribe for this exact object is already in flight —
+				// re-subscribing here would leak the first handle + watcher.
+				return
+			}
+			this.releaseLiveSubscription()
+			try {
+				const epoch = this.liveEpoch
+				this.livePendingKey = key
+				this.liveKey = key
+				const handle = await store.subscribe(OBJECT_TYPE, uuid)
+				if (this.livePendingKey === key) {
+					this.livePendingKey = ''
+				}
+				if (this.liveEpoch !== epoch) {
+					// Released while awaiting (another slug resolved, or the
+					// component was destroyed) — drop the stale subscription.
+					store.unsubscribe(handle)
+					return
+				}
+				this.liveHandle = handle
+				// Bridge: event → plugin refetch → objects[type][uuid] cache →
+				// detailObjectContext (which descendants render from).
+				this.liveUnwatch = this.$watch(
+					() => (typeof store.getObject === 'function' ? store.getObject(OBJECT_TYPE, uuid) : null),
+					(fresh) => {
+						if (fresh && this.liveKey === key && this.detailObjectContext.value) {
+							this.detailObjectContext.value = {
+								...this.detailObjectContext.value,
+								objectData: fresh,
+							}
+						}
+					},
+				)
+			} catch (e) {
+				if (this.livePendingKey === key) {
+					this.livePendingKey = ''
+				}
+				this.liveHandle = null
+				this.liveKey = ''
+				// eslint-disable-next-line no-console
+				console.warn('[RegulationDetailPage] live subscription failed:', e?.message ?? e)
+			}
+		},
+
+		/**
+		 * Release the current live object subscription and its cache
+		 * watcher, and invalidate any in-flight subscribe (its resolution
+		 * unsubscribes itself via the epoch check).
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/realtime-updates/spec.md
+		 */
+		releaseLiveSubscription() {
+			this.liveEpoch += 1
+			this.livePendingKey = ''
+			if (this.liveUnwatch) {
+				this.liveUnwatch()
+				this.liveUnwatch = null
+			}
+			if (this.liveHandle) {
+				const store = useObjectStore()
+				if (typeof store.unsubscribe === 'function') {
+					store.unsubscribe(this.liveHandle)
+				}
+			}
+			this.liveHandle = null
+			this.liveKey = ''
+		},
+
 		/**
 		 * Resolve the Regulation behind the current `:slug` route param and
 		 * publish it as the detail-object context, or show the not-found
@@ -164,6 +288,7 @@ export default {
 			if (!param) {
 				this.loading = false
 				this.notFound = true
+				this.releaseLiveSubscription()
 				return
 			}
 
@@ -198,6 +323,7 @@ export default {
 			if (!object) {
 				this.loading = false
 				this.notFound = true
+				this.releaseLiveSubscription()
 				return
 			}
 
@@ -216,6 +342,9 @@ export default {
 			}
 
 			this.loading = false
+
+			// Live updates for the resolved object (refetch hints only).
+			this.syncLiveSubscription(store, object)
 		},
 	},
 }
