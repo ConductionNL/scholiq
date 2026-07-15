@@ -117,6 +117,140 @@ class DataExchangeRunHandlerTest extends TestCase
     }//end buildPayload()
 
     /**
+     * buildPayload() stamps _scholiqRecordId (the source object's own id) onto
+     * every record in the profile-mapped (fieldMappings) path — even when no
+     * fieldMappings entry names the source's id field explicitly.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/duo-afkeurmelding-correction/tasks.md#task-4.1
+     * @spec openspec/changes/duo-afkeurmelding-correction/specs/data-exchange/spec.md#scenario-every-exported-record-carries-a-correlation-identifier
+     */
+    public function testBuildPayloadStampsCorrelationIdWithProfile(): void
+    {
+        $handler = $this->makeHandler([]);
+
+        $object  = ['id' => 'lp-1', 'eckId' => 'eck-1', 'givenName' => 'Foo'];
+        $profile = [
+            'fieldMappings' => [
+                ['scholiqField' => 'eckId', 'targetField' => 'eckId', 'transform' => null],
+            ],
+        ];
+
+        $payload = $this->buildPayload($handler, [$object], $profile, 'bron-rod');
+
+        self::assertSame('lp-1', $payload[0]['_scholiqRecordId']);
+        self::assertSame('eck-1', $payload[0]['eckId']);
+
+    }//end testBuildPayloadStampsCorrelationIdWithProfile()
+
+    /**
+     * buildPayload() stamps _scholiqRecordId onto every record in the
+     * no-profile / pass-through path too.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/duo-afkeurmelding-correction/tasks.md#task-4.1
+     * @spec openspec/changes/duo-afkeurmelding-correction/specs/data-exchange/spec.md#scenario-every-exported-record-carries-a-correlation-identifier
+     */
+    public function testBuildPayloadStampsCorrelationIdWithoutProfile(): void
+    {
+        $handler = $this->makeHandler([]);
+
+        $object = ['id' => 'sr-1', 'supportDomain' => 'gedrag'];
+
+        $payload = $this->buildPayload($handler, [$object], null, 'leerplicht-unrouted');
+
+        self::assertSame('sr-1', $payload[0]['_scholiqRecordId']);
+
+    }//end testBuildPayloadStampsCorrelationIdWithoutProfile()
+
+    /**
+     * The correlation stamp survives the leerplicht dossier composer — the
+     * composer only adds keys (breachingRecords/interventions), never strips
+     * the stamp buildPayload() wrote first.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/duo-afkeurmelding-correction/tasks.md#task-4.1
+     * @spec openspec/changes/duo-afkeurmelding-correction/specs/data-exchange/spec.md#scenario-every-exported-record-carries-a-correlation-identifier
+     */
+    public function testBuildPayloadStampsCorrelationIdSurvivesLeerplichtComposer(): void
+    {
+        $handler = $this->makeHandler(['rec-1' => ['id' => 'rec-1', 'status' => 'absent-unexcused']]);
+
+        $flag = [
+            'id'                 => 'flag-1',
+            'breachingRecordIds' => ['rec-1'],
+            'interventions'      => [],
+            'tenant_id'          => 'tenant-1',
+        ];
+
+        $profile = [
+            'fieldMappings' => [
+                ['scholiqField' => 'id', 'targetField' => 'flagRef', 'transform' => null],
+            ],
+        ];
+
+        $payload = $this->buildPayload($handler, [$flag], $profile, 'leerplicht');
+
+        self::assertSame('flag-1', $payload[0]['_scholiqRecordId']);
+        self::assertCount(1, $payload[0]['breachingRecords']);
+
+    }//end testBuildPayloadStampsCorrelationIdSurvivesLeerplichtComposer()
+
+    /**
+     * The correlation stamp survives the swv dossier composer too.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/duo-afkeurmelding-correction/tasks.md#task-4.1
+     * @spec openspec/changes/duo-afkeurmelding-correction/specs/data-exchange/spec.md#scenario-every-exported-record-carries-a-correlation-identifier
+     */
+    public function testBuildPayloadStampsCorrelationIdSurvivesSwvComposer(): void
+    {
+        $handler = $this->makeSwvHandler(['learner-1' => ['ncUserId' => 'learner-1', 'eckId' => 'eck-abc']]);
+
+        $supportRequest = [
+            'id'        => 'sr-9',
+            'learnerId' => 'learner-1',
+            'tenant_id' => 'tenant-1',
+        ];
+
+        $payload = $this->buildPayload($handler, [$supportRequest], ['fieldMappings' => []], 'swv');
+
+        self::assertSame('sr-9', $payload[0]['_scholiqRecordId']);
+        self::assertArrayHasKey('learner', $payload[0]);
+
+    }//end testBuildPayloadStampsCorrelationIdSurvivesSwvComposer()
+
+    /**
+     * A fieldMappings entry that (misconfigured) names '_scholiqRecordId' as
+     * its own targetField does not corrupt the stamp — buildPayload()
+     * re-asserts the true source id after the mapping loop.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/duo-afkeurmelding-correction/tasks.md#task-4.1
+     */
+    public function testCorrelationIdSurvivesTargetFieldCollision(): void
+    {
+        $handler = $this->makeHandler([]);
+
+        $object  = ['id' => 'lp-2', 'someField' => 'not-the-real-id'];
+        $profile = [
+            'fieldMappings' => [
+                ['scholiqField' => 'someField', 'targetField' => '_scholiqRecordId', 'transform' => null],
+            ],
+        ];
+
+        $payload = $this->buildPayload($handler, [$object], $profile, 'bron-rod');
+
+        self::assertSame('lp-2', $payload[0]['_scholiqRecordId']);
+
+    }//end testCorrelationIdSurvivesTargetFieldCollision()
+
+    /**
      * target=leerplicht with a mapping profile composes breachingRecords +
      * interventions on top of the flat field-mapped record.
      *

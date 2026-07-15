@@ -14578,7 +14578,7 @@
                             },
                             "validationReport": {
                                 "type": "array",
-                                "description": "Per-record validation errors from the target.",
+                                "description": "Per-record validation errors from the target. Assumed per-item shape (documented, not schema-enforced — items stays free-form object per record above): {recordId, errorCode, errorMessage, field?}. recordId MUST equal the _scholiqRecordId this job's buildPayload() stamped onto the corresponding outbound record, so RejectionMappingHandler can resolve a rejection back to its Scholiq source object.",
                                 "items": {
                                     "type": "object"
                                 },
@@ -14782,6 +14782,469 @@
                     }
                 },
                 "x-openregister-seed": []
+            },
+            "ExchangeRejection": {
+                "slug": "exchange-rejection",
+                "icon": "AlertOctagonOutline",
+                "version": "0.1.0",
+                "title": "ExchangeRejection",
+                "description": "One row per record DUO (or any DataExchangeJob target) rejected via a job's result.validationReport entry — the afkeurmelding correction loop's ground truth. Created exclusively by RejectionMappingHandler, never through the generic object-create UI (mirrors GradeNotification). Resolves back to the Scholiq source object via sourceKind + one typed $ref id field per kind (mirrors GradeEntry.sourceKind), so an admin/principal can deep-link straight from the rejection to the object that needs fixing.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "dataExchangeJobId",
+                    "errorCode",
+                    "errorMessage",
+                    "sourceKind",
+                    "detectedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "dataExchangeJobId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "DataExchangeJob",
+                        "description": "UUID of the DataExchangeJob whose result.validationReport produced this rejection.",
+                        "title": "Data Exchange Job ID"
+                    },
+                    "errorCode": {
+                        "type": "string",
+                        "description": "The target's own error/afkeurcode, copied verbatim from validationReport[i].errorCode.",
+                        "title": "Error Code"
+                    },
+                    "errorMessage": {
+                        "type": "string",
+                        "description": "The target's own human-readable error message, copied verbatim from validationReport[i].errorMessage.",
+                        "title": "Error Message"
+                    },
+                    "errorCodeRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "ExchangeErrorCode",
+                        "description": "Best-effort match against the ExchangeErrorCode catalogue by (code, target). Null when the code is not (yet) catalogued — this never blocks rejection creation.",
+                        "default": null,
+                        "title": "Error Code Reference"
+                    },
+                    "offendingFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Field path(s) the target identified as the cause, from validationReport[i].field when the connector supplies it. Empty when not derivable.",
+                        "default": [],
+                        "title": "Offending Fields"
+                    },
+                    "sourceKind": {
+                        "type": "string",
+                        "enum": [
+                            "learner-profile",
+                            "enrolment",
+                            "final-grade",
+                            "attendance-flag",
+                            "support-request"
+                        ],
+                        "description": "Which Scholiq schema the rejected record belongs to, resolved from the originating DataExchangeJob's scope.schema. Determines which of the typed id fields below is set.",
+                        "title": "Source Kind"
+                    },
+                    "learnerProfileId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "LearnerProfile",
+                        "description": "UUID of the rejected LearnerProfile (set when sourceKind=learner-profile).",
+                        "default": null,
+                        "title": "Learner Profile ID"
+                    },
+                    "enrolmentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Enrolment",
+                        "description": "UUID of the rejected Enrolment (set when sourceKind=enrolment).",
+                        "default": null,
+                        "title": "Enrolment ID"
+                    },
+                    "finalGradeId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "FinalGrade",
+                        "description": "UUID of the rejected FinalGrade (set when sourceKind=final-grade).",
+                        "default": null,
+                        "title": "Final Grade ID"
+                    },
+                    "attendanceFlagId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "AttendanceFlag",
+                        "description": "UUID of the rejected AttendanceFlag (set when sourceKind=attendance-flag).",
+                        "default": null,
+                        "title": "Attendance Flag ID"
+                    },
+                    "supportRequestId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "SupportRequest",
+                        "description": "UUID of the rejected SupportRequest (set when sourceKind=support-request).",
+                        "default": null,
+                        "title": "Support Request ID"
+                    },
+                    "rawRecord": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "The mapped payload record the target rejected, when the connector's response echoes it back. Kept for admin context without re-deriving it. Null when the connector's validationReport entry carries no record data (the documented {recordId, errorCode, errorMessage, field?} shape does not guarantee it).",
+                        "default": null,
+                        "title": "Raw Record"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "corrected",
+                            "resubmitted",
+                            "accepted",
+                            "waived"
+                        ],
+                        "default": "open",
+                        "description": "Correction lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Status"
+                    },
+                    "detectedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when RejectionMappingHandler created this row.",
+                        "title": "Detected At"
+                    },
+                    "correctedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of whoever performed the markCorrected transition.",
+                        "default": null,
+                        "title": "Corrected By"
+                    },
+                    "correctedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when the markCorrected transition was performed.",
+                        "default": null,
+                        "title": "Corrected At"
+                    },
+                    "resubmittedJobId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "DataExchangeJob",
+                        "description": "UUID of the single-record DataExchangeJob RejectionResubmitGuard created for this rejection. Always server-stamped — never a caller-supplied value.",
+                        "default": null,
+                        "title": "Resubmitted Job ID"
+                    },
+                    "waivedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of whoever performed the waive transition. Always server-stamped by RejectionWaiveGuard.",
+                        "default": null,
+                        "title": "Waived By"
+                    },
+                    "waivedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when the waive transition was performed. Always server-stamped by RejectionWaiveGuard.",
+                        "default": null,
+                        "title": "Waived At"
+                    },
+                    "waiveReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text reason for waiving this rejection. Required non-empty by RejectionWaiveGuard when status transitions to waived (mirrors DeliberationRecord.pupilVoice.waiverReason).",
+                        "default": null,
+                        "title": "Waive Reason"
+                    },
+                    "correctionDeadlineAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "Externally-supplied correction deadline (admin-entered, or a future OpenConnector-carried aanlevering-cyclus deadline). NOT a computed fixed-offset value — no verifiable statutory day-count exists for BRON/ROD afkeurmelding correction, unlike AttendanceFlag.reportDeadlineAt's verified Leerplichtwet art. 21a anchor.",
+                        "default": null,
+                        "title": "Correction Deadline At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "status",
+                    "initial": "open",
+                    "transitions": {
+                        "markCorrected": {
+                            "from": "open",
+                            "to": "corrected",
+                            "description": "Admin/coordinator marks the underlying source object as fixed."
+                        },
+                        "resubmit": {
+                            "from": "corrected",
+                            "to": "resubmitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\RejectionResubmitGuard",
+                            "description": "Creates one new single-record DataExchangeJob scoped to this rejection's source object and stamps resubmittedJobId server-side."
+                        },
+                        "accept": {
+                            "from": "resubmitted",
+                            "to": "accepted",
+                            "description": "RejectionMappingHandler drives this when the resubmission job's validationReport no longer contains this recordId."
+                        },
+                        "reopen": {
+                            "from": "resubmitted",
+                            "to": "open",
+                            "description": "RejectionMappingHandler drives this when the resubmission job's validationReport still contains this recordId — errorCode/errorMessage are refreshed first."
+                        },
+                        "waive": {
+                            "from": [
+                                "open",
+                                "corrected"
+                            ],
+                            "to": "waived",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\RejectionWaiveGuard",
+                            "description": "Admin/coordinator waives the rejection with a mandatory reason; waivedBy/waivedAt are server-stamped."
+                        }
+                    }
+                },
+                "x-openregister-calculations": {
+                    "ageDays": {
+                        "type": "integer",
+                        "materialise": true,
+                        "description": "Number of days since detectedAt. Always available regardless of whether a correctionDeadlineAt has been set — the honest, always-on urgency signal.",
+                        "expression": {
+                            "dateDiff": {
+                                "from": {
+                                    "prop": "detectedAt"
+                                },
+                                "to": "now",
+                                "unit": "days"
+                            }
+                        }
+                    },
+                    "overdue": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "description": "True once correctionDeadlineAt has been set and has passed, while status is not yet accepted/waived. False (not null) when no correctionDeadlineAt is set — mirrors AttendanceFlag.reportOverdue's null-safe if/eq-against-null shape already verified in DataExchangeJob.durationSeconds.",
+                        "expression": {
+                            "if": [
+                                {
+                                    "eq": [
+                                        {
+                                            "prop": "correctionDeadlineAt"
+                                        },
+                                        null
+                                    ]
+                                },
+                                false,
+                                {
+                                    "and": [
+                                        {
+                                            "lte": [
+                                                {
+                                                    "prop": "correctionDeadlineAt"
+                                                },
+                                                "now"
+                                            ]
+                                        },
+                                        {
+                                            "ne": [
+                                                {
+                                                    "prop": "status"
+                                                },
+                                                "accepted"
+                                            ]
+                                        },
+                                        {
+                                            "ne": [
+                                                {
+                                                    "prop": "status"
+                                                },
+                                                "waived"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Same tightest-available posture as SupportRequest/TlvApplication (design.md Security Considerations) — DUO afkeurmeldingen routinely quote learner PII (name, birth date, BSN-derived pseudonym) back in errorMessage/rawRecord. No dedicated data-exchange-coordinator role exists in this register.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "principal"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ExchangeErrorCode": {
+                "slug": "exchange-error-code",
+                "icon": "BookAlertOutline",
+                "version": "0.1.0",
+                "title": "ExchangeErrorCode",
+                "description": "Local, admin-editable lookup catalogue of known target error/afkeurcodes, used by RejectionMappingHandler to best-effort resolve ExchangeRejection.errorCodeRef. Explicitly illustrative starter data, NOT an authoritative source — DUO owns the real BRON/ROD code list, and OpenConnector is the intended channel for keeping this catalogue current (an adapter issue, alongside the wire-protocol adapters the data-exchange spec's 'Delegate wire protocols to OpenConnector' requirement already lists, should carry catalogue updates).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "code",
+                    "description",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "The target's own error/afkeurcode identifier, e.g. as DUO issues it.",
+                        "title": "Code"
+                    },
+                    "target": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Which DataExchangeJob.target this code applies to (e.g. 'bron-rod', 'oso', 'leerplicht'). Null = generic/unknown target.",
+                        "default": null,
+                        "title": "Target"
+                    },
+                    "description": {
+                        "type": "object",
+                        "description": "Bilingual human-readable explanation of the error code, same {nl, en} shape x-openregister-notifications.subject already uses throughout this register.",
+                        "required": [
+                            "nl",
+                            "en"
+                        ],
+                        "properties": {
+                            "nl": {
+                                "type": "string",
+                                "description": "Dutch explanation of the error code.",
+                                "title": "Dutch Description"
+                            },
+                            "en": {
+                                "type": "string",
+                                "description": "English explanation of the error code.",
+                                "title": "English Description"
+                            }
+                        },
+                        "title": "Description"
+                    },
+                    "category": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text grouping, e.g. 'identiteit', 'inschrijving', 'vooropleiding'.",
+                        "default": null,
+                        "title": "Category"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "blocking",
+                            "warning"
+                        ],
+                        "default": "blocking",
+                        "description": "Whether the target's own semantics treat this as a hard rejection or an accepted-with-warning.",
+                        "title": "Severity"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether this catalogue entry is current. Deactivate stale codes without deleting history.",
+                        "title": "Active"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "code": "BRON-101",
+                        "target": "bron-rod",
+                        "description": {
+                            "nl": "Ongeldig BSN-formaat (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Invalid BSN format (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "identiteit",
+                        "severity": "blocking",
+                        "active": true
+                    },
+                    {
+                        "code": "BRON-102",
+                        "target": "bron-rod",
+                        "description": {
+                            "nl": "Ontbrekende geboortedatum (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Missing birth date (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "identiteit",
+                        "severity": "blocking",
+                        "active": true
+                    },
+                    {
+                        "code": "BRON-201",
+                        "target": "bron-rod",
+                        "description": {
+                            "nl": "Overlappende inschrijving gedetecteerd (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Overlapping enrolment detected (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "inschrijving",
+                        "severity": "blocking",
+                        "active": true
+                    },
+                    {
+                        "code": "BRON-205",
+                        "target": "bron-rod",
+                        "description": {
+                            "nl": "Ontbrekende vooropleidingscode (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Missing prior-education code (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "vooropleiding",
+                        "severity": "blocking",
+                        "active": true
+                    },
+                    {
+                        "code": "OSO-301",
+                        "target": "oso",
+                        "description": {
+                            "nl": "Onvolledig overstapdossier (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Incomplete transfer dossier (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "dossier",
+                        "severity": "warning",
+                        "active": true
+                    },
+                    {
+                        "code": "LP-401",
+                        "target": "leerplicht",
+                        "description": {
+                            "nl": "Ontbrekend BRIN-nummer (illustratief startgegeven — niet de autoritatieve DUO-lijst).",
+                            "en": "Missing BRIN number (illustrative starter data — not DUO's authoritative list)."
+                        },
+                        "category": "melding",
+                        "severity": "blocking",
+                        "active": true
+                    }
+                ]
             },
             "GradeNotification": {
                 "slug": "grade-notification",

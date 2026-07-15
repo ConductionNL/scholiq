@@ -551,6 +551,14 @@ class DataExchangeRunHandler implements IEventListener
             // No mapping: pass raw objects but strip PII fields (C3 — explicit unset).
             return array_map(
                 function (array $obj) use ($target): array {
+                    // Correlation stamp (duo-afkeurmelding-correction): every record carries
+                    // the source object's own id BEFORE composition, so a rejection returned
+                    // in a later job's result.validationReport can be resolved back to the
+                    // Scholiq object that produced it. Stamped first so the leerplicht/swv
+                    // composers below never strip it (they only add keys, never unset()).
+                    $recordId = $obj['id'] ?? ($obj['uuid'] ?? '');
+                    $obj['_scholiqRecordId'] = $recordId;
+
                     unset($obj['bsnEncrypted'], $obj['bsnHash'], $obj['email']);
                     if ($target === self::LEERPLICHT_TARGET) {
                         $obj = $this->composeLeerplichtDossier(record: $obj, flag: $obj);
@@ -564,13 +572,17 @@ class DataExchangeRunHandler implements IEventListener
                 },
                 $objects
             );
-        }
+        }//end if
 
         $fieldMappings = $profile['fieldMappings'];
         $payload       = [];
 
         foreach ($objects as $object) {
-            $record = [];
+            // Correlation stamp (duo-afkeurmelding-correction): the source object's own id,
+            // written before the fieldMappings loop so it is never a caller-mappable target
+            // field and always survives dossier composition below.
+            $record = ['_scholiqRecordId' => ($object['id'] ?? ($object['uuid'] ?? ''))];
+
             foreach ($fieldMappings as $mapping) {
                 $scholiqField = $mapping['scholiqField'] ?? '';
                 $targetField  = $mapping['targetField'] ?? '';
@@ -593,6 +605,11 @@ class DataExchangeRunHandler implements IEventListener
 
             // C3: always strip PII fields from the mapped record even when profile is present.
             unset($record['bsnEncrypted'], $record['bsnHash'], $record['email']);
+
+            // Re-assert the correlation stamp: guarantee it survives even if a
+            // (misconfigured) fieldMappings entry names '_scholiqRecordId' as its
+            // own targetField — this stamp must always equal the source object's id.
+            $record['_scholiqRecordId'] = ($object['id'] ?? ($object['uuid'] ?? ''));
 
             // Verzuimloket dossier composer (target=leerplicht): assemble the report
             // from the originating AttendanceFlag's breachingRecordIds + interventions,
