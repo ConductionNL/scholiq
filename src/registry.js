@@ -82,6 +82,12 @@ import CourseQualityReport from './views/CourseQualityReport.vue'
 // AdmissionsRound/SubjectChoice screen is a declarative manifest page.
 import AdmissionsReviewBoard from './views/AdmissionsReviewBoard.vue'
 import SubjectChoicePicker from './views/SubjectChoicePicker.vue'
+// groepsplan: the one genuine new custom view this change adds — resolves
+// each GroupPlanSubgroup member learner's active LearningPlan (if any); the
+// manifest's equality-only filter DSL cannot express the learnerIds
+// array-membership lookup. Every other GroupPlan/GroupPlanSubgroup/
+// GroupPlanEvaluation screen is a declarative manifest page.
+import GroupPlanSubgroupLearnerContext from './views/GroupPlanSubgroupLearnerContext.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -123,6 +129,7 @@ export default {
 	DashboardStudent: page(DashboardStudent),
 	ExamCaseDossierView: page(ExamCaseDossierView),
 	GradeImpactDetail: page(GradeImpactDetail),
+	GroupPlanSubgroupLearnerContext: page(GroupPlanSubgroupLearnerContext),
 	GroupTrendHeatmap: page(GroupTrendHeatmap),
 	ItemAnalysisView: page(ItemAnalysisView),
 	ItemAuthorView: page(ItemAuthorView),
