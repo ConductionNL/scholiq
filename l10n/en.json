@@ -1,5 +1,16 @@
 {
 	"translations": {
+		"Leaderboard": "Leaderboard",
+		"Ranked points for cohorts that have opted in to a leaderboard. Your own points and level are always visible to you regardless of this setting.": "Ranked points for cohorts that have opted in to a leaderboard. Your own points and level are always visible to you regardless of this setting.",
+		"No active leaderboards": "No active leaderboards",
+		"A coordinator has not opted any cohort into a leaderboard yet.": "A coordinator has not opted any cohort into a leaderboard yet.",
+		"Hide me from this leaderboard": "Hide me from this leaderboard",
+		"You are not a member of this cohort.": "You are not a member of this cohort.",
+		"Failed to load the leaderboard. Please try again.": "Failed to load the leaderboard. Please try again.",
+		"No ranked learners": "No ranked learners",
+		"Every member of this cohort has opted out, or nobody has earned points yet.": "Every member of this cohort has opted out, or nobody has earned points yet.",
+		"My points": "My points",
+		"{days}-day streak": "{days}-day streak",
 		"Data exchange": "Data exchange",
 		"Data-exchange jobs": "Data-exchange jobs",
 		"Mapping profiles": "Mapping profiles",

@@ -41,6 +41,8 @@ use OCA\Scholiq\Listener\ExemptionGrantHandler;
 use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
 use OCA\Scholiq\Listener\BsaProgressFlagHandler;
 use OCA\Scholiq\Listener\EngagementSignalHandler;
+use OCA\Scholiq\Listener\LearnerEngagementRollupHandler;
+use OCA\Scholiq\Listener\PointAwardTriggerHandler;
 use OCA\Scholiq\Listener\EnrolmentProgressRollupHandler;
 use OCA\Scholiq\Listener\LessonProgressHandler;
 use OCA\Scholiq\Listener\PeerFeedbackAggregator;
@@ -503,6 +505,28 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: PortfolioShareGrantHandler::class
+        );
+
+        // ADR-031 legitimate exception (engagement-gamification): Enrolment
+        // `completed` / Submission `submitted` (isLate:false) / GradeEntry
+        // `published` (GradeFormulaEvaluator passed:true) -> idempotency-keyed
+        // PointAward creation bridge. Mirrors GradeRollupHandler/
+        // BsaProgressFlagHandler's event-to-object-write shape exactly; no
+        // invented event sources (see design.md "Event -> points mechanics").
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PointAwardTriggerHandler::class
+        );
+
+        // ADR-031 legitimate exception (engagement-gamification): PointAward
+        // creation -> LearnerEngagement totals/level/streak recompute bridge,
+        // plus the streak-milestone bonus-award check (recursion-guarded on
+        // sourceKind). Mirrors GradeRollupHandler's FinalGrade roll-up shape;
+        // NOT a TimedJob (ADR-022) and NOT a declarative sum aggregation (no
+        // sum metric is precedented anywhere in this register).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: LearnerEngagementRollupHandler::class
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);

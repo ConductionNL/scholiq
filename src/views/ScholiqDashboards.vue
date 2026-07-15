@@ -15,7 +15,7 @@
  ScholiqDashboard.vue wrapper that nested a second CnDashboardPage inside a
  dashboard widget (the dashboard-in-dashboard antipattern).
 
- @spec openspec/changes/fix-dashboards-settings-notifications/specs/dashboard/spec.md#requirement-per-resolved-role-default-dashboard
+ @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 -->
 <template>
 	<div class="scholiq-dashboards">
@@ -94,6 +94,9 @@
 			<template #widget-my-mandatory-training>
 				<MyMandatoryTrainingWidget />
 			</template>
+			<template #widget-kpi-points-level>
+				<KpiPointsLevelWidget />
+			</template>
 		</CnDashboardPage>
 	</div>
 </template>
@@ -113,6 +116,7 @@ import ManageCohortsWidget from './widgets/ManageCohortsWidget.vue'
 import ManageProgrammesWidget from './widgets/ManageProgrammesWidget.vue'
 import ManageListWidget from './widgets/ManageListWidget.vue'
 import MyMandatoryTrainingWidget from './widgets/MyMandatoryTrainingWidget.vue'
+import KpiPointsLevelWidget from './widgets/KpiPointsLevelWidget.vue'
 
 const VALID_ROLES = ['admin', 'teacher', 'student']
 
@@ -145,6 +149,7 @@ export default {
 		ManageProgrammesWidget,
 		ManageListWidget,
 		MyMandatoryTrainingWidget,
+		KpiPointsLevelWidget,
 	},
 
 	computed: {
@@ -267,19 +272,26 @@ export default {
 		},
 
 		/**
-		 * Student layout — the learner's own mandatory-training obligations.
-		 * Deliberately limited to user-scoped widgets to avoid exposing other
-		 * learners' records.
+		 * Student layout — the learner's own mandatory-training obligations,
+		 * plus (engagement-gamification) the learner's own points/level/streak
+		 * KPI, visible unconditionally regardless of any Leaderboard/opt-out
+		 * state. Deliberately limited to user-scoped widgets to avoid exposing
+		 * other learners' records.
 		 *
 		 * @return {{widgets: Array<object>, layout: Array<object>}}
+		 * @spec openspec/changes/engagement-gamification/specs/engagement/spec.md#scenario-a-learner-sees-their-own-points-and-level-regardless-of-leaderboard-opt-out
 		 */
 		studentConfig() {
 			return {
 				widgets: [
 					{ id: 'my-mandatory-training', title: this.t('scholiq', 'My mandatory training'), type: 'custom' },
+					// engagement-gamification: the learner's own points/level/streak KPI —
+					// always visible regardless of any Leaderboard/opt-out state.
+					{ id: 'kpi-points-level', title: this.t('scholiq', 'My points'), type: 'custom' },
 				],
 				layout: [
 					{ id: 1, widgetId: 'my-mandatory-training', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 5 },
+					{ id: 2, widgetId: 'kpi-points-level', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
 				],
 			}
 		},

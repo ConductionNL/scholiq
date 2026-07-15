@@ -1,5 +1,16 @@
 {
 	"translations": {
+		"Leaderboard": "Klassement",
+		"Ranked points for cohorts that have opted in to a leaderboard. Your own points and level are always visible to you regardless of this setting.": "Gerangschikte punten voor cohorten die zich hebben aangemeld voor een klassement. Je eigen punten en niveau zijn altijd zichtbaar voor jezelf, ongeacht deze instelling.",
+		"No active leaderboards": "Geen actieve klassementen",
+		"A coordinator has not opted any cohort into a leaderboard yet.": "Een coördinator heeft nog geen enkel cohort aangemeld voor een klassement.",
+		"Hide me from this leaderboard": "Verberg mij in dit klassement",
+		"You are not a member of this cohort.": "Je bent geen lid van dit cohort.",
+		"Failed to load the leaderboard. Please try again.": "Het klassement kon niet worden geladen. Probeer het opnieuw.",
+		"No ranked learners": "Geen gerangschikte leerlingen",
+		"Every member of this cohort has opted out, or nobody has earned points yet.": "Alle leden van dit cohort hebben zich afgemeld, of niemand heeft nog punten verdiend.",
+		"My points": "Mijn punten",
+		"{days}-day streak": "{days}-daagse reeks",
 		"Data exchange": "Gegevensuitwisseling",
 		"Data-exchange jobs": "Uitwisselingstaken",
 		"Mapping profiles": "Mappingprofielen",

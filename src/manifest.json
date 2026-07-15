@@ -425,6 +425,76 @@
 			]
 		},
 		{
+			"id": "GroupEngagement",
+			"label": "Engagement",
+			"icon": "icon-chart",
+			"order": 32,
+			"children": [
+				{
+					"id": "LeaderboardViewMenu",
+					"label": "Leaderboard",
+					"icon": "icon-chart",
+					"route": "LeaderboardView",
+					"order": 10
+				},
+				{
+					"id": "PointRulesMenu",
+					"label": "Point rules",
+					"icon": "icon-toggle",
+					"route": "PointRules",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "EngagementLevelsMenu",
+					"label": "Levels",
+					"icon": "icon-clippy",
+					"route": "EngagementLevels",
+					"order": 30,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "LeaderboardsMenu",
+					"label": "Leaderboards (config)",
+					"icon": "icon-flag",
+					"route": "Leaderboards",
+					"order": 40,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "PointAwardsMenu",
+					"label": "Point awards",
+					"icon": "icon-history",
+					"route": "PointAwards",
+					"order": 50,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "LearnerEngagementsMenu",
+					"label": "Learner engagement",
+					"icon": "icon-chart",
+					"route": "LearnerEngagements",
+					"order": 60
+				}
+			]
+		},
+		{
 			"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
@@ -11420,6 +11490,379 @@
 			"title": "Review portfolio",
 			"component": "PortfolioReviewView",
 			"_note": "eportfolio: the read-only review surface for a shared or owned Portfolio's entries (resolving and displaying the referenced Submission/WerkprocesAssessment/ExternalTrainingRecord/Credential/NC file per entry), plus — for the grading teacher of a course-bound Portfolio in submitted state only — a gradeValue entry field and the `grade` transition. No manifest declarative page can render cross-schema entry resolution, mirrors MarkSubmissionView's existing precedent for the same reason."
+		},
+		{
+			"id": "PointRules",
+			"route": "/engagement/point-rules",
+			"type": "index",
+			"title": "Point rules",
+			"config": {
+				"register": "scholiq",
+				"schema": "point-rule"
+			}
+		},
+		{
+			"id": "PointRuleDetail",
+			"route": "/engagement/point-rules/:id",
+			"type": "detail",
+			"title": "Point rule",
+			"config": {
+				"register": "scholiq",
+				"schema": "point-rule",
+				"_note": "engagement-gamification: a PointRule is a declarative event -> points config (kind, points, optional cohort/course scope) — a config/rule archetype, mirroring AttendanceThreshold. Body leads with the rule definition (8-wide) and a Related panel resolving the optional scope Cohort/Course. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail for rule-change history.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "pr-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Star"
+					},
+					{
+						"id": "pr-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pr-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pr-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EngagementLevels",
+			"route": "/engagement/levels",
+			"type": "index",
+			"title": "Engagement levels",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-level"
+			}
+		},
+		{
+			"id": "EngagementLevelDetail",
+			"route": "/engagement/levels/:id",
+			"type": "detail",
+			"title": "Engagement level",
+			"config": {
+				"register": "scholiq",
+				"schema": "engagement-level",
+				"_note": "engagement-gamification: an EngagementLevel is a standalone, independently editable threshold row (name, order, minPoints, icon) — no lifecycle, mirroring AttendanceThreshold's row-per-rule editability rather than a buried array. Body leads with the level data (8-wide); no cross-object references to resolve, so the Related panel is omitted. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "el-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Trophy"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "el-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Leaderboards",
+			"route": "/engagement/leaderboards",
+			"type": "index",
+			"title": "Leaderboards",
+			"config": {
+				"register": "scholiq",
+				"schema": "leaderboard"
+			}
+		},
+		{
+			"id": "LeaderboardDetail",
+			"route": "/engagement/leaderboards/:id",
+			"type": "detail",
+			"title": "Leaderboard",
+			"config": {
+				"register": "scholiq",
+				"schema": "leaderboard",
+				"_note": "engagement-gamification: a Leaderboard is the opt-in policy row scoping a ranked view to one Cohort or Course (draft -> active -> archived; default OFF -- see design.md). Body leads with the policy data (8-wide) and a Related panel resolving the scoped Cohort/Course. No ranking data lives on this object -- LeaderboardController computes it live. Sidebar keeps metadata + audit-trail for activation history.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "lb-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ChartBar"
+					},
+					{
+						"id": "lb-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "lb-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "lb-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PointAwards",
+			"route": "/engagement/awards",
+			"type": "index",
+			"title": "Point awards",
+			"config": {
+				"register": "scholiq",
+				"schema": "point-award",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "PointAwardDetail",
+			"route": "/engagement/awards/:id",
+			"type": "detail",
+			"title": "Point award",
+			"config": {
+				"register": "scholiq",
+				"schema": "point-award",
+				"readOnly": true,
+				"_note": "engagement-gamification: a PointAward is an append-only ledger row (learner, rule, points, source) -- an immutable evidence archetype, mirroring AttendanceFlag/AssessmentResult. Body leads with the award data (8-wide) and a Related panel resolving the learner's PointRule. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "pa-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CheckCircleOutline"
+					},
+					{
+						"id": "pa-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "pa-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "pa-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LearnerEngagements",
+			"route": "/engagement/learner-engagement",
+			"type": "index",
+			"title": "Learner engagement",
+			"config": {
+				"register": "scholiq",
+				"schema": "learner-engagement",
+				"readOnly": true
+			}
+		},
+		{
+			"id": "LearnerEngagementDetail",
+			"route": "/engagement/learner-engagement/:id",
+			"type": "detail",
+			"title": "Learner engagement",
+			"config": {
+				"register": "scholiq",
+				"schema": "learner-engagement",
+				"readOnly": true,
+				"_note": "engagement-gamification: LearnerEngagement is the derived per-learner roll-up (totalPoints, levelId, streak days) -- an aggregate-result archetype, mirroring FinalGrade. x-property-rbac restricts reads to admin + the learner's own self-match, so a non-admin caller only ever sees their own row here regardless of the index filter. Body leads with the roll-up data (8-wide) and a Related panel resolving the learner's EngagementLevel. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "le-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ChartLine"
+					},
+					{
+						"id": "le-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "le-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "le-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LeaderboardView",
+			"route": "/engagement/leaderboard",
+			"type": "custom",
+			"title": "Leaderboard",
+			"component": "LeaderboardView",
+			"_note": "engagement-gamification (story-required custom view, mirrors BsaRiskDashboard's status as the sole custom-UI exception): renders LeaderboardController's ranked response for a cohort with an active Leaderboard, with an inline opt-out toggle wired to the existing preferences-api. No manifest declarative page can render this — the ranking is computed live by a narrow authorizing controller, not a raw OR object list (see design.md 'Why the RBAC gap forces a controller')."
 		}
 	]
 }
