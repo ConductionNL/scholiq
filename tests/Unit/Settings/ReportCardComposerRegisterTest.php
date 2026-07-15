@@ -219,15 +219,16 @@ class ReportCardComposerRegisterTest extends TestCase
 
     /**
      * The register's info.version was bumped for this change, and has only
-     * moved forward since (pupil-dossier-notes bumped it again to 0.12.0 —
-     * this assertion tracks the current HEAD version, not a point-in-time
+     * moved forward since (pupil-dossier-notes bumped it again to 0.12.0,
+     * course-evaluation to 0.13.0, school-payments to 0.14.0 — this
+     * assertion tracks the current HEAD version, not a point-in-time
      * snapshot of report-card-composer's own bump).
      *
      * @return void
      */
     public function testRegisterVersionBumped(): void
     {
-        self::assertSame('0.13.0', $this->config['info']['version']);
+        self::assertSame('0.14.0', $this->config['info']['version']);
 
     }//end testRegisterVersionBumped()
 }//end class

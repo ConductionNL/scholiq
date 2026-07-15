@@ -788,6 +788,69 @@
 			]
 		},
 		{
+			"id": "GroupPayments",
+			"label": "Payments",
+			"icon": "icon-quota",
+			"order": 34,
+			"children": [
+				{
+					"id": "OrdersMenu",
+					"label": "Orders",
+					"icon": "icon-clippy",
+					"route": "Orders",
+					"order": 10
+				},
+				{
+					"id": "FeeItemsMenu",
+					"label": "Fee items",
+					"icon": "icon-flag",
+					"route": "FeeItems",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "finance"]
+						}
+					}
+				},
+				{
+					"id": "OrderLinesMenu",
+					"label": "Order lines",
+					"icon": "icon-file",
+					"route": "OrderLines",
+					"order": 30,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "finance"]
+						}
+					}
+				},
+				{
+					"id": "PaymentTransactionsMenu",
+					"label": "Payment transactions",
+					"icon": "icon-chart",
+					"route": "PaymentTransactions",
+					"order": 40,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "finance"]
+						}
+					}
+				},
+				{
+					"id": "EntitlementsMenu",
+					"label": "Entitlements",
+					"icon": "icon-checkmark",
+					"route": "Entitlements",
+					"order": 50,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "finance"]
+						}
+					}
+				}
+			]
+		},
+		{
 			"id": "Documentation",
 			"label": "Documentation",
 			"icon": "icon-info",
@@ -13113,6 +13176,379 @@
 			"title": "Pick electives",
 			"component": "SubjectChoicePicker",
 			"_note": "admissions-and-subject-choice (task 5.3): the one genuine custom-view exception for subject choice -- an interactive elective picker for a CurriculumPlan showing live feedback against minElectives/maxElectives, mandatory combinations, and remaining capacityByCourseId before submission, which a generic manifest form cannot render. Every other SubjectChoice screen is a declarative manifest index/detail page."
+		},
+		{
+			"id": "FeeItems",
+			"route": "/payments/fee-items",
+			"type": "index",
+			"title": "Fee items",
+			"config": {
+				"register": "scholiq",
+				"schema": "fee-item"
+			}
+		},
+		{
+			"id": "FeeItemDetail",
+			"route": "/payments/fee-items/:id",
+			"type": "detail",
+			"title": "Fee item",
+			"config": {
+				"register": "scholiq",
+				"schema": "fee-item",
+				"widgets": [
+					{
+						"id": "fee-item-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CurrencyEur"
+					},
+					{
+						"id": "fee-item-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "fee-item-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "fee-item-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Orders",
+			"route": "/payments/orders",
+			"type": "index",
+			"title": "Orders",
+			"config": {
+				"register": "scholiq",
+				"schema": "order"
+			}
+		},
+		{
+			"id": "OrderDetail",
+			"route": "/payments/orders/:id",
+			"type": "detail",
+			"title": "Order",
+			"config": {
+				"register": "scholiq",
+				"schema": "order",
+				"widgets": [
+					{
+						"id": "order-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CashMultiple"
+					},
+					{
+						"id": "order-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "order-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "order-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "OrderLines",
+			"route": "/payments/order-lines",
+			"type": "index",
+			"title": "Order lines",
+			"config": {
+				"register": "scholiq",
+				"schema": "order-line"
+			}
+		},
+		{
+			"id": "OrderLineDetail",
+			"route": "/payments/order-lines/:id",
+			"type": "detail",
+			"title": "Order line",
+			"config": {
+				"register": "scholiq",
+				"schema": "order-line",
+				"widgets": [
+					{
+						"id": "order-line-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ClipboardList"
+					},
+					{
+						"id": "order-line-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "order-line-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "order-line-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PaymentTransactions",
+			"route": "/payments/payment-transactions",
+			"type": "index",
+			"title": "Payment transactions",
+			"config": {
+				"register": "scholiq",
+				"schema": "payment-transaction"
+			}
+		},
+		{
+			"id": "PaymentTransactionDetail",
+			"route": "/payments/payment-transactions/:id",
+			"type": "detail",
+			"title": "Payment transaction",
+			"config": {
+				"register": "scholiq",
+				"schema": "payment-transaction",
+				"widgets": [
+					{
+						"id": "payment-transaction-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Cash"
+					},
+					{
+						"id": "payment-transaction-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "payment-transaction-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "payment-transaction-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Entitlements",
+			"route": "/payments/entitlements",
+			"type": "index",
+			"title": "Entitlements",
+			"config": {
+				"register": "scholiq",
+				"schema": "entitlement"
+			}
+		},
+		{
+			"id": "EntitlementDetail",
+			"route": "/payments/entitlements/:id",
+			"type": "detail",
+			"title": "Entitlement",
+			"config": {
+				"register": "scholiq",
+				"schema": "entitlement",
+				"widgets": [
+					{
+						"id": "entitlement-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "CheckCircleOutline"
+					},
+					{
+						"id": "entitlement-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "entitlement-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "entitlement-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "OrderPaymentPanel",
+			"route": "/payments/orders/:orderId/pay",
+			"type": "custom",
+			"title": "Pay now",
+			"component": "OrderPaymentPanel",
+			"_note": "school-payments: the one genuine custom-view exception for payments -- the payer's pay-now surface for an open/partially-paid Order (shows lines/total, calls PaymentTransactionController::initiate(), renders the returned checkout reference opaquely). Every other payments schema is a declarative manifest index/detail page."
 		}
 	]
 }

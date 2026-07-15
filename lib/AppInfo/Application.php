@@ -63,6 +63,7 @@ use OCA\Scholiq\Listener\AdmissionsWaitlistPromoter;
 use OCA\Scholiq\Listener\ApplicationConversionHandler;
 use OCA\Scholiq\Listener\SubjectChoiceValidator;
 use OCA\Scholiq\Listener\SubjectChoiceEnrolmentBridge;
+use OCA\Scholiq\Listener\PaymentTransactionStatusHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
@@ -623,6 +624,15 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: SubjectChoiceEnrolmentBridge::class
+        );
+
+        // ADR-031 legitimate exception (school-payments): PaymentTransaction
+        // `succeeded`/`refunded` -> Order paid/partially-paid roll-up and
+        // refund cascade (revoking any active Entitlements reachable through
+        // the Order's OrderLines). Event-driven, NOT a TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PaymentTransactionStatusHandler::class
         );
 
     }//end register()
