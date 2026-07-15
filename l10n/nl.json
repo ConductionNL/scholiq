@@ -818,7 +818,20 @@
 		"A guardian (or I, if 18+) consents to this selection": "Een ouder/verzorger (of ikzelf, indien 18+) stemt in met deze keuze",
 		"Your subject choice has been submitted for review.": "Je vakkenpakket is ingediend ter beoordeling.",
 		"Submit subject choice": "Vakkenpakket indienen",
-		"We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule.": "Je vakkenpakket kon niet worden ingediend. Mogelijk ben je geen gekoppelde ouder/verzorger van dit kind, of overtreedt de keuze een regel van het leerplan."
+		"We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule.": "Je vakkenpakket kon niet worden ingediend. Mogelijk ben je geen gekoppelde ouder/verzorger van dit kind, of overtreedt de keuze een regel van het leerplan.",
+		"Group plans": "Groepsplannen",
+		"Subgroup learner context": "Leerlingcontext subgroep",
+		"For each learner in this subgroup, whether they already have an active LearningPlan (OPP) — resolved live, not stored on the subgroup.": "Voor elke leerling in deze subgroep: of er al een actief leerplan (OPP) bestaat — live opgehaald, niet opgeslagen op de subgroep.",
+		"Subgroup ID": "Subgroep-ID",
+		"UUID of the GroupPlanSubgroup": "UUID van de subgroep (GroupPlanSubgroup)",
+		"Open learner context": "Leerlingcontext openen",
+		"Usually opened from a subgroup's detail page (\"Learner context\" tile) — this picker is a fallback for direct navigation.": "Meestal geopend vanaf de detailpagina van een subgroep (tegel \"Leerlingcontext\") — dit invoerveld is een terugvaloptie voor rechtstreekse navigatie.",
+		"Loading learner context...": "Leerlingcontext laden...",
+		"This subgroup could not be found.": "Deze subgroep kon niet worden gevonden.",
+		"This subgroup has no learners yet.": "Deze subgroep heeft nog geen leerlingen.",
+		"Active learning plan: {kind}": "Actief leerplan: {kind}",
+		"No active learning plan": "Geen actief leerplan",
+		"Failed to load the subgroup learner context. Please try again.": "Het laden van de leerlingcontext is mislukt. Probeer het opnieuw."
 	},
 	"plurals": ""
 }

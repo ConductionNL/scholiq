@@ -10279,6 +10279,555 @@
                     }
                 }
             },
+            "GroupPlan": {
+                "slug": "group-plan",
+                "icon": "AccountGroupOutline",
+                "version": "0.1.0",
+                "title": "GroupPlan",
+                "description": "The groepsplan: a Dutch PO/SBO group-level planning cycle for one Cohort/subject/period — results analysis, differentiated GroupPlanSubgroups (instructieniveau), period goals, and a period-end GroupPlanEvaluation. One level up from the per-learner LearningPlan (OPP); links to it and to SupportRequest by reference, never duplicates either.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "cohortId",
+                    "subject",
+                    "coordinatorId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "cohortId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "UUID of the Cohort (group/klas) this groepsplan governs.",
+                        "title": "Cohort ID"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "The leerlijn/vak this groepsplan covers (e.g. 'technisch lezen', 'rekenen-wiskunde'). A groepsplan is always scoped to a subject, never school-wide.",
+                        "title": "Subject"
+                    },
+                    "period": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Plan period identifier, e.g. '2025-2026 blok 2' (same free-text convention as LearningPlan.period).",
+                        "title": "Plan Period"
+                    },
+                    "periodEndDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "ISO 8601 date this period's groepsplan ends. Drives the declared periodEndDue calculation below. Null until set.",
+                        "default": null,
+                        "title": "Period End Date"
+                    },
+                    "coordinatorId": {
+                        "type": "string",
+                        "description": "NC user ID of the responsible teacher/IB'er coordinating this groepsplan.",
+                        "title": "Coordinator ID"
+                    },
+                    "resultsAnalysis": {
+                        "type": "object",
+                        "description": "The group's results analysis this groepsplan responds to — narrative plus evidence references. MAY be narrative-only with an empty evidenceRefs when no Cito/LVS import exists yet for this school; groepsplan creation is never blocked on it.",
+                        "title": "Results Analysis",
+                        "properties": {
+                            "narrative": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Free-text results analysis narrative — the toets round/methodetoets analysis this groepsplan responds to.",
+                                "title": "Results Analysis Narrative"
+                            },
+                            "evidenceRefs": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "description": "UUIDs of evidence objects (GradeEntry, AssessmentResult, FinalGrade, or a prior GroupPlanEvaluation) this analysis is based on. No Cito/LVS-specific results schema exists in this register; a future data-exchange/openconnector connector would land such scores as ordinary GradeEntry rows, reusable here without a schema change.",
+                                "title": "Evidence References"
+                            }
+                        }
+                    },
+                    "goals": {
+                        "type": "array",
+                        "description": "Group-wide period goals tracked in this groepsplan (same shape as LearningPlan.goals, one level up from an individual learner).",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "goalId",
+                                "description"
+                            ],
+                            "properties": {
+                                "goalId": {
+                                    "type": "string",
+                                    "title": "Goal ID",
+                                    "description": "Stable identifier for this goal within the plan."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "title": "Goal Description",
+                                    "description": "Plain-language description of the group-wide learning goal."
+                                },
+                                "domain": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Goal Domain",
+                                    "description": "Domain or area this goal belongs to (e.g. 'leren-en-ontwikkeling')."
+                                },
+                                "baseline": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Baseline",
+                                    "description": "Documented starting level before intervention."
+                                },
+                                "target": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Target",
+                                    "description": "Desired level to be achieved by the target date."
+                                },
+                                "targetDate": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "date",
+                                    "title": "Target Date",
+                                    "description": "ISO 8601 date by which this goal should be achieved."
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "open",
+                                        "met",
+                                        "adjusted",
+                                        "dropped"
+                                    ],
+                                    "default": "open",
+                                    "title": "Goal Status",
+                                    "description": "Current status of this goal."
+                                },
+                                "evidenceRefs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "title": "Evidence References",
+                                    "description": "UUIDs of evidence objects (e.g. GradeEntries, GroupPlanEvaluations) supporting this goal's progress."
+                                }
+                            }
+                        },
+                        "title": "Plan Goals"
+                    },
+                    "supersedesId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "GroupPlan",
+                        "description": "UUID of the prior period's GroupPlan this version supersedes — reuses LearningPlan.supersedesId's exact version-chain pattern instead of a second forward-pointing 'seeds next plan' field.",
+                        "default": null,
+                        "title": "Supersedes Plan ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Groepsplan lifecycle state.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "under-evaluation",
+                            "closed",
+                            "superseded"
+                        ],
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": [
+                                "draft"
+                            ],
+                            "to": "active"
+                        },
+                        "startEvaluation": {
+                            "from": [
+                                "active"
+                            ],
+                            "to": "under-evaluation"
+                        },
+                        "completeEvaluation": {
+                            "from": [
+                                "under-evaluation"
+                            ],
+                            "to": "active"
+                        },
+                        "close": {
+                            "from": [
+                                "active",
+                                "under-evaluation"
+                            ],
+                            "to": "closed"
+                        },
+                        "supersede": {
+                            "from": [
+                                "active",
+                                "under-evaluation"
+                            ],
+                            "to": "superseded"
+                        }
+                    }
+                },
+                "x-openregister-calculations": {
+                    "periodEndDue": {
+                        "type": "boolean",
+                        "description": "True when periodEndDate is not null and <= today.",
+                        "expression": {
+                            "and": [
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "periodEndDate"
+                                        },
+                                        null
+                                    ]
+                                },
+                                {
+                                    "lte": [
+                                        {
+                                            "prop": "periodEndDate"
+                                        },
+                                        {
+                                            "now": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "periodEndReminder": {
+                        "trigger": {
+                            "type": "calculatedChange",
+                            "field": "periodEndDue",
+                            "condition": {
+                                "eq": true
+                            },
+                            "previously": {
+                                "eq": false
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "coordinatorId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "De periode van het groepsplan loopt af",
+                            "en": "The groepsplan's period is ending"
+                        }
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "id": "fef97832-39c5-4f05-bcc3-e0abf7c5104d",
+                        "cohortId": "cohort-001",
+                        "subject": "technisch lezen",
+                        "period": "2025-2026 blok 3",
+                        "periodEndDate": "2026-04-15",
+                        "coordinatorId": "teacher-001",
+                        "resultsAnalysis": {
+                            "narrative": "Cito-toetsronde blok 3: methodetoetsen tonen een groep leerlingen die achterblijft op AVI/DMT.",
+                            "evidenceRefs": []
+                        },
+                        "goals": [
+                            {
+                                "goalId": "goal-1",
+                                "description": "90% van de groep behaalt het AVI-niveau passend bij leerjaar aan het einde van blok 3.",
+                                "status": "met"
+                            }
+                        ],
+                        "supersedesId": null,
+                        "lifecycle": "closed",
+                        "tenant_id": "default"
+                    },
+                    {
+                        "id": "410bed2e-1b8e-4c74-99d6-aa950fd5266a",
+                        "cohortId": "cohort-001",
+                        "subject": "technisch lezen",
+                        "period": "2026-2027 blok 1",
+                        "periodEndDate": "2026-10-16",
+                        "coordinatorId": "teacher-001",
+                        "resultsAnalysis": {
+                            "narrative": "Vervolg op blok 3 (zie de gekoppelde GroupPlanEvaluation): drie duidelijke instructieniveaus binnen de klas.",
+                            "evidenceRefs": [
+                                "11d6c388-8050-4303-a5fd-72a50c7f1e34"
+                            ]
+                        },
+                        "goals": [
+                            {
+                                "goalId": "goal-1",
+                                "description": "Alle subgroepen tonen aantoonbare vooruitgang op AVI-niveau bij de volgende meting.",
+                                "status": "open"
+                            }
+                        ],
+                        "supersedesId": "fef97832-39c5-4f05-bcc3-e0abf7c5104d",
+                        "lifecycle": "active",
+                        "tenant_id": "default"
+                    }
+                ]
+            },
+            "GroupPlanSubgroup": {
+                "slug": "group-plan-subgroup",
+                "icon": "AccountMultipleOutline",
+                "version": "0.1.0",
+                "title": "GroupPlanSubgroup",
+                "description": "A named instructieniveau subgroup within a GroupPlan (intensief/basis/verdiept or school-defined), with its own differentiated goal, approach, and intended outcome. Carries its members' learnerIds only — no stored link to a member's LearningPlan or SupportRequest; those are resolved live (see GroupPlanSubgroupLearnerContext.vue and the standard originGroupPlanSubgroupId reverse filter).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "groupPlanId",
+                    "name",
+                    "instructieniveau",
+                    "differentiatedGoal",
+                    "approach",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "groupPlanId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "GroupPlan",
+                        "description": "UUID of the GroupPlan this subgroup belongs to.",
+                        "title": "Group Plan ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable subgroup name, e.g. 'Intensief - technisch lezen' or a school-defined label.",
+                        "title": "Subgroup Name"
+                    },
+                    "instructieniveau": {
+                        "type": "string",
+                        "enum": [
+                            "intensief",
+                            "basis",
+                            "verdiept",
+                            "custom"
+                        ],
+                        "description": "Instruction level for this subgroup. 'custom' covers school-specific naming beyond the three standard HGW levels.",
+                        "title": "Instructieniveau"
+                    },
+                    "learnerIds": {
+                        "type": "array",
+                        "description": "Nextcloud user IDs of the learners in this subgroup (same convention as Cohort.learnerIds). No learningPlanId/learningPlanIds field is stored here — a member's active LearningPlan is resolved live by learnerId lookup (GroupPlanSubgroupLearnerContext.vue).",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Learner IDs"
+                    },
+                    "differentiatedGoal": {
+                        "type": "string",
+                        "description": "The differentiated goal for this subgroup, distinct from the GroupPlan's group-wide goals.",
+                        "title": "Differentiated Goal"
+                    },
+                    "approach": {
+                        "type": "string",
+                        "description": "The instruction/aanpak used for this subgroup to reach its differentiated goal.",
+                        "title": "Approach"
+                    },
+                    "intendedOutcome": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The outcome this subgroup's differentiated approach is intended to produce by period end.",
+                        "title": "Intended Outcome"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "id": "ea23b17b-d5a0-4dc0-84f3-4418f4e93edc",
+                        "groupPlanId": "fef97832-39c5-4f05-bcc3-e0abf7c5104d",
+                        "name": "Basis - technisch lezen (blok 3)",
+                        "instructieniveau": "basis",
+                        "learnerIds": [
+                            "learner-001",
+                            "learner-003"
+                        ],
+                        "differentiatedGoal": "AVI-niveau een stap verhogen via extra leestijd.",
+                        "approach": "Drie keer per week begeleid lezen in kleine groep.",
+                        "intendedOutcome": "Beide leerlingen behalen het volgende AVI-niveau.",
+                        "tenant_id": "default"
+                    },
+                    {
+                        "id": "bd50b455-03c9-4254-9068-c2b68d4356b5",
+                        "groupPlanId": "410bed2e-1b8e-4c74-99d6-aa950fd5266a",
+                        "name": "Intensief - technisch lezen",
+                        "instructieniveau": "intensief",
+                        "learnerIds": [
+                            "learner-001",
+                            "learner-002"
+                        ],
+                        "differentiatedGoal": "Dagelijks 1-op-1 leesbegeleiding om de leesachterstand in te lopen.",
+                        "approach": "Dagelijks 15 minuten RT met de intern begeleider, aanvullend op de klassikale les.",
+                        "intendedOutcome": "Substantiële groei op DMT/AVI binnen dit blok; escalatie naar SupportRequest indien onvoldoende.",
+                        "tenant_id": "default"
+                    },
+                    {
+                        "id": "84fee2e8-b004-4e65-9c5b-a697eaefd4af",
+                        "groupPlanId": "410bed2e-1b8e-4c74-99d6-aa950fd5266a",
+                        "name": "Basis - technisch lezen",
+                        "instructieniveau": "basis",
+                        "learnerIds": [
+                            "learner-003",
+                            "learner-004",
+                            "learner-005"
+                        ],
+                        "differentiatedGoal": "Leerlijn-tempo vasthouden.",
+                        "approach": "Reguliere klassikale leesinstructie volgens de methode.",
+                        "intendedOutcome": "Leerlingen blijven op het leerlijn-tempo.",
+                        "tenant_id": "default"
+                    },
+                    {
+                        "id": "f4c78a7e-877e-4415-892f-3b326858daaf",
+                        "groupPlanId": "410bed2e-1b8e-4c74-99d6-aa950fd5266a",
+                        "name": "Verdiept - technisch lezen",
+                        "instructieniveau": "verdiept",
+                        "learnerIds": [
+                            "learner-006"
+                        ],
+                        "differentiatedGoal": "Uitdagende teksten boven leerjaarniveau.",
+                        "approach": "Verrijkingsopdrachten en zelfstandig verwerken van moeilijkere teksten.",
+                        "intendedOutcome": "Leerling blijft gemotiveerd en leest boven leerjaarniveau.",
+                        "tenant_id": "default"
+                    }
+                ]
+            },
+            "GroupPlanEvaluation": {
+                "slug": "group-plan-evaluation",
+                "icon": "ClipboardCheckOutline",
+                "version": "0.1.0",
+                "title": "GroupPlanEvaluation",
+                "description": "A dated period-end evaluation of a GroupPlan: a per-subgroup outcome plus an overall narrative. Closes the HGW cycle; the next period's GroupPlan seeds from it via GroupPlan.supersedesId, not a forward-pointing field on this record.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "groupPlanId",
+                    "evaluatedAt",
+                    "evaluatedBy",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "groupPlanId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "GroupPlan",
+                        "description": "UUID of the GroupPlan being evaluated.",
+                        "title": "Group Plan ID"
+                    },
+                    "evaluatedAt": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Date of the period-end evaluation meeting.",
+                        "title": "Evaluated At"
+                    },
+                    "evaluatedBy": {
+                        "type": "string",
+                        "description": "NC user ID of the coordinator or teacher who led the evaluation.",
+                        "title": "Evaluated By"
+                    },
+                    "outcomes": {
+                        "type": "array",
+                        "description": "Outcome for each subgroup evaluated in this period-end review.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "subgroupId",
+                                "outcome"
+                            ],
+                            "properties": {
+                                "subgroupId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "$ref": "GroupPlanSubgroup",
+                                    "title": "Subgroup ID",
+                                    "description": "UUID of the GroupPlanSubgroup this outcome evaluates."
+                                },
+                                "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                        "met",
+                                        "partially-met",
+                                        "not-met"
+                                    ],
+                                    "title": "Outcome",
+                                    "description": "Whether the subgroup's differentiated goal was met this period."
+                                },
+                                "narrative": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Outcome Narrative",
+                                    "description": "Optional note explaining the outcome for this subgroup."
+                                }
+                            }
+                        },
+                        "title": "Subgroup Outcomes"
+                    },
+                    "narrative": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Overall free-text evaluation narrative for the period.",
+                        "title": "Evaluation Narrative"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "Tenant identifier.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": [
+                    {
+                        "id": "11d6c388-8050-4303-a5fd-72a50c7f1e34",
+                        "groupPlanId": "fef97832-39c5-4f05-bcc3-e0abf7c5104d",
+                        "evaluatedAt": "2026-04-14",
+                        "evaluatedBy": "teacher-001",
+                        "outcomes": [
+                            {
+                                "subgroupId": "ea23b17b-d5a0-4dc0-84f3-4418f4e93edc",
+                                "outcome": "met",
+                                "narrative": "Beide leerlingen behaalden het beoogde AVI-niveau."
+                            }
+                        ],
+                        "narrative": "Blok 3 geëvalueerd; de groep wordt voor blok 1 van volgend jaar opnieuw ingedeeld op basis van deze uitkomst.",
+                        "tenant_id": "default"
+                    }
+                ]
+            },
             "SupportRequest": {
                 "slug": "support-request",
                 "icon": "HandHeartOutline",
@@ -10313,6 +10862,15 @@
                         "description": "UUID of the LearningPlan (OPP) this request relates to. Nullable — a zorgvraag frequently precedes the OPP that follows from it, so the request must remain creatable without one.",
                         "default": null,
                         "title": "Learning Plan ID"
+                    },
+                    "originGroupPlanSubgroupId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "GroupPlanSubgroup",
+                        "description": "UUID of the GroupPlanSubgroup this request was raised from, when a group-level differentiated approach proved insufficient for this learner. Nullable and independent of learningPlanId — a request may originate from a GroupPlanSubgroup, from an existing LearningPlan, from both, or from neither.",
+                        "default": null,
+                        "title": "Origin Group Plan Subgroup ID"
                     },
                     "raisedBy": {
                         "type": "string",

@@ -818,7 +818,20 @@
 		"A guardian (or I, if 18+) consents to this selection": "A guardian (or I, if 18+) consents to this selection",
 		"Your subject choice has been submitted for review.": "Your subject choice has been submitted for review.",
 		"Submit subject choice": "Submit subject choice",
-		"We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule.": "We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule."
+		"We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule.": "We could not submit your subject choice. You may not be a linked guardian for this child, or the choice may violate a plan rule.",
+		"Group plans": "Group plans",
+		"Subgroup learner context": "Subgroup learner context",
+		"For each learner in this subgroup, whether they already have an active LearningPlan (OPP) — resolved live, not stored on the subgroup.": "For each learner in this subgroup, whether they already have an active LearningPlan (OPP) — resolved live, not stored on the subgroup.",
+		"Subgroup ID": "Subgroup ID",
+		"UUID of the GroupPlanSubgroup": "UUID of the GroupPlanSubgroup",
+		"Open learner context": "Open learner context",
+		"Usually opened from a subgroup's detail page (\"Learner context\" tile) — this picker is a fallback for direct navigation.": "Usually opened from a subgroup's detail page (\"Learner context\" tile) — this picker is a fallback for direct navigation.",
+		"Loading learner context...": "Loading learner context...",
+		"This subgroup could not be found.": "This subgroup could not be found.",
+		"This subgroup has no learners yet.": "This subgroup has no learners yet.",
+		"Active learning plan: {kind}": "Active learning plan: {kind}",
+		"No active learning plan": "No active learning plan",
+		"Failed to load the subgroup learner context. Please try again.": "Failed to load the subgroup learner context. Please try again."
 	},
 	"plurals": ""
 }

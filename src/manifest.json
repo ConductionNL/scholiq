@@ -96,6 +96,13 @@
 					"order": 30
 				},
 				{
+					"id": "GroupPlans",
+					"label": "Group plans",
+					"icon": "icon-group",
+					"route": "GroupPlans",
+					"order": 32
+				},
+				{
 					"id": "SupportRequests",
 					"label": "Support requests",
 					"icon": "icon-comment",
@@ -6426,7 +6433,484 @@
 			"title": "Learning plan editor",
 			"component": "CnRelationshipGraph",
 			"_note": "Mounts CnRelationshipGraph from @conduction/nextcloud-vue for the learning-plan editor (dependency-chain layout, drag-drop ordering, milestone scoring)."
-		},
+			},
+			{
+				"id": "GroupPlans",
+				"route": "/group-plans",
+				"type": "index",
+				"title": "Group plans",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan"
+				}
+			},
+			{
+				"id": "GroupPlanDetail",
+				"route": "/group-plans/:id",
+				"type": "detail",
+				"title": "Group plan",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan",
+					"_note": "A GroupPlan is the groepsplan — Dutch PO/SBO's group-level HGW/1-zorgroute planning cycle for one Cohort/subject/period: results analysis, group-wide goals, lifecycle, and the version-chain supersedesId (identical pattern to LearningPlan.supersedesId). Body leads with the plan data (2-column) and a Related panel resolving the cohort, coordinator, and prior-period plan; its GroupPlanSubgroups (instructieniveau split) and GroupPlanEvaluations (period-end reviews) render as wide related-index panels, mirroring LearningPlanDetail's Evaluations pattern. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+					"lifecycleActions": {
+						"field": "lifecycle"
+					},
+					"widgets": [
+						{
+							"id": "gp-data",
+							"type": "data",
+							"title": "Data",
+							"content": {
+								"columns": 2
+							},
+							"icon": "AccountGroup"
+						},
+						{
+							"id": "gp-kpis",
+							"type": "stats-block",
+							"title": "Overview",
+							"icon": "ChartBar",
+							"content": {
+								"entries": [
+									{
+										"title": "Subgroups",
+										"register": "scholiq",
+										"schema": "group-plan-subgroup",
+										"metric": "count",
+										"filter": {
+											"groupPlanId": "@objectId"
+										},
+										"route": "GroupPlanSubgroups"
+									},
+									{
+										"title": "Evaluations",
+										"register": "scholiq",
+										"schema": "group-plan-evaluation",
+										"metric": "count",
+										"filter": {
+											"groupPlanId": "@objectId"
+										},
+										"route": "GroupPlanEvaluations"
+									}
+								]
+							}
+						},
+						{
+							"id": "gp-subgroups",
+							"type": "object-list",
+							"title": "Subgroups",
+							"content": {
+								"register": "scholiq",
+								"schema": "group-plan-subgroup",
+								"filter": {
+									"groupPlanId": "@objectId"
+								},
+								"sort": {
+									"field": "id",
+									"dir": "asc"
+								},
+								"limit": 25,
+								"columns": [
+									{
+										"key": "name",
+										"label": "Name"
+									},
+									{
+										"key": "instructieniveau",
+										"label": "Instructieniveau"
+									},
+									{
+										"key": "differentiatedGoal",
+										"label": "Differentiated Goal"
+									}
+								],
+								"rowRoute": "GroupPlanSubgroupDetail",
+								"viewAllRoute": "GroupPlanSubgroups",
+								"viewAllQuery": {
+									"groupPlanId": "@objectId"
+								},
+								"emptyText": "No subgroups found.",
+								"allowCreate": true
+							},
+							"icon": "AccountBoxOutline"
+						},
+						{
+							"id": "gp-related",
+							"type": "related",
+							"title": "Related",
+							"icon": "LinkVariant"
+						},
+						{
+							"id": "gp-evals",
+							"type": "object-list",
+							"title": "Evaluations",
+							"content": {
+								"register": "scholiq",
+								"schema": "group-plan-evaluation",
+								"filter": {
+									"groupPlanId": "@objectId"
+								},
+								"sort": {
+									"field": "id",
+									"dir": "asc"
+								},
+								"limit": 25,
+								"columns": [
+									{
+										"key": "evaluatedAt",
+										"label": "Evaluated At"
+									},
+									{
+										"key": "evaluatedBy",
+										"label": "Evaluated By"
+									}
+								],
+								"rowRoute": "GroupPlanEvaluationDetail",
+								"viewAllRoute": "GroupPlanEvaluations",
+								"viewAllQuery": {
+									"groupPlanId": "@objectId"
+								},
+								"emptyText": "No evaluations found.",
+								"allowCreate": true
+							},
+							"icon": "CheckCircleOutline"
+						}
+					],
+					"layout": [
+						{
+							"id": "1",
+							"widgetId": "gp-data",
+							"gridX": 0,
+							"gridY": 0,
+							"gridWidth": 8,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "2",
+							"widgetId": "gp-kpis",
+							"gridX": 8,
+							"gridY": 0,
+							"gridWidth": 4,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "3",
+							"widgetId": "gp-subgroups",
+							"gridX": 0,
+							"gridY": 5,
+							"gridWidth": 6,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "4",
+							"widgetId": "gp-related",
+							"gridX": 6,
+							"gridY": 5,
+							"gridWidth": 6,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "5",
+							"widgetId": "gp-evals",
+							"gridX": 0,
+							"gridY": 10,
+							"gridWidth": 12,
+							"gridHeight": 4,
+							"showTitle": false
+						}
+					],
+					"sidebar": {
+						"enabled": true,
+						"showMetadata": true,
+						"tabs": [
+							{
+								"id": "audit",
+								"label": "History",
+								"icon": "History",
+								"widgets": [
+									{
+										"type": "audit"
+									}
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"id": "GroupPlanSubgroups",
+				"route": "/group-plans/:planId/subgroups",
+				"type": "index",
+				"title": "Group plan subgroups",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan-subgroup",
+					"filter": {
+						"groupPlanId": "@route.planId"
+					},
+					"selectable": false,
+					"showAdd": false,
+					"showFormDialog": false,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassCopy": false,
+					"showMassDelete": false
+				}
+			},
+			{
+				"id": "GroupPlanSubgroupDetail",
+				"route": "/group-plans/:planId/subgroups/:id",
+				"type": "detail",
+				"title": "Group plan subgroup",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan-subgroup",
+					"_note": "A GroupPlanSubgroup is a named instructieniveau split (intensief/basis/verdiept or custom) within a GroupPlan — its own differentiated goal, approach, and intended outcome. Body leads with the subgroup data (2-column) and a Related panel resolving the parent plan; the 'Learner context' KPI tile links to GroupPlanSubgroupLearnerContext.vue, the one named custom view resolving each member learner's active LearningPlan (the manifest's equality-only filter DSL cannot express the learnerIds array-membership lookup — design.md 'Why no stored link'). SupportRequests raised from this subgroup render as a standard equality-filtered object-list (originGroupPlanSubgroupId: @objectId) — no custom view needed for that reverse link. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+					"widgets": [
+						{
+							"id": "gps-data",
+							"type": "data",
+							"title": "Data",
+							"content": {
+								"columns": 2
+							},
+							"icon": "AccountBoxOutline"
+						},
+						{
+							"id": "gps-kpis",
+							"type": "stats-block",
+							"title": "Learner context",
+							"icon": "ChartBar",
+							"content": {
+								"entries": [
+									{
+										"title": "Learner context",
+										"register": "scholiq",
+										"schema": "group-plan-subgroup",
+										"metric": "count",
+										"countLabel": "subgroup",
+										"filter": {
+											"id": "@objectId"
+										},
+										"route": {
+											"name": "GroupPlanSubgroupLearnerContext",
+											"query": {
+												"subgroupId": "@objectId"
+											}
+										}
+									}
+								]
+							},
+							"_note": "The only token-resolved (@objectId) deep link from a detail page to another named route this manifest dialect supports (stats-block entry.route, resolved by CnStatsBlockWidget) — same mechanism as LearnerProfileDetail's 'Dossier timeline' KPI tile (lprof-kpis-dossier-timeline). Clicking it opens GroupPlanSubgroupLearnerContext pre-scoped to this subgroup via the subgroupId query param."
+						},
+						{
+							"id": "gps-related",
+							"type": "related",
+							"title": "Related",
+							"icon": "LinkVariant"
+						},
+						{
+							"id": "gps-support-requests",
+							"type": "object-list",
+							"title": "Support requests",
+							"content": {
+								"register": "scholiq",
+								"schema": "support-request",
+								"filter": {
+									"originGroupPlanSubgroupId": "@objectId"
+								},
+								"sort": {
+									"field": "id",
+									"dir": "asc"
+								},
+								"limit": 25,
+								"columns": [
+									{
+										"key": "supportDomain",
+										"label": "Support Domain"
+									},
+									{
+										"key": "urgency",
+										"label": "Urgency"
+									},
+									{
+										"key": "lifecycle",
+										"label": "Status"
+									}
+								],
+								"rowRoute": "SupportRequestDetail",
+								"viewAllRoute": "SupportRequests",
+								"viewAllQuery": {
+									"originGroupPlanSubgroupId": "@objectId"
+								},
+								"emptyText": "No support requests found.",
+								"allowCreate": false
+							},
+							"icon": "HandshakeOutline"
+						}
+					],
+					"layout": [
+						{
+							"id": "1",
+							"widgetId": "gps-data",
+							"gridX": 0,
+							"gridY": 0,
+							"gridWidth": 8,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "2",
+							"widgetId": "gps-kpis",
+							"gridX": 8,
+							"gridY": 0,
+							"gridWidth": 4,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "3",
+							"widgetId": "gps-related",
+							"gridX": 0,
+							"gridY": 5,
+							"gridWidth": 6,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "4",
+							"widgetId": "gps-support-requests",
+							"gridX": 6,
+							"gridY": 5,
+							"gridWidth": 6,
+							"gridHeight": 5,
+							"showTitle": false
+						}
+					],
+					"sidebar": {
+						"enabled": true,
+						"showMetadata": true,
+						"tabs": [
+							{
+								"id": "audit",
+								"label": "History",
+								"icon": "History",
+								"widgets": [
+									{
+										"type": "audit"
+									}
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"id": "GroupPlanEvaluations",
+				"route": "/group-plans/:planId/evaluations",
+				"type": "index",
+				"title": "Group plan evaluations",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan-evaluation",
+					"filter": {
+						"groupPlanId": "@route.planId"
+					},
+					"selectable": false,
+					"showAdd": false,
+					"showFormDialog": false,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassCopy": false,
+					"showMassDelete": false
+				}
+			},
+			{
+				"id": "GroupPlanEvaluationDetail",
+				"route": "/group-plans/:planId/evaluations/:id",
+				"type": "detail",
+				"title": "Group plan evaluation",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan-evaluation",
+					"readOnly": true,
+					"_note": "A GroupPlanEvaluation is the period-end review of a GroupPlan — a per-subgroup outcome plus an overall narrative, closing the HGW cycle. The next period's GroupPlan seeds from it via GroupPlan.supersedesId (design.md 'GroupPlanEvaluation and cycle-seeding via supersedesId'), not a forward-pointing field on this record. Body leads with the evaluation data (8-wide) and a Related panel resolving the parent plan. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+					"widgets": [
+						{
+							"id": "gpe-data",
+							"type": "data",
+							"title": "Data",
+							"content": {
+								"columns": 2
+							},
+							"icon": "ClipboardCheckOutline"
+						},
+						{
+							"id": "gpe-related",
+							"type": "related",
+							"title": "Related",
+							"icon": "LinkVariant"
+						}
+					],
+					"layout": [
+						{
+							"id": "1",
+							"widgetId": "gpe-data",
+							"gridX": 0,
+							"gridY": 0,
+							"gridWidth": 8,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "2",
+							"widgetId": "gpe-related",
+							"gridX": 8,
+							"gridY": 0,
+							"gridWidth": 4,
+							"gridHeight": 5,
+							"showTitle": false
+						}
+					],
+					"sidebar": {
+						"enabled": true,
+						"showMetadata": true,
+						"tabs": [
+							{
+								"id": "audit",
+								"label": "History",
+								"icon": "History",
+								"widgets": [
+									{
+										"type": "audit"
+									}
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"id": "GroupPlanSubgroupLearnerContext",
+				"route": "/group-plans/subgroup-learner-context",
+				"type": "custom",
+				"title": "Subgroup learner context",
+				"component": "GroupPlanSubgroupLearnerContext",
+				"_note": "groepsplan (the one genuine custom-view exception for this capability): resolves each GroupPlanSubgroup member learner's active LearningPlan (if any) — the manifest's equality-only object-list filter DSL cannot express an array-membership match against learnerIds (design.md 'Why no stored link'). Reached via GroupPlanSubgroupDetail's 'Learner context' KPI tile (gps-kpis), which resolves @objectId into this route's subgroupId query parameter — the same token-resolved deep-link mechanism as LearnerProfileDetail's 'Dossier timeline' tile (lprof-kpis-dossier-timeline). Reads subgroupId from $route.query.subgroupId. No PHP CRUD controller — reads via the OpenRegister object API only.",
+				"config": {
+					"register": "scholiq",
+					"schema": "group-plan-subgroup"
+				}
+			},
 		{
 			"id": "SupportRequests",
 			"route": "/support-requests",
