@@ -36,6 +36,7 @@ use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
 use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
+use OCA\Scholiq\Listener\RejectionMappingHandler;
 use OCA\Scholiq\Listener\EnrolmentPrerequisiteListener;
 use OCA\Scholiq\Listener\ExemptionGrantHandler;
 use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
@@ -266,6 +267,17 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: DataExchangeRunHandler::class
+        );
+
+        // ADR-031 legitimate exception: DataExchangeJob lifecycle →
+        // succeeded/partial/failed bridge (duo-afkeurmelding-correction). When a
+        // job finishes, this handler walks result.validationReport and either
+        // creates ExchangeRejection rows (first pass) or updates rejections
+        // referencing this job as their resubmittedJobId (resubmission-outcome
+        // pass) — see RejectionMappingHandler's own docblock.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: RejectionMappingHandler::class
         );
 
         // ADR-031 legitimate exception: SupportRequest `submit` transition → auto-queue

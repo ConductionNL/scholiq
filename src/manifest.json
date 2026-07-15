@@ -321,6 +321,62 @@
 			]
 		},
 		{
+			"id": "GroupDataExchange",
+			"label": "Data exchange",
+			"icon": "icon-external",
+			"order": 31,
+			"children": [
+				{
+					"id": "DataMappingProfilesMenu",
+					"label": "Mapping profiles",
+					"icon": "icon-projects",
+					"route": "DataMappingProfiles",
+					"order": 10,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "principal"]
+						}
+					}
+				},
+				{
+					"id": "DataExchangeJobsMenu",
+					"label": "Exchange jobs",
+					"icon": "icon-shared",
+					"route": "DataExchangeJobs",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "principal"]
+						}
+					}
+				},
+				{
+					"id": "ExchangeRejectionsMenu",
+					"label": "Rejections",
+					"icon": "icon-flag",
+					"route": "ExchangeRejections",
+					"order": 30,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "principal"]
+						}
+					}
+				},
+				{
+					"id": "ExchangeErrorCodesMenu",
+					"label": "Error codes",
+					"icon": "icon-info",
+					"route": "ExchangeErrorCodes",
+					"order": 40,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "principal"]
+						}
+					}
+				}
+			]
+		},
+		{
 			"id": "GroupExamBoard",
 			"label": "Exam board",
 			"icon": "icon-password",
@@ -8279,6 +8335,49 @@
 						"integrationId": "files",
 						"title": "Job payload & logs",
 						"icon": "FolderOutline"
+					},
+					{
+						"id": "dej-rejections",
+						"type": "object-list",
+						"title": "Rejections",
+						"content": {
+							"register": "scholiq",
+							"schema": "exchange-rejection",
+							"filter": {
+								"dataExchangeJobId": "@objectId"
+							},
+							"sort": {
+								"field": "detectedAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "errorCode",
+									"label": "Error Code"
+								},
+								{
+									"key": "sourceKind",
+									"label": "Source Kind"
+								},
+								{
+									"key": "status",
+									"label": "Status"
+								},
+								{
+									"key": "detectedAt",
+									"label": "Detected At"
+								}
+							],
+							"rowRoute": "ExchangeRejectionDetail",
+							"viewAllRoute": "ExchangeRejections",
+							"viewAllQuery": {
+								"dataExchangeJobId": "@objectId"
+							},
+							"emptyText": "No rejections found for this job.",
+							"allowCreate": false
+						},
+						"icon": "AlertCircleOutline"
 					}
 				],
 				"layout": [
@@ -8307,6 +8406,151 @@
 						"gridY": 5,
 						"gridWidth": 12,
 						"gridHeight": 3,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "dej-rejections",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ExchangeRejections",
+			"route": "/data-exchange/rejections",
+			"type": "index",
+			"title": "Exchange rejections",
+			"config": {
+				"register": "scholiq",
+				"schema": "exchange-rejection"
+			}
+		},
+		{
+			"id": "ExchangeRejectionDetail",
+			"route": "/data-exchange/rejections/:id",
+			"type": "detail",
+			"title": "Exchange rejection",
+			"config": {
+				"register": "scholiq",
+				"schema": "exchange-rejection",
+				"_note": "An Exchange Rejection is a single afkeurmelding — DUO's (or any target's) refusal of one exported record, resolved back to its Scholiq source object via sourceKind + a typed $ref id field — the correction-loop worklist entry. Body leads with the rejection data (error code/message, age) (8-wide) and a Related panel that auto-resolves the originating DataExchangeJob AND whichever sourceKind $ref field is set (learnerProfileId/enrolmentId/finalGradeId/attendanceFlagId/supportRequestId) into a deep link to the offending object's own editable detail page — the whole point of this page (design.md 'sourceKind enum + per-kind typed $ref'). lifecycleActions renders Mark corrected/Resubmit/Waive from the declared lifecycle. NO comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "status"
+				},
+				"widgets": [
+					{
+						"id": "erej-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "erej-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "erej-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "erej-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ExchangeErrorCodes",
+			"route": "/data-exchange/error-codes",
+			"type": "index",
+			"title": "Exchange error codes",
+			"config": {
+				"register": "scholiq",
+				"schema": "exchange-error-code"
+			}
+		},
+		{
+			"id": "ExchangeErrorCodeDetail",
+			"route": "/data-exchange/error-codes/:id",
+			"type": "detail",
+			"title": "Exchange error code",
+			"config": {
+				"register": "scholiq",
+				"schema": "exchange-error-code",
+				"_note": "An Exchange Error Code is a local, admin-editable reference-data catalogue entry (code, target, bilingual description, category, severity, active) used by RejectionMappingHandler to best-effort resolve ExchangeRejection.errorCodeRef — explicitly illustrative starter data, not DUO's authoritative list (design.md). Body is the data block only (8-wide) — reference data has no Related panel and no lifecycleActions beyond the register's own default create/edit. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "eec-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "BookOpenVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "eec-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5,
 						"showTitle": false
 					}
 				],
