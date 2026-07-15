@@ -218,13 +218,16 @@ class ReportCardComposerRegisterTest extends TestCase
     }//end testGradeEntryPublishRepublishRequireReportPeriodLockGuard()
 
     /**
-     * The register's info.version was bumped for this change.
+     * The register's info.version was bumped for this change, and has only
+     * moved forward since (pupil-dossier-notes bumped it again to 0.12.0 —
+     * this assertion tracks the current HEAD version, not a point-in-time
+     * snapshot of report-card-composer's own bump).
      *
      * @return void
      */
     public function testRegisterVersionBumped(): void
     {
-        self::assertSame('0.11.0', $this->config['info']['version']);
+        self::assertSame('0.12.0', $this->config['info']['version']);
 
     }//end testRegisterVersionBumped()
 }//end class

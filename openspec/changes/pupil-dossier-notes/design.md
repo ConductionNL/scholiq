@@ -104,9 +104,10 @@ to all of them alike. Three concrete options were weighed:
   `confidentiality` value. It fails closed (under-shares — a `team-visible` note is, worst case, as
   restricted as a `care-team-only` one today) rather than failing open. The genuinely finer distinction
   between "the whole mentor/coordinator floor" and "just the author" requires row-conditional RBAC
-  OpenRegister does not have at HEAD; `tasks.md` files this as a named follow-up (an OpenRegister
-  platform-capability issue: `x-property-rbac.match` comparing one object field against another, or against a
-  caller-role-scoped subset, not only against `$userId`) rather than papering over it.
+  OpenRegister does not have at HEAD; `tasks.md` files this as a named follow-up — filed as
+  [OpenRegister platform-capability issue #416](https://codeberg.org/Conduction/openregister/issues/416)
+  (`x-property-rbac.match` comparing one object field against another, or against a caller-role-scoped
+  subset, not only against `$userId`) rather than papering over it.
 
 This is the same category of honesty already established in this register: `SupportRequest.raisedBy`'s
 _comment (`lib/Settings/scholiq_register.json:7274`) names "a known platform gap" for enforcing

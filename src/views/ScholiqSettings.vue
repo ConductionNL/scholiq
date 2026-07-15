@@ -96,13 +96,13 @@
 					</NcButton>
 				</div>
 
-				<!-- Activity catalogue (the seven Scholiq categories) -->
+				<!-- Activity catalogue (the ten Scholiq categories) -->
 				<div class="scholiq-settings__field">
 					<div class="scholiq-settings__catalogue-label">
 						{{ t('scholiq', 'Scholiq processing activities') }}
 					</div>
 					<div class="scholiq-settings__message">
-						{{ t('scholiq', 'Scholiq declares seven processing activities. They are seeded into OpenRegister as drafts when the Scholiq register configuration is imported; the privacy officer reviews, amends, and activates them in OpenRegister to make Scholiq processing attributable in the Art. 30 register.') }}
+						{{ t('scholiq', 'Scholiq declares ten processing activities. They are seeded into OpenRegister as drafts when the Scholiq register configuration is imported; the privacy officer reviews, amends, and activates them in OpenRegister to make Scholiq processing attributable in the Art. 30 register.') }}
 					</div>
 					<ul class="scholiq-settings__activities">
 						<li v-for="activity in processingActivities" :key="activity.code">
@@ -203,7 +203,7 @@ export default {
 		},
 
 		/**
-		 * The seven Scholiq processing activities surfaced in the AVG Art. 30
+		 * The ten Scholiq processing activities surfaced in the AVG Art. 30
 		 * compliance section. Mirrors the x-openregister-processing catalogue
 		 * annotations in lib/Settings/scholiq_register.json (authoring source of
 		 * truth); the register itself is owned and rendered by OpenRegister.
@@ -254,6 +254,24 @@ export default {
 					name: t('scholiq', 'AI-assisted learning features'),
 					purpose: t('scholiq', 'Operate adaptive learning paths and record EU AI Act high-risk decision traces.'),
 					basis: t('scholiq', 'consent'),
+				},
+				{
+					code: 'scholiq-pupil-dossier-notes',
+					name: t('scholiq', 'Pupil dossier notes (leerlingdossier notities)'),
+					purpose: t('scholiq', 'Record routine staff observations, conversations, and concerns about a learner as part of the school\'s ongoing pastoral/mentoring duty of care.'),
+					basis: t('scholiq', 'public-task'),
+				},
+				{
+					code: 'scholiq-behaviour-incidents',
+					name: t('scholiq', 'Behaviour incidents (gedragsincidenten)'),
+					purpose: t('scholiq', 'Record behaviour incidents involving a learner, their follow-up handling, and an optional escalation into a formal support request.'),
+					basis: t('scholiq', 'public-task'),
+				},
+				{
+					code: 'scholiq-wellbeing-checkins',
+					name: t('scholiq', 'Wellbeing check-ins (welbevinden check-ins)'),
+					purpose: t('scholiq', 'Record a learner\'s own periodic self-reported mood/wellbeing signal, visible to their mentor.'),
+					basis: t('scholiq', 'public-task'),
 				},
 			]
 		},
