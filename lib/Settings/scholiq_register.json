@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/.",
-        "version": "0.14.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/. v0.15.0 adds accessibility-conformance — the toegankelijkheidsverklaring (accessibility statement) obligation under the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936): three new schemas, AccessibilityStatement (channel identity, a 3-value status collapsed from the government's five-level A–E scale with the mapping documented in the schema description, evaluation method/date, standard applied, feedback contact, escalation route, a materialised reviewOverdue calculation mirroring Enrolment.isOverdue's @now/dateDiff idiom plus a calculatedChange notification mirroring TlvApplication.tlvExpiringSoon; lifecycle draft → published → archived, with AccessibilityStatementPublishGuard refusing to publish without evaluation evidence or a fully-compliant status while an open/mitigated limitation exists); AccessibilityLimitation (the known-limitations register — WCAG criterion, severity, affected surface, justification, disproportionate-burden flag, workaround, planned-fix date; open → mitigated → fixed; create/update restricted to admin/compliance-officer, mirroring xapi-statement/BsaWarning); AccessibilityFeedback (a user-reported barrier, create open to any authenticated user — the opposite RBAC posture, deliberately — with an onSubmitted notification to compliance-officer/admin mirroring ItemRevisionFlag's created-trigger shape; submitted → acknowledged → resolved). No new PHP controller or route — only the one lifecycle guard, per ADR-022/ADR-031. See openspec/changes/accessibility-conformance-statement/.",
+        "version": "0.15.0"
     },
     "x-openregister": {
         "type": "application",
@@ -19449,6 +19449,468 @@
                                 }
                             }
                         ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "AccessibilityStatement": {
+                "slug": "accessibility-statement",
+                "icon": "Human",
+                "version": "0.1.0",
+                "title": "AccessibilityStatement",
+                "description": "The toegankelijkheidsverklaring (accessibility statement) record required by the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936). Fields mirror the toegankelijkheidsverklaring.nl invulassistent's field order. Lifecycle: draft → published → archived; the publish transition requires AccessibilityStatementPublishGuard, which refuses to publish an unsubstantiated claim (missing evaluation evidence, or a fully-compliant status while a known limitation is still open). See openspec/changes/accessibility-conformance-statement/.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "channelTitle",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "channelTitle": {
+                        "type": "string",
+                        "description": "Human-readable name of the digital channel (app/site) this statement describes — e.g. the school's Scholiq environment name.",
+                        "example": "Scholiq — De Vrije School",
+                        "title": "Channel Title"
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "fully-compliant",
+                            "partially-compliant",
+                            "non-compliant",
+                            null
+                        ],
+                        "default": null,
+                        "description": "Conformance status, collapsed from the Dutch government model's five-level A–E scale (toegankelijkheidsverklaring.nl): A (voldoet volledig) maps to fully-compliant; B/C (voldoet gedeeltelijk, with or without an approved remediation plan) both map to partially-compliant — the B/C plan-approval distinction is a Logius-tracked procedural fact this schema does not itself carry; D (voldoet niet) maps to non-compliant; E (geen verklaring) is a non-state that cannot apply to a record that exists. Whoever transcribes this statement into the official invulassistent picks B or C using their own plan-approval status. Null until set; required before publish.",
+                        "title": "Conformance Status"
+                    },
+                    "evaluationMethod": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "self-assessment",
+                            "expert-review",
+                            "user-testing",
+                            "automated-scan",
+                            null
+                        ],
+                        "default": null,
+                        "description": "How the conformance status above was determined. Null until set; required before publish.",
+                        "title": "Evaluation Method"
+                    },
+                    "evaluationDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "default": null,
+                        "description": "Date the evaluation method above was carried out. Null until set; required before publish.",
+                        "title": "Evaluation Date"
+                    },
+                    "researchReportUrl": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "default": null,
+                        "description": "Optional link to the full research/audit report backing this statement. Null when no separate report exists.",
+                        "title": "Research Report URL"
+                    },
+                    "standardApplied": {
+                        "type": "string",
+                        "default": "EN 301 549 §9/§11 (WCAG 2.1 AA)",
+                        "description": "The accessibility standard this statement is assessed against.",
+                        "title": "Standard Applied"
+                    },
+                    "feedbackContact": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Contact mechanism (email address or web form) a person can use to report an accessibility barrier or ask a question about this statement. Null until set; required before publish.",
+                        "example": "toegankelijkheid@school.example",
+                        "title": "Feedback Contact"
+                    },
+                    "escalationRoute": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null,
+                        "description": "The school's own complaints procedure plus the statutory escalation to the Nationale Ombudsman if the school does not respond satisfactorily, per the BDTO.",
+                        "title": "Escalation Route"
+                    },
+                    "lastReviewedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "default": null,
+                        "description": "Date this statement was last reviewed/actualised. Drives the reviewOverdue calculation below — the BDTO requires the statement to be reviewed at least once a year.",
+                        "title": "Last Reviewed At"
+                    },
+                    "approvedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Name of the official who approved/signed off this statement.",
+                        "title": "Approved By"
+                    },
+                    "approvedByRole": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Role/title of the approving official (e.g. principal, bestuurder).",
+                        "title": "Approved By Role"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "published",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "AccessibilityStatement lifecycle state. Managed by the OR lifecycle engine; do not set directly.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant UUID (multi-tenant isolation).",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "publish": {
+                            "from": "draft",
+                            "to": "published",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\AccessibilityStatementPublishGuard"
+                        },
+                        "archive": {
+                            "from": "published",
+                            "to": "archived"
+                        },
+                        "unarchive": {
+                            "from": "archived",
+                            "to": "draft"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "compliance-officer"
+                    ],
+                    "update": [
+                        "admin",
+                        "compliance-officer"
+                    ],
+                    "_comment": "The statement is the school's official record — authoring/updating is restricted the same way BsaWarning/xapi-statement restrict theirs. Reporting a barrier (AccessibilityFeedback, below) is deliberately the opposite posture."
+                },
+                "x-openregister-calculations": {
+                    "reviewOverdue": {
+                        "type": "boolean",
+                        "materialise": true,
+                        "description": "True when lastReviewedAt is set and more than 365 days in the past — the BDTO's 'at least once a year' actualisation duty. Pure JSON-logic dateDiff/lt idiom, reusing Enrolment.isOverdue's @now-comparison shape; no PHP TimedJob.",
+                        "expression": {
+                            "and": [
+                                {
+                                    "ne": [
+                                        {
+                                            "prop": "lastReviewedAt"
+                                        },
+                                        null
+                                    ]
+                                },
+                                {
+                                    "gt": [
+                                        {
+                                            "dateDiff": {
+                                                "from": {
+                                                    "prop": "lastReviewedAt"
+                                                },
+                                                "to": "now",
+                                                "unit": "days"
+                                            }
+                                        },
+                                        365
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "reviewOverdue": {
+                        "trigger": {
+                            "type": "calculatedChange",
+                            "field": "reviewOverdue",
+                            "condition": {
+                                "eq": true
+                            },
+                            "previously": {
+                                "eq": false
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "compliance-officer"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "De toegankelijkheidsverklaring is aan een jaarlijkse herziening toe",
+                            "en": "The accessibility statement is due for its annual review"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "AccessibilityLimitation": {
+                "slug": "accessibility-limitation",
+                "icon": "AlertCircleOutline",
+                "version": "0.1.0",
+                "title": "AccessibilityLimitation",
+                "description": "The known-limitations register — one row per known accessibility issue disclosed under an AccessibilityStatement, the honest evidence core of the accessibility-conformance capability. Lifecycle: open → mitigated → fixed. See openspec/changes/accessibility-conformance-statement/.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "accessibilityStatementId",
+                    "wcagCriterion",
+                    "severity",
+                    "affectedSurface",
+                    "description",
+                    "justification",
+                    "workaround",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "accessibilityStatementId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "AccessibilityStatement",
+                        "description": "UUID of the AccessibilityStatement this limitation is disclosed under.",
+                        "title": "Accessibility Statement ID"
+                    },
+                    "wcagCriterion": {
+                        "type": "string",
+                        "description": "The WCAG 2.1 success criterion this limitation relates to.",
+                        "example": "2.1.1 Keyboard",
+                        "title": "WCAG Criterion"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "critical",
+                            "serious",
+                            "moderate",
+                            "minor"
+                        ],
+                        "description": "Severity of the limitation.",
+                        "title": "Severity"
+                    },
+                    "affectedSurface": {
+                        "type": "string",
+                        "description": "The page or component affected by this limitation.",
+                        "example": "Course authoring — lesson reorder",
+                        "title": "Affected Surface"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Plain-language description of the limitation.",
+                        "title": "Description"
+                    },
+                    "justification": {
+                        "type": "string",
+                        "description": "Why this limitation is not yet fixed, including whether it is claimed as a disproportionate-burden exception (see disproportionateBurden below).",
+                        "title": "Justification"
+                    },
+                    "disproportionateBurden": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether this limitation is claimed as a disproportionate-burden exception under the government model, rather than a planned fix.",
+                        "title": "Disproportionate Burden"
+                    },
+                    "workaround": {
+                        "type": "string",
+                        "description": "A workaround a user can use in the meantime, if any.",
+                        "title": "Workaround"
+                    },
+                    "plannedFixDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "default": null,
+                        "description": "Date the fix is planned for. Null only when genuinely undetermined.",
+                        "title": "Planned Fix Date"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "mitigated",
+                            "fixed"
+                        ],
+                        "default": "open",
+                        "description": "AccessibilityLimitation lifecycle state. Managed by the OR lifecycle engine; do not set directly.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant UUID (multi-tenant isolation).",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "mitigate": {
+                            "from": "open",
+                            "to": "mitigated"
+                        },
+                        "fix": {
+                            "from": "mitigated",
+                            "to": "fixed"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "compliance-officer"
+                    ],
+                    "update": [
+                        "admin",
+                        "compliance-officer"
+                    ],
+                    "_comment": "Same authoring posture as AccessibilityStatement — mirrors xapi-statement/BsaWarning's create restriction."
+                },
+                "x-openregister-seed": []
+            },
+            "AccessibilityFeedback": {
+                "slug": "accessibility-feedback",
+                "icon": "MessageAlertOutline",
+                "version": "0.1.0",
+                "title": "AccessibilityFeedback",
+                "description": "A user-reported accessibility barrier — the BDTO's required feedback mechanism, reachable by any authenticated user (the opposite RBAC posture from AccessibilityStatement/AccessibilityLimitation, deliberately: restricting who may report a barrier would defeat the requirement's own purpose). Lifecycle: submitted → acknowledged → resolved. See openspec/changes/accessibility-conformance-statement/.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "reporterUserId",
+                    "affectedSurface",
+                    "description",
+                    "severity",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "reporterUserId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the person reporting the barrier.",
+                        "title": "Reporter User ID"
+                    },
+                    "affectedSurface": {
+                        "type": "string",
+                        "description": "The page or component the barrier was encountered on.",
+                        "title": "Affected Surface"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Plain-language description of the barrier encountered.",
+                        "title": "Description"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "critical",
+                            "serious",
+                            "moderate",
+                            "minor"
+                        ],
+                        "description": "Self-reported severity of the barrier, on the same scale as AccessibilityLimitation.severity.",
+                        "title": "Severity"
+                    },
+                    "triagedIntoLimitationId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "AccessibilityLimitation",
+                        "default": null,
+                        "description": "UUID of the AccessibilityLimitation this feedback was triaged into, set by a compliance officer. Null until triaged.",
+                        "title": "Triaged Into Limitation ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "submitted",
+                            "acknowledged",
+                            "resolved"
+                        ],
+                        "default": "submitted",
+                        "description": "AccessibilityFeedback lifecycle state. Managed by the OR lifecycle engine; do not set directly.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant UUID (multi-tenant isolation).",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "submitted",
+                    "transitions": {
+                        "acknowledge": {
+                            "from": "submitted",
+                            "to": "acknowledged"
+                        },
+                        "resolve": {
+                            "from": "acknowledged",
+                            "to": "resolved"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "onSubmitted": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "compliance-officer",
+                                    "admin"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Er is een toegankelijkheidsprobleem gemeld",
+                            "en": "An accessibility problem was reported"
+                        }
                     }
                 },
                 "x-openregister-seed": []
