@@ -772,7 +772,22 @@
 		"Record a learner's own periodic self-reported mood/wellbeing signal, visible to their mentor.": "Registreert het periodieke, zelfgerapporteerde stemmings-/welbevindenssignaal van een leerling, zichtbaar voor de mentor.",
 		"Record behaviour incidents involving a learner, their follow-up handling, and an optional escalation into a formal support request.": "Registreert gedragsincidenten waarbij een leerling betrokken is, de vervolgafhandeling ervan, en een eventuele escalatie naar een formele zorgvraag.",
 		"Record routine staff observations, conversations, and concerns about a learner as part of the school's ongoing pastoral/mentoring duty of care.": "Registreert routinematige observaties, gesprekken en zorgen van medewerkers over een leerling als onderdeel van de doorlopende mentor-/zorgplicht van de school.",
-		"Wellbeing check-ins (welbevinden check-ins)": "Welbevinden check-ins (wellbeing check-ins)"
+		"Wellbeing check-ins (welbevinden check-ins)": "Welbevinden check-ins (wellbeing check-ins)",
+		"Course quality report": "Kwaliteitsrapport cursus",
+		"Vakevaluatie results over time, per course and teacher.": "Vakevaluatieresultaten in de tijd, per cursus en docent.",
+		"Course": "Cursus",
+		"Teacher (optional)": "Docent (optioneel)",
+		"No evaluation results yet": "Nog geen evaluatieresultaten",
+		"No CourseQualityScore rows exist yet for this course/teacher — results appear once responses are submitted.": "Er zijn nog geen kwaliteitsscores voor deze cursus/docent — resultaten verschijnen zodra reacties zijn ingediend.",
+		"Score trend": "Scoretrend",
+		"Average score": "Gemiddelde score",
+		"Responses": "Reacties",
+		"Invitations": "Uitnodigingen",
+		"Response rate": "Responspercentage",
+		"Free-text answers": "Open antwoorden",
+		"No free-text answers submitted yet.": "Nog geen open antwoorden ingediend.",
+		"Draft improvement action": "Verbeteractie opstellen",
+		"All teachers (course-level)": "Alle docenten (op cursusniveau)"
 	},
 	"plurals": ""
 }

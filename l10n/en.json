@@ -772,7 +772,22 @@
 		"Record a learner's own periodic self-reported mood/wellbeing signal, visible to their mentor.": "Record a learner's own periodic self-reported mood/wellbeing signal, visible to their mentor.",
 		"Record behaviour incidents involving a learner, their follow-up handling, and an optional escalation into a formal support request.": "Record behaviour incidents involving a learner, their follow-up handling, and an optional escalation into a formal support request.",
 		"Record routine staff observations, conversations, and concerns about a learner as part of the school's ongoing pastoral/mentoring duty of care.": "Record routine staff observations, conversations, and concerns about a learner as part of the school's ongoing pastoral/mentoring duty of care.",
-		"Wellbeing check-ins (welbevinden check-ins)": "Wellbeing check-ins (welbevinden check-ins)"
+		"Wellbeing check-ins (welbevinden check-ins)": "Wellbeing check-ins (welbevinden check-ins)",
+		"Course quality report": "Course quality report",
+		"Vakevaluatie results over time, per course and teacher.": "Vakevaluatie results over time, per course and teacher.",
+		"Course": "Course",
+		"Teacher (optional)": "Teacher (optional)",
+		"No evaluation results yet": "No evaluation results yet",
+		"No CourseQualityScore rows exist yet for this course/teacher — results appear once responses are submitted.": "No CourseQualityScore rows exist yet for this course/teacher — results appear once responses are submitted.",
+		"Score trend": "Score trend",
+		"Average score": "Average score",
+		"Responses": "Responses",
+		"Invitations": "Invitations",
+		"Response rate": "Response rate",
+		"Free-text answers": "Free-text answers",
+		"No free-text answers submitted yet.": "No free-text answers submitted yet.",
+		"Draft improvement action": "Draft improvement action",
+		"All teachers (course-level)": "All teachers (course-level)"
 	},
 	"plurals": ""
 }
