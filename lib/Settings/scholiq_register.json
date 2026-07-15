@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/.",
-        "version": "0.11.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/.",
+        "version": "0.12.0"
     },
     "x-openregister": {
         "type": "application",
@@ -10196,6 +10196,507 @@
                                 "role": "principal"
                             }
                         ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "DossierNote": {
+                "x-openregister-processing": {
+                    "code": "scholiq-pupil-dossier-notes",
+                    "naam": "Pupil dossier notes (leerlingdossier notities)",
+                    "doelbinding": "Record routine staff observations, conversations, and concerns about a learner as part of the school's ongoing pastoral/mentoring duty of care, distinct from the formal zorgvraag/OPP track.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "authorId",
+                        "category",
+                        "confidentiality",
+                        "body"
+                    ],
+                    "backend": "scholiq.pupil-dossier-notes",
+                    "retentionReference": "not declared (DossierNote carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-pupil-dossier-notes"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
+                "slug": "dossier-note",
+                "icon": "NotebookOutline",
+                "version": "0.1.0",
+                "title": "DossierNote",
+                "description": "The everyday pupil-dossier note a mentor/coordinator keeps day to day — an observation, a conversation, a phone call home, a concern, or a positive note — distinct from the formal OPP/zorgvraag track (LearningPlan/SupportRequest/DeliberationRecord). appendOnly: true (ADR-008) — a correction is a new record, never an in-place edit of prior evidence about a named minor. Server-side x-property-rbac restricts every row to admin/mentor/coordinator/the note's own author; the confidentiality field's finer three-way tiering beyond that floor is a named OpenRegister platform-capability gap (see openspec/changes/pupil-dossier-notes/design.md Decision 1) — NOT enforced per-row today.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "authorId",
+                    "date",
+                    "category",
+                    "body",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this dossier note concerns.",
+                        "title": "Learner ID"
+                    },
+                    "authorId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the staff member (mentor/coordinator/admin) who authored this note.",
+                        "title": "Author ID"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Date the observed event (observation/conversation/phone call/concern) took place.",
+                        "title": "Date"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "observation",
+                            "conversation",
+                            "phone-call-home",
+                            "concern",
+                            "positive"
+                        ],
+                        "description": "The kind of everyday dossier entry this note records.",
+                        "title": "Category"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "The note's free-text content.",
+                        "title": "Note Body"
+                    },
+                    "confidentiality": {
+                        "type": "string",
+                        "enum": [
+                            "team-visible",
+                            "care-team-only",
+                            "private-to-author"
+                        ],
+                        "default": "care-team-only",
+                        "description": "The note's intended confidentiality tier. Presentational default only — the server-enforced read floor (admin/mentor/coordinator/author) is currently the SAME for all three values; see the schema-level x-property-rbac _comment and design.md Decision 1 for the named platform gap.",
+                        "title": "Confidentiality"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "mentor",
+                        "coordinator"
+                    ],
+                    "_comment": "A learner or parent cannot author a DossierNote about anyone (design.md Security/Privacy Posture)."
+                },
+                "x-property-rbac": {
+                    "_comment": "Read restricted to admin/mentor/coordinator/the note's own authorId — the tightest common floor x-property-rbac can express (one static per-schema policy, uniformly applied to every row). This fails closed: no parent, pupil, or unrelated account can ever read a DossierNote regardless of its confidentiality value. The finer team-visible/care-team-only/private-to-author distinction WITHIN that floor is NOT enforced server-side today — a verified, named OpenRegister platform-capability gap (row-conditional x-property-rbac), not a fabricated guarantee. See openspec/changes/pupil-dossier-notes/design.md Decision 1.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "role": "coordinator"
+                            },
+                            {
+                                "match": {
+                                    "field": "authorId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "BehaviourIncident": {
+                "x-openregister-processing": {
+                    "code": "scholiq-behaviour-incidents",
+                    "naam": "Behaviour incidents (gedragsincidenten)",
+                    "doelbinding": "Record behaviour incidents involving a learner, their follow-up handling, and an optional escalation into a formal SupportRequest, as part of the school's duty of care.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "reportedBy",
+                        "what",
+                        "location",
+                        "involvedUserIds",
+                        "severity",
+                        "followUpActions",
+                        "resolution",
+                        "escalatedSupportRequestId"
+                    ],
+                    "backend": "scholiq.behaviour-incidents",
+                    "retentionReference": "not declared (BehaviourIncident carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-behaviour-incidents"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14"
+                },
+                "slug": "behaviour-incident",
+                "icon": "AlertCircleOutline",
+                "version": "0.1.0",
+                "title": "BehaviourIncident",
+                "description": "A behaviour incident involving a learner — what/where/who-involved, severity, an append-only follow-up log, and an eventual resolution. Optionally references a SupportRequest (escalatedSupportRequestId) when staff raise a formal zorgvraag from it — the incident never duplicates SupportRequest fields, it only points at one. appendOnly: true (ADR-008); own lifecycle open -> in-handling -> resolved, independent of any linked SupportRequest's own lifecycle.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "reportedBy",
+                    "occurredAt",
+                    "what",
+                    "severity",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this incident concerns.",
+                        "title": "Learner ID"
+                    },
+                    "reportedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the staff member (mentor/coordinator/admin) who reported this incident.",
+                        "title": "Reported By"
+                    },
+                    "occurredAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp the incident occurred.",
+                        "title": "Occurred At"
+                    },
+                    "what": {
+                        "type": "string",
+                        "description": "Free-text description of what happened.",
+                        "title": "What Happened"
+                    },
+                    "location": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Where the incident took place. Null when not recorded.",
+                        "default": null,
+                        "title": "Location"
+                    },
+                    "involvedUserIds": {
+                        "type": "array",
+                        "nullable": true,
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Nextcloud user IDs of other learners/staff involved in the incident, if any. Null when not recorded.",
+                        "default": null,
+                        "title": "Involved User IDs"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high"
+                        ],
+                        "description": "Severity of the incident.",
+                        "title": "Severity"
+                    },
+                    "followUpActions": {
+                        "type": "array",
+                        "description": "Append-only log of the school's handling history for this incident (contact attempts, agreements reached, escalations). Each addition MUST be a new audited version of the appendOnly incident (ADR-008) — never an in-place edit of a prior entry. Same shape as AttendanceFlag.interventions.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "recordedBy",
+                                "recordedAt",
+                                "action"
+                            ],
+                            "properties": {
+                                "recordedBy": {
+                                    "type": "string",
+                                    "description": "Nextcloud user ID of the mentor/coordinator who recorded this follow-up action.",
+                                    "title": "Recorded By"
+                                },
+                                "recordedAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "description": "ISO 8601 timestamp when this follow-up action was recorded.",
+                                    "title": "Recorded At"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "description": "Free-text description of the follow-up action taken.",
+                                    "title": "Action"
+                                }
+                            },
+                            "title": "Follow-Up Action Entry"
+                        },
+                        "default": [],
+                        "title": "Follow-Up Actions"
+                    },
+                    "resolution": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "How the incident was resolved. Set on the resolve transition. Null until resolved.",
+                        "default": null,
+                        "title": "Resolution"
+                    },
+                    "escalatedSupportRequestId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "SupportRequest",
+                        "description": "UUID of the SupportRequest this incident escalated into, when staff raise a formal zorgvraag from it. Null unless escalated. A reference only — no SupportRequest field is duplicated onto BehaviourIncident.",
+                        "default": null,
+                        "title": "Escalated Support Request ID"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "in-handling",
+                            "resolved"
+                        ],
+                        "default": "open",
+                        "description": "Behaviour-incident lifecycle state.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "startHandling": {
+                            "from": "open",
+                            "to": "in-handling"
+                        },
+                        "resolve": {
+                            "from": [
+                                "open",
+                                "in-handling"
+                            ],
+                            "to": "resolved"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "mentor",
+                        "coordinator"
+                    ],
+                    "_comment": "A learner or parent cannot author a BehaviourIncident about anyone (design.md Security/Privacy Posture)."
+                },
+                "x-property-rbac": {
+                    "_comment": "Read restricted to admin/mentor/coordinator/the incident's own reportedBy — same tightest-common-floor rationale as DossierNote (design.md Decision 1).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "role": "coordinator"
+                            },
+                            {
+                                "match": {
+                                    "field": "reportedBy",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-notifications": {
+                    "incidentRecorded": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "mentor",
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Er is een gedragsincident geregistreerd",
+                            "en": "A behaviour incident was recorded"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "WellbeingCheckIn": {
+                "x-openregister-processing": {
+                    "code": "scholiq-wellbeing-checkins",
+                    "naam": "Wellbeing check-ins (welbevinden check-ins)",
+                    "doelbinding": "Record a learner's own periodic self-reported mood/wellbeing signal, visible to their mentor, as part of the school's duty of care for pupil wellbeing.",
+                    "rechtsgrond": "public-task",
+                    "grondslagSource": "Regulation.slug",
+                    "dataCategories": [
+                        "learnerId",
+                        "moodScale",
+                        "comment"
+                    ],
+                    "backend": "scholiq.wellbeing-checkins",
+                    "retentionReference": "not declared (WellbeingCheckIn carries no x-openregister-archival annotation; align with the school's selectielijst onderwijs)",
+                    "lifecycle": "draft",
+                    "logReads": true,
+                    "attribution": {
+                        "default": "scholiq-wellbeing-checkins"
+                    },
+                    "subjectIdFields": {
+                        "learnerId": "learnerId"
+                    },
+                    "ownerUserId": "admin",
+                    "reviewIntervalMonths": 12,
+                    "nextReviewAt": "2027-06-14",
+                    "_comment": "Open question for the privacy officer, not resolved by this schema: whether moodScale constitutes AVG Art. 9 special-category (health-adjacent) data requiring a stricter legal basis than public-task. Seeded as draft specifically so the privacy officer decides before activation (openspec/changes/pupil-dossier-notes/design.md Security/Privacy Posture)."
+                },
+                "slug": "wellbeing-check-in",
+                "icon": "EmoticonOutline",
+                "version": "0.1.0",
+                "title": "WellbeingCheckIn",
+                "description": "A light, learner-authored periodic wellbeing self-report — a mood scale plus an optional comment, visible to the learner's mentor/coordinator/admin and to the learner's own submissions (the Microsoft Teams Education 'Reflect' shape, not a clinical instrument). appendOnly: true (ADR-008); no lifecycle — each check-in is a single point-in-time record.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "submittedAt",
+                    "moodScale",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner submitting this check-in.",
+                        "title": "Learner ID"
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp the check-in was submitted.",
+                        "title": "Submitted At"
+                    },
+                    "moodScale": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "Self-reported mood on a 1 (low) to 5 (high) scale.",
+                        "title": "Mood Scale"
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional free-text comment accompanying the mood scale. Null when not provided.",
+                        "default": null,
+                        "title": "Comment"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "Read restricted to admin/mentor/coordinator/the submitting learner (self-read of one's own check-ins). The 'mentor' role check is the school-wide mentor NC group, not the learner's specifically assigned mentor (LearnerProfile.managerId) — x-property-rbac.match can only compare a field on the object itself against $userId, not against a related object's field, so scoping to 'this learner's specific mentor' is not expressible (same documented granularity limit as SupportRequest.raisedBy).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "role": "coordinator"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-notifications": {
+                    "checkInSubmitted": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "mentor"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Er is een welbevinden check-in ingediend",
+                            "en": "A wellbeing check-in was submitted"
+                        }
                     }
                 },
                 "x-openregister-seed": []

@@ -183,6 +183,35 @@
 			]
 		},
 		{
+			"id": "GroupPupilDossier",
+			"label": "Pupil dossier",
+			"icon": "icon-comment",
+			"order": 27,
+			"children": [
+				{
+					"id": "DossierNotesMenu",
+					"label": "Dossier notes",
+					"icon": "icon-comment",
+					"route": "DossierNotes",
+					"order": 10
+				},
+				{
+					"id": "BehaviourIncidentsMenu",
+					"label": "Behaviour incidents",
+					"icon": "icon-flag",
+					"route": "BehaviourIncidents",
+					"order": 20
+				},
+				{
+					"id": "WellbeingCheckInsMenu",
+					"label": "Wellbeing check-ins",
+					"icon": "icon-projects",
+					"route": "WellbeingCheckIns",
+					"order": 30
+				}
+			]
+		},
+		{
 			"id": "GroupInsight",
 			"label": "Insight",
 			"icon": "icon-projects",
@@ -6608,6 +6637,245 @@
 			}
 		},
 		{
+			"id": "DossierNotes",
+			"route": "/pupil-dossier/notes",
+			"type": "index",
+			"title": "Dossier notes",
+			"config": {
+				"register": "scholiq",
+				"schema": "dossier-note"
+			}
+		},
+		{
+			"id": "DossierNoteDetail",
+			"route": "/pupil-dossier/notes/:id",
+			"type": "detail",
+			"title": "Dossier note",
+			"config": {
+				"register": "scholiq",
+				"schema": "dossier-note",
+				"readOnly": true,
+				"_note": "pupil-dossier-notes: a DossierNote is the everyday pupil-dossier record a mentor/coordinator keeps day to day (observation/conversation/phone-call-home/concern/positive), distinct from the formal LearningPlan/SupportRequest/DeliberationRecord care chain. appendOnly: true — readOnly here; a correction is a new note, never an in-place edit. Body leads with the note data (8-wide) and a Related panel. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail. x-property-rbac restricts every row server-side to admin/mentor/coordinator/the note's own author regardless of confidentiality value — the finer three-way confidentiality tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap (design.md Decision 1), not a UI filter.",
+				"widgets": [
+					{
+						"id": "dn-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "dn-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "dn-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "dn-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BehaviourIncidents",
+			"route": "/pupil-dossier/incidents",
+			"type": "index",
+			"title": "Behaviour incidents",
+			"config": {
+				"register": "scholiq",
+				"schema": "behaviour-incident"
+			}
+		},
+		{
+			"id": "BehaviourIncidentDetail",
+			"route": "/pupil-dossier/incidents/:id",
+			"type": "detail",
+			"title": "Behaviour incident",
+			"config": {
+				"register": "scholiq",
+				"schema": "behaviour-incident",
+				"_note": "pupil-dossier-notes: a BehaviourIncident is what/where/who-involved, severity, an append-only followUpActions log, and an eventual resolution — own lifecycle open -> in-handling -> resolved, no guard on either transition (mirrors AttendanceThreshold's own unguarded activate/archive). Optionally references a SupportRequest (escalatedSupportRequestId) when staff raise a formal zorgvraag from it; the incident never duplicates SupportRequest fields, it only points at one. Body leads with the incident data (8-wide) and a Related panel resolving the escalated SupportRequest, if any. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "bi-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "bi-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "bi-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "bi-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "WellbeingCheckIns",
+			"route": "/pupil-dossier/check-ins",
+			"type": "index",
+			"title": "Wellbeing check-ins",
+			"config": {
+				"register": "scholiq",
+				"schema": "wellbeing-check-in"
+			}
+		},
+		{
+			"id": "WellbeingCheckInDetail",
+			"route": "/pupil-dossier/check-ins/:id",
+			"type": "detail",
+			"title": "Wellbeing check-in",
+			"config": {
+				"register": "scholiq",
+				"schema": "wellbeing-check-in",
+				"readOnly": true,
+				"_note": "pupil-dossier-notes: a WellbeingCheckIn is a light, learner-authored periodic self-report (moodScale 1-5 + optional comment) — the Reflect-style shape, not a clinical instrument. appendOnly: true, no lifecycle — readOnly here; each check-in is a single point-in-time record. Body leads with the check-in data (8-wide) and a Related panel. No comms leaves (no linkedTypes). Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "wc-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "Heart"
+					},
+					{
+						"id": "wc-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "wc-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "wc-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PupilDossierTimelineView",
+			"route": "/pupil-dossier/timeline",
+			"type": "custom",
+			"title": "Pupil dossier timeline",
+			"component": "PupilDossierTimelineView",
+			"_note": "pupil-dossier-notes (the one genuine custom-view exception for this capability): merges DossierNote + BehaviourIncident + WellbeingCheckIn with the existing LearningPlan/SupportRequest/DeliberationRecord care-chain objects into one chronological feed for a single learner — no object-list widget filter can merge more than one schema (verified: the manifest's object-list/stats-block/data/integration/related widget types are all single-schema). Reached via the 'Dossier timeline' KPI tile on LearnerProfileDetail (lprof-kpis-dossier-timeline), which resolves @objectId into this route's learnerId query parameter — the only token-resolved deep-link mechanism the v2 action dialect has for a detail-page-to-custom-page link at HEAD (open-page/navigate header actions do not carry the current object id; verified against actionsDispatcher.js). Reads learnerId from $route.query.learnerId; shows a learner-picker empty state when absent (e.g. direct navigation).",
+			"config": {
+				"register": "scholiq",
+				"schema": "learner-profile"
+			}
+		},
+		{
 			"id": "AttendanceRecords",
 			"route": "/attendance/records",
 			"type": "index",
@@ -7528,6 +7796,32 @@
 						}
 					},
 					{
+						"id": "lprof-kpis-dossier-timeline",
+						"type": "stats-block",
+						"title": "Dossier timeline",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Dossier notes",
+									"register": "scholiq",
+									"schema": "dossier-note",
+									"metric": "count",
+									"filter": {
+										"learnerId": "@objectId"
+									},
+									"route": {
+										"name": "PupilDossierTimelineView",
+										"query": {
+											"learnerId": "@objectId"
+										}
+									}
+								}
+							]
+						},
+						"_note": "pupil-dossier-notes: this KPI's route is the only token-resolved (@objectId) deep link from a detail page to another named route this manifest dialect supports (stats-block entry.route, resolved by CnStatsBlockWidget) — clicking it opens PupilDossierTimelineView pre-scoped to this learner. open-page/navigate header actions were considered but do NOT carry the current object id (verified against actionsDispatcher.js at HEAD)."
+					},
+					{
 						"id": "lprof-enrol",
 						"type": "object-list",
 						"title": "Enrolments",
@@ -7737,6 +8031,116 @@
 						"type": "related",
 						"title": "Related",
 						"icon": "LinkVariant"
+					},
+					{
+						"id": "lprof-dossier-notes",
+						"type": "object-list",
+						"title": "Dossier notes",
+						"content": {
+							"register": "scholiq",
+							"schema": "dossier-note",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"sort": {
+								"field": "date",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "date",
+									"label": "Date"
+								},
+								{
+									"key": "category",
+									"label": "Category"
+								},
+								{
+									"key": "confidentiality",
+									"label": "Confidentiality"
+								}
+							],
+							"rowRoute": "DossierNoteDetail",
+							"viewAllRoute": "DossierNotes",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No dossier notes found."
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "lprof-behaviour-incidents",
+						"type": "object-list",
+						"title": "Behaviour incidents",
+						"content": {
+							"register": "scholiq",
+							"schema": "behaviour-incident",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"sort": {
+								"field": "occurredAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "occurredAt",
+									"label": "Occurred At"
+								},
+								{
+									"key": "severity",
+									"label": "Severity"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Status"
+								}
+							],
+							"rowRoute": "BehaviourIncidentDetail",
+							"viewAllRoute": "BehaviourIncidents",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No behaviour incidents found."
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "lprof-wellbeing-checkins",
+						"type": "object-list",
+						"title": "Wellbeing check-ins",
+						"content": {
+							"register": "scholiq",
+							"schema": "wellbeing-check-in",
+							"filter": {
+								"learnerId": "@objectId"
+							},
+							"sort": {
+								"field": "submittedAt",
+								"dir": "desc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "submittedAt",
+									"label": "Submitted At"
+								},
+								{
+									"key": "moodScale",
+									"label": "Mood"
+								}
+							],
+							"rowRoute": "WellbeingCheckInDetail",
+							"viewAllRoute": "WellbeingCheckIns",
+							"viewAllQuery": {
+								"learnerId": "@objectId"
+							},
+							"emptyText": "No wellbeing check-ins found."
+						},
+						"icon": "Heart"
 					}
 				],
 				"layout": [
@@ -7826,6 +8230,42 @@
 						"widgetId": "lprof-related",
 						"gridX": 6,
 						"gridY": 16,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "9",
+						"widgetId": "lprof-kpis-dossier-timeline",
+						"gridX": 0,
+						"gridY": 21,
+						"gridWidth": 4,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "10",
+						"widgetId": "lprof-dossier-notes",
+						"gridX": 0,
+						"gridY": 23,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "11",
+						"widgetId": "lprof-behaviour-incidents",
+						"gridX": 6,
+						"gridY": 23,
+						"gridWidth": 6,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "12",
+						"widgetId": "lprof-wellbeing-checkins",
+						"gridX": 0,
+						"gridY": 28,
 						"gridWidth": 6,
 						"gridHeight": 5,
 						"showTitle": false
