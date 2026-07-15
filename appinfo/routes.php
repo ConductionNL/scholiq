@@ -112,6 +112,16 @@ return [
         // Controller: LeaderboardController (slug: leaderboard).
         ['name' => 'leaderboard#getRankings', 'url' => '/api/leaderboard/{cohortId}', 'verb' => 'GET'],
 
+        // Payment transaction — outbound initiate delegates to OpenConnector's
+        // (not-yet-built) PSP adapter; #[NoAdminRequired] + #[NoCSRFRequired]
+        // (any authenticated payer). Inbound callback receives OpenConnector's
+        // async status update; #[PublicPage] + #[NoCSRFRequired] since it is a
+        // server-to-server call with no NC session — authenticated instead by
+        // its own bearer-token check inside the controller (school-payments).
+        // Controller: PaymentTransactionController (slug: paymentTransaction).
+        ['name' => 'paymentTransaction#initiate', 'url' => '/api/payments/{orderId}/initiate', 'verb' => 'POST'],
+        ['name' => 'paymentTransaction#callback', 'url' => '/api/payments/callback',            'verb' => 'POST'],
+
         // SPA catch-all — Vue history mode; specific routes MUST precede this.
         ['name' => 'page#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
     ],
