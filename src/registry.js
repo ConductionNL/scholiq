@@ -38,6 +38,11 @@ import DashboardAdmin from './views/DashboardAdmin.vue'
 import DashboardTeacher from './views/DashboardTeacher.vue'
 import DashboardStudent from './views/DashboardStudent.vue'
 import ScholiqCompliance from './views/ScholiqCompliance.vue'
+// accessibility-conformance-statement: the toegankelijkheidsverklaring
+// disclosure surface — a purpose-built read surface over the published
+// AccessibilityStatement plus its linked AccessibilityLimitation rows
+// (mirrors ScholiqCompliance's role), reachable by every authenticated user.
+import ScholiqAccessibilityStatement from './views/ScholiqAccessibilityStatement.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
@@ -147,6 +152,7 @@ export default {
 	RapportvergaderingReviewView: page(RapportvergaderingReviewView),
 	RegulationDetailPage: page(RegulationDetailPage),
 	RolloverWizard: page(RolloverWizard),
+	ScholiqAccessibilityStatement: page(ScholiqAccessibilityStatement),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),

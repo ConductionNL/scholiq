@@ -50,6 +50,7 @@
     "eslint-plugin-import-x": "4.13.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@babel/eslint-parser": "^7.28.6",
     "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",

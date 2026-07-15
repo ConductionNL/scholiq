@@ -317,6 +317,43 @@
 							]
 						}
 					}
+				},
+				{
+					"id": "Accessibility",
+					"label": "Accessibility",
+					"icon": "icon-info",
+					"route": "AccessibilityStatement",
+					"order": 40
+				},
+				{
+					"id": "AccessibilityLimitationsMenu",
+					"label": "Accessibility limitations",
+					"icon": "icon-flag",
+					"route": "AccessibilityLimitations",
+					"order": 41,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": [
+								"compliance-officer",
+								"admin"
+							]
+						}
+					}
+				},
+				{
+					"id": "AccessibilityFeedbacksMenu",
+					"label": "Accessibility feedback",
+					"icon": "icon-comment",
+					"route": "AccessibilityFeedbacks",
+					"order": 42,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": [
+								"compliance-officer",
+								"admin"
+							]
+						}
+					}
 				}
 			]
 		},
@@ -975,7 +1012,180 @@
 			"title": "Compliance",
 			"component": "ScholiqCompliance",
 			"_note": "Compliance overview surface (regulation coverage, attestations); officer/hr gated; no generic lib index/detail analogue."
-		},
+			},
+			{
+				"id": "AccessibilityStatement",
+				"route": "/accessibility",
+				"type": "custom",
+				"title": "Accessibility statement",
+				"component": "ScholiqAccessibilityStatement",
+				"_note": "accessibility-conformance-statement: the toegankelijkheidsverklaring disclosure surface, mirrors ScholiqCompliance's role as a purpose-built read surface over cross-schema data (the published AccessibilityStatement plus its linked AccessibilityLimitation rows). No generic lib index/detail analogue: no :id route param, this is a singleton disclosure page. Reachable by every authenticated user (no visibleIf role gate on its Accessibility nav entry) - hosts the persistent 'Report an accessibility problem' entry point that opens AccessibilityFeedbackCreate."
+			},
+			{
+				"id": "AccessibilityLimitations",
+				"route": "/accessibility/limitations",
+				"type": "index",
+				"title": "Accessibility limitations",
+				"config": {
+					"register": "scholiq",
+					"schema": "accessibility-limitation",
+					"_note": "accessibility-conformance-statement: the known-limitations register index, compliance-officer/admin authoring surface (gated via the Accessibility limitations nav entry's visibleIf). Generic declarative index - no bespoke UI."
+				}
+			},
+			{
+				"id": "AccessibilityLimitationDetail",
+				"route": "/accessibility/limitations/:id",
+				"type": "detail",
+				"title": "Accessibility limitation",
+				"config": {
+					"register": "scholiq",
+					"schema": "accessibility-limitation",
+					"lifecycleActions": {
+						"field": "lifecycle"
+					},
+					"widgets": [
+						{
+							"id": "al-data",
+							"type": "data",
+							"title": "Data",
+							"content": {
+								"columns": 2
+							},
+							"icon": "AlertCircleOutline"
+						},
+						{
+							"id": "al-related",
+							"type": "related",
+							"title": "Related",
+							"icon": "LinkVariant"
+						}
+					],
+					"layout": [
+						{
+							"id": "1",
+							"widgetId": "al-data",
+							"gridX": 0,
+							"gridY": 0,
+							"gridWidth": 8,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "2",
+							"widgetId": "al-related",
+							"gridX": 8,
+							"gridY": 0,
+							"gridWidth": 4,
+							"gridHeight": 5,
+							"showTitle": false
+						}
+					],
+					"sidebar": {
+						"enabled": true,
+						"showMetadata": true,
+						"tabs": [
+							{
+								"id": "audit",
+								"label": "History",
+								"icon": "History",
+								"widgets": [
+									{
+										"type": "audit"
+									}
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"id": "AccessibilityFeedbacks",
+				"route": "/accessibility/feedback",
+				"type": "index",
+				"title": "Accessibility feedback",
+				"config": {
+					"register": "scholiq",
+					"schema": "accessibility-feedback",
+					"_note": "accessibility-conformance-statement: the triage log of user-submitted AccessibilityFeedback, compliance-officer/admin surface (gated via the Accessibility feedback nav entry's visibleIf). Creation itself stays open to any authenticated user via AccessibilityFeedbackCreate, reached from the AccessibilityStatement page's 'Report an accessibility problem' entry point, not from this index."
+				}
+			},
+			{
+				"id": "AccessibilityFeedbackDetail",
+				"route": "/accessibility/feedback/:id",
+				"type": "detail",
+				"title": "Accessibility feedback",
+				"config": {
+					"register": "scholiq",
+					"schema": "accessibility-feedback",
+					"lifecycleActions": {
+						"field": "lifecycle"
+					},
+					"widgets": [
+						{
+							"id": "af-data",
+							"type": "data",
+							"title": "Data",
+							"content": {
+								"columns": 2
+							},
+							"icon": "MessageTextOutline"
+						},
+						{
+							"id": "af-related",
+							"type": "related",
+							"title": "Related",
+							"icon": "LinkVariant"
+						}
+					],
+					"layout": [
+						{
+							"id": "1",
+							"widgetId": "af-data",
+							"gridX": 0,
+							"gridY": 0,
+							"gridWidth": 8,
+							"gridHeight": 5,
+							"showTitle": false
+						},
+						{
+							"id": "2",
+							"widgetId": "af-related",
+							"gridX": 8,
+							"gridY": 0,
+							"gridWidth": 4,
+							"gridHeight": 5,
+							"showTitle": false
+						}
+					],
+					"sidebar": {
+						"enabled": true,
+						"showMetadata": true,
+						"tabs": [
+							{
+								"id": "audit",
+								"label": "History",
+								"icon": "History",
+								"widgets": [
+									{
+										"type": "audit"
+									}
+								]
+							}
+						]
+					}
+				}
+			},
+			{
+				"id": "AccessibilityFeedbackCreate",
+				"route": "/accessibility/feedback/new",
+				"type": "detail",
+				"title": "Report an accessibility problem",
+				"config": {
+					"register": "scholiq",
+					"schema": "accessibility-feedback",
+					"_note": "accessibility-conformance-statement: a dedicated no-id detail route so CnDetailPage's isCreateMode (ADR-062) opens an empty create form - the same pattern as course-evaluation's ImprovementActionCreate. Reached from ScholiqAccessibilityStatement.vue's persistent 'Report an accessibility problem' entry point. Creation is open to any authenticated user (AccessibilityFeedback carries no x-openregister-authorization.create restriction) - the opposite RBAC posture from the statement/limitation authoring pages above, deliberately (design.md Decision 3). Vue Router 4 ranks this static 'new' segment above AccessibilityFeedbackDetail's dynamic :id segment regardless of declaration order."
+				}
+			},
 		{
 			"id": "CourseDetail",
 			"route": "/courses/:id",
