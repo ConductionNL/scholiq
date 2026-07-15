@@ -15814,6 +15814,445 @@
                 },
                 "x-openregister-seed": [],
                 "appendOnly": true
+            },
+            "PointRule": {
+                "slug": "point-rule",
+                "icon": "StarOutline",
+                "version": "0.1.0",
+                "title": "PointRule",
+                "description": "Declarative event -> points config for the engagement layer. Each kind maps to a real, already-firing HEAD transition -- no invented event sources: enrolment-completed fires on Enrolment -> completed (the transition XapiCompletionHandler already dispatches for mandatory-training completion); submission-on-time fires on Submission -> submitted where the materialised isLate calculation is false; finalgrade-passed fires on GradeEntry -> published/republish where GradeFormulaEvaluator::evaluate() returns passed:true; streak-milestone fires a bonus award when a learner's currentStreakDays newly crosses milestoneDays. Mirrors AttendanceThreshold's config/rule shape (draft -> active -> archived). No x-openregister-authorization block, same as AttendanceThreshold -- creation is gated by the same app-wide admin/coordinator posture every other config object in this register relies on.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "kind",
+                    "points",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable rule name, e.g. \"On-time submission bonus\".",
+                        "title": "Rule Name"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "enrolment-completed",
+                            "submission-on-time",
+                            "finalgrade-passed",
+                            "streak-milestone"
+                        ],
+                        "description": "Which real HEAD event this rule reacts to. enrolment-completed: Enrolment -> completed. submission-on-time: Submission -> submitted with isLate false. finalgrade-passed: GradeEntry -> published/republish with GradeFormulaEvaluator passed:true. streak-milestone: a learner's currentStreakDays newly crosses milestoneDays. No peer-review kind exists -- peer review/peer grading is not implemented in the assignments capability.",
+                        "title": "Rule Kind"
+                    },
+                    "points": {
+                        "type": "number",
+                        "description": "Flat points awarded per firing. Copied onto each PointAward at award time -- editing this value never reprices existing awards.",
+                        "title": "Points"
+                    },
+                    "milestoneDays": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Only meaningful for kind: streak-milestone -- the consecutive-day streak length that triggers the bonus award (e.g. 7, 30). Null for every other kind.",
+                        "title": "Milestone Days"
+                    },
+                    "scope": {
+                        "type": "object",
+                        "nullable": true,
+                        "description": "Optional restriction to a specific Cohort or Course. Null means the rule applies tenant-wide.",
+                        "properties": {
+                            "cohortId": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "uuid",
+                                "$ref": "Cohort",
+                                "description": "UUID of the Cohort this rule is scoped to. Null if scoped by course or tenant-wide.",
+                                "title": "Cohort ID"
+                            },
+                            "courseId": {
+                                "type": "string",
+                                "nullable": true,
+                                "format": "uuid",
+                                "$ref": "Course",
+                                "description": "UUID of the Course this rule is scoped to. Null if scoped by cohort or tenant-wide.",
+                                "title": "Course ID"
+                            }
+                        },
+                        "title": "Scope"
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether this rule is currently enforced.",
+                        "title": "Active"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "Lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "archive": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "PointAward": {
+                "slug": "point-award",
+                "icon": "MedalOutline",
+                "version": "0.1.0",
+                "title": "PointAward",
+                "description": "Append-only ledger row: one award of points to one learner for one firing of one PointRule. appendOnly: true per ADR-008 (immutable audit evidence), mirroring AttendanceFlag/AssessmentResult. Created only by PointAwardTriggerHandler / LearnerEngagementRollupHandler -- never directly by a learner, so a learner cannot retroactively pad their own score. points is copied from PointRule.points at award time and is never recomputed when the rule is later edited.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "x-openregister-notifications": {
+                    "pointsAwarded": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Je hebt punten verdiend",
+                            "en": "You earned points"
+                        }
+                    }
+                },
+                "required": [
+                    "learnerId",
+                    "pointRuleId",
+                    "points",
+                    "sourceKind",
+                    "awardedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner who earned the points.",
+                        "title": "Learner ID"
+                    },
+                    "pointRuleId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "PointRule",
+                        "description": "UUID of the PointRule that fired.",
+                        "title": "Point Rule ID"
+                    },
+                    "points": {
+                        "type": "number",
+                        "description": "Points awarded, copied from PointRule.points at the moment of award. A later edit to the rule's points value does not retroactively reprice this award.",
+                        "title": "Points"
+                    },
+                    "sourceKind": {
+                        "type": "string",
+                        "enum": [
+                            "enrolment",
+                            "submission",
+                            "grade-entry",
+                            "streak-milestone"
+                        ],
+                        "description": "Which kind of source object triggered this award.",
+                        "title": "Source Kind"
+                    },
+                    "sourceObjectId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "description": "Identifies the Enrolment/Submission/GradeEntry (via its curriculumPlanId) that fired the rule, per sourceKind. The target schema varies by sourceKind (polymorphic), so no single $ref applies -- the fleet's relation-dialect gate bans polymorphic $ref targets, same reasoning documented on PokSignature's description. Null for sourceKind: streak-milestone, which has no single triggering object.",
+                        "title": "Source Object ID"
+                    },
+                    "awardedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp when the award was created.",
+                        "title": "Awarded At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "EngagementLevel": {
+                "slug": "engagement-level",
+                "icon": "TrophyVariantOutline",
+                "version": "0.1.0",
+                "title": "EngagementLevel",
+                "description": "Tenant-scoped, admin-configurable engagement level threshold row (e.g. \"Bronze\", \"Silver\"). One row per level -- no lifecycle needed, a level either exists or is deleted, mirroring AttendanceThreshold's row-per-rule editability rather than a buried array a coordinator would have to edit in-place (compare GradeScale.bands[]).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "order",
+                    "minPoints",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable level name, e.g. \"Bronze\", \"Silver\".",
+                        "title": "Level Name"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "description": "Ascending display/comparison order among this tenant's levels.",
+                        "title": "Order"
+                    },
+                    "minPoints": {
+                        "type": "number",
+                        "description": "Inclusive totalPoints threshold a learner must reach to hold this level.",
+                        "title": "Minimum Points"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Material Design Icons name, matching every other schema's icon convention.",
+                        "title": "Icon"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "LearnerEngagement": {
+                "slug": "learner-engagement",
+                "icon": "ChartLineVariant",
+                "version": "0.1.0",
+                "title": "LearnerEngagement",
+                "description": "Calculated per-learner engagement roll-up -- totalPoints, resolved levelId, and streak days. x-openregister readOnly: true (mirrors FinalGrade exactly) so it can never be written directly by the frontend. One row per (learnerId, tenant_id). Recomputed by LearnerEngagementRollupHandler via PointEngagementEvaluator whenever a PointAward is created -- NOT a declarative x-openregister-aggregations sum metric, since no sum metric is used anywhere else in this register (only count/count_distinct are precedented).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "learnerId",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this roll-up belongs to.",
+                        "title": "Learner ID"
+                    },
+                    "totalPoints": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Sum of the learner's PointAward.points, computed by PointEngagementEvaluator. Derived -- do not set manually.",
+                        "title": "Total Points"
+                    },
+                    "levelId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "EngagementLevel",
+                        "description": "UUID of the highest EngagementLevel whose minPoints is at most totalPoints. Null before any level threshold is reached. Derived -- do not set manually.",
+                        "title": "Level ID"
+                    },
+                    "currentStreakDays": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Consecutive calendar days (ending today or yesterday) with at least one PointAward. Derived -- do not set manually.",
+                        "title": "Current Streak Days"
+                    },
+                    "longestStreakDays": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Historical maximum of currentStreakDays. Derived -- do not set manually.",
+                        "title": "Longest Streak Days"
+                    },
+                    "lastActivityDate": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date",
+                        "description": "Date of the learner's most recent PointAward.awardedAt. Derived -- do not set manually.",
+                        "title": "Last Activity Date"
+                    },
+                    "lastRecomputedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp of the last recompute triggered by a PointAward creation. Mirrors FinalGrade.lastRecomputedAt.",
+                        "title": "Last Recomputed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-triggers": {
+                    "calculatedChange": {
+                        "description": "Recompute this LearnerEngagement whenever a PointAward for this learner is created. Implemented via LearnerEngagementRollupHandler listening on ObjectCreatedEvent -- NOT a TimedJob.",
+                        "handler": "OCA\\Scholiq\\Listener\\LearnerEngagementRollupHandler"
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "engagement-gamification: a learner's points/level/streak are personal progress data. Learner sees own row via self-match; admins see all. Deliberately NOT opened up to cohort-mates -- see design.md 'Why the RBAC gap forces a controller'. Peer-visible rankings go through LeaderboardController instead, which additionally respects the per-learner leaderboard opt-out preference this self-match RBAC rule is independent of.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "Leaderboard": {
+                "slug": "leaderboard",
+                "icon": "PodiumGoldOutline",
+                "version": "0.1.0",
+                "title": "Leaderboard",
+                "description": "Opt-in policy row scoping a ranked, peer-visible view of learner points to one Cohort or Course. Default OFF by construction: no Leaderboard row exists until a coordinator/admin explicitly creates and activates one for a specific cohort or course (x-openregister-seed is empty -- a fresh tenant has zero Leaderboard rows). Archiving one instantly turns that leaderboard back off. No ranking data is stored on this object itself -- LeaderboardController computes the ranking live so it always reflects the current per-learner opt-out state (see design.md).",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable leaderboard name.",
+                        "title": "Leaderboard Name"
+                    },
+                    "cohortId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "UUID of the Cohort this leaderboard ranks. Mutually exclusive with courseId, mirroring FinalGrade's courseId/programmeId dual-scope shape.",
+                        "title": "Cohort ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this leaderboard ranks. Mutually exclusive with cohortId.",
+                        "title": "Course ID"
+                    },
+                    "topN": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Display-limit hint for the frontend. Null means show all non-opted-out members.",
+                        "title": "Top N"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "Lifecycle state. Managed by OR lifecycle engine. Only an active Leaderboard row is served by LeaderboardController -- draft and archived rows never produce a ranking.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "archive": {
+                            "from": [
+                                "draft",
+                                "active"
+                            ],
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
             }
         }
     }

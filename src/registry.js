@@ -66,6 +66,10 @@ import PortfolioReviewView from './views/PortfolioReviewView.vue'
 // the chronological DossierNote/BehaviourIncident/WellbeingCheckIn +
 // LearningPlan/SupportRequest/DeliberationRecord merge for one learner.
 import PupilDossierTimelineView from './views/PupilDossierTimelineView.vue'
+// engagement-gamification: the one genuine new custom view this change adds —
+// the opt-in, opt-out-respecting leaderboard ranking (LeaderboardController's
+// response); every other engagement object is a declarative manifest page.
+import LeaderboardView from './views/LeaderboardView.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -108,6 +112,7 @@ export default {
 	GroupTrendHeatmap: page(GroupTrendHeatmap),
 	ItemAnalysisView: page(ItemAnalysisView),
 	ItemAuthorView: page(ItemAuthorView),
+	LeaderboardView: page(LeaderboardView),
 	LearningDashboard: page(LearningDashboard),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),

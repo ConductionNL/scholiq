@@ -106,6 +106,12 @@ return [
         ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
         ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
 
+        // Engagement leaderboard — one narrow read, opt-in per cohort, opt-out
+        // gated. The raw OR object API cannot serve this ranking (no
+        // cross-object "cohort-mate" RBAC primitive — see design.md).
+        // Controller: LeaderboardController (slug: leaderboard).
+        ['name' => 'leaderboard#getRankings', 'url' => '/api/leaderboard/{cohortId}', 'verb' => 'GET'],
+
         // SPA catch-all — Vue history mode; specific routes MUST precede this.
         ['name' => 'page#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
     ],
