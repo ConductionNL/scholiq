@@ -70,6 +70,10 @@ import PupilDossierTimelineView from './views/PupilDossierTimelineView.vue'
 // the opt-in, opt-out-respecting leaderboard ranking (LeaderboardController's
 // response); every other engagement object is a declarative manifest page.
 import LeaderboardView from './views/LeaderboardView.vue'
+// course-evaluation: the one genuine new custom view this change adds — a
+// coordinator/opleidingscommissie view of a course's CourseQualityScore
+// trend over time, response rate, and raw free-text answers.
+import CourseQualityReport from './views/CourseQualityReport.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -104,6 +108,7 @@ export default {
 	BookConferenceSlotsView: page(BookConferenceSlotsView),
 	BsaRiskDashboard: page(BsaRiskDashboard),
 	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
+	CourseQualityReport: page(CourseQualityReport),
 	DashboardAdmin: page(DashboardAdmin),
 	DashboardTeacher: page(DashboardTeacher),
 	DashboardStudent: page(DashboardStudent),

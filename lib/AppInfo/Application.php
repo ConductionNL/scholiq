@@ -55,6 +55,9 @@ use OCA\Scholiq\Listener\ReportCardComposer;
 use OCA\Scholiq\Listener\ReportCardPublishHandler;
 use OCA\Scholiq\Listener\SupportRequestSubmitHandler;
 use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
+use OCA\Scholiq\Listener\EvaluationInvitationProvisioningHandler;
+use OCA\Scholiq\Listener\CourseEvaluationResponseSubmittedHandler;
+use OCA\Scholiq\Listener\CourseQualityScoreRollupHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
@@ -530,6 +533,39 @@ class Application extends App implements IBootstrap
         );
 
         $this->registerWalletOfferConcludedListener(context: $context);
+
+        // ADR-031 legitimate exception (course-evaluation): EvaluationCampaign
+        // `open` transition -> one EvaluationInvitation per learner in scope
+        // (resolved from courseIds/cohortIds via the referenced
+        // Cohort.learnerIds) provisioning bridge. Idempotency-keyed so a
+        // duplicate/replayed open event does not create duplicate invitations.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: EvaluationInvitationProvisioningHandler::class
+        );
+
+        // ADR-031 legitimate exception (course-evaluation): CourseEvaluationResponse
+        // `submit` transition -> the caller's own EvaluationInvitation flip
+        // (hasResponded:true, respondedAt:now). Re-resolves the SAME
+        // session-caller identity CourseEvaluationEligibilityGuard used —
+        // the response itself carries no identity field to read from — and
+        // never writes a field referencing the response back onto the
+        // invitation (design.md Decision 2's anonymity mechanism, second half).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CourseEvaluationResponseSubmittedHandler::class
+        );
+
+        // ADR-031 legitimate exception (course-evaluation): CourseEvaluationResponse
+        // `submit` transition -> CourseQualityScore find-or-create + recompute
+        // bridge, mirroring GradeRollupHandler/FinalGrade's shape exactly.
+        // Averaging (CourseQualityScoreEvaluator) is beyond this register's
+        // proven declarative count/count_distinct aggregation metrics; NOT a
+        // TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CourseQualityScoreRollupHandler::class
+        );
 
     }//end register()
 

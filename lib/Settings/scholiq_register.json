@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/.",
-        "version": "0.12.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/.",
+        "version": "0.13.0"
     },
     "x-openregister": {
         "type": "application",
@@ -16249,6 +16249,704 @@
                         "reactivate": {
                             "from": "archived",
                             "to": "active"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "EvaluationCampaign": {
+                "slug": "evaluation-campaign",
+                "icon": "ClipboardTextOutline",
+                "version": "0.1.0",
+                "title": "EvaluationCampaign",
+                "description": "A course/module evaluation cycle (vakevaluatie): which Course(s)/Cohort(s) it covers, the academic period, the survey instrument, and a fixed anonymity policy. Opening a campaign provisions one EvaluationInvitation per learner in scope (EvaluationInvitationProvisioningHandler). Lifecycle: draft -> open -> closed -> archived. No existing course-management schema is modified -- courseIds/cohortIds reference Course/Cohort by $ref only. See openspec/changes/course-evaluation/.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "academicYear",
+                    "period",
+                    "instrumentKind",
+                    "anonymityPolicy",
+                    "closesAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable campaign name.",
+                        "example": "Vakevaluatie Biologie 3H - Q1 2026",
+                        "title": "Campaign Name"
+                    },
+                    "closesAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Date/time this campaign's evaluation window closes. Source of EvaluationInvitation.campaignClosesAt (stamped onto each invitation at open-time by EvaluationInvitationProvisioningHandler) — the reminder's scheduled+filter rule reads that denormalised copy, same shape as Enrolment.dueReminder reading the object's own dueDate.",
+                        "title": "Closes At"
+                    },
+                    "courseIds": {
+                        "type": "array",
+                        "description": "UUIDs of the Courses this campaign evaluates. At least one of courseIds/cohortIds MUST be populated (documented constraint, not a JSON-Schema conditional, matching this register's existing convention for cross-field constraints).",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Course"
+                        },
+                        "default": [],
+                        "title": "Course IDs"
+                    },
+                    "cohortIds": {
+                        "type": "array",
+                        "description": "UUIDs of the Cohorts this campaign evaluates. At least one of courseIds/cohortIds MUST be populated (documented constraint, not a JSON-Schema conditional).",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Cohort"
+                        },
+                        "default": [],
+                        "title": "Cohort IDs"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic or training year in YYYY or YYYY-YYYY format, same convention as Cohort.academicYear.",
+                        "example": "2025-2026",
+                        "title": "Academic Year"
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Human-readable period label, same convention as Cohort.period.",
+                        "example": "Q1",
+                        "title": "Period Label"
+                    },
+                    "instrumentKind": {
+                        "type": "string",
+                        "enum": [
+                            "built-in",
+                            "external-form"
+                        ],
+                        "default": "built-in",
+                        "description": "built-in: Scholiq owns the questions[] instrument end-to-end. external-form: learners are pointed at a supplementary Nextcloud Forms survey via externalFormUrl for free-text-only qualitative input that Scholiq does NOT ingest, read, or aggregate -- a convenience link only (design.md Decision 1).",
+                        "title": "Instrument Kind"
+                    },
+                    "questions": {
+                        "type": "array",
+                        "description": "The built-in instrument's questions, in display order. Only meaningful when instrumentKind is built-in.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "questionId",
+                                "text",
+                                "kind",
+                                "required"
+                            ],
+                            "properties": {
+                                "questionId": {
+                                    "type": "string",
+                                    "title": "Question ID",
+                                    "description": "Stable identifier for this question within the campaign, referenced by CourseEvaluationResponse.answers[].questionId."
+                                },
+                                "text": {
+                                    "type": "object",
+                                    "title": "Question Text",
+                                    "description": "Localised question text, same nl/en shape as this register's notification subject fields.",
+                                    "required": [
+                                        "nl",
+                                        "en"
+                                    ],
+                                    "properties": {
+                                        "nl": {
+                                            "type": "string",
+                                            "title": "Dutch",
+                                            "description": "Question text in Dutch."
+                                        },
+                                        "en": {
+                                            "type": "string",
+                                            "title": "English",
+                                            "description": "Question text in English."
+                                        }
+                                    }
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                        "likert-5",
+                                        "free-text"
+                                    ],
+                                    "title": "Question Kind",
+                                    "description": "likert-5: a 1-5 rating answer. free-text: an open free-text answer."
+                                },
+                                "required": {
+                                    "type": "boolean",
+                                    "title": "Required",
+                                    "description": "Whether a learner must answer this question before submitting."
+                                }
+                            }
+                        },
+                        "default": [],
+                        "title": "Questions"
+                    },
+                    "externalFormUrl": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "description": "URL of the supplementary Nextcloud Forms survey learners are pointed at. Only meaningful when instrumentKind is external-form. Scholiq never reads or aggregates what is submitted through it (design.md Decision 1).",
+                        "title": "External Form URL"
+                    },
+                    "anonymityPolicy": {
+                        "type": "string",
+                        "enum": [
+                            "fully-anonymous"
+                        ],
+                        "default": "fully-anonymous",
+                        "description": "Documentation of the platform invariant that CourseEvaluationResponse carries no learner-identifying field -- a fixed value, not a per-campaign configurable toggle (design.md Decision 2).",
+                        "title": "Anonymity Policy"
+                    },
+                    "reminderSchedule": {
+                        "type": "object",
+                        "description": "Reminder configuration. leadDays is currently informational only -- v1 ships a single fixed P5D EvaluationInvitation.reminder rule (design.md Caveats); making leadDays actually drive that rule is a follow-up.",
+                        "title": "Reminder Schedule",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean",
+                                "default": true,
+                                "title": "Reminders Enabled",
+                                "description": "Whether non-responder reminders are sent for this campaign."
+                            },
+                            "leadDays": {
+                                "type": "integer",
+                                "default": 5,
+                                "title": "Lead Days",
+                                "description": "Intended days-before-close lead time for reminders. Informational only in v1 -- the declarative EvaluationInvitation.reminder rule uses a fixed P5D window regardless of this value (design.md Caveats)."
+                            }
+                        }
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "open",
+                            "closed",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "description": "Campaign lifecycle state. Managed by the OR lifecycle engine. Opening provisions EvaluationInvitations (EvaluationInvitationProvisioningHandler).",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "open": {
+                            "from": "draft",
+                            "to": "open"
+                        },
+                        "close": {
+                            "from": "open",
+                            "to": "closed"
+                        },
+                        "archive": {
+                            "from": "closed",
+                            "to": "archived"
+                        }
+                    }
+                },
+                "x-openregister-triggers": {
+                    "invitationProvisioning": {
+                        "description": "Provision one EvaluationInvitation per learner in scope (resolved from courseIds/cohortIds via the referenced Cohort.learnerIds) when the campaign opens. Implemented via EvaluationInvitationProvisioningHandler listening on ObjectTransitionedEvent -- NOT a TimedJob. Idempotency-keyed so a duplicate open event does not create duplicate invitations for the same (campaignId, learnerId).",
+                        "handler": "OCA\\Scholiq\\Listener\\EvaluationInvitationProvisioningHandler"
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "EvaluationInvitation": {
+                "slug": "evaluation-invitation",
+                "icon": "AccountCheckOutline",
+                "version": "0.1.0",
+                "title": "EvaluationInvitation",
+                "description": "One system-provisioned row per learner per EvaluationCampaign, created when the campaign opens (EvaluationInvitationProvisioningHandler). The ONLY place a learner's identity and their evaluation-response status co-exist -- it never references which CourseEvaluationResponse satisfied it (no responseId field). CourseEvaluationEligibilityGuard and CourseEvaluationResponseSubmittedHandler are the only code paths that read/write it, both resolving the caller transiently via IUserSession (design.md Decision 2). System-provisioned -- no user-initiated lifecycle, no dedicated authoring UI.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "campaignId",
+                    "courseId",
+                    "learnerId",
+                    "academicYear",
+                    "period",
+                    "campaignClosesAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "campaignId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "EvaluationCampaign",
+                        "description": "UUID of the EvaluationCampaign this invitation was provisioned for.",
+                        "title": "Campaign ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this invitation's evaluation is about.",
+                        "title": "Course ID"
+                    },
+                    "cohortId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "UUID of the Cohort this invitation was provisioned from. Null when the campaign scoped the learner directly via courseIds without a Cohort.",
+                        "title": "Cohort ID"
+                    },
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the invited learner. Resolved transiently via IUserSession by the guard/handler pair -- never read from a client-supplied claim.",
+                        "title": "Learner ID"
+                    },
+                    "hasResponded": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether this learner has submitted a CourseEvaluationResponse for the campaign. Flipped to true by CourseEvaluationResponseSubmittedHandler after a successful submit -- never read back from, or linked to, the response itself.",
+                        "title": "Has Responded"
+                    },
+                    "respondedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp when hasResponded was flipped to true. Null while unanswered.",
+                        "title": "Responded At"
+                    },
+                    "campaignClosesAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Denormalised copy of the campaign's close date, stamped at provisioning time, so the reminder's scheduled+filter rule is self-contained -- same shape as Enrolment.dueReminder's use of the object's own dueDate.",
+                        "title": "Campaign Closes At"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Denormalised copy of the campaign's academicYear, stamped at provisioning time, scoping this invitation into the same period CourseQualityScore aggregates by.",
+                        "example": "2025-2026",
+                        "title": "Academic Year"
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Denormalised copy of the campaign's period, stamped at provisioning time, scoping this invitation into the same period CourseQualityScore aggregates by.",
+                        "example": "Q1",
+                        "title": "Period Label"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-notifications": {
+                    "reminder": {
+                        "trigger": {
+                            "type": "scheduled",
+                            "intervalSec": 86400,
+                            "filter": {
+                                "hasResponded": false,
+                                "campaignClosesAt": {
+                                    "operator": "withinNext",
+                                    "value": "P5D"
+                                }
+                            }
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "field",
+                                "field": "learnerId"
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Vergeet niet je vakevaluatie in te vullen",
+                            "en": "Don't forget to complete your course evaluation"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "CourseEvaluationResponse": {
+                "slug": "course-evaluation-response",
+                "icon": "MessageTextOutline",
+                "version": "0.1.0",
+                "title": "CourseEvaluationResponse",
+                "description": "An anonymous course/module evaluation response, appendOnly. MUST NOT declare any property identifying the responding learner (no learnerId/submittedBy/equivalent) -- anonymity is enforced by the absence of such a property in the schema, not by an x-property-rbac rule hiding an existing one (design.md Decision 2). The draft -> submitted transition requires CourseEvaluationEligibilityGuard, which resolves the caller's identity server-side via IUserSession and never writes it onto this object.",
+                "type": "object",
+                "appendOnly": true,
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "campaignId",
+                    "courseId",
+                    "academicYear",
+                    "period",
+                    "answers",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "campaignId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "EvaluationCampaign",
+                        "description": "UUID of the EvaluationCampaign this response was submitted for.",
+                        "title": "Campaign ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this response is about.",
+                        "title": "Course ID"
+                    },
+                    "cohortId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Cohort",
+                        "description": "UUID of the Cohort this response's campaign scope came from. Null when the campaign scoped the response directly via courseIds without a Cohort.",
+                        "title": "Cohort ID"
+                    },
+                    "teacherId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the teacher this response evaluates, for teacher-scoped evaluations. Null for course-only evaluations. NOT the responding learner's identity.",
+                        "title": "Teacher ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Denormalised copy of the campaign's academicYear, so CourseQualityScoreEvaluator can scope its per-(course,teacher,academicYear,period) roll-up without joining back through EvaluationCampaign for every response.",
+                        "example": "2025-2026",
+                        "title": "Academic Year"
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Denormalised copy of the campaign's period, same reasoning as academicYear.",
+                        "example": "Q1",
+                        "title": "Period Label"
+                    },
+                    "overallScore": {
+                        "type": "number",
+                        "nullable": true,
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "Denormalised copy of the designated 'overall satisfaction' likert-5 answer from answers[], trading a small amount of redundancy for a materially simpler CourseQualityScoreEvaluator that averages a flat numeric column instead of parsing answers[] per response (design.md).",
+                        "title": "Overall Score"
+                    },
+                    "answers": {
+                        "type": "array",
+                        "description": "One entry per question answered, matching the campaign's questions[]. Never carries any field identifying the responding learner.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "questionId"
+                            ],
+                            "properties": {
+                                "questionId": {
+                                    "type": "string",
+                                    "title": "Question ID",
+                                    "description": "References the answered EvaluationCampaign.questions[].questionId."
+                                },
+                                "ratingValue": {
+                                    "type": "integer",
+                                    "nullable": true,
+                                    "minimum": 1,
+                                    "maximum": 5,
+                                    "title": "Rating Value",
+                                    "description": "1-5 answer for a likert-5 question. Null for a free-text question."
+                                },
+                                "textValue": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Text Value",
+                                    "description": "Free-text answer for a free-text question. Null for a likert-5 question."
+                                }
+                            }
+                        },
+                        "default": [],
+                        "title": "Answers"
+                    },
+                    "submittedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp when the response transitioned to submitted. Null while in draft.",
+                        "title": "Submitted At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted"
+                        ],
+                        "default": "draft",
+                        "description": "Response lifecycle state. Managed by the OR lifecycle engine. submitted is terminal (appendOnly).",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "submit": {
+                            "from": "draft",
+                            "to": "submitted",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\CourseEvaluationEligibilityGuard"
+                        }
+                    }
+                },
+                "x-openregister-triggers": {
+                    "qualityScoreRollup": {
+                        "description": "Recompute the matching CourseQualityScore row (find-or-create, keyed on courseId/teacherId/academicYear/period) whenever a CourseEvaluationResponse submits. Implemented via CourseQualityScoreRollupHandler (internally calling CourseQualityScoreEvaluator) listening on ObjectTransitionedEvent -- NOT a TimedJob. Mirrors FinalGrade's own x-openregister-triggers block.",
+                        "handler": "OCA\\Scholiq\\Listener\\CourseQualityScoreRollupHandler"
+                    },
+                    "invitationFlip": {
+                        "description": "Flip the submitting learner's own EvaluationInvitation to hasResponded:true/respondedAt:now, re-resolving the same session-caller identity the guard used. Implemented via CourseEvaluationResponseSubmittedHandler listening on ObjectTransitionedEvent -- never reads or writes an identity field on this object.",
+                        "handler": "OCA\\Scholiq\\Listener\\CourseEvaluationResponseSubmittedHandler"
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "CourseQualityScore": {
+                "slug": "course-quality-score",
+                "icon": "ChartLineVariant",
+                "version": "0.1.0",
+                "title": "CourseQualityScore",
+                "description": "Materialised roll-up per (courseId, teacherId nullable, academicYear, period), recomputed by CourseQualityScoreRollupHandler whenever a CourseEvaluationResponse for the matching scope submits, via CourseQualityScoreEvaluator (averaging is beyond this register's proven declarative aggregation metrics -- a full-file grep for \"metric\": shows only count/count_distinct in use anywhere in this register). No lifecycle -- fully derived, read-only from the frontend. Surfaced on the CourseQualityReport.vue custom view.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true,
+                    "readOnly": true
+                },
+                "required": [
+                    "courseId",
+                    "academicYear",
+                    "period",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "courseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this quality score is about.",
+                        "title": "Course ID"
+                    },
+                    "teacherId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the teacher this quality score is about, for teacher-scoped evaluations. Null for course-level-only scores.",
+                        "title": "Teacher ID"
+                    },
+                    "academicYear": {
+                        "type": "string",
+                        "description": "Academic year in YYYY or YYYY-YYYY format, matching the source responses' academicYear.",
+                        "example": "2025-2026",
+                        "title": "Academic Year"
+                    },
+                    "period": {
+                        "type": "string",
+                        "description": "Period label, matching the source responses' period.",
+                        "example": "Q1",
+                        "title": "Period Label"
+                    },
+                    "responseCount": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Count of submitted CourseEvaluationResponses in this scope. Derived -- do not set manually.",
+                        "title": "Response Count"
+                    },
+                    "invitationCount": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Count of EvaluationInvitations provisioned in this scope. Derived -- do not set manually.",
+                        "title": "Invitation Count"
+                    },
+                    "averageOverallScore": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Mean of overallScore across the scope's submitted responses (null values ignored, not treated as 0). Null before any response has submitted. Derived -- do not set manually.",
+                        "title": "Average Overall Score"
+                    },
+                    "responseRate": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "responseCount / invitationCount, 0 when invitationCount is 0 (never a divide-by-zero error). Derived -- do not set manually.",
+                        "title": "Response Rate"
+                    },
+                    "lastRecomputedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp of the last recompute triggered by a CourseEvaluationResponse submit.",
+                        "title": "Last Recomputed At"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-aggregations": {
+                    "responseCountAggregate": {
+                        "description": "Cross-schema aggregation: number of submitted CourseEvaluationResponses for this (courseId, teacherId, academicYear, period) scope. Documentation of the count CourseQualityScoreEvaluator computes in PHP -- like FinalGrade.publishedEntries, this does not itself materialise the field; CourseQualityScoreRollupHandler writes responseCount directly.",
+                        "from": "course-evaluation-response",
+                        "metric": "count",
+                        "where": {
+                            "courseId": "@self.courseId",
+                            "teacherId": "@self.teacherId",
+                            "academicYear": "@self.academicYear",
+                            "period": "@self.period",
+                            "lifecycle": "submitted"
+                        }
+                    },
+                    "invitationCountAggregate": {
+                        "description": "Cross-schema aggregation: number of EvaluationInvitations provisioned for this (courseId, academicYear, period) scope. Documentation only, same reasoning as responseCountAggregate.",
+                        "from": "evaluation-invitation",
+                        "metric": "count",
+                        "where": {
+                            "courseId": "@self.courseId",
+                            "academicYear": "@self.academicYear",
+                            "period": "@self.period"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ImprovementAction": {
+                "slug": "improvement-action",
+                "icon": "ClipboardCheckOutline",
+                "version": "0.1.0",
+                "title": "ImprovementAction",
+                "description": "Closes the evaluation cycle: an opleidingscommissie/vaksectie reviewer's findings and a resulting recorded action against a campaign/course's results, with a targetPeriod naming when the action should show results. Purely declarative CRUD -- no PHP guard, matching the RolloverPlan/CatalogChangeRequest-style housekeeping-tracker shape already used elsewhere in this register.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "campaignId",
+                    "courseId",
+                    "reviewedBy",
+                    "findings",
+                    "actionDescription",
+                    "targetPeriod",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "campaignId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "EvaluationCampaign",
+                        "description": "UUID of the EvaluationCampaign this action responds to.",
+                        "title": "Campaign ID"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this action targets.",
+                        "title": "Course ID"
+                    },
+                    "reviewedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the governance reviewer (opleidingscommissie/vaksectie) who recorded this action.",
+                        "title": "Reviewed By"
+                    },
+                    "reviewedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp of the review.",
+                        "title": "Reviewed At"
+                    },
+                    "findings": {
+                        "type": "string",
+                        "description": "The reviewer's findings from the evaluation results.",
+                        "title": "Findings"
+                    },
+                    "actionDescription": {
+                        "type": "string",
+                        "description": "The resulting improvement action to be taken.",
+                        "title": "Action Description"
+                    },
+                    "targetPeriod": {
+                        "type": "string",
+                        "description": "The next period this action should show results in, same free-text convention as Cohort.period.",
+                        "example": "Q2",
+                        "title": "Target Period"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "planned",
+                            "in-progress",
+                            "done",
+                            "dropped"
+                        ],
+                        "default": "planned",
+                        "description": "Action lifecycle state. Managed by the OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "planned",
+                    "transitions": {
+                        "start": {
+                            "from": "planned",
+                            "to": "in-progress"
+                        },
+                        "complete": {
+                            "from": "in-progress",
+                            "to": "done"
+                        },
+                        "drop": {
+                            "from": [
+                                "planned",
+                                "in-progress"
+                            ],
+                            "to": "dropped"
                         }
                     }
                 },

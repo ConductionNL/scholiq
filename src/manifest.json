@@ -495,7 +495,48 @@
 			]
 		},
 		{
-			"id": "GroupBpv",
+			"id": "GroupCourseEvaluation",
+"label": "Course evaluation",
+"icon": "icon-quota",
+"order": 33,
+"children": [
+{
+"id": "EvaluationCampaignsMenu",
+"label": "Evaluation campaigns",
+"icon": "icon-clippy",
+"route": "EvaluationCampaigns",
+"order": 10
+},
+{
+"id": "CourseQualityReportMenu",
+"label": "Quality report",
+"icon": "icon-chart",
+"route": "CourseQualityReport",
+"order": 20
+},
+{
+"id": "CourseEvaluationResponsesMenu",
+"label": "Responses",
+"icon": "icon-comment",
+"route": "CourseEvaluationResponses",
+"order": 30,
+"visibleIf": {
+"user.primaryRole": {
+"in": ["admin", "coordinator", "teacher"]
+}
+}
+},
+{
+"id": "ImprovementActionsMenu",
+"label": "Improvement actions",
+"icon": "icon-checkmark",
+"route": "ImprovementActions",
+"order": 40
+}
+]
+},
+{
+"id": "GroupBpv",
 			"label": "BPV",
 			"icon": "icon-briefcase",
 			"order": 26,
@@ -11863,6 +11904,176 @@
 			"title": "Leaderboard",
 			"component": "LeaderboardView",
 			"_note": "engagement-gamification (story-required custom view, mirrors BsaRiskDashboard's status as the sole custom-UI exception): renders LeaderboardController's ranked response for a cohort with an active Leaderboard, with an inline opt-out toggle wired to the existing preferences-api. No manifest declarative page can render this — the ranking is computed live by a narrow authorizing controller, not a raw OR object list (see design.md 'Why the RBAC gap forces a controller')."
+		},
+		{
+"id": "EvaluationCampaigns",
+"route": "/course-evaluation/campaigns",
+"type": "index",
+"title": "Evaluation campaigns",
+"config": {
+"register": "scholiq",
+"schema": "evaluation-campaign"
+}
+		},
+		{
+"id": "EvaluationCampaignDetail",
+"route": "/course-evaluation/campaigns/:id",
+"type": "detail",
+"title": "Evaluation campaign",
+"config": {
+"register": "scholiq",
+"schema": "evaluation-campaign",
+"_note": "course-evaluation: an EvaluationCampaign scopes which Course(s)/Cohort(s) a vakevaluatie evaluates, its academic period, instrument, and a fixed fully-anonymous policy. Body leads with the campaign data (8-wide) and a Related panel resolving the scoped Course(s)/Cohort(s). A read-only responses preview shows submitted CourseEvaluationResponses in scope (anonymous by schema shape -- no learner-identifying field exists to display). lifecycleActions exposes draft -> open -> closed -> archived; opening provisions EvaluationInvitations server-side (EvaluationInvitationProvisioningHandler). Sidebar keeps metadata + audit-trail.",
+"lifecycleActions": {
+"field": "lifecycle"
+},
+"widgets": [
+{
+"id": "campaign-data",
+"type": "data",
+"title": "Data",
+"content": { "columns": 2 },
+"icon": "ClipboardList"
+},
+{
+"id": "campaign-responses",
+"type": "object-list",
+"title": "Responses",
+"content": {
+"register": "scholiq",
+"schema": "course-evaluation-response",
+"filter": { "campaignId": "@object.id" },
+"sort": { "field": "submittedAt", "dir": "desc" },
+"limit": 20,
+"columns": [
+{ "key": "courseId", "label": "Course" },
+{ "key": "overallScore", "label": "Overall score" },
+{ "key": "submittedAt", "label": "Submitted at" }
+],
+"rowRoute": "CourseEvaluationResponseDetail",
+"viewAllRoute": "CourseEvaluationResponses",
+"viewAllQuery": { "campaignId": "@object.id" },
+"emptyText": "No responses submitted yet.",
+"allowCreate": false
+},
+"icon": "MessageTextOutline"
+},
+{
+"id": "campaign-related",
+"type": "related",
+"title": "Related",
+"icon": "LinkVariant"
+}
+],
+"layout": [
+{ "id": "1", "widgetId": "campaign-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "showTitle": false },
+{ "id": "2", "widgetId": "campaign-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5, "showTitle": false },
+{ "id": "3", "widgetId": "campaign-responses", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5, "showTitle": true }
+],
+"sidebar": {
+"enabled": true,
+"showMetadata": true,
+"tabs": [
+{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+]
+}
+}
+		},
+		{
+"id": "CourseEvaluationResponses",
+"route": "/course-evaluation/responses",
+"type": "index",
+"title": "Evaluation responses",
+"config": {
+"register": "scholiq",
+"schema": "course-evaluation-response",
+"readOnly": true
+}
+		},
+		{
+"id": "CourseEvaluationResponseDetail",
+"route": "/course-evaluation/responses/:id",
+"type": "detail",
+"title": "Evaluation response",
+"config": {
+"register": "scholiq",
+"schema": "course-evaluation-response",
+"readOnly": true,
+"_note": "course-evaluation: an anonymous course-evaluation response -- appendOnly, anonymous by SCHEMA SHAPE (no learnerId/submittedBy property exists anywhere on this object; design.md Decision 2). readOnly:true -- no edit/delete affordance and no lifecycleActions block, matching AssessmentResult's own appendOnly-evidence pattern; the guarded submit transition happens server-side (CourseEvaluationEligibilityGuard), not through this administrative view. Body leads with the response data (8-wide, includes answers[]) and a Related panel resolving the campaign/course/cohort. Sidebar keeps metadata + audit-trail.",
+"widgets": [
+{ "id": "resp-data", "type": "data", "title": "Data", "content": { "columns": 2 }, "icon": "MessageTextOutline" },
+{ "id": "resp-related", "type": "related", "title": "Related", "icon": "LinkVariant" }
+],
+"layout": [
+{ "id": "1", "widgetId": "resp-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6, "showTitle": false },
+{ "id": "2", "widgetId": "resp-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6, "showTitle": false }
+],
+"sidebar": {
+"enabled": true,
+"showMetadata": true,
+"tabs": [
+{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+]
+}
+}
+		},
+		{
+"id": "ImprovementActions",
+"route": "/course-evaluation/improvement-actions",
+"type": "index",
+"title": "Improvement actions",
+"config": {
+"register": "scholiq",
+"schema": "improvement-action"
+}
+		},
+		{
+"id": "ImprovementActionDetail",
+"route": "/course-evaluation/improvement-actions/:id",
+"type": "detail",
+"title": "Improvement action",
+"config": {
+"register": "scholiq",
+"schema": "improvement-action",
+"_note": "course-evaluation: closes the evaluation cycle -- an opleidingscommissie/vaksectie reviewer's findings and a recorded action against a campaign/course's results. Purely declarative CRUD, no PHP guard. Body leads with the action data (8-wide) and a Related panel resolving the campaign/course. lifecycleActions exposes planned -> in-progress -> done|dropped. Sidebar keeps metadata + audit-trail.",
+"lifecycleActions": {
+"field": "lifecycle"
+},
+"widgets": [
+{ "id": "ia-data", "type": "data", "title": "Data", "content": { "columns": 2 }, "icon": "ClipboardCheckOutline" },
+{ "id": "ia-related", "type": "related", "title": "Related", "icon": "LinkVariant" }
+],
+"layout": [
+{ "id": "1", "widgetId": "ia-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5, "showTitle": false },
+{ "id": "2", "widgetId": "ia-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 5, "showTitle": false }
+],
+"sidebar": {
+"enabled": true,
+"showMetadata": true,
+"tabs": [
+{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+]
+}
+}
+		},
+		{
+"id": "ImprovementActionCreate",
+"route": "/course-evaluation/improvement-actions/new",
+"type": "detail",
+"title": "New improvement action",
+"config": {
+"register": "scholiq",
+"schema": "improvement-action",
+"_note": "course-evaluation: a dedicated no-id detail route so CnDetailPage's isCreateMode (ADR-062) opens an empty create form pre-filled from ?campaignId=&courseId= query params (CnDetailPage.createPrefill, filtered to the schema's own properties) -- reached from CourseQualityReport.vue's 'Draft improvement action' link. Vue Router 4 ranks this static 'new' segment above ImprovementActionDetail's dynamic :id segment regardless of declaration order."
+}
+		},
+		{
+"id": "CourseQualityReport",
+"route": "/course-evaluation/quality-report",
+"type": "custom",
+"title": "Course quality report",
+"component": "CourseQualityReport",
+"_note": "course-evaluation: the one genuine custom-view exception for this capability (mirrors GroupTrendHeatmap/LeaderboardView's precedent) -- a coordinator/opleidingscommissie view of a course's CourseQualityScore trend over time, response rate, and raw free-text answers, with a link to draft an ImprovementAction. Own in-page Course (and optional teacher) picker, since the manifest router only auto-binds :route params (not ?query=) to props -- reached via the Course evaluation menu with no id required."
 		}
 	]
 }

@@ -227,7 +227,7 @@ class ReportCardComposerRegisterTest extends TestCase
      */
     public function testRegisterVersionBumped(): void
     {
-        self::assertSame('0.12.0', $this->config['info']['version']);
+        self::assertSame('0.13.0', $this->config['info']['version']);
 
     }//end testRegisterVersionBumped()
 }//end class
