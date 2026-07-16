@@ -26,11 +26,23 @@
  * `ai-assisted` proctoring path is gated; manual proctoring (the default) and
  * every other transition are untouched.
  *
+ * Locality gate (sovereign-ai-guarantee): AFTER the DPO-enablement check above
+ * passes, this guard additionally calls {@see AiLocalityClassifier} and
+ * {@see \OCA\Scholiq\Service\SovereigntyPolicyService} — a school-verifiable
+ * locality guarantee composed on top of the existing DPO gate, not a second
+ * `x-openregister-lifecycle.requires` entry (verified at HEAD:
+ * `LifecycleAnnotationValidator`/`LifecycleGuardRegistry` resolve `requires` as
+ * a single DI-tag string, never an array, in this register — the
+ * `ReportPeriodLockGuard` precedent for "two checks, one guard class"). A
+ * `false` result from `SovereigntyPolicyService::isCompliant()` blocks the
+ * transition with a log message distinct from the DPO-enablement block, so an
+ * admin can tell the two failure reasons apart.
+ *
  * Legitimate PHP per ADR-031: "Lifecycle guard — business rule that must run before
  * a state transition and cannot be expressed as a schema declaration." Requires a
- * cross-schema query (Assessment → Hermiq agentaifeature) and conditional logic.
- * Referenced from the Assessment schema's x-openregister-lifecycle.transitions.publish.requires
- * in scholiq_register.json.
+ * cross-schema query (Assessment → Hermiq agentaifeature, and cross-app locality
+ * classification) and conditional logic. Referenced from the Assessment schema's
+ * x-openregister-lifecycle.transitions.publish.requires in scholiq_register.json.
  *
  * @category Lifecycle
  * @package  OCA\Scholiq\Lifecycle
@@ -46,6 +58,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/ai-feature-delegate-to-hermiq/specs/ai-surface/spec.md
+ * @spec openspec/changes/sovereign-ai-guarantee/specs/ai-locality-guarantee/spec.md#requirement-the-system-must-refuse-to-let-an-ai-assisted-feature-take-effect-when-its-verified-or-unverified-locality-violates-the-school-s-policy
  */
 
 declare(strict_types=1);
@@ -53,7 +66,9 @@ declare(strict_types=1);
 namespace OCA\Scholiq\Lifecycle;
 
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\Scholiq\Service\AiLocalityClassifier;
 use OCA\Scholiq\Service\ItemPoolFilter;
+use OCA\Scholiq\Service\SovereigntyPolicyService;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
@@ -67,8 +82,13 @@ use Psr\Log\LoggerInterface;
  * - If proctoring.flagReviewMode is `ai-assisted`, the AI feature with slug
  *   `assessment-ai-proctor-review` is `enabled` in Hermiq's central governance
  *   register (ADR-005). Governance is delegated to Hermiq.
+ * - If proctoring.flagReviewMode is `ai-assisted` AND the feature is
+ *   DPO-enabled, the active AI provider's classified locality
+ *   ({@see AiLocalityClassifier}) MUST also comply with the school's
+ *   {@see SovereigntyPolicyService} `SovereigntyPolicy` (sovereign-ai-guarantee).
  *
  * @spec openspec/changes/assessment-item-pools-and-analysis/specs/assessment/spec.md#requirement-publishing-an-assessment-requires-a-resolvable-item-source
+ * @spec openspec/changes/sovereign-ai-guarantee/specs/ai-locality-guarantee/spec.md#requirement-the-system-must-refuse-to-let-an-ai-assisted-feature-take-effect-when-its-verified-or-unverified-locality-violates-the-school-s-policy
  */
 class AssessmentPublishGuard
 {
@@ -101,12 +121,16 @@ class AssessmentPublishGuard
     /**
      * Constructor.
      *
-     * @param ObjectService   $objectService OR object service for the Hermiq AI-feature lookup and,
-     *                                       since assessment-item-pools-and-analysis, the random-draw
-     *                                       item-pool resolvability check.
-     * @param ItemPoolFilter  $poolFilter    Pool filter/variant-grouping collaborator (assessment-item-pools-and-analysis).
-     * @param IAppManager     $appManager    Used to tell "Hermiq absent" from "feature not enabled".
-     * @param LoggerInterface $logger        PSR logger.
+     * @param ObjectService            $objectService            OR object service for the Hermiq AI-feature
+     *                                                           lookup and, since
+     *                                                           assessment-item-pools-and-analysis, the
+     *                                                           random-draw item-pool resolvability check.
+     * @param ItemPoolFilter           $poolFilter               Pool filter/variant-grouping collaborator (assessment-item-pools-and-analysis).
+     * @param IAppManager              $appManager               Used to tell "Hermiq absent" from "feature not enabled".
+     * @param AiLocalityClassifier     $localityClassifier       Derives the active AI provider's locality verdict (sovereign-ai-guarantee).
+     * @param SovereigntyPolicyService $sovereigntyPolicyService Evaluates the locality verdict against the
+     *                                                           school's SovereigntyPolicy (sovereign-ai-guarantee).
+     * @param LoggerInterface          $logger                   PSR logger.
      *
      * @return void
      */
@@ -114,6 +138,8 @@ class AssessmentPublishGuard
         private readonly ObjectService $objectService,
         private readonly ItemPoolFilter $poolFilter,
         private readonly IAppManager $appManager,
+        private readonly AiLocalityClassifier $localityClassifier,
+        private readonly SovereigntyPolicyService $sovereigntyPolicyService,
         private readonly LoggerInterface $logger,
     ) {
     }//end __construct()
@@ -179,6 +205,25 @@ class AssessmentPublishGuard
                 .'feature with slug "{slug}" was found; blocking publish (ADR-005 DPO gate). Register '
                 .'and DPO-enable it in the Hermiq AI-feature register.',
                 ['slug' => self::AI_PROCTOR_SLUG]
+            );
+            return false;
+        }
+
+        // DPO-enablement passed. Sovereign-ai-guarantee: the AI feature is
+        // governed, but is it running somewhere this school has agreed to
+        // accept? A distinct log message from the DPO-gate block above so an
+        // admin can tell the two failure reasons apart.
+        $verdict = $this->localityClassifier->classifyActiveProvider();
+        if ($this->sovereigntyPolicyService->isCompliant(locality: $verdict['locality'], verified: $verdict['verified']) === false) {
+            $verifiedLabel = 'false';
+            if ($verdict['verified'] === true) {
+                $verifiedLabel = 'true';
+            }
+
+            $this->logger->info(
+                '[AssessmentPublishGuard] DPO-enabled but locality violates SovereigntyPolicy — '
+                .'blocking publish. Verdict: locality={locality}, verified={verified}. {evidence}',
+                ['locality' => $verdict['locality'], 'verified' => $verifiedLabel, 'evidence' => $verdict['evidence']]
             );
             return false;
         }

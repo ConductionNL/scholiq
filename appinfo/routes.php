@@ -127,6 +127,13 @@ return [
         // Controller: LeaderboardController (slug: leaderboard).
         ['name' => 'leaderboard#getRankings', 'url' => '/api/leaderboard/{cohortId}', 'verb' => 'GET'],
 
+        // AI processing disclosure — read-only composition of Hermiq's
+        // agentaifeature register, Scholiq's scholiq-ai-features AVG carrier,
+        // and the AiLocalityClassifier/SovereigntyPolicyService verdict for
+        // the currently active provider (sovereign-ai-guarantee).
+        // Controller: AiProcessingDisclosureController (slug: aiProcessingDisclosure).
+        ['name' => 'aiProcessingDisclosure#index', 'url' => '/api/ai-processing-disclosure', 'verb' => 'GET'],
+
         // Payment transaction — outbound initiate delegates to OpenConnector's
         // (not-yet-built) PSP adapter; #[NoAdminRequired] + #[NoCSRFRequired]
         // (any authenticated payer). Inbound callback receives OpenConnector's
