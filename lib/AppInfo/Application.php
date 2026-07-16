@@ -64,6 +64,9 @@ use OCA\Scholiq\Listener\ApplicationConversionHandler;
 use OCA\Scholiq\Listener\SubjectChoiceValidator;
 use OCA\Scholiq\Listener\SubjectChoiceEnrolmentBridge;
 use OCA\Scholiq\Listener\PaymentTransactionStatusHandler;
+use OCA\Scholiq\Listener\SessionChangeNoticeHandler;
+use OCA\Scholiq\Listener\SessionConflictListener;
+use OCA\Scholiq\Timetabling\TimetableImportHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
@@ -71,6 +74,7 @@ use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -633,6 +637,49 @@ class Application extends App implements IBootstrap
         $context->registerEventListener(
             event: ObjectTransitionedEvent::class,
             listener: PaymentTransactionStatusHandler::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution): Session
+        // `cancel`/`substitute-teacher`/`substitute-teacher-in-progress` ->
+        // affectedLearnerIds/affectedParentIds/changedAt materialisation
+        // bridge, mirroring ConferenceRound.invitedLearnerIds's cross-schema
+        // two-hop join shape (Cohort.learnerIds -> each LearnerProfile.
+        // parentIds), so the declared x-openregister-notifications rules'
+        // kind:field recipients can resolve without a runtime join.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SessionChangeNoticeHandler::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution): Session
+        // create/update -> TimetableConflictDetector pairwise overlap scan
+        // dispatcher. Registered against BOTH ObjectCreatedEvent and
+        // ObjectUpdatedEvent (the latter is a real OpenRegister event class
+        // with no prior scholiq listener precedent, needed here since a
+        // Session's roomId/startsAt/endsAt can be edited via the generic OR
+        // object-update endpoint without any lifecycle transition). The
+        // actual scan algorithm lives in TimetableConflictDetector, not here
+        // — it only ever creates TimetableConflict rows, never edits a
+        // Session.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: SessionConflictListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: SessionConflictListener::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution):
+        // DataExchangeJob lifecycle -> running bridge, filtered to target:
+        // timetable-import (DataExchangeRunHandler bails out for this target
+        // — see its own handle()). Pulls a generated timetable from
+        // OpenConnector and idempotently upserts Session objects by
+        // externalRef, then triggers TimetableConflictDetector's batch scan.
+        // No Zermelo/Untis/Xedule wire protocol is implemented in Scholiq.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: TimetableImportHandler::class
         );
 
     }//end register()

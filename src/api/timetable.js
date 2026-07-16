@@ -21,13 +21,18 @@ import { generateUrl } from '@nextcloud/router'
  *
  * When `from`/`to` are omitted the backend defaults to the current ISO week.
  * A caller with no cohorts receives an empty `sessions` list (HTTP 200), never
- * an error.
+ * an error. Each session also carries `roomId`/resolved `room` detail,
+ * `lifecycle`, `substituteTeacherId`, `changeReasonKind`, and `changeReason`
+ * (timetabling-and-substitution). The response's `changes` list carries every
+ * Session in the caller's own cohorts whose cancel/substitute-teacher
+ * transition occurred today — the "dagrooster" surface — regardless of
+ * whether its own `startsAt` falls inside the requested window.
  *
  * @param {string} [from] Inclusive ISO 8601 window start.
  * @param {string} [to]   Exclusive ISO 8601 window end.
  *
- * @return {Promise<{sessions: Array<object>, from: string, to: string}>} The
- *   ordered session list plus the resolved window echoed by the server.
+ * @return {Promise<{sessions: Array<object>, from: string, to: string, changes: Array<object>}>} The
+ *   ordered session list, the resolved window echoed by the server, and today's changes.
  */
 export async function fetchMyTimetable(from, to) {
 	const params = {}
@@ -46,5 +51,6 @@ export async function fetchMyTimetable(from, to) {
 		sessions: Array.isArray(data.sessions) ? data.sessions : [],
 		from: data.from || from || '',
 		to: data.to || to || '',
+		changes: Array.isArray(data.changes) ? data.changes : [],
 	}
 }

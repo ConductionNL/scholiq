@@ -162,6 +162,18 @@ class DataExchangeRunHandler implements IEventListener
             return;
         }
 
+        // Timetabling-and-substitution: target: timetable-import is a PULL
+        // (external -> Scholiq Session upserts), a fundamentally different
+        // shape than every other target this handler's runJob() implements
+        // (Scholiq objects -> external PUSH). OCA\Scholiq\Timetabling\
+        // TimetableImportHandler owns that target exclusively, registered
+        // against this SAME event in lib/AppInfo/Application.php — bail here
+        // so the two handlers never race to transition the same job.
+        $job = $event->getObject()->jsonSerialize();
+        if (($job['target'] ?? '') === 'timetable-import') {
+            return;
+        }
+
         $this->runJob(event: $event);
 
     }//end handle()

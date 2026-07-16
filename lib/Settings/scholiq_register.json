@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/. v0.15.0 adds accessibility-conformance — the toegankelijkheidsverklaring (accessibility statement) obligation under the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936): three new schemas, AccessibilityStatement (channel identity, a 3-value status collapsed from the government's five-level A–E scale with the mapping documented in the schema description, evaluation method/date, standard applied, feedback contact, escalation route, a materialised reviewOverdue calculation mirroring Enrolment.isOverdue's @now/dateDiff idiom plus a calculatedChange notification mirroring TlvApplication.tlvExpiringSoon; lifecycle draft → published → archived, with AccessibilityStatementPublishGuard refusing to publish without evaluation evidence or a fully-compliant status while an open/mitigated limitation exists); AccessibilityLimitation (the known-limitations register — WCAG criterion, severity, affected surface, justification, disproportionate-burden flag, workaround, planned-fix date; open → mitigated → fixed; create/update restricted to admin/compliance-officer, mirroring xapi-statement/BsaWarning); AccessibilityFeedback (a user-reported barrier, create open to any authenticated user — the opposite RBAC posture, deliberately — with an onSubmitted notification to compliance-officer/admin mirroring ItemRevisionFlag's created-trigger shape; submitted → acknowledged → resolved). No new PHP controller or route — only the one lifecycle guard, per ADR-022/ADR-031. See openspec/changes/accessibility-conformance-statement/. v0.16.0 adds course-authoring-ux — the one authoring surface course-management never got: Lesson gains blocks (an ordered array of typed content blocks — richText | media | quiz | assignment | ltiTool — each pointing at an existing Material/Assessment/Assignment/LtiToolPlacement UUID or carrying inline markdown for richText, structured JSON mirroring the Assessment.itemRefs precedent, not a new Block schema) and contentRef's top-level required entry is replaced by an allOf/if/then conditional (contentType='text' → contentRef not required; every other contentType unchanged), the second use of the exam-board-case-handling if/then/else construct in this register. Course gains order (nullable integer, additive — null sorts after every sibling with an explicit value) sequencing sibling modules sharing a parentCourseId. New schema CourseTemplate captures a reusable Course→Module→Lesson skeleton (+ optional CurriculumPlan skeleton) instantiated via frontend orchestration against OpenRegister's existing object-create endpoint (no new PHP controller, per ADR-022) — the concrete implementation of the 'Clone for next year' acceptance criterion the spec already promised but never backed with a requirement. Two new custom views (CourseBuilder.vue, LessonComposer.vue) provide drag-and-drop AND keyboard-operable reorder (WCAG 2.1 AA SC 2.1.1) for modules/lessons/blocks; LessonPlayer.vue gains a real contentType='text' rendering path over lesson.blocks, replacing the previously dead lesson.title/lesson.summary/lesson.content reads. See openspec/changes/course-authoring-ux/.",
-        "version": "0.16.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/. v0.15.0 adds accessibility-conformance — the toegankelijkheidsverklaring (accessibility statement) obligation under the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936): three new schemas, AccessibilityStatement (channel identity, a 3-value status collapsed from the government's five-level A–E scale with the mapping documented in the schema description, evaluation method/date, standard applied, feedback contact, escalation route, a materialised reviewOverdue calculation mirroring Enrolment.isOverdue's @now/dateDiff idiom plus a calculatedChange notification mirroring TlvApplication.tlvExpiringSoon; lifecycle draft → published → archived, with AccessibilityStatementPublishGuard refusing to publish without evaluation evidence or a fully-compliant status while an open/mitigated limitation exists); AccessibilityLimitation (the known-limitations register — WCAG criterion, severity, affected surface, justification, disproportionate-burden flag, workaround, planned-fix date; open → mitigated → fixed; create/update restricted to admin/compliance-officer, mirroring xapi-statement/BsaWarning); AccessibilityFeedback (a user-reported barrier, create open to any authenticated user — the opposite RBAC posture, deliberately — with an onSubmitted notification to compliance-officer/admin mirroring ItemRevisionFlag's created-trigger shape; submitted → acknowledged → resolved). No new PHP controller or route — only the one lifecycle guard, per ADR-022/ADR-031. See openspec/changes/accessibility-conformance-statement/. v0.16.0 adds course-authoring-ux — the one authoring surface course-management never got: Lesson gains blocks (an ordered array of typed content blocks — richText | media | quiz | assignment | ltiTool — each pointing at an existing Material/Assessment/Assignment/LtiToolPlacement UUID or carrying inline markdown for richText, structured JSON mirroring the Assessment.itemRefs precedent, not a new Block schema) and contentRef's top-level required entry is replaced by an allOf/if/then conditional (contentType='text' → contentRef not required; every other contentType unchanged), the second use of the exam-board-case-handling if/then/else construct in this register. Course gains order (nullable integer, additive — null sorts after every sibling with an explicit value) sequencing sibling modules sharing a parentCourseId. New schema CourseTemplate captures a reusable Course→Module→Lesson skeleton (+ optional CurriculumPlan skeleton) instantiated via frontend orchestration against OpenRegister's existing object-create endpoint (no new PHP controller, per ADR-022) — the concrete implementation of the 'Clone for next year' acceptance criterion the spec already promised but never backed with a requirement. Two new custom views (CourseBuilder.vue, LessonComposer.vue) provide drag-and-drop AND keyboard-operable reorder (WCAG 2.1 AA SC 2.1.1) for modules/lessons/blocks; LessonPlayer.vue gains a real contentType='text' rendering path over lesson.blocks, replacing the previously dead lesson.title/lesson.summary/lesson.content reads. See openspec/changes/course-authoring-ux/. v0.17.0 adds timetabling-and-substitution — the operational layer between 'an external optimiser (Zermelo/Untis/Xedule) produced a timetable' and 'a learner/teacher sees today's reality,' deliberately NOT a constraint-solving timetable generator (school-structure's 'Room-booking conflict resolution and timetabling optimisation' stays out of scope, permanently, by design): new Room (bookable resource — capacity/kind/facilities/buildingCode/floor, no lifecycle, the same resource-metadata shape as Material); Session gains additive roomId ($ref Room, location kept unchanged as a display-only fallback), externalRef (timetable-import idempotency key), substituteTeacherId/changeReasonKind/changeReason/affectedLearnerIds/affectedParentIds (mirroring ConferenceRound.invitedLearnerIds), and changedAt (server-stamped, backs personal-timetable's same-day dagrooster changes list), plus a substitute-teacher/substitute-teacher-in-progress self-loop pair (split per from-state — verified at HEAD that TransitionEngine resolves a single scalar 'to', so one from:[scheduled,in-progress] self-loop is not expressible as a single transition entry) and a SessionChangeGuard-gated cancel (now requiring changeReasonKind). New TimetableConflict (teacher/room/cohort/learner-double-booking, room-capacity-exceeded, exam-clash; open → acknowledged → resolved; admin/coordinator-only read; idempotent by (sessionIds, kind); created — never auto-resolved — by TimetableConflictDetector, an OR-event-driven cross-object write bridge mirroring ConferenceScheduleGenerator, invoked by SessionConflictListener on Session create/update and once in batch after a timetable-import DataExchangeJob succeeds). New ExamAccommodation (learnerId/submittedBy/accommodationKind/value/evidenceRef/approvedBy; requested → approved → active → expired|revoked; create open to learner/parent-portal roles, approve restricted to admin/compliance-officer/mentor via the new ExamAccommodationApprovalGuard — a 5th PHP class beyond the 4 named in the timetabling spec's 'Frontend is declarative' text, documented as a deviation since no x-openregister-authorization key expresses a per-transition role gate in this register). DataMappingProfile gains three timetable-import (direction:import) seed profiles (Zermelo/Untis/Xedule), reusing — not duplicating — the existing DataExchangeJob queue (target: timetable-import); the OpenConnector wire adapters themselves are a cross-repo openconnector follow-up, not built here. personal-timetable's TimetableController::mine() projects roomId/Room detail/substitution fields per Session and a same-day changes list — still read-only, no new write endpoint, per personal-timetable's unchanged invariant. See openspec/changes/timetabling-and-substitution/.",
+        "version": "0.17.0"
     },
     "x-openregister": {
         "type": "application",
@@ -4943,6 +4943,102 @@
                 },
                 "appendOnly": false
             },
+            "Room": {
+                "slug": "room",
+                "icon": "DoorOutline",
+                "version": "0.1.0",
+                "title": "Room",
+                "description": "A bookable physical or virtual teaching resource (classroom, lab, gym, auditorium, or an online meeting space) that a Session can reference structurally instead of only a free-text location string. Plain resource-metadata object — the same shape as Material, not a Session-like state machine (school-structure spec 'Room is persisted as a bookable resource'). timetabling-and-substitution.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "capacity",
+                    "kind",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable room name or code, e.g. 'Lokaal A-203' or 'Aula'.",
+                        "example": "Lokaal A-203",
+                        "title": "Room Name"
+                    },
+                    "code": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Short internal room code distinct from the display name, e.g. a facilities-system identifier. Null when the name itself is the code.",
+                        "example": "A-203",
+                        "title": "Room Code"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Maximum number of occupants this room can hold. Compared against a linked exam Session's candidate count by TimetableConflictDetector's room-capacity-exceeded check.",
+                        "example": 30,
+                        "title": "Capacity"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "classroom",
+                            "lab",
+                            "gym",
+                            "auditorium",
+                            "online",
+                            "other"
+                        ],
+                        "description": "The kind of resource this room represents.",
+                        "example": "classroom",
+                        "title": "Room Kind"
+                    },
+                    "facilities": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "Free-text facility tags available in this room, e.g. 'projector', 'whiteboard', 'lab-equipment'.",
+                        "title": "Facilities"
+                    },
+                    "buildingCode": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Building identifier this room is located in. Null for an online-only resource.",
+                        "example": "A",
+                        "title": "Building Code"
+                    },
+                    "floor": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Floor label this room is located on. Free-text (e.g. '2', 'Ground', 'B-1') since floor numbering conventions vary per building. Null for an online-only resource.",
+                        "example": "2",
+                        "title": "Floor"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-authorization": {
+                    "create": [
+                        "admin",
+                        "coordinator"
+                    ],
+                    "update": [
+                        "admin",
+                        "coordinator"
+                    ],
+                    "_comment": "Read-open (any authenticated user may see a room's capacity/facilities to understand their own timetable, per design.md Security posture); write restricted to admin/coordinator, mirroring the general 'coordinator writes, learner reads' posture used throughout school-structure. No x-openregister-lifecycle — a plain resource-metadata object, the same shape as Material."
+                },
+                "x-openregister-seed": []
+            },
             "Session": {
                 "slug": "session",
                 "icon": "CalendarClockOutline",
@@ -5010,9 +5106,79 @@
                     "location": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Room code or online URL (MS Teams, Zoom, etc.).",
+                        "description": "Room code or online URL (MS Teams, Zoom, etc.). Kept alongside roomId (below) as the display label for an online-meeting URL or for a Session with no Room row; a Session with roomId set SHOULD treat this as a display convenience only — consumers reading the room's real capacity/facilities MUST read Room, not parse this string.",
                         "example": "Lokaal A-203",
                         "title": "Location"
+                    },
+                    "roomId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Room",
+                        "description": "UUID of the Room this session is booked in — the canonical structured room reference (timetabling-and-substitution). Null for a Session with no assigned Room (still usable via the free-text location field above).",
+                        "default": null,
+                        "title": "Room ID"
+                    },
+                    "externalRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The source system's own occurrence identifier (Zermelo/Untis/Xedule event id), used ONLY by a timetable-import DataExchangeJob for idempotent upsert matching — never rendered as a primary user-facing value. Null for a manually-created Session, which a timetable-import job MUST never match or overwrite.",
+                        "default": null,
+                        "title": "External Reference"
+                    },
+                    "substituteTeacherId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the substitute teacher assigned via the substitute-teacher / substitute-teacher-in-progress self-loop transitions. Null when no substitute is assigned.",
+                        "default": null,
+                        "title": "Substitute Teacher ID"
+                    },
+                    "changeReasonKind": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "teacher-absence",
+                            "room-unavailable",
+                            "timetable-change",
+                            "other",
+                            null
+                        ],
+                        "description": "Structured reason category for a cancel or substitute-teacher transition. Required by SessionChangeGuard on both transitions ('no cancellation without a reason').",
+                        "default": null,
+                        "title": "Change Reason Kind"
+                    },
+                    "changeReason": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Free-text elaboration of changeReasonKind, e.g. 'Meneer De Vries is ziek'.",
+                        "default": null,
+                        "title": "Change Reason"
+                    },
+                    "affectedLearnerIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "Nextcloud user IDs of every learner affected by a cancel/substitute-teacher transition, materialised once from Cohort.learnerIds and persisted by SessionChangeNoticeHandler at transition time (denormalised, mirroring ConferenceRound.invitedLearnerIds, so the verified notification dialect's kind:field recipient can resolve it).",
+                        "title": "Affected Learner IDs"
+                    },
+                    "affectedParentIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "Nextcloud user IDs of every linked parent/guardian of an affected learner, resolved from each affected learner's LearnerProfile.parentIds and persisted by SessionChangeNoticeHandler alongside affectedLearnerIds.",
+                        "title": "Affected Parent IDs"
+                    },
+                    "changedAt": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp stamped server-side by SessionChangeNoticeHandler at the cancel/substitute-teacher transition — never a caller-supplied value (mirrors ExcuseRequest.decidedAt/DataExchangeJob.startedAt's stamping convention). Additive field beyond the literal task-list enumeration, added so personal-timetable's same-day 'dagrooster' changes list (a required scenario) has a concrete, testable 'did this Session change today' signal without depending on an unverified OR audit-log query surface.",
+                        "default": null,
+                        "title": "Changed At"
                     },
                     "materialIds": {
                         "type": "array",
@@ -5070,7 +5236,21 @@
                                 "scheduled",
                                 "in-progress"
                             ],
-                            "to": "cancelled"
+                            "to": "cancelled",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\SessionChangeGuard",
+                            "description": "Requires SessionChangeGuard: caller must be a Cohort.teacherIds member or admin/coordinator, and changeReasonKind must be set ('no cancellation without a reason')."
+                        },
+                        "substitute-teacher": {
+                            "from": "scheduled",
+                            "to": "scheduled",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\SessionChangeGuard",
+                            "description": "Assigns a substitute teacher without changing lifecycle — a genuine self-loop. Requires SessionChangeGuard (same authorization as cancel, plus substituteTeacherId must be set). Scoped to a single from-state (scheduled), matching this register's only two prior self-loop precedents (ConferenceRound.regenerate: scheduled->scheduled; DataExchangeJob.recordMunicipalityFeedback: succeeded->succeeded) — both pair one 'from' state with an identical 'to' value; verified at HEAD (TransitionEngine::transition()) that 'to' is resolved as a single scalar string, so an array 'from' converging on one fixed 'to' value is only correct for a state-CHANGING transition (this same schema's cancel, above), never a true multi-state self-loop. substitute-teacher-in-progress (below) is the in-progress counterpart, split into its own action name for that reason. design.md/spec.md describe this as one transition with from:[scheduled,in-progress]; this is the concrete two-action realization of that requirement."
+                        },
+                        "substitute-teacher-in-progress": {
+                            "from": "in-progress",
+                            "to": "in-progress",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\SessionChangeGuard",
+                            "description": "The in-progress counterpart of substitute-teacher above — identical guard, identical effect (substituteTeacherId/changeReasonKind set, no lifecycle change), split into its own action name so this register's single-from-state self-loop precedent holds for both source states declared by spec.md's substitute-teacher requirement."
                         }
                     }
                 },
@@ -5117,6 +5297,317 @@
                                 "unit": "days"
                             }
                         }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "TimetableConflict": {
+                "slug": "timetable-conflict",
+                "icon": "AlertDecagramOutline",
+                "version": "0.1.0",
+                "title": "TimetableConflict",
+                "description": "A detected (never auto-resolved) scheduling conflict between two Sessions, or a single Session exceeding its Room's capacity: teacher/room/cohort/learner double-booking, room-capacity-exceeded, or exam-clash. Created and idempotently upserted by TimetableConflictDetector (an OR-event-driven cross-object write bridge, the same ADR-031 exception class as ConferenceScheduleGenerator) — the detector only ever writes TimetableConflict rows, it never edits a Session. timetabling-and-substitution.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "kind",
+                    "sessionIds",
+                    "severity",
+                    "detectedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "teacher-double-booking",
+                            "room-double-booking",
+                            "cohort-double-booking",
+                            "learner-double-booking",
+                            "room-capacity-exceeded",
+                            "exam-clash"
+                        ],
+                        "description": "The kind of conflict detected.",
+                        "title": "Conflict Kind"
+                    },
+                    "sessionIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "$ref": "Session"
+                        },
+                        "description": "UUIDs of the conflicting Session(s) — two for a pairwise overlap kind, one for room-capacity-exceeded. The idempotency key this detector matches on is (sessionIds, kind), order-independent.",
+                        "title": "Session IDs"
+                    },
+                    "scopeRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The teacherId/roomId/cohortId/learnerId actually in conflict, when the kind identifies a single shared identity (e.g. the shared teacher for teacher-double-booking, the shared Room for room-double-booking/room-capacity-exceeded). Null when not applicable.",
+                        "default": null,
+                        "title": "Scope Reference"
+                    },
+                    "severity": {
+                        "type": "string",
+                        "enum": [
+                            "error",
+                            "warning"
+                        ],
+                        "default": "error",
+                        "description": "Triage severity — error for a hard double-booking, warning for a softer signal (e.g. a capacity overrun by a small margin). Set by the detector.",
+                        "title": "Severity"
+                    },
+                    "detectedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO 8601 timestamp when the detector found this conflict.",
+                        "title": "Detected At"
+                    },
+                    "resolutionNote": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional coordinator note recorded when acknowledging or resolving the conflict.",
+                        "default": null,
+                        "title": "Resolution Note"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "acknowledged",
+                            "resolved"
+                        ],
+                        "default": "open",
+                        "description": "Conflict review lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "open",
+                    "transitions": {
+                        "acknowledge": {
+                            "from": "open",
+                            "to": "acknowledged"
+                        },
+                        "resolve": {
+                            "from": [
+                                "open",
+                                "acknowledged"
+                            ],
+                            "to": "resolved"
+                        },
+                        "reopen": {
+                            "from": [
+                                "acknowledged",
+                                "resolved"
+                            ],
+                            "to": "open"
+                        }
+                    }
+                },
+                "x-openregister-notifications": {
+                    "conflictDetected": {
+                        "trigger": {
+                            "type": "created"
+                        },
+                        "enabled": true,
+                        "channels": [
+                            "nc-notification"
+                        ],
+                        "recipients": [
+                            {
+                                "kind": "groups",
+                                "groups": [
+                                    "coordinator"
+                                ]
+                            }
+                        ],
+                        "subject": {
+                            "nl": "Nieuw roosterconflict gedetecteerd ({{kind}})",
+                            "en": "New timetable conflict detected ({{kind}})"
+                        }
+                    }
+                },
+                "x-property-rbac": {
+                    "_comment": "A double-booking is an internal operational signal, not a fact to surface to the learners/parents affected by it — they are notified separately, once a human has acted, via the Session cancel/substitute-teacher notification. Restricted to admin/coordinator/scheduling roles per design.md Security posture; 'coordinator' is the same NC-group RBAC role already used fleet-wide for scheduling-coordinator gating (documented platform gap: no dedicated coordinator role exists in LearnerProfile.roles today, same rationale as SupportRequest/TlvApplication/DossierNote).",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "coordinator"
+                            }
+                        ]
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "ExamAccommodation": {
+                "slug": "exam-accommodation",
+                "icon": "AccountHeartOutline",
+                "version": "0.1.0",
+                "title": "ExamAccommodation",
+                "description": "A learner's approved, evidence-backed exam entitlement (extra time, separate room, reader, etc.) — a real legal duty for a dyslexie- or ADHD-verklaring. Recording only: this change stops at the data model and legal evidence trail; wiring the effective time limit into TakeAssessmentView/AssessmentResult is an explicit assessment-capability follow-up (see design.md 'Exam accommodations'). timetabling-and-substitution.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "learnerId",
+                    "submittedBy",
+                    "accommodationKind",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "learnerId": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the learner this accommodation applies to.",
+                        "title": "Learner ID"
+                    },
+                    "submittedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of whoever submitted this request — the learner themselves (18+ self-request) or a parent/guardian requesting on the learner's behalf. Mirrors ExcuseRequest.submittedBy; used by the x-property-rbac match below so the requester can read their own submission.",
+                        "title": "Submitted By"
+                    },
+                    "assessmentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Assessment",
+                        "description": "UUID of a specific Assessment this accommodation overrides. Null for a generic, standing accommodation applying to every assessment the learner sits.",
+                        "default": null,
+                        "title": "Assessment ID"
+                    },
+                    "accommodationKind": {
+                        "type": "string",
+                        "enum": [
+                            "extra-time-percentage",
+                            "separate-room",
+                            "reader",
+                            "screen-reader-software",
+                            "rest-breaks",
+                            "other"
+                        ],
+                        "description": "The kind of entitlement granted.",
+                        "title": "Accommodation Kind"
+                    },
+                    "value": {
+                        "type": "number",
+                        "nullable": true,
+                        "description": "Quantified value where applicable, e.g. 25 for a 25% extra-time-percentage. Null for a kind with no numeric value (e.g. separate-room).",
+                        "default": null,
+                        "title": "Value"
+                    },
+                    "evidenceRef": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Reference to the OpenRegister file attachment carrying the evidence (e.g. the dyslexie-/ADHD-verklaring). This app stores no evidence file bytes itself — only the reference.",
+                        "default": null,
+                        "title": "Evidence Reference"
+                    },
+                    "approvedBy": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Nextcloud user ID of the admin/compliance-officer/mentor who approved this accommodation. Null until approved; stamped server-side by ExamAccommodationApprovalGuard, never a caller-supplied value.",
+                        "default": null,
+                        "title": "Approved By"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "requested",
+                            "approved",
+                            "active",
+                            "expired",
+                            "revoked"
+                        ],
+                        "default": "requested",
+                        "description": "Accommodation lifecycle state. Managed by OR lifecycle engine.",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "requested",
+                    "transitions": {
+                        "approve": {
+                            "from": "requested",
+                            "to": "approved",
+                            "requires": "OCA\\Scholiq\\Lifecycle\\ExamAccommodationApprovalGuard",
+                            "description": "Restricted to admin/compliance-officer/mentor — a learner MUST NOT self-approve. No x-openregister-authorization key expresses a per-transition role gate in this register (verified: every existing x-openregister-authorization block uses only create/update/read/delete keys, never a transition action name), so — mirroring MunicipalityFeedbackGuard's identical 'no declarative field/transition-scoped write-authorization extension exists' rationale — a small PHP lifecycle guard is the only ADR-031-legitimate seam. This is a 5th PHP class beyond the 4 named in spec.md's 'Frontend is declarative' requirement text; the deviation is documented here and on the guard class itself, same as ReportPeriodLockGuard's own documented deviation."
+                        },
+                        "activate": {
+                            "from": "approved",
+                            "to": "active"
+                        },
+                        "expire": {
+                            "from": [
+                                "approved",
+                                "active"
+                            ],
+                            "to": "expired"
+                        },
+                        "revoke": {
+                            "from": [
+                                "requested",
+                                "approved",
+                                "active"
+                            ],
+                            "to": "revoked"
+                        }
+                    }
+                },
+                "x-openregister-authorization": {
+                    "_comment": "Creating a 'requested' row is intentionally open to the learner/parent-portal roles (a learner or parent can request their own accommodation); only the approve transition (above) is role-restricted, via a PHP guard rather than this block since OpenRegister has no declarative transition-scoped authorization key."
+                },
+                "x-property-rbac": {
+                    "_comment": "AVG-sensitive (health/disability-adjacent) data. Read restricted to admin/compliance-officer/mentor, the learner themselves (learnerId match), or the submitter (submittedBy match, covering the parent/guardian who filed the request) — mirrors ExcuseRequest's learnerId/submittedBy field shape. Broader 'any guardian of this learner, not just the one who submitted' is the same x-property-rbac.match single-field-on-self limitation already documented for SupportRequest/DossierNote (cannot express a cross-object LearnerProfile.parentIds join) — a known platform gap, not a fabricated guarantee.",
+                    "read": {
+                        "anyOf": [
+                            {
+                                "role": "admin"
+                            },
+                            {
+                                "role": "compliance-officer"
+                            },
+                            {
+                                "role": "mentor"
+                            },
+                            {
+                                "match": {
+                                    "field": "learnerId",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            },
+                            {
+                                "match": {
+                                    "field": "submittedBy",
+                                    "operator": "eq",
+                                    "value": "$userId"
+                                }
+                            }
+                        ]
                     }
                 },
                 "x-openregister-seed": []
@@ -14620,7 +15111,7 @@
                     },
                     "target": {
                         "type": "string",
-                        "description": "Named OpenConnector connection: bron-rod | oso | leerplicht | surfconext | hr | swv | or a custom name. This is a reference to an OpenConnector source/target configuration — Scholiq implements no wire protocol.",
+                        "description": "Named OpenConnector connection: bron-rod | oso | leerplicht | surfconext | hr | swv | timetable-import | or a custom name. This is a reference to an OpenConnector source/target configuration — Scholiq implements no wire protocol. 'timetable-import' (direction:import) resolves a Zermelo/Untis/Xedule-generated timetable into Session upserts, per timetabling-and-substitution.",
                         "title": "OpenConnector Target"
                     },
                     "direction": {
@@ -14870,6 +15361,61 @@
                         "validationProfile": "oso-care-request-v1",
                         "active": true,
                         "lifecycle": "active"
+                    },
+                    {
+                        "name": "Zermelo timetable import",
+                        "target": "timetable-import",
+                        "direction": "import",
+                        "sourceSchema": "session",
+                        "targetSchema": "Zermelo:Appointment",
+                        "fieldMappings": [
+                            { "scholiqField": "externalRef", "targetField": "appointmentId", "transform": null },
+                            { "scholiqField": "cohortId", "targetField": "groupInDepartment", "transform": null },
+                            { "scholiqField": "title", "targetField": "subjects", "transform": null },
+                            { "scholiqField": "startsAt", "targetField": "start", "transform": "date-iso8601" },
+                            { "scholiqField": "endsAt", "targetField": "end", "transform": "date-iso8601" },
+                            { "scholiqField": "location", "targetField": "locationOfBranch", "transform": null }
+                        ],
+                        "validationProfile": null,
+                        "active": true,
+                        "lifecycle": "active",
+                        "_comment": "TimetableImportHandler reads this profile in the reverse direction of the export precedents above: for direction:import, scholiqField still names the Scholiq-side (Session) field and targetField still names the external-side field (per the schema's own generic property descriptions), but the handler resolves each incoming Zermelo record's targetField into the matching scholiqField, not the other way around. sourceSchema is 'session' — the Scholiq schema the import ultimately populates — reusing the same required property rather than inventing an import-specific one."
+                    },
+                    {
+                        "name": "Untis timetable import",
+                        "target": "timetable-import",
+                        "direction": "import",
+                        "sourceSchema": "session",
+                        "targetSchema": "Untis:Period",
+                        "fieldMappings": [
+                            { "scholiqField": "externalRef", "targetField": "id", "transform": null },
+                            { "scholiqField": "cohortId", "targetField": "klasseId", "transform": null },
+                            { "scholiqField": "title", "targetField": "faechId", "transform": null },
+                            { "scholiqField": "startsAt", "targetField": "startDateTime", "transform": "date-iso8601" },
+                            { "scholiqField": "endsAt", "targetField": "endDateTime", "transform": "date-iso8601" },
+                            { "scholiqField": "location", "targetField": "raumId", "transform": null }
+                        ],
+                        "validationProfile": null,
+                        "active": true,
+                        "lifecycle": "active"
+                    },
+                    {
+                        "name": "Xedule timetable import",
+                        "target": "timetable-import",
+                        "direction": "import",
+                        "sourceSchema": "session",
+                        "targetSchema": "Xedule:Event",
+                        "fieldMappings": [
+                            { "scholiqField": "externalRef", "targetField": "eventId", "transform": null },
+                            { "scholiqField": "cohortId", "targetField": "groupCode", "transform": null },
+                            { "scholiqField": "title", "targetField": "activityName", "transform": null },
+                            { "scholiqField": "startsAt", "targetField": "startMoment", "transform": "date-iso8601" },
+                            { "scholiqField": "endsAt", "targetField": "endMoment", "transform": "date-iso8601" },
+                            { "scholiqField": "location", "targetField": "locationName", "transform": null }
+                        ],
+                        "validationProfile": null,
+                        "active": true,
+                        "lifecycle": "active"
                     }
                 ]
             },
@@ -14930,7 +15476,7 @@
                     },
                     "target": {
                         "type": "string",
-                        "description": "Named OpenConnector connection (e.g. 'bron-rod', 'oso', 'leerplicht', 'surfconext', 'hr', 'swv', 'ooapi-catalog'). 'swv' routes a zorgvraag/TLV-chain dossier (learning-plan's SupportRequest) to the regional samenwerkingsverband (openconnector#753). 'ooapi-catalog' syncs a published/archived Course, Programme, or Cohort to the OOAPI 5.0 course catalog hosted by opencatalogi, per the course-management publication contract (course → course, program → program, offering → offering; see openspec/changes/delegate-ooapi-to-opencatalogi/design.md). Scholiq implements no Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML/OOAPI wire code — all protocol logic lives in OpenConnector.",
+                        "description": "Named OpenConnector connection (e.g. 'bron-rod', 'oso', 'leerplicht', 'surfconext', 'hr', 'swv', 'ooapi-catalog', 'timetable-import'). 'swv' routes a zorgvraag/TLV-chain dossier (learning-plan's SupportRequest) to the regional samenwerkingsverband (openconnector#753). 'ooapi-catalog' syncs a published/archived Course, Programme, or Cohort to the OOAPI 5.0 course catalog hosted by opencatalogi, per the course-management publication contract (course → course, program → program, offering → offering; see openspec/changes/delegate-ooapi-to-opencatalogi/design.md). 'timetable-import' (direction:import) hands a generated-timetable pull to the OpenConnector Zermelo/Untis/Xedule source configuration; TimetableImportHandler resolves the response via the matching DataMappingProfile into idempotent Session upserts keyed by externalRef, then triggers TimetableConflictDetector's batch scan (timetabling-and-substitution). Scholiq implements no Edukoppeling/StUF/OSO-XML/Digikoppeling/SAML/OOAPI/Zermelo/Untis/Xedule wire code — all protocol logic lives in OpenConnector.",
                         "title": "OpenConnector Target"
                     },
                     "mappingProfileId": {
