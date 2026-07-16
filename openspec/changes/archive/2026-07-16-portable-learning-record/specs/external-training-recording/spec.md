@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: `ExternalTrainingRecord` carries an additive ADR-046 portal-scoping reference
 
