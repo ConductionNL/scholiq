@@ -13,23 +13,6 @@ toggle — it is a resource-metadata object, the same shape as `Material`, not a
 - **WHEN** they set `name`, `capacity`, `kind`, and `facilities`
 - **THEN** a `Room` object is persisted with those values and is available for a `Session` to reference
 
-## MODIFIED Requirements
-
-### Requirement: Persist school-structure domain objects in OpenRegister
-
-The system MUST persist `Programme`, `CurriculumPlan`, `Cohort`, `Session`, `Material`, and `Room` as
-OpenRegister objects with `x-openregister-lifecycle` (draft → published → archived for Programme/Course;
-scheduled → in-progress → completed | cancelled for Session, plus the guarded `substitute-teacher` self-loop
-transition described below) and `x-openregister-relations` (Cohort↔Programme/Course, Session↔Cohort/Course/
-Room, Material↔Course/Lesson/Session). `Room` carries no workflow lifecycle of its own (see "Room is
-persisted as a bookable resource").
-
-#### Scenario: School-structure objects persisted in OpenRegister
-
-- **GIVEN** the school-structure domain schemas are registered
-- **WHEN** a coordinator creates a Programme, CurriculumPlan, Cohort, Session, Material, or Room
-- **THEN** each is stored as an OpenRegister object carrying the declared lifecycle states and relations
-
 ### Requirement: Session references a Room and carries substitution and import metadata
 
 `Session` MUST gain the following additive fields, all nullable/optional so existing rows continue to
@@ -67,3 +50,20 @@ same state) alongside the existing `cancel` transition; both `cancel` and `subst
   `changeReasonKind`, `changeReason`, `affectedLearnerIds`, and `affectedParentIds` all unset
 - **WHEN** the row is read or re-saved unchanged
 - **THEN** it validates without error — none of the new fields are required
+
+## MODIFIED Requirements
+
+### Requirement: Persist school-structure domain objects in OpenRegister
+
+The system MUST persist `Programme`, `CurriculumPlan`, `Cohort`, `Session`, `Material`, and `Room` as
+OpenRegister objects with `x-openregister-lifecycle` (draft → published → archived for Programme/Course;
+scheduled → in-progress → completed | cancelled for Session, plus the guarded `substitute-teacher` self-loop
+transition described below) and `x-openregister-relations` (Cohort↔Programme/Course, Session↔Cohort/Course/
+Room, Material↔Course/Lesson/Session). `Room` carries no workflow lifecycle of its own (see "Room is
+persisted as a bookable resource").
+
+#### Scenario: School-structure objects persisted in OpenRegister
+
+- **GIVEN** the school-structure domain schemas are registered
+- **WHEN** a coordinator creates a Programme, CurriculumPlan, Cohort, Session, Material, or Room
+- **THEN** each is stored as an OpenRegister object carrying the declared lifecycle states and relations

@@ -15,12 +15,7 @@ this spec covers only ScholiQ's frontend adoption.
 
 ### Requirement: Store-backed app-local detail views MUST subscribe to live object updates
 
-App-local detail views that resolve an OpenRegister object through the shared
-library object store MUST subscribe to `or-object-{uuid}` via
-`objectStore.subscribe(type, uuid)` while the object is displayed, and MUST
-release the subscription when another object is resolved or the view is
-destroyed. Events are refetch hints only — the view MUST NOT apply event
-payloads directly, but re-render from the store's refetched object cache.
+App-local detail views resolving an OpenRegister object through the shared library object store MUST subscribe to `or-object-{uuid}` via `objectStore.subscribe(type, uuid)` while the object is displayed, and MUST release the subscription when another object is resolved or the view is destroyed. Events are refetch hints only — the view MUST NOT apply event payloads directly, but re-render from the store's refetched object cache.
 
 #### Scenario: Regulation detail refreshes when the regulation changes elsewhere
 

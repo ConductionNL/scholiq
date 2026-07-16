@@ -133,7 +133,7 @@ instructional designer sees every imported, degraded, and dropped resource in on
 controller — `CoursePackageImportController`/`CoursePackageExportController` are thin per ADR-022, delegating
 all parsing/generation to `CoursePackageImportService`/`CoursePackageExportService`.
 
-<!-- @e2e tests/e2e/spec-coverage/course-package-import-export.spec.ts -->
+<!-- @e2e exclude tests/e2e/spec-coverage/course-package-import-export.spec.ts was never created during this change's apply pass (tasks.md task 7.2 was left unchecked with no other file covering this flow) — verify-archive correction 2026-07-16: the file did not exist in the working tree, so the original @e2e reference was a false coverage claim. The upload/report/filter flow is exercised by CoursePackageImportServiceTest.php at the PHPUnit level (fixture-archive imports asserting entries/outcome counts); live-browser e2e coverage for CoursePackageImportView.vue remains outstanding follow-up work. -->
 
 #### Scenario: An instructional designer uploads a package and sees the report
 
