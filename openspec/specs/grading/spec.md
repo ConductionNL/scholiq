@@ -49,13 +49,13 @@ The system MUST persist `GradeScale`, `GradeEntry`, `FinalGrade` as OpenRegister
 `x-openregister-notifications` keyed so a re-publish/backfill doesn't double-notify. `FinalGrade`
 is computed via `x-openregister-calculations` + cross-schema aggregation over the learner's
 published `GradeEntry`s, parameterised by the `CurriculumPlan.formula` + component weights.
-`GradeEntry.sourceKind` MUST include `lti-ags` alongside the existing `assignment-submission`,
-`assessment-result`, `participation`, and `manual` values, so a score received via LTI
-Assignment & Grade Services (AGS) passback carries an honest, traceable origin rather than being
-recorded as `manual`. When `sourceKind = lti-ags`, `GradeEntry` MUST carry `ltiToolPlacementId`
-(the originating `LtiToolPlacement`) and `ltiAgsResultId` (the AGS result/CloudEvent message
-identifier, used as an idempotency key so a redelivered event cannot create a duplicate
-`GradeEntry`).
+`GradeEntry.sourceKind` MUST include `portfolio` alongside the existing `assignment-submission`,
+`assessment-result`, `participation`, `manual`, `exemption`, and `lti-ags` values, so a mark
+originating from a graded `course-bound` `Portfolio` carries an honest, traceable origin rather
+than being recorded as `manual`. When `sourceKind = portfolio`, `GradeEntry` MUST carry
+`portfolioId` (the originating `Portfolio`, `$ref: Portfolio`), nullable and set only for this
+`sourceKind` — the same additive, per-`sourceKind` reference-field shape `submissionId` /
+`assessmentResultId` / `exemptionCaseId` / `fraudCaseId` / `ltiToolPlacementId` already use.
 
 #### Scenario: Grading objects persisted in OpenRegister
 
@@ -64,23 +64,23 @@ identifier, used as an idempotency key so a redelivered event cannot create a du
 - **THEN** `GradeScale`, `GradeEntry`, and `FinalGrade` are stored as OpenRegister objects and the
   `FinalGrade` is computed via `x-openregister-calculations` over the learner's published entries
 
-#### Scenario: An LTI AGS score creates a traceable concept GradeEntry
+#### Scenario: A graded course-bound portfolio creates a traceable concept GradeEntry
 
-- **GIVEN** a published `LtiToolPlacement` configured with `curriculumPlanId` and
-  `gradeEntryComponentId`, and an AGS score-received CloudEvent for its
-  `openconnectorDeploymentId`
-- **WHEN** the score is translated into a `GradeEntry`
-- **THEN** the entry is created with `sourceKind: 'lti-ags'`, `lifecycle: 'concept'`,
-  `ltiToolPlacementId` set to the originating placement, and `ltiAgsResultId` set to the AGS
-  result identifier
+<!-- @e2e exclude Cross-schema event-to-object-write bridge is backend logic verified by PHPUnit PortfolioGradeEmitHandlerTest, mirroring GradeRollupHandlerTest::testAssessmentResultGradedCreatesConceptGradeEntry's equivalent coverage. -->
+
+- **GIVEN** a `course-bound` `Portfolio` with `gradeValue` set, in `submitted` state
+- **WHEN** the portfolio transitions to `graded`
+- **THEN** a `GradeEntry` is created with `sourceKind: 'portfolio'`, `lifecycle: 'concept'`, and
+  `portfolioId` set to the originating `Portfolio`
 - **AND** it is NOT recorded with `sourceKind: 'manual'`
 
-#### Scenario: A redelivered AGS message does not create a duplicate GradeEntry
+#### Scenario: Re-processing the graded transition does not create a duplicate GradeEntry
 
-- **GIVEN** a `GradeEntry` already exists with a given `(ltiToolPlacementId, ltiAgsResultId)`
-  pair
-- **WHEN** the same AGS score-received message is processed again
-- **THEN** no second `GradeEntry` is created for that pair
+<!-- @e2e exclude Idempotency guard is backend logic verified by PHPUnit PortfolioGradeEmitHandlerTest::testNoDuplicateWhenGradeEntryIdAlreadySet, mirroring GradeRollupHandler::handleAssessmentResultGraded()'s existing `gradeEntryId already set` skip. -->
+
+- **GIVEN** a `Portfolio` whose `gradeEntryId` is already set from a prior `graded` transition
+- **WHEN** the `graded` transition is processed again for the same portfolio
+- **THEN** no second `GradeEntry` is created
 
 ### Requirement: Notification dispatch honours per-parent/per-18+-learner preference
 
