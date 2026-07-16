@@ -369,6 +369,21 @@
 					}
 				},
 				{
+					"id": "AiProcessingDisclosureMenu",
+					"label": "AI processing disclosure",
+					"icon": "icon-password",
+					"route": "AiProcessingDisclosure",
+					"order": 42,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": [
+								"admin",
+								"compliance-officer"
+							]
+						}
+					}
+				},
+				{
 					"id": "AccessibilityFeedbacksMenu",
 					"label": "Accessibility feedback",
 					"icon": "icon-comment",
@@ -1076,7 +1091,15 @@
 			"_note": "Compliance overview surface (regulation coverage, attestations); officer/hr gated; no generic lib index/detail analogue."
 			},
 			{
-				"id": "AccessibilityStatement",
+				"id": "AiProcessingDisclosure",
+					"route": "/ai-processing-disclosure",
+					"type": "custom",
+					"title": "AI processing disclosure",
+					"component": "ScholiqAiProcessingDisclosure",
+					"_note": "sovereign-ai-guarantee: the AI-processing locality disclosure surface a school hands to its DPO, mirrors ScholiqAccessibilityStatement's exact shape (no generic lib index/detail analogue, no :id route param, singleton disclosure page). Composes AiProcessingDisclosureController's server-side read (Hermiq agentaifeature register + scholiq-ai-features AVG carrier + AiLocalityClassifier/SovereigntyPolicyService verdict) with an inline SovereigntyPolicy editor. Gated to admin/compliance-officer via the AiProcessingDisclosure nav entry's visibleIf (unlike Accessibility, which is open to every authenticated user)."
+				},
+				{
+					"id": "AccessibilityStatement",
 				"route": "/accessibility",
 				"type": "custom",
 				"title": "Accessibility statement",

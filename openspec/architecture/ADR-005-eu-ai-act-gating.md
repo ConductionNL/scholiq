@@ -39,6 +39,17 @@ Change `ai-feature-delegate-to-hermiq`. The **compliance pattern below is unchan
 
 **What moves to Hermiq:** every step of "The pattern" and "Concretely for v0.1" below now describes **Hermiq's** responsibility. Any new Scholiq high-risk AI feature is registered in Hermiq's `agentaifeature` register (not `scholiq_register.json`), acknowledged by the DPO there, and — where Scholiq must gate on it — looked up cross-app as `AssessmentPublishGuard` does. The sections below are retained for historical context and as the contract Hermiq inherits.
 
+## Amendment (2026-07-16) — locality gate added on top of the DPO gate
+
+Change `sovereign-ai-guarantee`. **The DPO gate above is unchanged** — this amendment adds a second, independent check to the same `AssessmentPublishGuard::check()` method, not a new register or a new lifecycle. Where the 2026-07-06 amendment answers "is this AI feature governed," this one answers "is this AI feature's processing happening somewhere this school has agreed to accept."
+
+- A new **`SovereigntyPolicy`** OR object (`lib/Settings/scholiq_register.json`, flat, un-lifecycled singleton) lets a school declare its accepted locality tier (`on-premises-only` / `eu-hosted-allowed` / `third-country-allowed`, default `eu-hosted-allowed`).
+- A new **`OCA\Scholiq\Service\AiLocalityClassifier`** derives a `{locality, verified, evidence}` verdict from Hermiq's real `hermiq.llm` chat-provider configuration and, for the three OpenRegister-catalogued host-locked broker SaaS providers (`openai`/`fireworks`/`anthropic`), the referenced credential's catalogue `provider` field — never from a hand-typed field. It classifies `third-country` with `verified: true` only for those three catalogued providers; every other configuration (`ollama`, `nextcloud`, an inject-only credential, Hermiq absent) classifies `unverified`. No code path proves `on-premises`/`eu-hosted` true today, so the classifier never emits `verified: true` for either — this is a deliberate asymmetry (prove violations, never fabricate compliance), not an oversight.
+- **`AssessmentPublishGuard`** composes this classifier plus `OCA\Scholiq\Service\SovereigntyPolicyService::isCompliant()` after its existing DPO-enablement check: an `ai-assisted`-proctored `Assessment` cannot publish if the active provider's locality verdict violates the school's `SovereigntyPolicy`. `unverified` never satisfies the two stricter tiers.
+- A new read-only `AiProcessingDisclosureController` + `ScholiqAiProcessingDisclosure.vue` compose Hermiq's `agentaifeature` register, Scholiq's existing `scholiq-ai-features` AVG Art. 30 carrier, and this verdict into one DPO-facing disclosure page. No verdict renders "compliant" (green) unless `verified: true` — an unverifiable claim shows as `unverified`, never as compliant.
+
+See `openspec/changes/sovereign-ai-guarantee/design.md` for the full evidence chain (which providers are verifiable and why) and the compliance-rule matrix. No hermiq-repo file is touched by this amendment; a per-provider `jurisdiction` catalogue field and a per-feature provider binding are named there as cross-repo follow-up, not built here.
+
 ## Context
 
 The EU AI Act (Regulation 2024/1689) entered into force August 2024; high-risk obligations apply from **August 2026**. Annex III §3 explicitly classifies as **high-risk** any AI system used:

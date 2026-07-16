@@ -43,6 +43,12 @@ import ScholiqCompliance from './views/ScholiqCompliance.vue'
 // AccessibilityStatement plus its linked AccessibilityLimitation rows
 // (mirrors ScholiqCompliance's role), reachable by every authenticated user.
 import ScholiqAccessibilityStatement from './views/ScholiqAccessibilityStatement.vue'
+// sovereign-ai-guarantee: the AI-processing disclosure surface a school hands
+// to its DPO — mirrors ScholiqAccessibilityStatement's singleton, no-:id-route
+// shape. Composes AiProcessingDisclosureController's server-side read with an
+// inline SovereigntyPolicy editor (writes via OpenRegister's generic
+// object-create/update endpoint, no bespoke write controller, per ADR-022).
+import ScholiqAiProcessingDisclosure from './views/ScholiqAiProcessingDisclosure.vue'
 import ScholiqLearnerHome from './views/ScholiqLearnerHome.vue'
 import RolloverWizard from './views/RolloverWizard.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
@@ -183,6 +189,7 @@ export default {
 	RegulationDetailPage: page(RegulationDetailPage),
 	RolloverWizard: page(RolloverWizard),
 	ScholiqAccessibilityStatement: page(ScholiqAccessibilityStatement),
+	ScholiqAiProcessingDisclosure: page(ScholiqAiProcessingDisclosure),
 	ScholiqCompliance: page(ScholiqCompliance),
 	ScholiqDashboards: page(ScholiqDashboards),
 	ScholiqLearnerHome: page(ScholiqLearnerHome),
