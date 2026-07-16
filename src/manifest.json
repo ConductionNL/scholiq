@@ -815,6 +815,13 @@
 			"order": 25
 		},
 		{
+			"id": "MyLearningRecordMenu",
+			"label": "My learning record",
+			"icon": "icon-quota",
+			"route": "MyLearningRecordView",
+			"order": 26
+		},
+		{
 			"id": "GroupConferences",
 			"label": "Parent conferences",
 			"icon": "icon-calendar",
@@ -1929,6 +1936,289 @@
 			"title": "Export course package",
 			"component": "CnExportWizard",
 			"_note": "course-package-import-export: mounts CnExportWizard from @conduction/nextcloud-vue for the course export (Course scope + common-cartridge/scholiq-json format picker → server-side bundle), the same declarative pattern AuditPackExport (src/manifest.json) already uses — no bespoke Vue file needed."
+		},
+		{
+			"id": "LearningRecordExports",
+			"route": "/learning-records/exports",
+			"type": "index",
+			"title": "Learning record exports",
+			"_note": "portable-learning-record: read-only history of LearningRecordExport rows — a learner-initiated, signed, dual-shaped bundle of the learner's own trajectory. No create/edit actions beyond the declarative generate lifecycle action.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-export"
+			}
+		},
+		{
+			"id": "LearningRecordExportDetail",
+			"route": "/learning-records/exports/:id",
+			"type": "detail",
+			"title": "Learning record export",
+			"_note": "portable-learning-record: renders one LearningRecordExport's coverageReport (naming every source object's included/summarized/omitted outcome), bundle reference, signature, and issuer DID. lifecycleActions expose generate (requested → generated) as a button.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-export",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "lre-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "FileDocument"
+					},
+					{
+						"id": "lre-coverage",
+						"type": "data",
+						"title": "Coverage report",
+						"icon": "TableColumn",
+						"content": {
+							"columns": 1,
+							"include": [
+								"coverageReport"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "lre-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "lre-coverage",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LearningRecordShares",
+			"route": "/learning-records/shares",
+			"type": "index",
+			"title": "Learning record shares",
+			"_note": "portable-learning-record: read-only history of LearningRecordShare rows — a time-boxed, revocable grant of one generated export to a named external recipient. No create/edit actions beyond the declarative grant/revoke lifecycle actions.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-share"
+			}
+		},
+		{
+			"id": "LearningRecordShareDetail",
+			"route": "/learning-records/shares/:id",
+			"type": "detail",
+			"title": "Learning record share",
+			"_note": "portable-learning-record: renders one LearningRecordShare's recipient, expiry, revocation, and access-tracking data plus a Related panel resolving the shared LearningRecordExport. lifecycleActions expose grant/revoke as buttons.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-share",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "lrs-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "lrs-related",
+						"type": "related",
+						"title": "Related"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "lrs-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 6
+					},
+					{
+						"id": "2",
+						"widgetId": "lrs-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 6
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LearningRecordImports",
+			"route": "/learning-records/imports",
+			"type": "index",
+			"title": "Learning record imports",
+			"_note": "portable-learning-record: read-only history of LearningRecordImport rows — a coordinator-facing, evidence-only report of an applicant-uploaded prior-institution bundle during Application intake. No create/edit actions beyond the declarative parse lifecycle action.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-import"
+			}
+		},
+		{
+			"id": "LearningRecordImportDetail",
+			"route": "/learning-records/imports/:id",
+			"type": "detail",
+			"title": "Learning record import",
+			"_note": "portable-learning-record: renders one LearningRecordImport's verificationStatus and entries[] table (mirrors CoursePackageImportReportDetail's entries table, applied to the input side) plus a Related panel resolving the Application it is evidence for. lifecycleActions expose parse as a button.",
+			"config": {
+				"register": "scholiq",
+				"schema": "learning-record-import",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "lri-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2,
+							"exclude": [
+								"sourceRef"
+							]
+						},
+						"icon": "FileSign"
+					},
+					{
+						"id": "lri-entries",
+						"type": "data",
+						"title": "Entries",
+						"icon": "TableColumn",
+						"content": {
+							"columns": 1,
+							"include": [
+								"entries"
+							]
+						}
+					},
+					{
+						"id": "lri-related",
+						"type": "related",
+						"title": "Related"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "lri-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "lri-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5
+					},
+					{
+						"id": "3",
+						"widgetId": "lri-entries",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 12,
+						"gridHeight": 5,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "MyLearningRecordView",
+			"route": "/learning-records/me",
+			"type": "custom",
+			"title": "My learning record",
+			"component": "MyLearningRecordView",
+			"_note": "portable-learning-record: the learner's aggregate dashboard — LearningRecordAggregationService's live composition, read-only, plus the export action (generate + coverage report + download link) and a share panel (create with mandatory expiry, list, revoke). Mirrors CoursePackageImportView/SkillsGapDashboard's bar for a genuine non-CRUD interaction; no PHP CRUD controller beyond the read-only /api/learning-records/me composition endpoint."
+		},
+		{
+			"id": "LearningRecordImportView",
+			"route": "/admissions/applications/:applicationId/learning-record-import",
+			"type": "custom",
+			"title": "Import prior learning record",
+			"component": "LearningRecordImportView",
+			"_note": "portable-learning-record: coordinator upload + live coverage report for one Application's admissions intake, modeled directly on CoursePackageImportView's upload+live-report shape. Reachable from ApplicationDetail's related-index panel."
+		},
+		{
+			"id": "LearningRecordShareVerifyView",
+			"route": "/learning-record-shares/:id/verify",
+			"type": "custom",
+			"title": "Verify learning record share",
+			"component": "LearningRecordShareVerifyView",
+			"_note": "portable-learning-record: public verification page for a LearningRecordShare's shared bundle, modeled directly on the existing CredentialVerify page's minimal, anonymous-verifier shape. Calls the public GET /api/learning-record-shares/{id}/verify endpoint — never a session-authenticated OR object read. type='custom' pages have no manifest-level `mode` (that key only applies to type='detail'/'form'); the underlying PageController#index/#catchAll route is `@NoAdminRequired` (not `#[PublicPage]`), so reaching this SPA route today still requires an NC session — the identical, pre-existing limitation CredentialVerify's own 'anonymous proof page' already carries, not a regression introduced here."
 		},
 		{
 			"id": "LessonIndex",
@@ -13863,6 +14153,20 @@
 						"id": "app-related",
 						"type": "related",
 						"title": "Related"
+					},
+					{
+						"id": "app-learning-record-imports",
+						"type": "object-list",
+						"title": "Prior learning records",
+						"icon": "FileImportOutline",
+						"_note": "portable-learning-record: presentation-only related-index panel resolving LearningRecordImport rows uploaded as evidence for this Application. Application's own schema is unchanged.",
+						"content": {
+							"register": "scholiq",
+							"schema": "learning-record-import",
+							"filter": {
+								"applicationId": "@objectId"
+							}
+						}
 					}
 				],
 				"layout": [
@@ -13881,6 +14185,14 @@
 						"gridY": 0,
 						"gridWidth": 4,
 						"gridHeight": 6
+					},
+					{
+						"id": "3",
+						"widgetId": "app-learning-record-imports",
+						"gridX": 0,
+						"gridY": 6,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"sidebar": {
