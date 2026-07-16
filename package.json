@@ -20,7 +20,8 @@
     "check:register": "node tests/validate-register.js",
     "check:json-strict": "node tests/validate-json-strict.js",
     "check:specs": "npm run check:json-strict && npm run check:manifest && npm run check:register",
-    "seed:e2e": "node tests/e2e/seed-example-data.mjs"
+    "seed:e2e": "node tests/e2e/seed-example-data.mjs",
+    "test:js-unit": "node --test tests/unit-js/*.test.mjs"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
@@ -43,7 +44,8 @@
     "pinia": "^2.1.7",
     "vue": "^2.7.14",
     "vue-material-design-icons": "^5.3.0",
-    "vue-router": "^3.6.5"
+    "vue-router": "^3.6.5",
+    "vuedraggable": "^2.24.3"
   },
   "overrides": {
     "libxmljs2": "^0.37.0",

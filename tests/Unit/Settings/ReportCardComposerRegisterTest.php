@@ -228,7 +228,17 @@ class ReportCardComposerRegisterTest extends TestCase
      */
     public function testRegisterVersionBumped(): void
     {
-        self::assertSame('0.15.0', $this->config['info']['version']);
+        // report-card-composer bumped 0.10.0 -> 0.11.0 at the time this test
+        // was written; the register has since moved on (course-authoring-ux
+        // is the current tip, 0.16.0) — this assertion only needs to prove
+        // the version is AT LEAST the one this change introduced, not pin
+        // the exact current tip forever (every later change would otherwise
+        // have to keep re-editing this file, the same collision the
+        // exam-board-case-handling precedent documents).
+        self::assertTrue(
+            version_compare($this->config['info']['version'], '0.11.0', '>='),
+            'info.version MUST be at least 0.11.0 (report-card-composer\'s own bump) — got '.$this->config['info']['version']
+        );
 
     }//end testRegisterVersionBumped()
 }//end class

@@ -98,6 +98,21 @@ import GroupPlanSubgroupLearnerContext from './views/GroupPlanSubgroupLearnerCon
 // resulting CoursePackageImportReport's entries table. Course export reuses
 // the existing CnExportWizard shared component (no new Vue file for export).
 import CoursePackageImportView from './views/CoursePackageImportView.vue'
+// course-authoring-ux: the two genuine new custom views this change adds —
+// the Course/Module/Lesson tree editor and the per-lesson block composer.
+// Everything else (CourseTemplate index/detail) is a declarative manifest
+// page. Reachable via direct route + the CourseTemplates menu entry, and
+// cross-linked to each other (and to LessonPlayer) from within their own
+// templates — CnDetailPage's declarative `widgets:[]` array has no escape
+// hatch for an app-registered custom component (verified against
+// CnDetailPage.vue: registryRendererFor() only resolves catalog widget
+// TYPES registered into the library's own dashboardWidgetRegistry, never
+// the app-level `registry` prop), so a CourseDetail/LessonDetail button
+// into these routes is not achievable declaratively today — the same
+// pre-existing gap ItemAuthorView/LessonPlayer/PortfolioBuilder already
+// ship with, not one this change introduces.
+import CourseBuilder from './views/CourseBuilder.vue'
+import LessonComposer from './views/LessonComposer.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -133,6 +148,7 @@ export default {
 	BookConferenceSlotsView: page(BookConferenceSlotsView),
 	BsaRiskDashboard: page(BsaRiskDashboard),
 	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
+	CourseBuilder: page(CourseBuilder),
 	CoursePackageImportView: page(CoursePackageImportView),
 	CourseQualityReport: page(CourseQualityReport),
 	DashboardAdmin: page(DashboardAdmin),
@@ -146,6 +162,7 @@ export default {
 	ItemAuthorView: page(ItemAuthorView),
 	LeaderboardView: page(LeaderboardView),
 	LearningDashboard: page(LearningDashboard),
+	LessonComposer: page(LessonComposer),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
 	MyTimetable: page(MyTimetable),

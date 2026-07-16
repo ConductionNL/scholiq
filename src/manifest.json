@@ -110,6 +110,13 @@
 					"order": 20
 				},
 				{
+					"id": "CourseTemplatesMenu",
+					"label": "Course templates",
+					"icon": "icon-clone",
+					"route": "CourseTemplates",
+					"order": 22
+				},
+				{
 					"id": "LearningPlans",
 					"label": "Learning plans",
 					"icon": "icon-files",
@@ -2049,6 +2056,22 @@
 			"title": "Lesson Player",
 			"component": "LessonPlayer",
 			"_note": "Interactive lesson playback (scene navigation, media controls, attempt tracking). No lib analogue."
+		},
+		{
+			"id": "CourseBuilder",
+			"route": "/courses/:courseId/builder",
+			"type": "custom",
+			"title": "Course Builder",
+			"component": "CourseBuilder",
+			"_note": "course-authoring-ux: the Course/Module/Lesson tree editor — create, reorder (drag-and-drop AND keyboard move-up/move-down, WCAG 2.1 AA SC 2.1.1), and delete modules and lessons; 'Save as template' / 'New course from template' actions against the new CourseTemplate schema. No lib analogue. No new PHP controller — every write is a call against OpenRegister's existing object-create/update/delete endpoints (ADR-022)."
+		},
+		{
+			"id": "LessonComposer",
+			"route": "/courses/:courseId/lessons/:lessonId/compose",
+			"type": "custom",
+			"title": "Lesson Composer",
+			"component": "LessonComposer",
+			"_note": "course-authoring-ux: the per-lesson block editor — add/remove/reorder (drag-and-drop AND keyboard, WCAG 2.1 AA SC 2.1.1) typed content blocks (richText/media/quiz/assignment/ltiTool) and edit each block's payload, persisting the full Lesson.blocks array via OR's existing object-update endpoint. No lib analogue."
 		},
 		{
 			"id": "Settings",
@@ -6284,6 +6307,83 @@
 			"title": "Features & roadmap",
 			"config": {
 				"documentationUrl": "https://scholiq.conduction.nl"
+			}
+		},
+		{
+			"id": "CourseTemplates",
+			"route": "/courses/templates",
+			"type": "index",
+			"title": "Course templates",
+			"config": {
+				"register": "scholiq",
+				"schema": "course-template"
+			}
+		},
+		{
+			"id": "CourseTemplateDetail",
+			"route": "/courses/templates/:id",
+			"type": "detail",
+			"title": "Course template",
+			"config": {
+				"register": "scholiq",
+				"schema": "course-template",
+				"_note": "course-authoring-ux: a Course Template is a reusable Course→Module→Lesson skeleton (+ optional CurriculumPlan skeleton) — a config/template archetype, mirroring LearningPlanTemplateDetail's shape. Body leads with the template definition (8-wide) and a Related panel resolving the source Course (sourceCoursesId, when captured via 'Save as template'). moduleStructure/curriculumPlanSkeleton render via the generic data widget (nested arrays/objects). 'Save as template' (from CourseBuilder) creates rows here; 'New course from template' (also in CourseBuilder) reads a row and instantiates a fresh Course tree — both bespoke actions live in CourseBuilder.vue, not here. No comms leaves (no linkedTypes) — a template is a definition, not a correspondence thread. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "ctpl-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "NoteTextOutline"
+					},
+					{
+						"id": "ctpl-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "ctpl-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "ctpl-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{

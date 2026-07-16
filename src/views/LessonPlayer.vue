@@ -6,15 +6,25 @@
   course+lesson pair, with xAPI-instrumented progress tracking and
   next/previous navigation between lessons in the same course.
 
+  course-authoring-ux: when contentType='text', renders lesson.blocks in
+  order (richText/media/quiz/assignment/ltiTool), replacing the previously
+  dead lesson.title/lesson.summary/lesson.content reads — those fields have
+  never existed on the Lesson schema; the "text lesson" render path had no
+  real data to display until this change gave contentType='text' an actual
+  authoring surface (LessonComposer.vue) and a real rendering path.
+
   Talks only to OpenRegister's REST API:
     - GET /api/objects/scholiq/Course/:courseId
     - GET /api/objects/scholiq/Lesson/:lessonId
+    - GET /api/objects/scholiq/Material|Assessment|Assignment/:id (block references)
     - POST /api/objects/scholiq/LessonProgress (record xAPI statements)
 
   Uses Options API + direct fetch calls (no custom Pinia store modules).
 
   SPDX-License-Identifier: EUPL-1.2
   Copyright (C) 2026 Conduction B.V.
+
+  @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
 -->
 
 <template>
@@ -51,15 +61,12 @@
 
 		<article v-else class="lesson-player__content">
 			<header class="lesson-player__header">
-				<p v-if="course && course.title" class="lesson-player__course">
-					{{ course.title }}
+				<p v-if="course && course.name" class="lesson-player__course">
+					{{ course.name }}
 				</p>
-				<h1 v-if="lesson && lesson.title" class="lesson-player__title">
-					{{ lesson.title }}
+				<h1 v-if="lesson && lesson.name" class="lesson-player__title">
+					{{ lesson.name }}
 				</h1>
-				<p v-if="lesson && lesson.summary" class="lesson-player__summary">
-					{{ lesson.summary }}
-				</p>
 			</header>
 
 			<section v-if="isLtiLesson" class="lesson-player__lti">
@@ -104,10 +111,81 @@
 				</NcEmptyContent>
 			</section>
 
-			<section
-				v-else-if="lesson && lesson.content"
-				class="lesson-player__body"
-				v-html="sanitisedContent" />
+			<section v-else-if="isTextLesson" class="lesson-player__blocks">
+				<div
+					v-for="block in sortedBlocks"
+					:key="block.blockId"
+					class="lesson-player__block">
+					<!-- richText -->
+					<div
+						v-if="block.type === 'richText'"
+						class="lesson-player__block-richtext"
+						v-html="renderBlockMarkdown(block.text)" />
+
+					<!-- media -->
+					<div v-else-if="block.type === 'media'" class="lesson-player__block-media">
+						<template v-if="materialFor(block)">
+							<p class="lesson-player__block-media-kind">
+								{{ materialKindLabel(materialFor(block).kind) }}
+							</p>
+							<video
+								v-if="materialFor(block).kind === 'video' && materialFor(block).url"
+								class="lesson-player__block-video"
+								controls
+								:src="materialFor(block).url">
+								{{ materialFor(block).title }}
+							</video>
+							<a
+								v-else-if="materialFor(block).kind === 'link' && materialFor(block).url"
+								:href="materialFor(block).url"
+								target="_blank"
+								rel="noopener noreferrer">
+								{{ materialFor(block).title }}
+							</a>
+							<p v-else>
+								{{ materialFor(block).title }}
+							</p>
+						</template>
+						<p v-else class="lesson-player__block-media-missing">
+							{{ t('scholiq', 'Referenced material is unavailable.') }}
+						</p>
+					</div>
+
+					<!-- quiz -->
+					<div v-else-if="block.type === 'quiz'" class="lesson-player__block-quiz">
+						<p>{{ assessmentFor(block) ? assessmentFor(block).title : t('scholiq', 'Quiz') }}</p>
+						<NcButton type="primary" @click="startQuiz(block)">
+							{{ t('scholiq', 'Start quiz') }}
+						</NcButton>
+					</div>
+
+					<!-- assignment -->
+					<div v-else-if="block.type === 'assignment'" class="lesson-player__block-assignment">
+						<p>{{ assignmentFor(block) ? assignmentFor(block).title : t('scholiq', 'Assignment') }}</p>
+						<NcButton type="secondary" @click="openAssignment(block)">
+							{{ t('scholiq', 'View assignment') }}
+						</NcButton>
+					</div>
+
+					<!-- ltiTool -->
+					<div v-else-if="block.type === 'ltiTool'" class="lesson-player__block-lti">
+						<div v-if="blockLtiState[block.blockId] && blockLtiState[block.blockId].launching" aria-live="polite">
+							<span class="icon-loading" aria-hidden="true" />
+							<span>{{ t('scholiq', 'Starting external tool…') }}</span>
+						</div>
+						<p v-else-if="blockLtiState[block.blockId] && blockLtiState[block.blockId].error" role="alert">
+							{{ blockLtiState[block.blockId].error }}
+						</p>
+						<NcButton v-else type="secondary" @click="launchLtiForBlock(block)">
+							{{ t('scholiq', 'Open external tool') }}
+						</NcButton>
+					</div>
+				</div>
+
+				<p v-if="sortedBlocks.length === 0" class="lesson-player__block-empty">
+					{{ t('scholiq', 'This lesson has no content blocks yet.') }}
+				</p>
+			</section>
 
 			<section v-else class="lesson-player__placeholder">
 				<NcEmptyContent
@@ -144,6 +222,7 @@
 import { generateUrl } from '@nextcloud/router'
 import { getCurrentUser } from '@nextcloud/auth'
 import { NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { cnRenderMarkdown } from '@conduction/nextcloud-vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
@@ -213,28 +292,49 @@ export default {
 				reason: '',
 				availableAt: null,
 			},
+			// course-authoring-ux: referenced-object caches for block
+			// rendering (contentType === 'text'), keyed by UUID.
+			materialsById: {},
+			assessmentsById: {},
+			assignmentsById: {},
+			// Per-block LTI launch state, keyed by blockId — a lesson can
+			// carry more than one ltiTool block (LtiToolPlacement.lessonId
+			// is nullable, so multiple placements can target one Lesson),
+			// so launch state cannot be a single shared object the way the
+			// whole-lesson contentType='lti' branch uses.
+			blockLtiState: {},
 		}
 	},
 
 	computed: {
 		/**
-		 * Pass-through of the lesson's HTML content. The server validates
-		 * the content payload via OR's value-validator; this template renders
-		 * it as a string. Author-tooling is responsible for sanitisation
-		 * before persistence.
+		 * True when this lesson's body is authored as blocks
+		 * (contentType === 'text' — course-authoring-ux).
 		 *
-		 * @return {string}
-		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
+		 * @return {boolean}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
 		 */
-		sanitisedContent() {
-			return this.lesson?.content ?? ''
+		isTextLesson() {
+			return this.lesson?.contentType === 'text'
+		},
+
+		/**
+		 * lesson.blocks sorted by order — the sequence LessonComposer.vue
+		 * persists is trusted, but sort defensively so a manually-edited
+		 * object still renders in the right sequence.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		sortedBlocks() {
+			return (this.lesson?.blocks ?? []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 		},
 
 		/**
 		 * True when this lesson's content is an LTI 1.3 tool placement.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
+		 * @spec openspec/specs/course-management/spec.md#requirement-place-an-lti-1-3-tool-inside-a-lesson-via-a-dedicated-placement-object
 		 */
 		isLtiLesson() {
 			return this.lesson?.contentType === 'lti'
@@ -271,7 +371,7 @@ export default {
 		 * drip delay.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/adaptive-release-and-prerequisites/specs/course-management/spec.md#requirement-lesson-supports-drip-release-relative-to-each-learners-own-enrolment-date
+		 * @spec openspec/changes/adaptive-release-and-prerequisites/specs/course-management/spec.md#requirement-lesson-supports-drip-release-relative-to-each-learner-s-own-enrolment-date
 		 */
 		lockedDescription() {
 			if (this.releaseStatus.reason) {
@@ -285,7 +385,7 @@ export default {
 	 * Load the Course + Lesson pair on mount for xAPI-instrumented playback.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
+	 * @spec openspec/specs/course-management/spec.md#requirement-course-module-lesson-hierarchy-in-openregister
 	 */
 	async mounted() {
 		try {
@@ -327,6 +427,13 @@ export default {
 		if (this.isLtiLesson) {
 			await this.launchLti()
 		}
+
+		if (this.isTextLesson) {
+			// Best-effort — a failed reference fetch degrades that one
+			// block to its "unavailable" state rather than blocking the
+			// whole lesson from rendering.
+			await this.loadBlockReferences()
+		}
 	},
 
 	methods: {
@@ -334,11 +441,194 @@ export default {
 		 * Navigate back to the parent course detail view.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-19
+		 * @spec openspec/specs/course-management/spec.md#requirement-course-module-lesson-hierarchy-in-openregister
 		 */
 		goBack() {
 			if (this.$router) {
 				this.$router.push({ name: 'CourseDetail', params: { id: this.courseId } }).catch(() => {})
+			}
+		},
+
+		/**
+		 * Fetch every object referenced by this lesson's blocks (Material
+		 * for media blocks, Assessment for quiz blocks, Assignment for
+		 * assignment blocks) so the block renderers below have data to
+		 * show. ltiTool blocks resolve their placement lazily on click
+		 * (launchLtiForBlock), mirroring the whole-lesson isLtiLesson path.
+		 * Best-effort per reference — one failed fetch degrades only that
+		 * block, never the whole lesson.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		async loadBlockReferences() {
+			const materialIds = new Set()
+			const assessmentIds = new Set()
+			const assignmentIds = new Set()
+			for (const block of this.sortedBlocks) {
+				if (block.type === 'media' && block.materialId) materialIds.add(block.materialId)
+				if (block.type === 'quiz' && block.assessmentId) assessmentIds.add(block.assessmentId)
+				if (block.type === 'assignment' && block.assignmentId) assignmentIds.add(block.assignmentId)
+			}
+
+			const fetchInto = async (schema, id, target) => {
+				try {
+					const resp = await fetch(
+						generateUrl(`/apps/openregister/api/objects/scholiq/${schema}/${id}`),
+						{ headers: { 'OCS-APIREQUEST': 'true', Accept: 'application/json' } },
+					)
+					if (!resp.ok) return
+					const json = await resp.json()
+					this.$set(target, id, json.object ?? json ?? {})
+				} catch {
+					// Best-effort — the block renders its "unavailable" state.
+				}
+			}
+
+			await Promise.all([
+				...[...materialIds].map((id) => fetchInto('Material', id, this.materialsById)),
+				...[...assessmentIds].map((id) => fetchInto('Assessment', id, this.assessmentsById)),
+				...[...assignmentIds].map((id) => fetchInto('Assignment', id, this.assignmentsById)),
+			])
+		},
+
+		/**
+		 * Render a richText block's markdown as sanitised HTML.
+		 *
+		 * @param {string|null|undefined} text Markdown source.
+		 * @return {string}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		renderBlockMarkdown(text) {
+			return cnRenderMarkdown(text || '')
+		},
+
+		/**
+		 * Resolve a media block's referenced Material, or null if not
+		 * (yet) loaded.
+		 *
+		 * @param {object} block A media-type block.
+		 * @return {object|null}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		materialFor(block) {
+			return this.materialsById[block.materialId] ?? null
+		},
+
+		/**
+		 * Resolve a quiz block's referenced Assessment, or null.
+		 *
+		 * @param {object} block A quiz-type block.
+		 * @return {object|null}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		assessmentFor(block) {
+			return this.assessmentsById[block.assessmentId] ?? null
+		},
+
+		/**
+		 * Resolve an assignment block's referenced Assignment, or null.
+		 *
+		 * @param {object} block An assignment-type block.
+		 * @return {object|null}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		assignmentFor(block) {
+			return this.assignmentsById[block.assignmentId] ?? null
+		},
+
+		/**
+		 * Human-readable label for a Material.kind value.
+		 *
+		 * @param {string} kind Material.kind value.
+		 * @return {string}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		materialKindLabel(kind) {
+			const labels = {
+				slides: this.t('scholiq', 'Slides'),
+				reading: this.t('scholiq', 'Reading'),
+				video: this.t('scholiq', 'Video'),
+				scorm: this.t('scholiq', 'SCORM package'),
+				cmi5: this.t('scholiq', 'cmi5 package'),
+				lti: this.t('scholiq', 'External tool'),
+				link: this.t('scholiq', 'Link'),
+				document: this.t('scholiq', 'Document'),
+				other: this.t('scholiq', 'File'),
+			}
+			return labels[kind] ?? kind
+		},
+
+		/**
+		 * Navigate to TakeAssessmentView for a quiz block's referenced
+		 * Assessment ("embeds the referenced Assessment's take-flow").
+		 *
+		 * @param {object} block A quiz-type block.
+		 * @return {void}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		startQuiz(block) {
+			if (this.$router && block.assessmentId) {
+				this.$router.push({ name: 'TakeAssessmentView', params: { assessmentId: block.assessmentId } }).catch(() => {})
+			}
+		},
+
+		/**
+		 * Navigate to AssignmentDetail for an assignment block's referenced
+		 * Assignment ("a summary card linking to the referenced Assignment").
+		 *
+		 * @param {object} block An assignment-type block.
+		 * @return {void}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		openAssignment(block) {
+			if (this.$router && block.assignmentId) {
+				this.$router.push({ name: 'AssignmentDetail', params: { id: block.assignmentId } }).catch(() => {})
+			}
+		},
+
+		/**
+		 * Launch an ltiTool block's LtiToolPlacement — the same
+		 * launch-delegation flow launchLti()/submitLtiLaunchForm() already
+		 * use for the whole-lesson contentType='lti' branch
+		 * (LessonPlayer.vue:238-298 at the time of writing), scoped to this
+		 * one block's ltiToolPlacementId rather than lesson.contentRef, with
+		 * PER-BLOCK state (blockLtiState) since a lesson may carry more than
+		 * one ltiTool block.
+		 *
+		 * @param {object} block An ltiTool-type block.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/course-authoring-ux/specs/course-management/spec.md#requirement-lessonplayer-renders-a-lesson-s-authored-blocks
+		 */
+		async launchLtiForBlock(block) {
+			const placementId = block.ltiToolPlacementId
+			if (!placementId) {
+				this.$set(this.blockLtiState, block.blockId, {
+					launching: false,
+					error: this.t('scholiq', 'This block has no LTI tool placement configured.'),
+				})
+				return
+			}
+
+			this.$set(this.blockLtiState, block.blockId, { launching: true, error: '' })
+
+			try {
+				const res = await fetch(
+					generateUrl('/apps/scholiq/api/lti-placements/' + placementId + '/launch'),
+					{ method: 'POST', headers: { requesttoken: window.OC?.requestToken ?? '' } },
+				)
+				const body = await res.json().catch(() => ({}))
+				if (!res.ok) {
+					throw new Error(body?.error || this.t('scholiq', 'Failed to start the tool (HTTP {status})', { status: res.status }))
+				}
+				if (!body?.formActionUrl || !body?.idToken) {
+					throw new Error(this.t('scholiq', 'OpenConnector returned an unexpected launch response.'))
+				}
+
+				this.$set(this.blockLtiState, block.blockId, { launching: false, error: '' })
+				this.submitLtiLaunchForm(body)
+			} catch (e) {
+				this.$set(this.blockLtiState, block.blockId, { launching: false, error: e?.message ?? String(e) })
 			}
 		},
 
@@ -466,8 +756,8 @@ export default {
 		 * LtiToolPlacement UUID; the backend resolves it.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
-		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.2
+		 * @spec openspec/specs/course-management/spec.md#requirement-place-an-lti-1-3-tool-inside-a-lesson-via-a-dedicated-placement-object
+		 * @spec openspec/specs/course-management/spec.md#requirement-lessonplayer-delegates-the-oidc-launch-to-the-openconnector-adapter
 		 */
 		async launchLti() {
 			const placementId = this.lesson?.contentRef
@@ -511,7 +801,7 @@ export default {
 		 *
 		 * @param {object} launch The opaque {formActionUrl, idToken, launchMode} response.
 		 * @return {void}
-		 * @spec openspec/changes/lti-tool-placement/tasks.md#task-3.1
+		 * @spec openspec/specs/course-management/spec.md#requirement-place-an-lti-1-3-tool-inside-a-lesson-via-a-dedicated-placement-object
 		 */
 		submitLtiLaunchForm(launch) {
 			const form = document.createElement('form')
@@ -595,5 +885,51 @@ export default {
 	color: var(--color-error);
 	margin: 0;
 	font-size: 0.9em;
+}
+
+.lesson-player__blocks {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.lesson-player__block {
+	line-height: 1.6;
+}
+
+.lesson-player__block-richtext :deep(p:first-child) {
+	margin-top: 0;
+}
+
+.lesson-player__block-media,
+.lesson-player__block-quiz,
+.lesson-player__block-assignment,
+.lesson-player__block-lti {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius, 4px);
+}
+
+.lesson-player__block-media-kind {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.85em;
+	margin: 0;
+}
+
+.lesson-player__block-media-missing {
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
+}
+
+.lesson-player__block-video {
+	max-width: 100%;
+}
+
+.lesson-player__block-empty {
+	color: var(--color-text-maxcontrast);
+	font-style: italic;
 }
 </style>
