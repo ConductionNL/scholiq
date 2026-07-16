@@ -144,6 +144,24 @@ return [
         ['name' => 'paymentTransaction#initiate', 'url' => '/api/payments/{orderId}/initiate', 'verb' => 'POST'],
         ['name' => 'paymentTransaction#callback', 'url' => '/api/payments/callback',            'verb' => 'POST'],
 
+        // Portable learning record — the calling user's own composed
+        // trajectory (RBAC-gap read, mirrors LeaderboardController's own
+        // reasoning: OR's per-schema self-match RBAC cannot serve a
+        // cross-schema composed read).
+        // Controller: LearningRecordController (slug: learningRecord).
+        ['name' => 'learningRecord#mine', 'url' => '/api/learning-records/me', 'verb' => 'GET'],
+
+        // Portable learning record — prior-institution bundle upload during
+        // Application intake (ADR-023: learning-record.import).
+        // Controller: LearningRecordImportController (slug: learningRecordImport).
+        ['name' => 'learningRecordImport#upload', 'url' => '/api/applications/{applicationId}/learning-record-imports', 'verb' => 'POST'],
+
+        // Portable learning record — public verification of a
+        // LearningRecordShare's shared bundle, no auth, per ADR-031
+        // external-system contract (mirrors credentialVerify#verify).
+        // Controller: LearningRecordShareVerifyController (slug: learningRecordShareVerify).
+        ['name' => 'learningRecordShareVerify#verify', 'url' => '/api/learning-record-shares/{id}/verify', 'verb' => 'GET'],
+
         // SPA catch-all — Vue history mode; specific routes MUST precede this.
         ['name' => 'page#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
     ],

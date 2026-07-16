@@ -126,6 +126,15 @@ import LessonComposer from './views/LessonComposer.vue'
 // TimetableConflict, and ExamAccommodation index/detail pages are declarative
 // manifest pages.
 import TimetableConflictQueue from './views/TimetableConflictQueue.vue'
+// portable-learning-record: the three genuine new custom views this change
+// adds — the learner's aggregate dashboard + export/share actions, the
+// coordinator's prior-record upload + live coverage report, and the public
+// verification page for a granted share's bundle. Every other
+// LearningRecordExport/LearningRecordShare/LearningRecordImport screen is a
+// declarative manifest index/detail page.
+import MyLearningRecordView from './views/MyLearningRecordView.vue'
+import LearningRecordImportView from './views/LearningRecordImportView.vue'
+import LearningRecordShareVerifyView from './views/LearningRecordShareVerifyView.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -175,9 +184,12 @@ export default {
 	ItemAuthorView: page(ItemAuthorView),
 	LeaderboardView: page(LeaderboardView),
 	LearningDashboard: page(LearningDashboard),
+	LearningRecordImportView: page(LearningRecordImportView),
+	LearningRecordShareVerifyView: page(LearningRecordShareVerifyView),
 	LessonComposer: page(LessonComposer),
 	LessonPlayer: page(LessonPlayer),
 	MarkSubmissionView: page(MarkSubmissionView),
+	MyLearningRecordView: page(MyLearningRecordView),
 	MyTimetable: page(MyTimetable),
 	PeerReviewMarkingView: page(PeerReviewMarkingView),
 	PeopleDashboard: page(PeopleDashboard),
