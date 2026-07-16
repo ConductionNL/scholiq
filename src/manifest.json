@@ -82,6 +82,27 @@
 					"order": 10
 				},
 				{
+					"id": "CoursePackageImportMenu",
+					"label": "Import course package",
+					"icon": "icon-upload",
+					"route": "CoursePackageImportView",
+					"order": 11
+				},
+				{
+					"id": "CoursePackageExportMenu",
+					"label": "Export course package",
+					"icon": "icon-download",
+					"route": "CoursePackageExport",
+					"order": 12
+				},
+				{
+					"id": "CoursePackageImportReportsMenu",
+					"label": "Course package import reports",
+					"icon": "icon-details",
+					"route": "CoursePackageImportReports",
+					"order": 13
+				},
+				{
 					"id": "Curriculum",
 					"label": "Curriculum",
 					"icon": "icon-projects",
@@ -1734,6 +1755,116 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "CoursePackageImportReports",
+			"route": "/course-packages/reports",
+			"type": "index",
+			"title": "Course package import reports",
+			"_note": "course-package-import-export: the anti-Canvas promise made structural — one CoursePackageImportReport per course-package import attempt, listing every source-package resource's outcome (imported/degraded/dropped). Index lists every attempt; CoursePackageImportReportDetail renders the full entries table.",
+			"config": {
+				"register": "scholiq",
+				"schema": "course-package-import-report"
+			}
+		},
+		{
+			"id": "CoursePackageImportReportDetail",
+			"route": "/course-packages/reports/:id",
+			"type": "detail",
+			"title": "Course package import report",
+			"_note": "course-package-import-export: renders one import attempt's full outcome — summary counts, lifecycle (running/succeeded/partial/failed), and the entries[] table (resourceIdentifier/resourceType/title/outcome/targetType/targetId/reason) naming every source resource, never a silent omission. Links to the created Course when one exists.",
+			"config": {
+				"register": "scholiq",
+				"schema": "course-package-import-report",
+				"widgets": [
+					{
+						"id": "cpir-summary",
+						"type": "data",
+						"title": "Import summary",
+						"icon": "PackageVariant",
+						"content": {
+							"columns": 2,
+							"include": [
+								"sourceFormat",
+								"sourceFilename",
+								"courseId",
+								"importedBy",
+								"importedAt",
+								"lifecycle",
+								"resourcesTotal",
+								"resourcesImported",
+								"resourcesDegraded",
+								"resourcesDropped",
+								"errorMessage"
+							]
+						}
+					},
+					{
+						"id": "cpir-entries",
+						"type": "data",
+						"title": "Resource entries",
+						"icon": "TableOutline",
+						"content": {
+							"columns": 1,
+							"include": [
+								"entries"
+							]
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "cpir-summary",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "cpir-entries",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 12,
+						"gridHeight": 6,
+						"showTitle": true
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "CoursePackageImportView",
+			"route": "/course-packages/import",
+			"type": "custom",
+			"title": "Import course package",
+			"component": "CoursePackageImportView",
+			"_note": "course-package-import-export: the one genuine new custom view this change adds — uploads an IMS Common Cartridge 1.3 or Moodle backup (.mbz) package and renders the resulting CoursePackageImportReport's entries table (filterable by outcome), so an instructional designer sees every imported, degraded, and dropped resource in one place. No PHP CRUD controller — CoursePackageImportController is thin per ADR-022."
+		},
+		{
+			"id": "CoursePackageExport",
+			"route": "/course-packages/export",
+			"type": "custom",
+			"title": "Export course package",
+			"component": "CnExportWizard",
+			"_note": "course-package-import-export: mounts CnExportWizard from @conduction/nextcloud-vue for the course export (Course scope + common-cartridge/scholiq-json format picker → server-side bundle), the same declarative pattern AuditPackExport (src/manifest.json) already uses — no bespoke Vue file needed."
 		},
 		{
 			"id": "LessonIndex",

@@ -43,6 +43,21 @@ return [
         // Controller: QtiImportController (slug: qtiImport).
         ['name' => 'qtiImport#import', 'url' => '/api/assessment/qti-import', 'verb' => 'POST'],
 
+        // QTI 3.0 package export for an ItemBank — completes the import-only
+        // "Items use QTI 3.0 as canonical form" requirement into a round-trip
+        // (ADR-023: qti.export). Controller: QtiExportController (slug: qtiExport).
+        ['name' => 'qtiExport#export', 'url' => '/api/assessment/qti-export', 'verb' => 'GET'],
+
+        // Course-package import (IMS Common Cartridge 1.3 / Moodle .mbz) — the
+        // anti-Canvas migration-fidelity import path (ADR-023: course-package.import).
+        // Controller: CoursePackageImportController (slug: coursePackageImport).
+        ['name' => 'coursePackageImport#import', 'url' => '/api/course-management/course-package-import', 'verb' => 'POST'],
+
+        // Course-package export (Common Cartridge 1.3 / scholiq-native JSON) — the
+        // anti-lock-in export path (ADR-023: course-package.export).
+        // Controller: CoursePackageExportController (slug: coursePackageExport).
+        ['name' => 'coursePackageExport#export', 'url' => '/api/course-management/course-package-export', 'verb' => 'GET'],
+
         // School-year rollover wizard — proposal + side-effect-free preview,
         // authorized via the ADR-023 action matrix (rollover.plan).
         // Controller: RolloverController (slug: rollover).
