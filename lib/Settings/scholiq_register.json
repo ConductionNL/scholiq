@@ -18473,6 +18473,191 @@
                 },
                 "x-openregister-seed": []
             },
+            "CoursePackageImportReport": {
+                "slug": "course-package-import-report",
+                "icon": "PackageVariant",
+                "version": "0.1.0",
+                "title": "CoursePackageImportReport",
+                "description": "The anti-Canvas promise made structural: one record per course-package import attempt (IMS Common Cartridge 1.3 or Moodle .mbz), naming every source resource's outcome (imported/degraded/dropped) so nothing is silently lost. Created by CoursePackageImportService for every import, whether the package fully succeeds, partially succeeds, or fails to parse at all.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "sourceFormat",
+                    "sourceFilename",
+                    "importedBy",
+                    "importedAt",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "sourceFormat": {
+                        "type": "string",
+                        "enum": [
+                            "common-cartridge-1.3",
+                            "moodle-backup",
+                            "scholiq-json"
+                        ],
+                        "description": "Detected format of the uploaded package. scholiq-json is the lossless round-trip target of this change's own CoursePackageExportService::exportScholiqJson() output.",
+                        "example": "common-cartridge-1.3",
+                        "title": "Source Format"
+                    },
+                    "sourceFilename": {
+                        "type": "string",
+                        "description": "Original filename of the uploaded package, as supplied by the browser.",
+                        "example": "algebra-1-course.imscc",
+                        "title": "Source Filename"
+                    },
+                    "courseId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the top-level Course created by this import. Null until a Course has been created; remains null when lifecycle resolves to failed.",
+                        "title": "Course ID"
+                    },
+                    "importedBy": {
+                        "type": "string",
+                        "description": "Nextcloud user ID of the instructional designer who ran the import.",
+                        "title": "Imported By"
+                    },
+                    "importedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "ISO-8601 timestamp when the import was started.",
+                        "title": "Imported At"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "enum": [
+                            "running",
+                            "succeeded",
+                            "partial",
+                            "failed"
+                        ],
+                        "default": "running",
+                        "description": "Import lifecycle state. Resolves to succeeded only when zero entries are degraded/dropped; any non-imported entry resolves to partial (a normal, non-error terminal state); an archive that cannot be parsed at all resolves to failed.",
+                        "title": "Lifecycle State"
+                    },
+                    "resourcesTotal": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Total number of source-package resources encountered.",
+                        "title": "Resources Total"
+                    },
+                    "resourcesImported": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Count of resources whose entries.outcome is imported.",
+                        "title": "Resources Imported"
+                    },
+                    "resourcesDegraded": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Count of resources whose entries.outcome is degraded.",
+                        "title": "Resources Degraded"
+                    },
+                    "resourcesDropped": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Count of resources whose entries.outcome is dropped.",
+                        "title": "Resources Dropped"
+                    },
+                    "errorMessage": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Human-readable failure reason. Populated only when lifecycle is failed (corrupt archive, unrecognised manifest).",
+                        "title": "Error Message"
+                    },
+                    "entries": {
+                        "type": "array",
+                        "description": "One row per source-package resource, with zero omissions. A resource type the importer does not support MUST still produce a dropped entry naming why.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "resourceIdentifier",
+                                "resourceType",
+                                "title",
+                                "outcome"
+                            ],
+                            "properties": {
+                                "resourceIdentifier": {
+                                    "type": "string",
+                                    "title": "Resource Identifier",
+                                    "description": "The source package's own identifier for this resource (manifest resource id / Moodle module id)."
+                                },
+                                "resourceType": {
+                                    "type": "string",
+                                    "title": "Resource Type",
+                                    "description": "The source resource type as named by the format (e.g. webcontent, imsqti_item, basiclti, quiz, forum)."
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "title": "Resource Title",
+                                    "description": "Human-readable title of the source resource, taken verbatim from the package."
+                                },
+                                "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                        "imported",
+                                        "degraded",
+                                        "dropped"
+                                    ],
+                                    "title": "Outcome",
+                                    "description": "Whether this resource was fully imported, imported with a loss of fidelity, or not imported at all."
+                                },
+                                "targetType": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Target Type",
+                                    "description": "The scholiq schema the resource was materialised as (Course/Lesson/Material/Item/LtiToolPlacement/Assignment/Rubric). Null when outcome is dropped."
+                                },
+                                "targetId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "title": "Target ID",
+                                    "description": "UUID of the created object named by targetType. Null when outcome is dropped."
+                                },
+                                "reason": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "title": "Reason",
+                                    "description": "Human-readable explanation, required for degraded/dropped entries (e.g. 'Moodle question type not supported: drag-and-drop')."
+                                }
+                            }
+                        },
+                        "default": [],
+                        "title": "Entries"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant identifier for multi-tenant isolation.",
+                        "title": "Tenant ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "running",
+                    "transitions": {
+                        "resolveSucceeded": {
+                            "from": "running",
+                            "to": "succeeded"
+                        },
+                        "resolvePartial": {
+                            "from": "running",
+                            "to": "partial"
+                        },
+                        "resolveFailed": {
+                            "from": "running",
+                            "to": "failed"
+                        }
+                    }
+                }
+            },
             "CourseQualityScore": {
                 "slug": "course-quality-score",
                 "icon": "ChartLineVariant",

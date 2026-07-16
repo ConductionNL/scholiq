@@ -114,16 +114,7 @@ class QtiImportService
 
         try {
             $this->extractZip(zipPath: $packagePath, targetDir: $tmpDir);
-            $packageType  = $this->detectPackageType(dir: $tmpDir);
-            $itemXmlPaths = $this->collectItemPaths(dir: $tmpDir, packageType: $packageType);
-
-            $createdUuids = [];
-            foreach ($itemXmlPaths as $xmlPath) {
-                $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId, tenantId: $tenantId);
-                if ($uuid !== null) {
-                    $createdUuids[] = $uuid;
-                }
-            }
+            $createdUuids = $this->importFromDirectory(dir: $tmpDir, itemBankId: $itemBankId, tenantId: $tenantId);
 
             $this->logger->info(
                 '[QtiImportService] Imported {count} items into ItemBank {bankId} from {path}.',
@@ -141,6 +132,41 @@ class QtiImportService
     }//end import()
 
     /**
+     * Import QTI items from an already-extracted package directory.
+     *
+     * Extracted from `import()` (design.md "Why extraction is refactored, not
+     * duplicated") so `CoursePackageImportService` can reuse this exact parse
+     * path against a directory it has already extracted itself (a CC or Moodle
+     * package's own extraction is owned by that caller — this method never
+     * touches ZIP/tar handling), rather than duplicating the manifest-walk /
+     * item-parsing logic. `import()` is now a two-line wrapper: `extractZip()`
+     * then this method.
+     *
+     * @param string $dir        Absolute path to an already-extracted package directory.
+     * @param string $itemBankId UUID of the target ItemBank.
+     * @param string $tenantId   Optional tenant UUID; defaults to single-tenant mode when empty.
+     *
+     * @return string[] Array of created Item UUIDs.
+     *
+     * @spec openspec/changes/course-package-import-export/design.md#why-extraction-is-refactored-not-duplicated
+     */
+    public function importFromDirectory(string $dir, string $itemBankId, string $tenantId=''): array
+    {
+        $packageType  = $this->detectPackageType(dir: $dir);
+        $itemXmlPaths = $this->collectItemPaths(dir: $dir, packageType: $packageType);
+
+        $createdUuids = [];
+        foreach ($itemXmlPaths as $xmlPath) {
+            $uuid = $this->importSingleItem(xmlPath: $xmlPath, itemBankId: $itemBankId, tenantId: $tenantId);
+            if ($uuid !== null) {
+                $createdUuids[] = $uuid;
+            }
+        }
+
+        return $createdUuids;
+    }//end importFromDirectory()
+
+    /**
      * Extract a ZIP archive to a target directory with zip-slip and decompression-bomb protection.
      *
      * Defences applied (fixes #207):
@@ -149,6 +175,12 @@ class QtiImportService
      *   - Decompression bomb: total uncompressed size is checked before extraction;
      *     individual files over 100 MB are rejected.
      *
+     * Made public (was private) so `CoursePackageImportService` can extract a
+     * Common Cartridge archive's *entire* tree (not just item XML) through this
+     * exact hardened path instead of duplicating the zip-slip/decompression-bomb
+     * guards — design.md "Why extraction is refactored, not duplicated": "zero
+     * duplicated security logic".
+     *
      * @param string $zipPath   Absolute path to the ZIP file.
      * @param string $targetDir Absolute path to the destination directory.
      *
@@ -156,9 +188,9 @@ class QtiImportService
      *
      * @throws \RuntimeException When the ZIP cannot be opened or a security violation is detected.
      *
-     * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-4
+     * @spec openspec/changes/course-package-import-export/design.md#why-extraction-is-refactored-not-duplicated
      */
-    private function extractZip(string $zipPath, string $targetDir): void
+    public function extractZip(string $zipPath, string $targetDir): void
     {
         // #207: decompression-bomb cap — 256 MB total uncompressed per import.
         $maxTotalBytes    = 256 * 1024 * 1024;

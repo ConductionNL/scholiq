@@ -93,6 +93,11 @@ import SubjectChoicePicker from './views/SubjectChoicePicker.vue'
 // array-membership lookup. Every other GroupPlan/GroupPlanSubgroup/
 // GroupPlanEvaluation screen is a declarative manifest page.
 import GroupPlanSubgroupLearnerContext from './views/GroupPlanSubgroupLearnerContext.vue'
+// course-package-import-export: the one genuine new custom view this change
+// adds — uploads a Common Cartridge/Moodle course package and renders the
+// resulting CoursePackageImportReport's entries table. Course export reuses
+// the existing CnExportWizard shared component (no new Vue file for export).
+import CoursePackageImportView from './views/CoursePackageImportView.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -128,6 +133,7 @@ export default {
 	BookConferenceSlotsView: page(BookConferenceSlotsView),
 	BsaRiskDashboard: page(BsaRiskDashboard),
 	ConferenceScheduleBoard: page(ConferenceScheduleBoard),
+	CoursePackageImportView: page(CoursePackageImportView),
 	CourseQualityReport: page(CourseQualityReport),
 	DashboardAdmin: page(DashboardAdmin),
 	DashboardTeacher: page(DashboardTeacher),
