@@ -16,7 +16,15 @@
  * they do not belong to, and a caller with no cohorts receives an empty
  * timetable (HTTP 200), never an error. This controller introduces NO new
  * schema or storage and NEVER creates or mutates an object — it only reads the
- * existing `Session`, `Cohort` and `Enrolment` objects.
+ * existing `Session`, `Cohort`, `Room`, and `Enrolment` objects.
+ *
+ * timetabling-and-substitution additionally projects each Session's `roomId`
+ * (with resolved `Room` name/capacity/facilities when set), `lifecycle`,
+ * `substituteTeacherId`, `changeReasonKind`, and `changeReason`, plus a
+ * same-day `changes` list (Sessions whose `cancel`/`substitute-teacher`
+ * transition — server-stamped onto `changedAt` — occurred today, regardless
+ * of the requested window) — the "dagrooster" surface. Still read-only: no
+ * new write endpoint, no new schema.
  *
  * @category Controller
  * @package  OCA\Scholiq\Controller
@@ -122,15 +130,19 @@ class TimetableController extends Controller
                 ['uid' => $uid, 'from' => $windowFrom, 'to' => $windowTo]
             );
             return new JSONResponse(
-                data: ['sessions' => [], 'from' => $windowFrom, 'to' => $windowTo],
+                data: ['sessions' => [], 'from' => $windowFrom, 'to' => $windowTo, 'changes' => []],
                 statusCode: Http::STATUS_OK
             );
         }
 
-        $sessions = $this->fetchSessions(cohortIds: $cohortIds, windowFrom: $windowFrom, windowTo: $windowTo);
+        $rawSessions = $this->loadRawSessionsForCohorts(cohortIds: $cohortIds);
+        $roomCache   = $this->preloadRooms(sessions: $rawSessions);
+
+        $sessions = $this->projectWindowedSessions(rawSessions: $rawSessions, windowFrom: $windowFrom, windowTo: $windowTo, roomCache: $roomCache);
+        $changes  = $this->projectTodaysChanges(rawSessions: $rawSessions, roomCache: $roomCache);
 
         return new JSONResponse(
-            data: ['sessions' => $sessions, 'from' => $windowFrom, 'to' => $windowTo],
+            data: ['sessions' => $sessions, 'from' => $windowFrom, 'to' => $windowTo, 'changes' => $changes],
             statusCode: Http::STATUS_OK
         );
     }//end mine()
@@ -247,27 +259,23 @@ class TimetableController extends Controller
     }//end resolveCallerCohortIds()
 
     /**
-     * Fetch the caller's sessions for the resolved cohorts within the window.
+     * Load every raw Session row for the resolved cohorts (no window filter).
      *
      * Sessions are fetched per cohort (an equality filter on `cohortId`) so no
-     * cross-cohort session is ever loaded, then filtered to those overlapping
-     * the window and finally ordered globally by `startsAt`.
+     * cross-cohort session is ever loaded. The unfiltered result backs both
+     * the windowed `sessions` projection and the same-day `changes` list —
+     * one query pass, not two.
      *
-     * @param array<int,string> $cohortIds  The caller's cohort UUIDs.
-     * @param string            $windowFrom Inclusive window start (ISO 8601).
-     * @param string            $windowTo   Exclusive window end (ISO 8601).
+     * @param array<int,string> $cohortIds The caller's cohort UUIDs.
      *
-     * @return array<int,array<string,mixed>> The ordered, projected sessions.
+     * @return array<int,array<string,mixed>> Raw session data arrays, all cohorts.
      */
-    private function fetchSessions(array $cohortIds, string $windowFrom, string $windowTo): array
+    private function loadRawSessionsForCohorts(array $cohortIds): array
     {
-        $fromTs = strtotime($windowFrom);
-        $toTs   = strtotime($windowTo);
-
-        $sessions = [];
+        $rows = [];
 
         foreach ($cohortIds as $cohortId) {
-            $rows = $this->objectService->findAll(
+            $results = $this->objectService->findAll(
                 [
                     'register' => self::SCHOLIQ_REGISTER,
                     'schema'   => 'session',
@@ -276,28 +284,76 @@ class TimetableController extends Controller
                 ]
             );
 
-            foreach ($rows as $row) {
-                $session = $this->toArray(row: $row);
+            foreach ($results as $row) {
+                $rows[] = $this->toArray(row: $row);
+            }
+        }
 
-                if ($this->overlapsWindow(session: $session, fromTs: $fromTs, toTs: $toTs) === false) {
-                    continue;
-                }
+        return $rows;
+    }//end loadRawSessionsForCohorts()
 
-                $sessions[] = [
-                    'id'        => (string) ($session['id'] ?? ($session['uuid'] ?? '')),
-                    'title'     => (string) ($session['title'] ?? ''),
-                    'startsAt'  => (string) ($session['startsAt'] ?? ''),
-                    'endsAt'    => (string) ($session['endsAt'] ?? ''),
-                    'location'  => (string) ($session['location'] ?? ''),
-                    'cohortId'  => (string) ($session['cohortId'] ?? ''),
-                    'courseId'  => (string) ($session['courseId'] ?? ''),
-                    'lessonId'  => (string) ($session['lessonId'] ?? ''),
-                    'lifecycle' => (string) ($session['lifecycle'] ?? ''),
-                ];
-            }//end foreach
-        }//end foreach
+    /**
+     * Pre-load every distinct Room referenced by `roomId` across the given
+     * raw sessions, so the projection step never issues an N+1 query.
+     *
+     * @param array<int,array<string,mixed>> $sessions Raw session data arrays.
+     *
+     * @return array<string,array<string,mixed>> Room data keyed by room UUID.
+     */
+    private function preloadRooms(array $sessions): array
+    {
+        $roomIds = [];
+        foreach ($sessions as $session) {
+            $roomId = (string) ($session['roomId'] ?? '');
+            if ($roomId !== '') {
+                $roomIds[$roomId] = true;
+            }
+        }
 
-        // Global order by startsAt across all cohorts.
+        $rooms = [];
+        foreach (array_keys($roomIds) as $roomId) {
+            $results = $this->objectService->findAll(
+                [
+                    'register' => self::SCHOLIQ_REGISTER,
+                    'schema'   => 'room',
+                    'filters'  => ['id' => $roomId],
+                    'limit'    => 1,
+                ]
+            );
+
+            if (empty($results) === false) {
+                $rooms[$roomId] = $this->toArray(row: $results[0]);
+            }
+        }
+
+        return $rooms;
+    }//end preloadRooms()
+
+    /**
+     * Project the raw sessions overlapping the requested window, ordered
+     * globally by `startsAt`.
+     *
+     * @param array<int,array<string,mixed>>    $rawSessions Raw session data arrays, all cohorts.
+     * @param string                            $windowFrom  Inclusive window start (ISO 8601).
+     * @param string                            $windowTo    Exclusive window end (ISO 8601).
+     * @param array<string,array<string,mixed>> $roomCache   Pre-loaded Room data keyed by UUID.
+     *
+     * @return array<int,array<string,mixed>> The ordered, projected sessions.
+     */
+    private function projectWindowedSessions(array $rawSessions, string $windowFrom, string $windowTo, array $roomCache): array
+    {
+        $fromTs = strtotime($windowFrom);
+        $toTs   = strtotime($windowTo);
+
+        $sessions = [];
+        foreach ($rawSessions as $session) {
+            if ($this->overlapsWindow(session: $session, fromTs: $fromTs, toTs: $toTs) === false) {
+                continue;
+            }
+
+            $sessions[] = $this->projectSession(session: $session, roomCache: $roomCache);
+        }
+
         usort(
             $sessions,
             static function (array $a, array $b): int {
@@ -306,7 +362,99 @@ class TimetableController extends Controller
         );
 
         return $sessions;
-    }//end fetchSessions()
+    }//end projectWindowedSessions()
+
+    /**
+     * Project the raw sessions whose `cancel`/`substitute-teacher` transition
+     * (`changedAt`, stamped server-side by SessionChangeNoticeHandler)
+     * occurred today (UTC calendar date) — the dagrooster surface —
+     * regardless of whether the Session's own `startsAt` falls inside the
+     * requested window.
+     *
+     * @param array<int,array<string,mixed>>    $rawSessions Raw session data arrays, all cohorts.
+     * @param array<string,array<string,mixed>> $roomCache   Pre-loaded Room data keyed by UUID.
+     *
+     * @return array<int,array<string,mixed>> The projected same-day changes, ordered by changedAt.
+     *
+     * @spec openspec/changes/timetabling-and-substitution/specs/personal-timetable/spec.md#scenario-today-s-cancellation-surfaces-in-the-dagrooster-changes-list-even-for-a-future-session
+     */
+    private function projectTodaysChanges(array $rawSessions, array $roomCache): array
+    {
+        $today = gmdate('Y-m-d');
+
+        $changes = [];
+        foreach ($rawSessions as $session) {
+            $changedAt = (string) ($session['changedAt'] ?? '');
+            if ($changedAt === '') {
+                continue;
+            }
+
+            $ts = strtotime($changedAt);
+            if ($ts === false || gmdate('Y-m-d', $ts) !== $today) {
+                continue;
+            }
+
+            $changes[] = $this->projectSession(session: $session, roomCache: $roomCache);
+        }
+
+        usort(
+            $changes,
+            static function (array $a, array $b): int {
+                return strcmp((string) $a['changedAt'], (string) $b['changedAt']);
+            }
+        );
+
+        return $changes;
+    }//end projectTodaysChanges()
+
+    /**
+     * Project one raw Session row to the caller-facing shape, including
+     * resolved Room detail (when `roomId` is set) and substitution fields.
+     *
+     * @param array<string,mixed>               $session   Raw session data.
+     * @param array<string,array<string,mixed>> $roomCache Pre-loaded Room data keyed by UUID.
+     *
+     * @return array<string,mixed> The projected session.
+     *
+     * @spec openspec/changes/timetabling-and-substitution/specs/personal-timetable/spec.md#requirement-a-signed-in-user-can-see-their-own-upcoming-sessions
+     */
+    private function projectSession(array $session, array $roomCache): array
+    {
+        $roomId       = (string) ($session['roomId'] ?? '');
+        $room         = null;
+        $roomIdOrNull = null;
+        if ($roomId !== '') {
+            $roomIdOrNull = $roomId;
+        }
+
+        if ($roomId !== '' && isset($roomCache[$roomId]) === true) {
+            $roomData = $roomCache[$roomId];
+            $room     = [
+                'id'         => (string) ($roomData['id'] ?? ($roomData['uuid'] ?? $roomId)),
+                'name'       => (string) ($roomData['name'] ?? ''),
+                'capacity'   => $roomData['capacity'] ?? null,
+                'facilities' => $roomData['facilities'] ?? [],
+            ];
+        }
+
+        return [
+            'id'                  => (string) ($session['id'] ?? ($session['uuid'] ?? '')),
+            'title'               => (string) ($session['title'] ?? ''),
+            'startsAt'            => (string) ($session['startsAt'] ?? ''),
+            'endsAt'              => (string) ($session['endsAt'] ?? ''),
+            'location'            => (string) ($session['location'] ?? ''),
+            'cohortId'            => (string) ($session['cohortId'] ?? ''),
+            'courseId'            => (string) ($session['courseId'] ?? ''),
+            'lessonId'            => (string) ($session['lessonId'] ?? ''),
+            'lifecycle'           => (string) ($session['lifecycle'] ?? ''),
+            'roomId'              => $roomIdOrNull,
+            'room'                => $room,
+            'substituteTeacherId' => $session['substituteTeacherId'] ?? null,
+            'changeReasonKind'    => $session['changeReasonKind'] ?? null,
+            'changeReason'        => $session['changeReason'] ?? null,
+            'changedAt'           => $session['changedAt'] ?? null,
+        ];
+    }//end projectSession()
 
     /**
      * Decide whether a session overlaps the requested window.

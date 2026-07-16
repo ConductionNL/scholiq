@@ -113,6 +113,13 @@ import CoursePackageImportView from './views/CoursePackageImportView.vue'
 // ship with, not one this change introduces.
 import CourseBuilder from './views/CourseBuilder.vue'
 import LessonComposer from './views/LessonComposer.vue'
+// timetabling-and-substitution: the one genuine new routed custom view this
+// change adds — the scheduling-coordinator's TimetableConflict review queue.
+// SubstitutionModal.vue is a plain dialog imported directly by MyTimetable.vue
+// (mirrors ComposeReportPeriodModal's shape), not registered here. Room,
+// TimetableConflict, and ExamAccommodation index/detail pages are declarative
+// manifest pages.
+import TimetableConflictQueue from './views/TimetableConflictQueue.vue'
 
 /**
  * Wrap a Vue component into the v2 registry shape required by CnAppRoot's
@@ -184,6 +191,7 @@ export default {
 	SkillsGapDashboard: page(SkillsGapDashboard),
 	SubjectChoicePicker: page(SubjectChoicePicker),
 	TakeAssessmentView: page(TakeAssessmentView),
+	TimetableConflictQueue: page(TimetableConflictQueue),
 
 	// --- Shared library widgets registered under manifest widget keys (ADR-036). ---
 	'audit-trail': {

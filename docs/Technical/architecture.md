@@ -459,6 +459,61 @@ The assumed request/response shape is documented on `LtiToolPlacementController:
 
 ---
 
+## 8a. Timetabling operational layer (`timetabling-and-substitution`, cross-repo import seam)
+
+Scholiq does not generate a timetable — that stays permanently Zermelo's/Untis's job. This change adds the
+*operational* layer between "an external optimiser produced a timetable" and "a learner/teacher sees today's
+reality":
+
+- **`Room`** (`lib/Settings/scholiq_register.json`) — a plain bookable resource (`capacity`, `kind`,
+  `facilities`, `buildingCode`/`floor`), no lifecycle, the same resource-metadata shape as `Material`.
+  `Session` gains an additive `roomId` ($ref `Room`, kept alongside the existing free-text `location`),
+  `externalRef` (timetable-import idempotency key), and substitution fields (`substituteTeacherId`,
+  `changeReasonKind`, `changeReason`, `affectedLearnerIds`, `affectedParentIds`, `changedAt`).
+- **Import seam** — a generated timetable is pulled via the existing `DataExchangeJob`/`DataMappingProfile`
+  mechanism (`target: timetable-import`, `direction: import`), never a parallel job schema. Three seeded
+  `DataMappingProfile` rows (Zermelo/Untis/Xedule) declare the field mapping;
+  `OCA\Scholiq\Timetabling\TimetableImportHandler` (an ADR-031 external-system bridge, the same shape as
+  `DataExchangeRunHandler`) resolves the profile in reverse and idempotently upserts `Session` objects keyed
+  by `externalRef`. `DataExchangeRunHandler` bails out for this target so exactly one handler owns the job.
+- **Conflict detection, not resolution** — `OCA\Scholiq\Timetabling\TimetableConflictDetector` (an
+  ADR-031 cross-object write bridge, the same class as `ConferenceScheduleGenerator`) pairwise-scans
+  `Session`s in the affected date window for teacher/room/cohort/learner double-booking,
+  room-capacity-exceeded, and exam-clash, writing idempotent `TimetableConflict` rows — it never edits a
+  `Session`. `OCA\Scholiq\Listener\SessionConflictListener` triggers it on `Session` create/update
+  (`ObjectCreatedEvent`/`ObjectUpdatedEvent` — the fleet's first use of `ObjectUpdatedEvent`); the import
+  handler triggers it once in batch after a successful import.
+- **Substitution / lesuitval-vervanging** — `Session.cancel` (now guarded) and two new self-loop
+  transitions, `substitute-teacher` (`scheduled` → `scheduled`) and `substitute-teacher-in-progress`
+  (`in-progress` → `in-progress`), both requiring `OCA\Scholiq\Lifecycle\SessionChangeGuard` (caller must be
+  a `Cohort.teacherIds` member or admin/coordinator; `changeReasonKind` always required,
+  `substituteTeacherId` required for the substitute transitions). Split into two action names because
+  `TransitionEngine::transition()` resolves a single scalar `to` value — an array `from` converging on one
+  `to` is only correct for a state-changing transition (`cancel`), not a true multi-state self-loop.
+  `OCA\Scholiq\Listener\SessionChangeNoticeHandler` materialises `affectedLearnerIds`/`affectedParentIds`
+  (mirroring `ConferenceRound.invitedLearnerIds`) and a server-stamped `changedAt` at both transitions, so
+  the declared `x-openregister-notifications` rules can resolve recipients without a runtime join.
+- **`ExamAccommodation`** — a learner's approved, evidence-backed exam entitlement (extra time, separate
+  room, reader, etc.). `create` is open to learner/parent-portal roles; `approve` is restricted to
+  admin/compliance-officer/mentor via `OCA\Scholiq\Lifecycle\ExamAccommodationApprovalGuard` (a PHP guard,
+  since no `x-openregister-authorization` key expresses a per-transition role gate in this register).
+  Wiring the effective time limit into `TakeAssessmentView`/`AssessmentResult` is an explicit
+  `assessment`-capability follow-up, not built here.
+- **Dagrooster** — `TimetableController::mine()` (`personal-timetable`, still read-only, no new write
+  endpoint) projects `roomId`/resolved `Room` detail, `lifecycle`, and substitution fields per `Session`,
+  plus a same-day `changes` list (Sessions whose `changedAt` falls today, regardless of the requested
+  window).
+- **Frontend** — declarative `Room`/`TimetableConflict`/`ExamAccommodation` index/detail pages in
+  `src/manifest.json`; two named custom views, `src/dialogs/SubstitutionModal.vue` (cancel/substitute,
+  opened from `MyTimetable.vue`) and `src/views/TimetableConflictQueue.vue` (the coordinator's
+  acknowledge/resolve review queue).
+- **Out of scope, tracked as cross-repo follow-ups**: the OpenConnector Zermelo/Untis/Xedule wire adapters
+  themselves (`ConductionNL/openconnector`), and wiring `ExamAccommodation` into the `assessment` capability.
+
+See `openspec/changes/timetabling-and-substitution/` for the full proposal/design/specs.
+
+---
+
 ## 9. References
 
 - Hydra ADR-022: `hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md`

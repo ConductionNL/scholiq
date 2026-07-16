@@ -60,7 +60,22 @@
 			</template>
 		</NcEmptyContent>
 
-		<NcEmptyContent v-else-if="sessions.length === 0"
+		<section v-if="!loading && !error && changes.length > 0" class="my-timetable__changes" aria-live="polite">
+			<h3 class="my-timetable__changes-title">
+				{{ t('scholiq', "Today's changes") }}
+			</h3>
+			<ul class="my-timetable__changes-list">
+				<li v-for="session in changes" :key="'change-' + session.id" class="my-timetable__change">
+					<span class="my-timetable__change-name">{{ session.title || t('scholiq', 'Untitled session') }}</span>
+					<span class="my-timetable__change-badge" :class="'my-timetable__change-badge--' + session.lifecycle">
+						{{ statusLabel(session) }}
+					</span>
+					<span v-if="session.changeReason" class="my-timetable__change-reason">{{ session.changeReason }}</span>
+				</li>
+			</ul>
+		</section>
+
+		<NcEmptyContent v-if="!loading && !error && sessions.length === 0"
 			:name="t('scholiq', 'No sessions')"
 			:description="emptyDescription">
 			<template #icon>
@@ -68,7 +83,7 @@
 			</template>
 		</NcEmptyContent>
 
-		<div v-else class="my-timetable__grid" :class="{ 'my-timetable__grid--single': mode === 'today' }">
+		<div v-if="!loading && !error && sessions.length > 0" class="my-timetable__grid" :class="{ 'my-timetable__grid--single': mode === 'today' }">
 			<section v-for="day in visibleDays"
 				:key="day.iso"
 				class="my-timetable__day"
@@ -84,24 +99,45 @@
 					<li v-for="session in day.sessions"
 						:key="session.id"
 						class="my-timetable__session"
-						tabindex="0"
-						role="button"
-						:aria-label="sessionAria(session)"
-						@click="openSession(session)"
-						@keyup.enter="openSession(session)">
-						<span class="my-timetable__session-time">{{ timeRange(session) }}</span>
-						<span class="my-timetable__session-name">{{ session.title || t('scholiq', 'Untitled session') }}</span>
-						<span v-if="session.location" class="my-timetable__session-loc">{{ session.location }}</span>
+						:class="{ 'my-timetable__session--cancelled': session.lifecycle === 'cancelled' }">
+						<div tabindex="0"
+							role="button"
+							class="my-timetable__session-main"
+							:aria-label="sessionAria(session)"
+							@click="openSession(session)"
+							@keyup.enter="openSession(session)">
+							<span class="my-timetable__session-time">{{ timeRange(session) }}</span>
+							<span class="my-timetable__session-name">{{ session.title || t('scholiq', 'Untitled session') }}</span>
+							<span v-if="session.room" class="my-timetable__session-loc">{{ session.room.name }}</span>
+							<span v-else-if="session.location" class="my-timetable__session-loc">{{ session.location }}</span>
+							<span v-if="session.lifecycle && session.lifecycle !== 'scheduled'"
+								class="my-timetable__session-badge"
+								:class="'my-timetable__session-badge--' + session.lifecycle">
+								{{ statusLabel(session) }}
+							</span>
+						</div>
+						<NcButton class="my-timetable__session-manage"
+							type="tertiary"
+							:aria-label="t('scholiq', 'Manage this session')"
+							@click="manage(session)">
+							{{ t('scholiq', 'Manage') }}
+						</NcButton>
 					</li>
 				</ul>
 			</section>
 		</div>
+
+		<SubstitutionModal v-if="managingSession"
+			:session="managingSession"
+			@close="managingSession = null"
+			@changed="onChanged" />
 	</div>
 </template>
 
 <script>
 import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import { fetchMyTimetable } from '../api/timetable.js'
+import SubstitutionModal from '../dialogs/SubstitutionModal.vue'
 
 /**
  * Compute the Monday (00:00, local) of the week containing `date`.
@@ -124,15 +160,21 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
+		SubstitutionModal,
 	},
 	data() {
 		return {
 			loading: true,
 			error: '',
 			sessions: [],
+			// Same-day cancel/substitute-teacher changes (dagrooster), regardless
+			// of the currently viewed window — timetabling-and-substitution.
+			changes: [],
 			// Monday of the currently viewed week.
 			weekStart: mondayOf(new Date()),
 			mode: 'week',
+			// The Session currently open in SubstitutionModal, or null.
+			managingSession: null,
 		}
 	},
 	computed: {
@@ -243,9 +285,11 @@ export default {
 			try {
 				const result = await fetchMyTimetable(this.weekStart.toISOString(), this.weekEnd.toISOString())
 				this.sessions = result.sessions
+				this.changes = result.changes
 			} catch (e) {
 				this.error = t('scholiq', 'The timetable service is unavailable. Please try again later.')
 				this.sessions = []
+				this.changes = []
 			} finally {
 				this.loading = false
 			}
@@ -342,6 +386,43 @@ export default {
 				parts.push(session.location)
 			}
 			return parts.filter(Boolean).join(', ')
+		},
+		/**
+		 * Human-readable lifecycle/substitution status label for a session.
+		 *
+		 * @param {object} session The session.
+		 *
+		 * @return {string} The status label.
+		 * @spec openspec/changes/timetabling-and-substitution/specs/personal-timetable/spec.md#requirement-a-signed-in-user-can-see-their-own-upcoming-sessions
+		 */
+		statusLabel(session) {
+			if (session.lifecycle === 'cancelled') {
+				return t('scholiq', 'Cancelled')
+			}
+			if (session.substituteTeacherId) {
+				return t('scholiq', 'Substitute: {id}', { id: session.substituteTeacherId })
+			}
+			return session.lifecycle || ''
+		},
+		/**
+		 * Open SubstitutionModal for a session (cancel / assign substitute).
+		 *
+		 * @param {object} session The session to manage.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/timetabling-and-substitution/specs/timetabling/spec.md#requirement-frontend-is-declarative-with-named-custom-views
+		 */
+		manage(session) {
+			this.managingSession = session
+		},
+		/**
+		 * Reload the timetable after a substitution/cancellation change.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/timetabling-and-substitution/specs/timetabling/spec.md#requirement-frontend-is-declarative-with-named-custom-views
+		 */
+		async onChanged() {
+			await this.load()
 		},
 	},
 }
@@ -443,18 +524,33 @@ export default {
 
 	&__session {
 		display: flex;
-		flex-direction: column;
-		gap: 2px;
+		align-items: flex-start;
+		gap: 4px;
 		padding: 8px;
 		border-radius: var(--border-radius, 4px);
 		background: var(--color-primary-element-light);
+
+		&--cancelled {
+			opacity: 0.7;
+			text-decoration: line-through;
+		}
+	}
+
+	&__session-main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
 		cursor: pointer;
 
 		&:hover,
 		&:focus {
-			background: var(--color-primary-element-light-hover, var(--color-background-hover));
 			outline: 2px solid var(--color-primary-element);
 		}
+	}
+
+	&__session-manage {
+		flex-shrink: 0;
 	}
 
 	&__session-time {
@@ -469,6 +565,69 @@ export default {
 
 	&__session-loc {
 		font-size: 0.8em;
+		color: var(--color-text-maxcontrast);
+	}
+
+	&__session-badge {
+		align-self: flex-start;
+		font-size: 0.75em;
+		font-weight: 600;
+		padding: 1px 6px;
+		border-radius: var(--border-radius-pill, 12px);
+		background: var(--color-warning);
+		color: var(--color-main-text);
+
+		&--cancelled {
+			background: var(--color-error);
+			color: white;
+		}
+	}
+
+	&__changes {
+		margin-bottom: 16px;
+		padding: 12px;
+		border: 1px solid var(--color-warning);
+		border-radius: var(--border-radius-large, 8px);
+		background: var(--color-background-hover);
+	}
+
+	&__changes-title {
+		margin: 0 0 8px;
+		font-size: 0.95em;
+		font-weight: 600;
+	}
+
+	&__changes-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	&__change {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		font-size: 0.9em;
+	}
+
+	&__change-name {
+		font-weight: 600;
+	}
+
+	&__change-badge {
+		font-size: 0.75em;
+		font-weight: 600;
+		padding: 1px 6px;
+		border-radius: var(--border-radius-pill, 12px);
+		background: var(--color-error);
+		color: white;
+	}
+
+	&__change-reason {
 		color: var(--color-text-maxcontrast);
 	}
 }

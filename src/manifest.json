@@ -853,6 +853,40 @@
 			]
 		},
 		{
+			"id": "GroupTimetabling",
+			"label": "Timetabling",
+			"icon": "icon-calendar",
+			"order": 28,
+			"children": [
+				{
+					"id": "RoomsMenu",
+					"label": "Rooms",
+					"icon": "icon-category-office",
+					"route": "Rooms",
+					"order": 10
+				},
+				{
+					"id": "TimetableConflictQueueMenu",
+					"label": "Timetable conflicts",
+					"icon": "icon-error",
+					"route": "TimetableConflictQueue",
+					"order": 20,
+					"visibleIf": {
+						"user.primaryRole": {
+							"in": ["admin", "coordinator"]
+						}
+					}
+				},
+				{
+					"id": "ExamAccommodationsMenu",
+					"label": "Exam accommodations",
+					"icon": "icon-favorite",
+					"route": "ExamAccommodations",
+					"order": 30
+				}
+			]
+		},
+		{
 			"id": "GroupPayments",
 			"label": "Payments",
 			"icon": "icon-quota",
@@ -4207,6 +4241,322 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "Rooms",
+			"route": "/rooms",
+			"type": "index",
+			"title": "Rooms",
+			"config": {
+				"register": "scholiq",
+				"schema": "room"
+			}
+		},
+		{
+			"id": "RoomDetail",
+			"route": "/rooms/:id",
+			"type": "detail",
+			"title": "Room",
+			"config": {
+				"register": "scholiq",
+				"schema": "room",
+				"_note": "timetabling-and-substitution: a Room is a plain bookable resource (capacity/kind/facilities/buildingCode/floor), no lifecycle — the same resource-metadata archetype as Material. Body leads with the room definition (8-wide); the Sessions booked into this room render as a wide related-index so a coordinator can see the room's schedule. Sidebar keeps metadata + audit-trail.",
+				"widgets": [
+					{
+						"id": "room-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "OfficeBuilding"
+					},
+					{
+						"id": "room-kpis",
+						"type": "stats-block",
+						"title": "Overview",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{
+									"title": "Booked sessions",
+									"register": "scholiq",
+									"schema": "session",
+									"metric": "count",
+									"filter": {
+										"roomId": "@objectId"
+									},
+									"route": "Sessions"
+								}
+							]
+						}
+					},
+					{
+						"id": "room-sessions",
+						"type": "object-list",
+						"title": "Booked sessions",
+						"content": {
+							"register": "scholiq",
+							"schema": "Session",
+							"filter": {
+								"roomId": "@objectId"
+							},
+							"sort": {
+								"field": "startsAt",
+								"dir": "asc"
+							},
+							"limit": 25,
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "startsAt",
+									"label": "Starts At"
+								},
+								{
+									"key": "endsAt",
+									"label": "Ends At"
+								},
+								{
+									"key": "lifecycle",
+									"label": "Lifecycle"
+								}
+							],
+							"rowRoute": "SessionDetail",
+							"viewAllRoute": "Sessions",
+							"viewAllQuery": {
+								"roomId": "@objectId"
+							},
+							"emptyText": "No booked sessions found."
+						},
+						"icon": "Calendar"
+					},
+					{
+						"id": "room-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "room-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "room-kpis",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "room-sessions",
+						"gridX": 0,
+						"gridY": 5,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "room-related",
+						"gridX": 8,
+						"gridY": 5,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TimetableConflicts",
+			"route": "/timetable-conflicts",
+			"type": "index",
+			"title": "Timetable conflicts",
+			"config": {
+				"register": "scholiq",
+				"schema": "timetable-conflict"
+			}
+		},
+		{
+			"id": "TimetableConflictDetail",
+			"route": "/timetable-conflicts/:id",
+			"type": "detail",
+			"title": "Timetable conflict",
+			"config": {
+				"register": "scholiq",
+				"schema": "timetable-conflict",
+				"_note": "timetabling-and-substitution: a detected (never auto-resolved) double-booking or capacity overrun. Body leads with the conflict data (kind/severity/scopeRef/detectedAt) and a Related panel resolving the referenced Sessions. Admin/coordinator/scheduling-role read only (x-property-rbac) — a learner cannot reach this page. The primary review surface is the TimetableConflictQueue custom view; this detail page is the single-object drill-down. Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "conflict-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "AlertCircleOutline"
+					},
+					{
+						"id": "conflict-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "conflict-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "conflict-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ExamAccommodations",
+			"route": "/exam-accommodations",
+			"type": "index",
+			"title": "Exam accommodations",
+			"config": {
+				"register": "scholiq",
+				"schema": "exam-accommodation"
+			}
+		},
+		{
+			"id": "ExamAccommodationDetail",
+			"route": "/exam-accommodations/:id",
+			"type": "detail",
+			"title": "Exam accommodation",
+			"config": {
+				"register": "scholiq",
+				"schema": "exam-accommodation",
+				"_note": "timetabling-and-substitution: a learner's approved, evidence-backed exam entitlement (extra time, separate room, reader, etc.). AVG-sensitive (health/disability-adjacent) — x-property-rbac restricts read to admin/compliance-officer/mentor/the learner themselves/the submitter. Body leads with the accommodation data (accommodationKind/value/evidenceRef/approvedBy) and a Related panel resolving the linked Assessment (when set). Sidebar keeps metadata + audit-trail.",
+				"lifecycleActions": {
+					"field": "lifecycle"
+				},
+				"widgets": [
+					{
+						"id": "accom-data",
+						"type": "data",
+						"title": "Data",
+						"content": {
+							"columns": 2
+						},
+						"icon": "ShieldCheckOutline"
+					},
+					{
+						"id": "accom-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "accom-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 8,
+						"gridHeight": 5,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "accom-related",
+						"gridX": 8,
+						"gridY": 0,
+						"gridWidth": 4,
+						"gridHeight": 5,
+						"showTitle": false
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "TimetableConflictQueue",
+			"route": "/timetable-conflict-queue",
+			"type": "custom",
+			"title": "Timetable conflict queue",
+			"component": "TimetableConflictQueue",
+			"_note": "timetabling-and-substitution: the scheduling-coordinator's review queue for open/acknowledged TimetableConflict rows (acknowledge/resolve actions). The one genuine new routed custom view this change adds — every other Room/TimetableConflict/ExamAccommodation screen is a declarative manifest page. SubstitutionModal.vue is a dialog opened from MyTimetable.vue, not a routed page."
 		},
 		{
 			"id": "Rubrics",

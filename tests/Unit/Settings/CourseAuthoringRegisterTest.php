@@ -383,7 +383,10 @@ class CourseAuthoringRegisterTest extends TestCase
      */
     public function testRegisterAndSchemaVersionsBumped(): void
     {
-        $this->assertSame('0.16.0', $this->config['info']['version'] ?? null);
+        // Register version has since moved past course-authoring-ux (0.16.0)
+        // with timetabling-and-substitution (0.17.0); this test only asserts
+        // that course-authoring-ux's own bump is still present in the
+        // description, not that it is the latest entry.
         $this->assertStringContainsString('course-authoring-ux', $this->config['info']['description'] ?? '');
 
         $this->assertSame('0.3.0', $this->config['components']['schemas']['Lesson']['version'] ?? null);

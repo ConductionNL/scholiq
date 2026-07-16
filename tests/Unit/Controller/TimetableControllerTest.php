@@ -132,13 +132,14 @@ class TimetableControllerTest extends TestCase
      * @param array<int,array<string,mixed>> $cohorts    Cohort fixtures.
      * @param array<int,array<string,mixed>> $enrolments Enrolment fixtures (already scoped to the caller).
      * @param array<int,array<string,mixed>> $sessions   Session fixtures (all cohorts).
+     * @param array<int,array<string,mixed>> $rooms      Room fixtures.
      *
      * @return void
      */
-    private function wireFindAll(array $cohorts, array $enrolments, array $sessions): void
+    private function wireFindAll(array $cohorts, array $enrolments, array $sessions, array $rooms = []): void
     {
         $this->objectService->method('findAll')->willReturnCallback(
-            function (array $config) use ($cohorts, $enrolments, $sessions): array {
+            function (array $config) use ($cohorts, $enrolments, $sessions, $rooms): array {
                 $schema  = $config['schema'] ?? '';
                 $filters = $config['filters'] ?? [];
 
@@ -164,6 +165,11 @@ class TimetableControllerTest extends TestCase
                             static fn (array $s): bool => $cohortId === null || ($s['cohortId'] ?? null) === $cohortId
                         )
                     );
+                }
+
+                if ($schema === 'room') {
+                    $id = $filters['id'] ?? null;
+                    return array_values(array_filter($rooms, static fn (array $r): bool => ($r['id'] ?? null) === $id));
                 }
 
                 return [];
@@ -279,8 +285,120 @@ class TimetableControllerTest extends TestCase
 
         $response = $this->controller()->mine(from: $this->from, to: $this->to);
         $this->assertSame(Http::STATUS_OK, $response->getStatus());
-        $this->assertSame([], $this->body($response)['sessions']);
+        $body = $this->body($response);
+        $this->assertSame([], $body['sessions']);
+        $this->assertSame([], $body['changes']);
     }//end testNoCohortsReturnsEmptyOk()
+
+    /**
+     * Each session projects roomId (with resolved Room detail when set),
+     * lifecycle, substituteTeacherId, changeReasonKind, and changeReason.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/timetabling-and-substitution/specs/personal-timetable/spec.md#requirement-a-signed-in-user-can-see-their-own-upcoming-sessions
+     */
+    public function testProjectsRoomAndSubstitutionFields(): void
+    {
+        $this->signInAs('alice');
+
+        $cohorts = [['id' => 'cohort-1', 'learnerIds' => ['alice'], 'teacherIds' => []]];
+        $sessions = [
+            [
+                'id' => 's-1', 'cohortId' => 'cohort-1', 'title' => 'Bio',
+                'startsAt' => '2026-01-06T09:00:00+00:00', 'endsAt' => '2026-01-06T10:00:00+00:00',
+                'roomId' => 'room-1', 'lifecycle' => 'scheduled',
+                'substituteTeacherId' => 'sub-1', 'changeReasonKind' => 'teacher-absence', 'changeReason' => 'Ziek',
+            ],
+        ];
+        $rooms = [['id' => 'room-1', 'name' => 'Lokaal A-203', 'capacity' => 30, 'facilities' => ['projector']]];
+        $this->wireFindAll($cohorts, [], $sessions, $rooms);
+
+        $out = $this->body($this->controller()->mine(from: $this->from, to: $this->to));
+        $session = $out['sessions'][0];
+
+        $this->assertSame('room-1', $session['roomId']);
+        $this->assertSame('Lokaal A-203', $session['room']['name']);
+        $this->assertSame(30, $session['room']['capacity']);
+        $this->assertSame('sub-1', $session['substituteTeacherId']);
+        $this->assertSame('teacher-absence', $session['changeReasonKind']);
+        $this->assertSame('Ziek', $session['changeReason']);
+        $this->assertSame('scheduled', $session['lifecycle']);
+    }//end testProjectsRoomAndSubstitutionFields()
+
+    /**
+     * A Session with no roomId projects a null room, never an error.
+     *
+     * @return void
+     */
+    public function testNoRoomProjectsNull(): void
+    {
+        $this->signInAs('alice');
+
+        $cohorts  = [['id' => 'cohort-1', 'learnerIds' => ['alice'], 'teacherIds' => []]];
+        $sessions = [['id' => 's-1', 'cohortId' => 'cohort-1', 'title' => 'Bio', 'startsAt' => '2026-01-06T09:00:00+00:00', 'endsAt' => '2026-01-06T10:00:00+00:00']];
+        $this->wireFindAll($cohorts, [], $sessions);
+
+        $out = $this->body($this->controller()->mine(from: $this->from, to: $this->to));
+
+        $this->assertNull($out['sessions'][0]['roomId']);
+        $this->assertNull($out['sessions'][0]['room']);
+    }//end testNoRoomProjectsNull()
+
+    /**
+     * Today's cancellation surfaces in the dagrooster `changes` list even for
+     * a Session scheduled outside the requested window (a future Session).
+     *
+     * @return void
+     *
+     * @spec openspec/changes/timetabling-and-substitution/specs/personal-timetable/spec.md#scenario-today-s-cancellation-surfaces-in-the-dagrooster-changes-list-even-for-a-future-session
+     */
+    public function testTodaysCancellationSurfacesInChangesRegardlessOfWindow(): void
+    {
+        $this->signInAs('alice');
+
+        $today = gmdate('Y-m-d\TH:i:s\+00:00');
+        $cohorts  = [['id' => 'cohort-1', 'learnerIds' => ['alice'], 'teacherIds' => []]];
+        $sessions = [
+            [
+                // Scheduled well outside the requested window (2026-01-05..12).
+                'id' => 's-future', 'cohortId' => 'cohort-1', 'title' => 'Future lesson',
+                'startsAt' => '2099-01-01T09:00:00+00:00', 'endsAt' => '2099-01-01T10:00:00+00:00',
+                'lifecycle' => 'cancelled', 'changedAt' => $today,
+            ],
+        ];
+        $this->wireFindAll($cohorts, [], $sessions);
+
+        $out = $this->body($this->controller()->mine(from: $this->from, to: $this->to));
+
+        $this->assertSame([], $out['sessions']);
+        $this->assertCount(1, $out['changes']);
+        $this->assertSame('s-future', $out['changes'][0]['id']);
+    }//end testTodaysCancellationSurfacesInChangesRegardlessOfWindow()
+
+    /**
+     * A Session changed on a prior day does not appear in today's changes list.
+     *
+     * @return void
+     */
+    public function testStaleChangeDoesNotAppearInTodaysChanges(): void
+    {
+        $this->signInAs('alice');
+
+        $cohorts  = [['id' => 'cohort-1', 'learnerIds' => ['alice'], 'teacherIds' => []]];
+        $sessions = [
+            [
+                'id' => 's-old-change', 'cohortId' => 'cohort-1', 'title' => 'Old change',
+                'startsAt' => '2026-01-06T09:00:00+00:00', 'endsAt' => '2026-01-06T10:00:00+00:00',
+                'lifecycle' => 'cancelled', 'changedAt' => '2020-01-01T09:00:00+00:00',
+            ],
+        ];
+        $this->wireFindAll($cohorts, [], $sessions);
+
+        $out = $this->body($this->controller()->mine(from: $this->from, to: $this->to));
+
+        $this->assertSame([], $out['changes']);
+    }//end testStaleChangeDoesNotAppearInTodaysChanges()
 
     /**
      * Sessions outside the requested window are excluded.
