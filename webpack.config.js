@@ -79,11 +79,14 @@ webpackConfig.resolve.alias['@nextcloud/dialogs'] = path.resolve(__dirname, 'nod
 
 // dialogs v6 drags in a FilePicker chunk that imports node's `path`, and webpack 5 no
 // longer auto-polyfills node core modules — without this the bundle fails to emit with
-// "Can't resolve 'path'". This app only uses the toast APIs (showError/showSuccess), so
-// the FilePicker code path never runs and an empty module is safe.
+// "Can't resolve 'path'". course-authoring-ux is the first scholiq code to actually call
+// getFilePickerBuilder() (LessonComposer.vue's media-block picker, design.md D3), so the
+// FilePicker code path DOES run now — `path: false` would ship a stub that throws at
+// runtime the first time a user opens the picker. Polyfill with path-browserify (already
+// present via the node-polyfill-webpack-plugin dependency) instead of stubbing it out.
 webpackConfig.resolve.fallback = {
 	...(webpackConfig.resolve.fallback || {}),
-	path: false,
+	path: require.resolve('path-browserify'),
 }
 
 module.exports = webpackConfig

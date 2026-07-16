@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Scholiq Register",
-        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/. v0.15.0 adds accessibility-conformance — the toegankelijkheidsverklaring (accessibility statement) obligation under the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936): three new schemas, AccessibilityStatement (channel identity, a 3-value status collapsed from the government's five-level A–E scale with the mapping documented in the schema description, evaluation method/date, standard applied, feedback contact, escalation route, a materialised reviewOverdue calculation mirroring Enrolment.isOverdue's @now/dateDiff idiom plus a calculatedChange notification mirroring TlvApplication.tlvExpiringSoon; lifecycle draft → published → archived, with AccessibilityStatementPublishGuard refusing to publish without evaluation evidence or a fully-compliant status while an open/mitigated limitation exists); AccessibilityLimitation (the known-limitations register — WCAG criterion, severity, affected surface, justification, disproportionate-burden flag, workaround, planned-fix date; open → mitigated → fixed; create/update restricted to admin/compliance-officer, mirroring xapi-statement/BsaWarning); AccessibilityFeedback (a user-reported barrier, create open to any authenticated user — the opposite RBAC posture, deliberately — with an onSubmitted notification to compliance-officer/admin mirroring ItemRevisionFlag's created-trigger shape; submitted → acknowledged → resolved). No new PHP controller or route — only the one lifecycle guard, per ADR-022/ADR-031. See openspec/changes/accessibility-conformance-statement/.",
-        "version": "0.15.0"
+        "description": "Register containing all schemas for the Scholiq application. v0.2.0 declares Scholiq's AVG Art. 30 processing activities (learner administration, attendance & leerplicht reporting, grading & assessment, signed attestations, credentialing, data exchange to DUO/OSO/municipality/HR, and AI features) as x-openregister-processing catalogue annotations on LearnerProfile, AttendanceRecord, Assessment, Attestation, Credential, DataExchangeJob, and AiFeature. Each carries purpose (doelbinding), legal basis (rechtsgrond), data categories, backend identifier, retention reference, owner/review fields, and opts the schema into OpenRegister's per-access read-logging (logReads:true, attribution.default referencing the activity code). Seeds arrive as drafts; the school's privacy officer activates them in the OpenRegister lifecycle. v0.3.0 adds ADR-046 portal-identity scoping refs (learnerRef / learnerRefs / submittedByRef / guardianRefs) alongside the existing Nextcloud-user-id fields on GradeEntry, FinalGrade, AttendanceRecord, Enrolment, Submission, ExcuseRequest, LearnerProfile, and GradeNotification — additive, optional, fail-closed; see openspec/changes/portal-identity/. v0.3.1 strips the AiFeature schema to its AVG Art. 30 processing carrier only — EU AI Act high-risk feature governance (lifecycle, DPO acknowledgement, register pages) is delegated to the Hermiq app (ADR-005 amendment). Requires OpenRegister >= 0.2.14. See openspec/specs/avg-verwerkingsregister/spec.md. v0.4.0 adds beroepspraktijkvorming (BPV) — six new schemas (Praktijkopleider, BpvPlacement, Praktijkovereenkomst, PokSignature, WerkprocesAssessment, BpvVisitReport) implementing the MBO work-placement/POK/leerbedrijf-verification/werkproces-assessment domain (WEB art. 7.2.8/7.2.9). No existing schema is modified. See openspec/changes/bpv-praktijkovereenkomst/. v0.5.0 adds parent-conferences (oudergesprekken-cyclus) — five new schemas (ConferenceRound, TeacherAvailability, ConferenceSignup, ConferenceSlot, ConferenceReport) implementing conference-round invitations, guardian/self signup, ConferenceScheduleGenerator's greedy conflict-free slot generation, and an append-only gespreksverslag (ConferenceReport). No existing schema is modified. See openspec/changes/parent-evening-planner/. v0.6.0 adds exam-board (examencommissie) case handling — two new schemas (ExemptionCase, FraudCase) implementing the WHW art. 7.13 exemption (vrijstelling) and fraud/plagiarism dossier flows: ExemptionCase submitted→in-assessment→granted|rejected|withdrawn with ExemptionGrantHandler bridging a grant into a published GradeEntry (sourceKind=exemption); FraudCase reported→hearing-scheduled→heard→decided(+dismissed) with FraudCaseDecisionGuard stamping a 42-day appealDeadline and FraudCaseDecisionHandler invalidating a contested concept GradeEntry on a fraud-proven verdict. GradeEntry gains sourceKind=exemption, exemptionCaseId/fraudCaseId refs, conditional value requiredness, FraudCaseBlockGuard on publish/republish, and a new invalidated terminal state; GradeEntry/FinalGrade gain an examboard RBAC read role. See openspec/changes/exam-board-case-handling/. v0.6.1 is doc-only: DataExchangeJob.target's description gains the 'ooapi-catalog' example, naming the OpenConnector target that syncs published/archived Course, Programme, and Cohort objects to the OOAPI 5.0 catalog hosted by opencatalogi, per the course-management publication contract resolving the course-management/data-exchange OOAPI self-contradiction. No schema/type change — target was already a free-text string. See openspec/changes/delegate-ooapi-to-opencatalogi/. v0.7.0 adds LtiToolPlacement — places an external LTI 1.3 tool inside a Course/Lesson, naming the corresponding lti_deployment UUID in OpenConnector's own register plus an optional CurriculumPlan/component/GradeScale mapping for AGS grade passback; brings the previously-dead Lesson.contentType='lti' enum value to life (contentRef now names an LtiToolPlacement, doc-only correction). GradeEntry.sourceKind gains lti-ags, plus ltiToolPlacementId/ltiAgsResultId fields (same per-sourceKind-id-field shape as submissionId/assessmentResultId/sessionId), so an LTI Assignment & Grade Services score carries an honest, traceable, idempotent origin. See openspec/changes/lti-tool-placement/. v0.8.0 adds the competency capability — CompetencyFramework (a named taxonomy with its own proficiencyLevels scale), Competency (recursive via parentId, mirroring Course.parentCourseId — a leaf Competency IS the learning outcome, no separate LearningOutcome schema), and CompetencyAttainment (a FinalGrade-shaped, read-only, per-(learnerId, competencyId) roll-up recomputed by the new CompetencyAttainmentRollupHandler listener). Course, Lesson, Assignment, Assessment, Item, Credential, and Programme each gain an additive competencyIds/requiredCompetencyIds array. WerkprocesAssessment gains a nullable, server-resolved competencyId generalizing its existing kwalificatiedossierCode/kerntaakCode/werkprocesCode strings (unchanged in shape) into the shared taxonomy, and its confirm transition additionally fires CompetencyAttainmentRollupHandler alongside the existing WerkprocesGradeEmitHandler. See openspec/changes/competency-framework/. v0.9.0 adds learning-progress-and-analytics — LessonCompletion (one row per (learnerId, lessonId), source: xapi | manual, written by the new LessonProgressHandler sibling listener on the same XapiStatement ObjectCreatedEvent XapiCompletionHandler already consumes — no mandatoryTraining/last-lesson gate — plus a learner self-serve manual path); Enrolment gains completedLessonCount/totalPublishedLessonCount aggregate-refs and a progressPercent field (EnrolmentProgressEvaluator/EnrolmentProgressRollupHandler, mirroring FinalGrade.value/GradeFormulaEvaluator — no division operator exists in the calculation DSL); EngagementScore (per learnerId+courseId time-on-task/recency/score, EngagementScoreEvaluator), EngagementRiskThreshold + EngagementRiskFlag (deterministic rule-based at-risk detection generalised beyond the HE/MBO-only BsaTrajectory, mirroring AttendanceThreshold/AttendanceFlag and BsaTrajectory/BsaProgressFlag, via the new EngagementSignalHandler). GroupTrendHeatmap.vue renders a cohort x period grade-trend heat map over existing GradeEntry data — no new schema. See openspec/changes/learning-progress-and-analytics/. v0.10.0 adds adaptive-release-and-prerequisites — closes the prerequisite hole: Course gains prerequisiteCourseIds (array of $ref Course), enforced by the new EnrolmentPrerequisiteListener on OpenRegister's ObjectCreatingEvent for the enrolment schema (NOT a lifecycle `requires` guard — Enrolment has no transition into its initial pending state for one to attach to; mirrors decidesk's SubmissionDeadlineListener/larpingapp's CharacterRequirementListener creation-time-veto shape). Lesson and Assessment each gain releaseConditions (array of {kind: lesson-completed|assessment-min-score, lessonId?, assessmentId?, minScore?}, AND-combined) and availableAfterDays (nullable integer — drip release relative to each learner's OWN Enrolment.created), evaluated per-learner at request time by the new stateless LessonReleaseEvaluator/LessonReleaseController (no @self/@aggregate/@ref calc-DSL token carries a per-viewer identity, so this cannot be materialised). Assessment's existing availableFrom/availableUntil/isAvailable absolute window is unchanged; the new gates layer on top. See openspec/changes/adaptive-release-and-prerequisites/. v0.11.0 adds report-card (periodic rapport composition & rapportvergadering review) — three new schemas: ReportPeriod (the school-wide term a report is composed for: periodCode matching GradeEntry.period/CurriculumPlan.components[].period/FinalGrade.breakdown.periods keys, curriculumPlanIds[]/cohortIds[] scope, a nullable lockDate backing a materialised isLocked calculation — NOT an automatic lifecycle transition, mirroring ConferenceRound.isBookingClosed's documented 'scheduled triggers cannot drive a transition' precedent); ReportCard (one composed document per learner per ReportPeriod: subjectGrades[] snapshotting FinalGrade.breakdown.periods[periodCode] plus sourceGradeEntryIds[], an attendanceSummary, mentor/teacher comments, a forward-compatible nullable competencyAttainment field, and fail-soft docudesk PDF-render state fields; lifecycle draft → rapportvergadering-review → finalised → published-to-parents, with reopen back to review); ReportCardParentNotification (append-only fan-out record mirroring GradeNotification's shape). ReportCardComposer (Listener, ADR-031 cross-object write bridge mirroring DataExchangeRunHandler's composeLeerplichtDossier/composeSwvDossier assembly shape, NOT the DataExchangeJob queue) composes ReportCards on ReportPeriod's compose transition and on ReportCard's recompose self-loop. GradeEntry.publish/republish's requires guard is swapped from FraudCaseBlockGuard to ReportPeriodLockGuard, which composes FraudCaseBlockGuard's existing check internally then additionally blocks publishing into a locked ReportPeriod's scope unless the actor holds admin/mentor/principal — a single-guard composition, not a second `requires` array entry: verified at HEAD (LifecycleAnnotationValidator::validate + LifecycleGuardRegistry::resolve) that `requires` is strictly a single DI-tag string, never an array, so 'second requires entry' precedents named in this change's own design.md (Credential.revoke) do not actually exist as an array in this register — Credential.revoke has exactly one requires guard. ReportCard.publishToParents requires ReportCardVisibilityGuard, which re-resolves every contributing GradeEntry.visibleFrom at the moment of publication (not trusted from compose time) so grade-visibility-scheduling's promise holds end-to-end. PortalContributionProvider::parentContribution() gains a fourth parentReportCards collection, identical childJoin reverse-scope pattern to parentGrades/parentAttendance/parentExcuseRequests, filtered to lifecycle published-to-parents only. See openspec/changes/report-card-composer/. v0.12.0 adds pupil-dossier — the everyday pupil dossier layer underneath the formal LearningPlan/SupportRequest/DeliberationRecord care chain: three new schemas, DossierNote (appendOnly observation/conversation/phone-call-home/concern/positive note, x-property-rbac restricting every row to admin/mentor/coordinator/the note's own authorId — the tightest floor the dialect can express; the finer team-visible/care-team-only/private-to-author tiering beyond that floor is a named, unimplemented OpenRegister platform-capability gap, not a fabricated guarantee), BehaviourIncident (appendOnly what/severity/append-only followUpActions log/resolution, own lifecycle open → in-handling → resolved, escalatedSupportRequestId referencing — never duplicating — a SupportRequest), and WellbeingCheckIn (appendOnly learner-authored moodScale 1-5 + optional comment, no x-openregister-authorization restriction — any authenticated user may submit their own, a documented platform gap same as SupportRequest.raisedBy). All three carry x-openregister-processing catalogue entries (scholiq-pupil-dossier-notes / scholiq-behaviour-incidents / scholiq-wellbeing-checkins). No existing schema is modified. See openspec/changes/pupil-dossier-notes/. v0.13.0 adds course-evaluation (vakevaluatie) — five new schemas closing the gap between Nextcloud Forms (a real survey instrument this change deliberately does not rebuild) and course-quality reporting: EvaluationCampaign (which Course(s)/Cohort(s), academicYear/period, a minimal built-in Likert+free-text questions[] instrument or an external-form convenience link Scholiq never ingests, a fixed anonymityPolicy, draft → open → closed → archived); EvaluationInvitation (system-provisioned per learner when a campaign opens, via EvaluationInvitationProvisioningHandler — the ONLY place a learner's identity and response status co-exist, reusing Enrolment.dueReminder's scheduled+filter reminder shape); CourseEvaluationResponse (appendOnly, anonymous BY SCHEMA SHAPE — no learnerId/submittedBy property exists at all, not RBAC-hidden — gated by CourseEvaluationEligibilityGuard, which mirrors ConferenceSignupGuardianGuard's session-resolved-caller-looked-up-against-a-different-schema shape and structurally prevents both uninvited and duplicate submission); CourseQualityScore (materialised per courseId/teacherId/academicYear/period roll-up, recomputed by CourseQualityScoreRollupHandler via CourseQualityScoreEvaluator — averaging exceeds this register's proven declarative count/count_distinct aggregation metrics, mirroring FinalGrade/GradeFormulaEvaluator's x-openregister-triggers.calculatedChange shape exactly, not an `engine`-keyed x-openregister-calculations entry, which is not a dialect key used anywhere in this register); ImprovementAction (declarative opleidingscommissie review/action tracker, no PHP guard). CourseEvaluationResponseSubmittedHandler re-resolves the same session identity after a successful submit and flips the caller's own EvaluationInvitation.hasResponded — a write to a different, unlinked object; the invitation never gains a field referencing which response satisfied it. No course-management schema is modified — Course/Cohort are referenced by $ref only. See openspec/changes/course-evaluation/. v0.14.0 adds payments — the `enrolment`/`course-management` specs both punted payment to 'a separate spec' that was never written; this closes the gap with five new schemas: FeeItem (the chargeable definition — kind, amount/currency/taxPosture, and a required voluntary flag: true is the Wet vrijwillige ouderbijdrage schoolkassa/trip/materials case, false is a genuine paid product like MBO contractonderwijs); Order/OrderLine (payer-facing request draft -> open -> partially-paid | paid -> refunded, with a materialised isOverdue calculation and dueSoon/overdue notifications mirroring Enrolment's exact idiom, and OrderTotalValidationGuard validating OrderLine.lineTotal sums against Order.totalAmount at finalize since no sum aggregation metric is precedented in this register); PaymentTransaction (appendOnly PSP round-trip per ADR-008, mirroring Attestation's evidentiary shape — scholiq forwards OpenConnector's opaque status only, parsing nothing PSP-specific); Entitlement (what a paid Order grants — structurally cannot gate a voluntary fee: FeeItemVoluntaryEntitlementGuard blocks the pending -> active grant transition whenever the linked FeeItem.voluntary is true, composing EntitlementOrderPaidGuard which additionally requires the linked Order to have reached paid). PaymentTransactionController delegates payment initiation/callback to OpenConnector's (not-yet-built) mollie-stripe-payment-adapter, reusing the established IClientService/IURLGenerator/IAppConfig bearer-token shape LtiToolPlacementController/DataExchangeRunHandler already use. No invoicing/dunning/ERP — that territory belongs to pipelinq/financeq. See openspec/changes/school-payments/. v0.15.0 adds accessibility-conformance — the toegankelijkheidsverklaring (accessibility statement) obligation under the Tijdelijk besluit digitale toegankelijkheid overheid (BDTO, BWBR0040936): three new schemas, AccessibilityStatement (channel identity, a 3-value status collapsed from the government's five-level A–E scale with the mapping documented in the schema description, evaluation method/date, standard applied, feedback contact, escalation route, a materialised reviewOverdue calculation mirroring Enrolment.isOverdue's @now/dateDiff idiom plus a calculatedChange notification mirroring TlvApplication.tlvExpiringSoon; lifecycle draft → published → archived, with AccessibilityStatementPublishGuard refusing to publish without evaluation evidence or a fully-compliant status while an open/mitigated limitation exists); AccessibilityLimitation (the known-limitations register — WCAG criterion, severity, affected surface, justification, disproportionate-burden flag, workaround, planned-fix date; open → mitigated → fixed; create/update restricted to admin/compliance-officer, mirroring xapi-statement/BsaWarning); AccessibilityFeedback (a user-reported barrier, create open to any authenticated user — the opposite RBAC posture, deliberately — with an onSubmitted notification to compliance-officer/admin mirroring ItemRevisionFlag's created-trigger shape; submitted → acknowledged → resolved). No new PHP controller or route — only the one lifecycle guard, per ADR-022/ADR-031. See openspec/changes/accessibility-conformance-statement/. v0.16.0 adds course-authoring-ux — the one authoring surface course-management never got: Lesson gains blocks (an ordered array of typed content blocks — richText | media | quiz | assignment | ltiTool — each pointing at an existing Material/Assessment/Assignment/LtiToolPlacement UUID or carrying inline markdown for richText, structured JSON mirroring the Assessment.itemRefs precedent, not a new Block schema) and contentRef's top-level required entry is replaced by an allOf/if/then conditional (contentType='text' → contentRef not required; every other contentType unchanged), the second use of the exam-board-case-handling if/then/else construct in this register. Course gains order (nullable integer, additive — null sorts after every sibling with an explicit value) sequencing sibling modules sharing a parentCourseId. New schema CourseTemplate captures a reusable Course→Module→Lesson skeleton (+ optional CurriculumPlan skeleton) instantiated via frontend orchestration against OpenRegister's existing object-create endpoint (no new PHP controller, per ADR-022) — the concrete implementation of the 'Clone for next year' acceptance criterion the spec already promised but never backed with a requirement. Two new custom views (CourseBuilder.vue, LessonComposer.vue) provide drag-and-drop AND keyboard-operable reorder (WCAG 2.1 AA SC 2.1.1) for modules/lessons/blocks; LessonPlayer.vue gains a real contentType='text' rendering path over lesson.blocks, replacing the previously dead lesson.title/lesson.summary/lesson.content reads. See openspec/changes/course-authoring-ux/.",
+        "version": "0.16.0"
     },
     "x-openregister": {
         "type": "application",
@@ -820,7 +820,7 @@
             "Course": {
                 "slug": "course",
                 "icon": "FolderOutline",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "Course",
                 "description": "A course or training program (Schema.org Course). Lifecycle: draft → published → archived.",
                 "type": "object",
@@ -936,6 +936,13 @@
                         "$ref": "Course",
                         "description": "UUID of the parent Course. Makes Course recursive — a 'module' is a Course used as a container. Null for top-level courses.",
                         "title": "Parent Course ID"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "course-authoring-ux: display order among sibling modules (child Course rows sharing the same parentCourseId). Additive field — existing rows leave it null, which MUST sort after every sibling with an explicit order value (append-to-end), never as an error or as position zero. Set and maintained by CourseBuilder's drag-and-drop and keyboard-operable reorder controls.",
+                        "example": 1,
+                        "title": "Module Display Order"
                     },
                     "curriculumPlanId": {
                         "type": "string",
@@ -1112,7 +1119,7 @@
             "Lesson": {
                 "slug": "lesson",
                 "icon": "FileDocumentOutline",
-                "version": "0.2.0",
+                "version": "0.3.0",
                 "title": "Lesson",
                 "description": "A lesson / learning module within a Course (Schema.org LearningResource). Lifecycle: draft → published → retired.",
                 "type": "object",
@@ -1127,7 +1134,6 @@
                     "name",
                     "order",
                     "contentType",
-                    "contentRef",
                     "tenant_id"
                 ],
                 "properties": {
@@ -1153,7 +1159,7 @@
                     },
                     "contentType": {
                         "type": "string",
-                        "description": "Type of learning content",
+                        "description": "Type of learning content. 'text' denotes a native, block-composed lesson — its body is authored as blocks (see below), not a single packaged reference (course-authoring-ux). Every other value denotes packaged/external content addressed by contentRef exactly as before.",
                         "enum": [
                             "text",
                             "video",
@@ -1168,9 +1174,86 @@
                     },
                     "contentRef": {
                         "type": "string",
-                        "description": "nc:files path or cmi5 launch URL for those content types. For contentType='lti', this MUST be the UUID of an LtiToolPlacement object, not a raw link — a static URL cannot carry a signed OIDC launch; the placement is resolved server-side and the actual launch is delegated to OpenConnector's lti-13-platform adapter.",
+                        "nullable": true,
+                        "description": "nc:files path or cmi5 launch URL for those content types. For contentType='lti', this MUST be the UUID of an LtiToolPlacement object, not a raw link — a static URL cannot carry a signed OIDC launch; the placement is resolved server-side and the actual launch is delegated to OpenConnector's lti-13-platform adapter. Required for every contentType except 'text' (see the allOf/if/then conditional below) — a contentType='text' lesson carries its body in blocks instead and leaves contentRef unset.",
                         "example": "/Scholiq/tenant-uuid/course-uuid/cmi5/lesson-uuid/",
                         "title": "Content Reference"
+                    },
+                    "blocks": {
+                        "type": "array",
+                        "default": [],
+                        "description": "course-authoring-ux: ordered list of typed content blocks composing this Lesson's body when contentType='text' (native, block-composed lesson). Additive field — existing rows leave it empty/absent. Each block carries exactly one payload matching its type: richText (inline markdown text), media (pointer to an existing Material UUID — image, video, file attachment, or SCORM/cmi5 package reference via Material.kind), quiz (pointer to an existing Assessment UUID), assignment (pointer to an existing Assignment UUID), or ltiTool (pointer to an existing LtiToolPlacement UUID). Structured JSON on Lesson, mirroring the Assessment.itemRefs precedent — never accessed outside this Lesson's own save/load cycle (design.md D1).",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "blockId",
+                                "type",
+                                "order"
+                            ],
+                            "properties": {
+                                "blockId": {
+                                    "type": "string",
+                                    "description": "Stable identifier for this block within the lesson (client-generated, e.g. a UUID).",
+                                    "title": "Block ID"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "richText",
+                                        "media",
+                                        "quiz",
+                                        "assignment",
+                                        "ltiTool"
+                                    ],
+                                    "description": "Block content type — determines which of the payload fields below is populated.",
+                                    "title": "Block Type"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "description": "Display order of this block within the lesson's blocks array — contiguous, maintained by LessonComposer's drag-and-drop and keyboard-operable reorder controls.",
+                                    "title": "Block Order"
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Inline markdown text for a richText block (edited via CnMarkdownEditor). Null for every other block type.",
+                                    "title": "Rich Text Content"
+                                },
+                                "materialId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "$ref": "Material",
+                                    "description": "UUID of the referenced Material for a media block (image, video, file attachment, or SCORM/cmi5 package reference via Material.kind). Never duplicates the Material's fileRef/kind/license — those stay on Material as the single source of truth. Null for every other block type.",
+                                    "title": "Material ID"
+                                },
+                                "assessmentId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "$ref": "Assessment",
+                                    "description": "UUID of the referenced Assessment for a quiz block. Null for every other block type.",
+                                    "title": "Assessment ID"
+                                },
+                                "assignmentId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "$ref": "Assignment",
+                                    "description": "UUID of the referenced Assignment for an assignment block. Null for every other block type.",
+                                    "title": "Assignment ID"
+                                },
+                                "ltiToolPlacementId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "format": "uuid",
+                                    "$ref": "LtiToolPlacement",
+                                    "description": "UUID of the referenced LtiToolPlacement for an ltiTool block — the same launch-delegation flow the whole-lesson contentType='lti' branch already uses, scoped to this one block. Null for every other block type.",
+                                    "title": "LTI Tool Placement ID"
+                                }
+                            }
+                        },
+                        "title": "Content Blocks"
                     },
                     "durationMinutes": {
                         "type": "integer",
@@ -1282,6 +1365,27 @@
                         "title": "Tenant ID"
                     }
                 },
+                "allOf": [
+                    {
+                        "_comment": "course-authoring-ux: conditional contentRef requiredness by contentType — second use of the exam-board-case-handling if/then/else precedent (GradeEntry.sourceKind/value). contentType='text' denotes a native, block-composed lesson (its body lives in blocks) — contentRef is not required. Every other contentType keeps contentRef required exactly as before.",
+                        "if": {
+                            "properties": {
+                                "contentType": {
+                                    "const": "text"
+                                }
+                            },
+                            "required": [
+                                "contentType"
+                            ]
+                        },
+                        "then": {},
+                        "else": {
+                            "required": [
+                                "contentRef"
+                            ]
+                        }
+                    }
+                ],
                 "x-openregister-lifecycle": {
                     "property": "lifecycle",
                     "initial": "draft",
@@ -1317,6 +1421,360 @@
                         "subject": {
                             "nl": "Les '{{title}}' is gepubliceerd",
                             "en": "Lesson '{{title}}' was published"
+                        }
+                    }
+                },
+                "x-openregister-seed": []
+            },
+            "CourseTemplate": {
+                "slug": "course-template",
+                "icon": "ContentCopy",
+                "version": "0.1.0",
+                "title": "Course Template",
+                "description": "course-authoring-ux: a reusable Course→Module→Lesson skeleton (+ optional CurriculumPlan skeleton) captured from an existing Course ('Save as template') or authored from scratch, and instantiated into a new, independent Course tree sharing no object references with the source — the concrete implementation of the 'Clone for next year' capability. Carries structural skeleton fields only (module/lesson names, order, contentType, lightweight block placeholders) — no live materialId/assessmentId/assignmentId/ltiToolPlacementId pointers and no learner data, so it introduces no new AVG/privacy surface. Lifecycle: draft → active → archived, mirroring LearningPlanTemplate.",
+                "type": "object",
+                "x-openregister": {
+                    "active": true,
+                    "hardDelete": false,
+                    "searchable": true
+                },
+                "required": [
+                    "name",
+                    "level",
+                    "tenant_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable template name, e.g. 'Compliance onboarding — standard module set'.",
+                        "example": "Compliance onboarding — standard module set",
+                        "title": "Template Name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional longer description of the template's intended use.",
+                        "title": "Template Description"
+                    },
+                    "level": {
+                        "type": "string",
+                        "description": "Education or training level this template targets, matching Course.level.",
+                        "enum": [
+                            "po",
+                            "vo",
+                            "mbo",
+                            "hbo",
+                            "wo",
+                            "corporate"
+                        ],
+                        "example": "corporate",
+                        "title": "Education Level"
+                    },
+                    "sourceCoursesId": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uuid",
+                        "$ref": "Course",
+                        "description": "UUID of the Course this template was captured from via 'Save as template'. Null if the template was authored from scratch.",
+                        "title": "Source Course ID"
+                    },
+                    "moduleStructure": {
+                        "type": "array",
+                        "default": [],
+                        "description": "Ordered module skeletons. Each entry becomes a new child Course (parentCourseId = the new top Course, order = this entry's order) when the template is instantiated.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key",
+                                "name",
+                                "order"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "description": "Stable identifier for this module within the template. Not a Course UUID — templates carry no live object references.",
+                                    "title": "Module Key"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "Module (child Course) name to set on the new module Course.",
+                                    "title": "Module Name"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "description": "Display order among sibling modules — maps onto the new module Course's own order field.",
+                                    "title": "Module Order"
+                                },
+                                "ectsCredits": {
+                                    "type": "number",
+                                    "nullable": true,
+                                    "minimum": 0,
+                                    "description": "ECTS credits to set on the new module Course. Null if not applicable.",
+                                    "title": "ECTS Credits"
+                                },
+                                "lessons": {
+                                    "type": "array",
+                                    "default": [],
+                                    "description": "Ordered lesson skeletons within this module. Each entry becomes a new Lesson (courseId = the new module Course) when the template is instantiated.",
+                                    "items": {
+                                        "type": "object",
+                                        "required": [
+                                            "key",
+                                            "name",
+                                            "order",
+                                            "contentType"
+                                        ],
+                                        "properties": {
+                                            "key": {
+                                                "type": "string",
+                                                "description": "Stable identifier for this lesson within the template.",
+                                                "title": "Lesson Key"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Lesson name to set on the new Lesson.",
+                                                "title": "Lesson Name"
+                                            },
+                                            "order": {
+                                                "type": "integer",
+                                                "description": "Display order among sibling lessons within the module.",
+                                                "title": "Lesson Order"
+                                            },
+                                            "contentType": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "text",
+                                                    "video",
+                                                    "scorm12",
+                                                    "scorm2004",
+                                                    "cmi5",
+                                                    "lti",
+                                                    "quiz"
+                                                ],
+                                                "description": "contentType to set on the new Lesson, matching Lesson.contentType.",
+                                                "title": "Content Type"
+                                            },
+                                            "durationMinutes": {
+                                                "type": "integer",
+                                                "nullable": true,
+                                                "description": "Estimated duration in minutes to set on the new Lesson.",
+                                                "title": "Duration (Minutes)"
+                                            },
+                                            "blocksSkeleton": {
+                                                "type": "array",
+                                                "nullable": true,
+                                                "default": [],
+                                                "description": "Lightweight block placeholders for a contentType='text' lesson. Only richText placeholders carry instructional copy (e.g. 'Introduction — replace with your own text'); every other block type carries no materialId/assessmentId/assignmentId/ltiToolPlacementId pointer — a template must not hardcode UUID pointers to content objects that may not exist in the destination tenant/course.",
+                                                "items": {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "blockId",
+                                                        "type",
+                                                        "order"
+                                                    ],
+                                                    "properties": {
+                                                        "blockId": {
+                                                            "type": "string",
+                                                            "description": "Stable identifier for this block placeholder within the lesson skeleton.",
+                                                            "title": "Block ID"
+                                                        },
+                                                        "type": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "richText",
+                                                                "media",
+                                                                "quiz",
+                                                                "assignment",
+                                                                "ltiTool"
+                                                            ],
+                                                            "description": "Block type to create on the new Lesson.",
+                                                            "title": "Block Type"
+                                                        },
+                                                        "order": {
+                                                            "type": "integer",
+                                                            "description": "Display order of this block placeholder within the lesson skeleton.",
+                                                            "title": "Block Order"
+                                                        },
+                                                        "text": {
+                                                            "type": "string",
+                                                            "nullable": true,
+                                                            "description": "Instructional placeholder markdown text for a richText block, e.g. 'Introduction — replace with your own text'. Null for every other block type — those carry no live content pointer.",
+                                                            "title": "Placeholder Text"
+                                                        }
+                                                    }
+                                                },
+                                                "title": "Block Placeholders"
+                                            }
+                                        }
+                                    },
+                                    "title": "Lesson Skeletons"
+                                }
+                            }
+                        },
+                        "title": "Module Structure"
+                    },
+                    "curriculumPlanSkeleton": {
+                        "type": "object",
+                        "nullable": true,
+                        "default": null,
+                        "description": "Optional CurriculumPlan skeleton instantiated alongside the new Course tree, reusing CurriculumPlan's own kind/formula/components/periods/passRules shapes verbatim. Null if the template carries no curriculum plan.",
+                        "properties": {
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "pta",
+                                    "oer",
+                                    "opleidingsplan",
+                                    "training-curriculum",
+                                    "generic"
+                                ],
+                                "description": "Profile of the CurriculumPlan to create, matching CurriculumPlan.kind.",
+                                "title": "Plan Profile"
+                            },
+                            "formula": {
+                                "type": "string",
+                                "enum": [
+                                    "weighted-average",
+                                    "last-attempt",
+                                    "best-of-n",
+                                    "all-must-pass"
+                                ],
+                                "description": "Roll-up formula to set on the new CurriculumPlan, matching CurriculumPlan.formula.",
+                                "title": "Roll-Up Formula"
+                            },
+                            "components": {
+                                "type": "array",
+                                "default": [],
+                                "description": "Assessment component definitions to set on the new CurriculumPlan, same shape as CurriculumPlan.components.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "componentId": {
+                                            "type": "string",
+                                            "description": "Stable identifier for this component within the plan.",
+                                            "title": "Component ID"
+                                        },
+                                        "label": {
+                                            "type": "string",
+                                            "description": "Display label for the component.",
+                                            "title": "Component Label"
+                                        },
+                                        "weight": {
+                                            "type": "number",
+                                            "description": "Relative weight of this component in the roll-up formula.",
+                                            "title": "Component Weight"
+                                        },
+                                        "period": {
+                                            "type": "string",
+                                            "description": "Period identifier this component belongs to.",
+                                            "title": "Period"
+                                        },
+                                        "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                                "assignment",
+                                                "assessment",
+                                                "participation"
+                                            ],
+                                            "description": "Component category.",
+                                            "title": "Component Kind"
+                                        }
+                                    }
+                                },
+                                "title": "Assessment Components"
+                            },
+                            "periods": {
+                                "type": "array",
+                                "default": [],
+                                "description": "Period definitions to set on the new CurriculumPlan, same shape as CurriculumPlan.periods.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "periodId": {
+                                            "type": "string",
+                                            "description": "Stable identifier for this period.",
+                                            "title": "Period ID"
+                                        },
+                                        "label": {
+                                            "type": "string",
+                                            "description": "Display label for the period.",
+                                            "title": "Period Label"
+                                        },
+                                        "startDate": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "description": "Start date of the period (ISO 8601).",
+                                            "title": "Start Date"
+                                        },
+                                        "endDate": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "description": "End date of the period (ISO 8601).",
+                                            "title": "End Date"
+                                        }
+                                    }
+                                },
+                                "title": "Assessment Periods"
+                            },
+                            "passRules": {
+                                "type": "array",
+                                "default": [],
+                                "description": "Per-component (or overall) minimum-pass thresholds to set on the new CurriculumPlan, same shape as CurriculumPlan.passRules.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "componentId": {
+                                            "type": "string",
+                                            "nullable": true,
+                                            "description": "If set: applies to that specific component. If null: applies to the final grade.",
+                                            "title": "Component ID"
+                                        },
+                                        "minValue": {
+                                            "type": "number",
+                                            "description": "Minimum passing value.",
+                                            "title": "Minimum Pass Value"
+                                        }
+                                    }
+                                },
+                                "title": "Pass Rules"
+                            }
+                        },
+                        "title": "Curriculum Plan Skeleton"
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Tenant UUID (multi-tenant isolation)",
+                        "title": "Tenant ID"
+                    },
+                    "lifecycle": {
+                        "type": "string",
+                        "description": "Template lifecycle state.",
+                        "enum": [
+                            "draft",
+                            "active",
+                            "archived"
+                        ],
+                        "default": "draft",
+                        "example": "draft",
+                        "title": "Lifecycle State"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "property": "lifecycle",
+                    "initial": "draft",
+                    "transitions": {
+                        "activate": {
+                            "from": "draft",
+                            "to": "active"
+                        },
+                        "archive": {
+                            "from": "active",
+                            "to": "archived"
+                        },
+                        "reactivate": {
+                            "from": "archived",
+                            "to": "active"
                         }
                     }
                 },
