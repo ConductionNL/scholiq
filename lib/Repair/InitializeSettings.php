@@ -81,7 +81,14 @@ class InitializeSettings implements IRepairStep
         }
 
         try {
-            $result = $this->settingsService->loadConfiguration(force: true);
+            // NOT forced. `force: true` bypasses OpenRegister's app-level import fast-skip
+            // (gated on `$force === false`), so this step re-parsed scholiq_register.json and
+            // walked every register/schema on EVERY upgrade, even when nothing changed. Unlike
+            // the fragmented apps, scholiq's info.version is static, so loadConfiguration() now
+            // content-addresses the version (`+def.<sha256>`) — a definition change bumps the
+            // version and re-imports; an unchanged config fast-skips. OpenRegister#426's
+            // content-aware gate is belt-and-suspenders on top of that.
+            $result = $this->settingsService->loadConfiguration();
 
             if ($result['success'] === true) {
                 $version = ($result['version'] ?? 'unknown');
