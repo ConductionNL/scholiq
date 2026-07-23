@@ -6,7 +6,17 @@ declare(strict_types=1);
 define('PHPUNIT_RUN', 1);
 
 // Include Composer's autoloader.
-require_once __DIR__.'/../vendor/autoload.php';
+$autoloader = require __DIR__.'/../vendor/autoload.php';
+
+// Register the cross-app stub namespaces at test-time on the Composer loader.
+// These used to live under composer.json `autoload-dev`, but a dev-built
+// vendor/ (as on the shared dev instance) then baked the stubs into the
+// RUNTIME classmap, shadowing the real OpenRegister/Talk classes instance-wide
+// and 500-ing every app (openregister#2036). Registering them here keeps the
+// stubs test-only. Loading is lazy, so ordering vs the OCP/NCU registration
+// below is irrelevant.
+$autoloader->addPsr4('OCA\\OpenRegister\\', __DIR__.'/Stubs/');
+$autoloader->addPsr4('OCA\\Talk\\', __DIR__.'/Stubs/Talk/');
 
 // Register Nextcloud OCP interfaces (provided by nextcloud/ocp dev dependency).
 // The OCP package ships as a path-based library without its own autoload entry
