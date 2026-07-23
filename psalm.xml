@@ -79,6 +79,7 @@
                 <referencedClass name="OCA\OpenRegister\Service\Lifecycle\TransitionEngine"/>
                 <referencedClass name="OCA\OpenRegister\Db\AuditTrailMapper"/>
                 <referencedClass name="OCA\OpenRegister\Service\AuditHashService"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Service\GenericActionAuthService"/>
                 <!-- Additional OCP infrastructure types used across the fleet -->
                 <referencedClass name="OCP\AppFramework\Bootstrap\IBootContext"/>
                 <referencedClass name="OCP\AppFramework\Bootstrap\IRegistrationContext"/>
@@ -94,6 +95,22 @@
                 <referencedClass name="GuzzleHttp\Exception\GuzzleException"/>
             </errorLevel>
         </UndefinedClass>
+        <UndefinedMethod>
+            <errorLevel type="suppress">
+                <!--
+                    ActionAuthService (lib/Service/ActionAuthService.php) is a one-line
+                    subclass of the real OCA\OpenRegister\AppHost\Service\
+                    GenericActionAuthService, which Psalm cannot resolve (not scanned —
+                    see the referencedClass suppression above). Every domain controller
+                    that type-hints ActionAuthService and calls one of its inherited
+                    ADR-023 methods trips UndefinedMethod as a result; this is a Psalm
+                    resolution gap, not a real missing method.
+                -->
+                <referencedMethod name="OCA\Scholiq\Service\ActionAuthService::requireAction"/>
+                <referencedMethod name="OCA\Scholiq\Service\ActionAuthService::getMatrix"/>
+                <referencedMethod name="OCA\Scholiq\Service\ActionAuthService::setMatrix"/>
+            </errorLevel>
+        </UndefinedMethod>
         <UndefinedMagicMethod errorLevel="suppress"/>
         <UnusedClass errorLevel="suppress"/>
         <PossiblyUnusedMethod errorLevel="suppress"/>

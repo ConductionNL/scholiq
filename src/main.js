@@ -9,10 +9,12 @@ import { generateUrl } from '@nextcloud/router'
 import { loadState } from '@nextcloud/initial-state'
 import {
 	CnPageRenderer,
+	CnAuditTrailWidget,
 	defaultPageTypes,
 	registerIcons,
 	registerTranslations,
 	buildManifest,
+	registerDashboardWidget,
 } from '@conduction/nextcloud-vue'
 import pinia from './pinia.js'
 import App from './App.vue'
@@ -25,6 +27,26 @@ import '@conduction/nextcloud-vue/css/index.css'
 
 // Global (unscoped) app styles
 import './assets/app.css'
+
+// Bootstrap the library's built-in `audit-trail` widget (CnAuditTrailWidget)
+// into the shared widget-type catalog. CnDetailPage's config-grid body resolves
+// widget `type` via getWidgetTypeEntry (the dashboard-widget catalog), NOT via
+// BUILT_IN_WIDGETS — and the library only self-seeds chart/stats-block/table/
+// related into that catalog, so `audit-trail` must be registered here for the
+// 36 detail-page audit-trail widgets to render. This dissolves the former
+// bespoke AuditTrailWidget adapter (deleted) down to the library component and
+// works around the dissolution renderer gap tracked in nextcloud-vue#89 (the
+// library should self-seed audit-trail into the detail-page catalog too; once
+// it does, this bootstrap can be removed outright). The v2 slot/widgetKey path
+// already resolves `audit-trail` via the library's BUILT_IN_WIDGETS map.
+registerDashboardWidget('audit-trail', {
+	renderer: CnAuditTrailWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Audit trail',
+	icon: 'History',
+	surfaces: ['detail-page'],
+})
 
 Vue.mixin({ methods: { t, n } })
 Vue.use(PiniaVuePlugin)
@@ -84,11 +106,20 @@ function routesFromManifest(manifest) {
 // against the signed-in user's role. Provided as initial state by
 // PageController; absent runtime would (by lib fail-safe) hide every
 // role-gated menu item. Defaults to the least-privileged role on miss.
+// The set of dashboard views the signed-in user may see (resolved server-side
+// from `scholiq-{role}` group membership; admins get all three, everyone gets
+// 'student'). Exposed as per-role booleans so each dashboard menu item's
+// `visibleIf` can gate on a scalar `eq: true` (the predicate grammar has no
+// array-contains operator).
+const dashboardRoles = loadState('scholiq', 'dashboardRoles', ['student']) || []
 bundledManifest.runtime = {
 	...(bundledManifest.runtime || {}),
 	user: {
 		...(bundledManifest.runtime?.user || {}),
 		primaryRole: loadState('scholiq', 'primaryRole', 'learner'),
+		canAdminDashboard: dashboardRoles.includes('admin'),
+		canTeachDashboard: dashboardRoles.includes('teacher'),
+		canLearnDashboard: dashboardRoles.includes('student'),
 	},
 }
 

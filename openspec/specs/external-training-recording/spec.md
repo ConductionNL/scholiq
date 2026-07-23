@@ -7,9 +7,7 @@ status: done
 ## Purpose
 
 Capture externally-completed training (classroom, third-party e-learning, conferences, on-the-job) per learner as `ExternalTrainingRecord` OpenRegister objects with evidence file attachments and an officer verification gate — a separate, clearly-labelled evidence class that feeds compliance coverage and audit packs without diluting the signed-attestation model.
-
 ## Requirements
-
 ### Requirement: ExternalTrainingRecord MUST be an OpenRegister object with evidence attachments
 
 The system MUST persist `ExternalTrainingRecord` objects (learnerId, title, provider, kind `classroom | external-elearning | conference | on-the-job | other`, optional regulationSlug, optional courseId, completedAt, optional validUntil, submittedBy, verifiedBy, rejectionReason, optional credentialId, optional batchId, tenant_id) with lifecycle `submitted → verified | rejected`. Evidence files (certificate scan, signed attendance list) MUST be OpenRegister file attachments on the record; the app MUST NOT store file bytes itself. Records MUST NOT be persisted as Attestations or Enrolments.
@@ -77,3 +75,29 @@ Two notification rules on ExternalTrainingRecord MUST be declared exclusively in
 - **WHEN** a compliance officer rejects it with a reason
 - **THEN** `anna` receives a Nextcloud notification with an nl/en subject
 - **AND** both rule blocks in `scholiq_register.json` contain only verified dialect keys
+
+### Requirement: `ExternalTrainingRecord` carries an additive ADR-046 portal-scoping reference
+
+`ExternalTrainingRecord` MUST carry a nullable `learnerRef` (`format: uuid`, `$ref: LearnerProfile`)
+alongside its existing `learnerId` (Nextcloud user id), additive and optional so existing rows stay valid
+and an unset ref is fail-closed (invisible to any `learnerRef`-scoped read, including
+`LearningRecordAggregationService`) until backfilled — the identical shape `portal-identity` established for
+its first slice of eight schemas (`GradeEntry`, `FinalGrade`, `AttendanceRecord`, `Enrolment`, `Submission`,
+`ExcuseRequest`, `LearnerProfile`, `GradeNotification`) and every wave-2 capability that introduced a new
+learner-scoped schema since (`Portfolio`, `CompetencyAttainment`, `BpvPlacement`, `LessonCompletion`,
+`ReportCard` all carry the same field). `ExternalTrainingRecord` was not part of `portal-identity`'s original
+slice and had no `learnerRef` at HEAD — this closes that gap so `portable-learning-record` can scope it like
+every other consumed schema.
+
+#### Scenario: `ExternalTrainingRecord` gains an additive, optional `learnerRef`
+
+<!-- @e2e exclude Pure OpenRegister schema shape; no scholiq DOM surface for the field addition itself — covered by the register-validation test referenced in tasks.md, mirroring portal-identity's own equivalent scenario. -->
+
+- **GIVEN** the shipped `scholiq_register.json`
+- **WHEN** the register configuration is parsed
+- **THEN** `ExternalTrainingRecord` defines a `learnerRef` property with `format: uuid` and `$ref:
+  LearnerProfile`
+- **AND** its existing `learnerId` property is unchanged and `learnerRef` is not `required`
+- **AND** existing `ExternalTrainingRecord` rows with no `learnerRef` remain valid and stay invisible to any
+  `learnerRef`-scoped read until backfilled
+

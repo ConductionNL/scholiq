@@ -15,28 +15,12 @@
  ScholiqDashboard.vue wrapper that nested a second CnDashboardPage inside a
  dashboard widget (the dashboard-in-dashboard antipattern).
 
- @spec openspec/changes/fix-dashboards-settings-notifications/specs/dashboard/spec.md#requirement-per-resolved-role-default-dashboard
+ @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 -->
 <template>
 	<div class="scholiq-dashboards">
-		<div v-if="canSwitch" class="scholiq-dashboards__rolebar">
-			<label for="scholiq-dashboard-role" class="scholiq-dashboards__rolebar-label">
-				{{ t('scholiq', 'Viewing as') }}
-			</label>
-			<NcSelect
-				id="scholiq-dashboard-role"
-				v-model="selectedRole"
-				class="scholiq-dashboards__roleselect"
-				:options="roleOptions"
-				:clearable="false"
-				:input-label="t('scholiq', 'Dashboard role')"
-				:aria-label-combobox="t('scholiq', 'Dashboard role')"
-				label="label"
-				:reduce="option => option.value" />
-		</div>
-
 		<CnDashboardPage
-			:key="selectedRole"
+			:key="activeRole"
 			:title="pageTitle"
 			:widgets="widgets"
 			:layout="layout">
@@ -99,10 +83,19 @@
 					index-route="/cohorts"
 					:limit="6" />
 			</template>
+			<template #widget-kpi-engagement-score>
+				<KpiEngagementScoreWidget />
+			</template>
+			<template #widget-kpi-engagement-flags>
+				<KpiEngagementRiskFlagsWidget />
+			</template>
 
 			<!-- Student view -->
 			<template #widget-my-mandatory-training>
 				<MyMandatoryTrainingWidget />
+			</template>
+			<template #widget-kpi-points-level>
+				<KpiPointsLevelWidget />
 			</template>
 		</CnDashboardPage>
 	</div>
@@ -110,77 +103,79 @@
 
 <script>
 import { loadState } from '@nextcloud/initial-state'
-import { NcSelect } from '@nextcloud/vue'
 import { CnDashboardPage } from '@conduction/nextcloud-vue'
 import KpiCoursesWidget from './widgets/KpiCoursesWidget.vue'
 import KpiCohortsWidget from './widgets/KpiCohortsWidget.vue'
 import KpiLearnersWidget from './widgets/KpiLearnersWidget.vue'
 import KpiActiveEnrolmentsWidget from './widgets/KpiActiveEnrolmentsWidget.vue'
 import KpiOpenFlagsWidget from './widgets/KpiOpenFlagsWidget.vue'
+import KpiEngagementScoreWidget from './widgets/KpiEngagementScoreWidget.vue'
+import KpiEngagementRiskFlagsWidget from './widgets/KpiEngagementRiskFlagsWidget.vue'
 import ManageCoursesWidget from './widgets/ManageCoursesWidget.vue'
 import ManageCohortsWidget from './widgets/ManageCohortsWidget.vue'
 import ManageProgrammesWidget from './widgets/ManageProgrammesWidget.vue'
 import ManageListWidget from './widgets/ManageListWidget.vue'
 import MyMandatoryTrainingWidget from './widgets/MyMandatoryTrainingWidget.vue'
+import KpiPointsLevelWidget from './widgets/KpiPointsLevelWidget.vue'
 
 const VALID_ROLES = ['admin', 'teacher', 'student']
 
 export default {
 	name: 'ScholiqDashboards',
 
+	props: {
+		/**
+		 * Which dashboard view to render: 'admin' | 'teacher' | 'student'.
+		 * Supplied by the thin per-role route wrapper (DashboardAdmin/Teacher/
+		 * Student). Falls back to the user's resolved default view when empty.
+		 */
+		role: {
+			type: String,
+			default: '',
+		},
+	},
+
 	components: {
-		NcSelect,
 		CnDashboardPage,
 		KpiCoursesWidget,
 		KpiCohortsWidget,
 		KpiLearnersWidget,
 		KpiActiveEnrolmentsWidget,
 		KpiOpenFlagsWidget,
+		KpiEngagementScoreWidget,
+		KpiEngagementRiskFlagsWidget,
 		ManageCoursesWidget,
 		ManageCohortsWidget,
 		ManageProgrammesWidget,
 		ManageListWidget,
 		MyMandatoryTrainingWidget,
-	},
-
-	data() {
-		const available = (loadState('scholiq', 'dashboardRoles', ['student']) || [])
-			.filter(role => VALID_ROLES.includes(role))
-		const fallback = available.length > 0 ? available[0] : 'student'
-		const defaultRole = loadState('scholiq', 'dashboardRole', fallback)
-		return {
-			availableRoles: available.length > 0 ? available : ['student'],
-			selectedRole: VALID_ROLES.includes(defaultRole) ? defaultRole : fallback,
-		}
+		KpiPointsLevelWidget,
 	},
 
 	computed: {
 		/**
-		 * Whether to show the role switcher — only when the user can access
-		 * more than one dashboard view.
+		 * The active dashboard role — the `role` prop when valid, otherwise the
+		 * user's resolved default view (initial state `dashboardRole`).
 		 *
-		 * @return {boolean}
+		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
-		canSwitch() {
-			return this.availableRoles.length > 1
-		},
-
-		/**
-		 * Switcher options (value + localized label) for the accessible roles.
-		 *
-		 * @return {Array<{value: string, label: string}>}
-		 */
-		roleOptions() {
-			return this.availableRoles.map(role => ({ value: role, label: this.roleLabel(role) }))
+		activeRole() {
+			if (VALID_ROLES.includes(this.role)) {
+				return this.role
+			}
+			const dflt = loadState('scholiq', 'dashboardRole', 'student')
+			return VALID_ROLES.includes(dflt) ? dflt : 'student'
 		},
 
 		/**
 		 * The dashboard page title for the active role view.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
 		pageTitle() {
-			return this.roleLabel(this.selectedRole) + ' · ' + this.t('scholiq', 'Dashboard')
+			return this.roleLabel(this.activeRole) + ' · ' + this.t('scholiq', 'Dashboard')
 		},
 
 		/**
@@ -205,12 +200,13 @@ export default {
 		 * Resolve the widgets + layout for the active role view.
 		 *
 		 * @return {{widgets: Array<object>, layout: Array<object>}}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-per-role-group-gated-dashboard-menu-items
 		 */
 		viewConfig() {
-			if (this.selectedRole === 'admin') {
+			if (this.activeRole === 'admin') {
 				return this.adminConfig
 			}
-			if (this.selectedRole === 'teacher') {
+			if (this.activeRole === 'teacher') {
 				return this.teacherConfig
 			}
 			return this.studentConfig
@@ -254,34 +250,48 @@ export default {
 		teacherConfig() {
 			return {
 				widgets: [
+					// learning-progress-and-analytics: declarative KPI tiles
+					// surfacing average EngagementScore.score and open
+					// EngagementRiskFlag counts — no new chart component.
+					{ id: 'kpi-engagement-score', title: this.t('scholiq', 'Avg. engagement score'), type: 'custom' },
+					{ id: 'kpi-engagement-flags', title: this.t('scholiq', 'Open engagement flags'), type: 'custom' },
 					{ id: 'teacher-courses', title: this.t('scholiq', 'My courses'), type: 'custom' },
 					{ id: 'teacher-assignments', title: this.t('scholiq', 'Assignments to grade'), type: 'custom' },
 					{ id: 'teacher-sessions', title: this.t('scholiq', 'Sessions to mark'), type: 'custom' },
 					{ id: 'teacher-cohorts', title: this.t('scholiq', 'My cohorts'), type: 'custom' },
 				],
 				layout: [
-					{ id: 1, widgetId: 'teacher-courses', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
-					{ id: 2, widgetId: 'teacher-assignments', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 4 },
-					{ id: 3, widgetId: 'teacher-sessions', gridX: 0, gridY: 4, gridWidth: 6, gridHeight: 4 },
-					{ id: 4, widgetId: 'teacher-cohorts', gridX: 6, gridY: 4, gridWidth: 6, gridHeight: 4 },
+					{ id: 1, widgetId: 'kpi-engagement-score', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
+					{ id: 2, widgetId: 'kpi-engagement-flags', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
+					{ id: 3, widgetId: 'teacher-courses', gridX: 0, gridY: 2, gridWidth: 6, gridHeight: 4 },
+					{ id: 4, widgetId: 'teacher-assignments', gridX: 6, gridY: 2, gridWidth: 6, gridHeight: 4 },
+					{ id: 5, widgetId: 'teacher-sessions', gridX: 0, gridY: 6, gridWidth: 6, gridHeight: 4 },
+					{ id: 6, widgetId: 'teacher-cohorts', gridX: 6, gridY: 6, gridWidth: 6, gridHeight: 4 },
 				],
 			}
 		},
 
 		/**
-		 * Student layout — the learner's own mandatory-training obligations.
-		 * Deliberately limited to user-scoped widgets to avoid exposing other
-		 * learners' records.
+		 * Student layout — the learner's own mandatory-training obligations,
+		 * plus (engagement-gamification) the learner's own points/level/streak
+		 * KPI, visible unconditionally regardless of any Leaderboard/opt-out
+		 * state. Deliberately limited to user-scoped widgets to avoid exposing
+		 * other learners' records.
 		 *
 		 * @return {{widgets: Array<object>, layout: Array<object>}}
+		 * @spec openspec/changes/engagement-gamification/specs/engagement/spec.md#scenario-a-learner-sees-their-own-points-and-level-regardless-of-leaderboard-opt-out
 		 */
 		studentConfig() {
 			return {
 				widgets: [
 					{ id: 'my-mandatory-training', title: this.t('scholiq', 'My mandatory training'), type: 'custom' },
+					// engagement-gamification: the learner's own points/level/streak KPI —
+					// always visible regardless of any Leaderboard/opt-out state.
+					{ id: 'kpi-points-level', title: this.t('scholiq', 'My points'), type: 'custom' },
 				],
 				layout: [
 					{ id: 1, widgetId: 'my-mandatory-training', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 5 },
+					{ id: 2, widgetId: 'kpi-points-level', gridX: 6, gridY: 0, gridWidth: 6, gridHeight: 2, showTitle: false },
 				],
 			}
 		},

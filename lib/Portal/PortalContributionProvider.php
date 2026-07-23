@@ -1,0 +1,680 @@
+<?php
+
+/**
+ * Scholiq Portal Contribution Provider
+ *
+ * Scholiq's contribution to the shared Portaliq external portal (hydra ADR-046
+ * + contribution contract v2, 2026-07-06 amendment). Portaliq — the ONE shared
+ * portal for people WITHOUT Nextcloud accounts — discovers this class by
+ * convention FQCN (`OCA\{Namespace}\Portal\PortalContributionProvider`) and
+ * duck-types it via method_exists(), never instanceof. This class is therefore
+ * deliberately PLAIN: no portaliq imports, no `implements` clause, no info.xml
+ * dependency, no constructor dependencies. Without portaliq installed it is
+ * inert and Scholiq behaves exactly as before (amendment A1).
+ *
+ * It declares — for the `student` (the learner) and `parent` (a guardian)
+ * audiences — the OpenRegister collections a portal subject may read, the
+ * whitelisted create-actions they may perform, and (student only) a
+ * notification inbox. All scoping is by UUID DOMAIN-OBJECT references
+ * (`learnerRef` = a LearnerProfile object UUID; `guardianRef` = a guardian
+ * domain UUID) added by the `portal-identity` change — never a Nextcloud user
+ * id, because an external subject has no Nextcloud account by premise
+ * (amendment A4). Scholiq's internal `learnerId` / `parentIds` / `submittedBy`
+ * flows are untouched.
+ *
+ * @category Portal
+ * @package  OCA\Scholiq\Portal
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Scholiq\Portal;
+
+/**
+ * Declares what an external portal subject may see and do in Scholiq.
+ *
+ * The contribution is a declarative manifest (pure data — no I/O, no
+ * callbacks). All subject identity (subjectRef, audience, organisation, trust)
+ * is derived server-side by portaliq's auth edge and MUST never be trusted
+ * from the client (ADR-005). Scoping uses UUID domain refs — the student's own
+ * `LearnerProfile` object UUID (`learnerRef`), or a guardian domain UUID
+ * (`guardianRef`) resolved one hop to the child learner via
+ * `LearnerProfile.guardianRefs`.
+ *
+ * Field-projected surfaces: every read collection ships an explicit `fields`
+ * whitelist that drops staff-only/internal columns (grader identity + private
+ * comments on grades, the teacher's marking internals on submissions, the
+ * marker and internal links on attendance, the staff decision fields on excuse
+ * requests). Whitelist tables + the claim-names contract:
+ * openspec/changes/portal-contribution/design.md. The parent reverse /
+ * scope-value join (`match: 'scopeField'`) + its minTrust story:
+ * openspec/changes/portal-parent/design.md.
+ *
+ * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+ */
+class PortalContributionProvider
+{
+    /**
+     * The OpenRegister register slug every collection/action below lives in.
+     *
+     * @var string
+     */
+    private const REGISTER = 'scholiq';
+
+    /**
+     * The audiences this provider contributes to (contract v2, preferred).
+     *
+     * The registry probes for this method first. Scholiq serves the learner
+     * (`student`) and their guardian (`parent`).
+     *
+     * @return array<int, string> The audience identifiers.
+     *
+     * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-access-is-a-direct-scope-portalcontributionprovider-audience
+     * @spec openspec/changes/eportfolio/specs/eportfolio/spec.md#requirement-bpv-praktijkopleider-and-external-assessor-sharing-reuse-the-adr-046-portal-audience-mechanism
+     */
+    public function getAudiences(): array
+    {
+        return ['student', 'parent', 'praktijkopleider', 'external-assessor'];
+
+    }//end getAudiences()
+
+    /**
+     * The primary audience this provider contributes to (contract v1 fallback).
+     *
+     * Kept alongside getAudiences() so the provider also works against a v1
+     * registry that predates multi-audience support.
+     *
+     * @return string The primary audience identifier.
+     *
+     * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     */
+    public function getAudience(): string
+    {
+        return 'student';
+
+    }//end getAudience()
+
+    /**
+     * Build the declarative portal manifest for one resolved subject.
+     *
+     * The subject array is server-derived by portaliq (subjectRef UUID,
+     * audience, organisation, trust level low|substantial|high). Returns null
+     * for any audience Scholiq does not serve (fail-closed; the registry
+     * already filters by audience, but a provider must not rely on that).
+     *
+     * @param array<string, mixed> $subject The resolved portal subject.
+     *
+     * @return array<string, mixed>|null The manifest, or null when not contributing.
+     *
+     * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     */
+    public function getContribution(array $subject): ?array
+    {
+        $audience = $subject['audience'] ?? '';
+
+        if ($audience === 'student') {
+            return $this->studentContribution();
+        }
+
+        if ($audience === 'parent') {
+            return $this->parentContribution();
+        }
+
+        if ($audience === 'praktijkopleider') {
+            return $this->praktijkopleiderContribution();
+        }
+
+        if ($audience === 'external-assessor') {
+            return $this->externalAssessorContribution();
+        }
+
+        // Any audience Scholiq does not serve → null (fail-closed; ADR-005).
+        return null;
+
+    }//end getContribution()
+
+    /**
+     * Manifest for the `student` audience (the learner themself).
+     *
+     * `subject.subjectRef` is the student's own `LearnerProfile` object UUID.
+     * Every read collection is scoped by the record's `learnerRef` (Submission
+     * by membership in `learnerRefs`) == that UUID, field-projected to hide
+     * staff-only columns. The learner may create their own Submission and
+     * ExcuseRequest (strict field whitelists — grades, status, staff decision
+     * and assurance fields stay server-authoritative). The GradeNotification
+     * inbox is scoped to the learner. `scopeClaim` names the subject claim
+     * portaliq resolves the scope value from (the stable claim contract).
+     *
+     * @return array<string, mixed> The student manifest.
+     *
+     * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     */
+    private function studentContribution(): array
+    {
+        return [
+            'label'         => 'Scholiq',
+            'collections'   => [
+                [
+                    'id'         => 'studentGrades',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'grade-entry',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My grades',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'learnerRef',
+                        'courseId',
+                        'curriculumPlanId',
+                        'componentId',
+                        'value',
+                        'gradeScaleId',
+                        'period',
+                        'gradedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'studentFinalGrades',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'final-grade',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My final grades',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'learnerRef',
+                        'courseId',
+                        'programmeId',
+                        'curriculumPlanId',
+                        'gradeScaleId',
+                        'value',
+                        'passed',
+                        'lastRecomputedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'studentAttendance',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'attendance-record',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My attendance',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'learnerRef',
+                        'sessionId',
+                        'cohortId',
+                        'status',
+                        'minutesAttended',
+                        'markedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'studentEnrolments',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'enrolment',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My enrolments',
+                    'listable'   => true,
+                    'fields'     => [
+                        'learnerRef',
+                        'courseId',
+                        'mandatory',
+                        'dueDate',
+                        'source',
+                        'regulationSlug',
+                        'cohortId',
+                    ],
+                ],
+                [
+                    'id'         => 'studentSubmissions',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'submission',
+                    'scopeField' => 'learnerRefs',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My submissions',
+                    'listable'   => true,
+                    'fields'     => [
+                        'learnerRefs',
+                        'assignmentId',
+                        'attachmentRefs',
+                        'submittedAt',
+                        'feedbackText',
+                        'lifecycle',
+                    ],
+                ],
+                [
+                    'id'         => 'studentExcuseRequests',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'excuse-request',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'My absence excuses',
+                    'listable'   => true,
+                    'fields'     => [
+                        'learnerRef',
+                        'dateFrom',
+                        'dateTo',
+                        'reason',
+                        'reasonKind',
+                        'attachmentRef',
+                        'lifecycle',
+                        'decidedAt',
+                    ],
+                ],
+                // Inbox (contract v2): the learner's grade-published
+                // notifications, scoped by learnerRef. Portaliq renders
+                // `kind: inbox` collections in the shared inbox surface.
+                [
+                    'id'         => 'studentInbox',
+                    'kind'       => 'inbox',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'grade-notification',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'label'      => 'Notifications',
+                    'listable'   => true,
+                    'fields'     => [
+                        'learnerRef',
+                        'event',
+                        'courseId',
+                    ],
+                ],
+            ],
+            'actions'       => [
+                [
+                    'id'         => 'createSubmission',
+                    'type'       => 'create',
+                    'label'      => 'Hand in an assignment',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'submission',
+                    'scopeField' => 'learnerRefs',
+                    'scopeClaim' => 'learnerRef',
+                    'fields'     => [
+                        'assignmentId',
+                        'attachmentRefs',
+                    ],
+                ],
+                [
+                    'id'         => 'createExcuseRequest',
+                    'type'       => 'create',
+                    'label'      => 'Report an absence',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'excuse-request',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'learnerRef',
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'dateFrom',
+                        'dateTo',
+                        'reason',
+                        'reasonKind',
+                        'attachmentRef',
+                    ],
+                ],
+            ],
+            'notifications' => [],
+        ];
+
+    }//end studentContribution()
+
+    /**
+     * Manifest for the `parent` audience (a guardian of the learner).
+     *
+     * `subject.subjectRef` is a guardian domain-object UUID (claim
+     * `guardianRef`). A guardian has no direct scope key on the record schemas,
+     * so every read collection routes through portaliq's reverse / scope-value
+     * `via` join (contract v2.2, ADR-046 A5 ext):
+     *
+     * 1. The reader resolves the guardian's children — `learner-profile` rows
+     *    whose `guardianRefs` (an array) contains the guardian UUID — and, per
+     *    verified join row, collects the value at `via.targetField` into the
+     *    target set.
+     * 2. `via.targetField` is `id`: a normalised OpenRegister row exposes its
+     *    OWN object UUID at the top-level `id` key
+     *    (`ObjectEntity::jsonSerialize()` sets `$object['id'] = $this->uuid`),
+     *    which is exactly what `grade-entry.learnerRef` (a LearnerProfile
+     *    object UUID) points at. So the target set is the guardian's children's
+     *    LearnerProfile UUIDs.
+     * 3. `via.match` is `scopeField` (the REVERSE mode): each outer record
+     *    survives iff the value at its own `scopeField` (`learnerRef`) is in
+     *    that set — a foreign scope key, not the row's own id (the forward
+     *    default). An empty child set can only ever yield zero rows, never all
+     *    (fail-closed floor).
+     *
+     * Reads are `minTrust: substantial` — a guardian authenticating to a
+     * MINOR's grades/attendance/excuses needs substantial assurance (pairs with
+     * the DigiD/eHerkenning broker). The create-action stamps the guardian UUID
+     * into `submittedByRef` (never `learnerRef`, which is the child) and is
+     * likewise `substantial`. Field projection is identical to the student
+     * surface (same staff-only columns dropped). Reverse-join semantics, the
+     * minTrust story and a worked example: openspec/changes/portal-parent/design.md.
+     *
+     * @return array<string, mixed> The parent manifest.
+     *
+     * @spec openspec/changes/portal-contribution/specs/portal-contribution/spec.md
+     */
+    private function parentContribution(): array
+    {
+        // The one-hop reverse join shared by every parent read collection:
+        // guardianRefs (array, on learner-profile) contains the guardian UUID →
+        // collect each child profile's own object UUID (`id`) → keep outer rows
+        // whose `learnerRef` is in that set (match: 'scopeField').
+        $childJoin = [
+            'register'    => self::REGISTER,
+            'schema'      => 'learner-profile',
+            'scopeField'  => 'guardianRefs',
+            'targetField' => 'id',
+            'match'       => 'scopeField',
+        ];
+
+        return [
+            'label'         => 'Scholiq',
+            'collections'   => [
+                [
+                    'id'         => 'parentGrades',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'grade-entry',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'guardianRef',
+                    'via'        => $childJoin,
+                    'label'      => "My child's grades",
+                    'listable'   => true,
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'learnerRef',
+                        'courseId',
+                        'curriculumPlanId',
+                        'componentId',
+                        'value',
+                        'gradeScaleId',
+                        'period',
+                        'gradedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'parentAttendance',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'attendance-record',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'guardianRef',
+                    'via'        => $childJoin,
+                    'label'      => "My child's attendance",
+                    'listable'   => true,
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'learnerRef',
+                        'sessionId',
+                        'cohortId',
+                        'status',
+                        'minutesAttended',
+                        'markedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'parentExcuseRequests',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'excuse-request',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'guardianRef',
+                    'via'        => $childJoin,
+                    'label'      => "My child's absence excuses",
+                    'listable'   => true,
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'learnerRef',
+                        'dateFrom',
+                        'dateTo',
+                        'reason',
+                        'reasonKind',
+                        'attachmentRef',
+                        'lifecycle',
+                        'decidedAt',
+                    ],
+                ],
+                [
+                    'id'         => 'parentReportCards',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'report-card',
+                    'scopeField' => 'learnerRef',
+                    'scopeClaim' => 'guardianRef',
+                    'via'        => $childJoin,
+                    'label'      => "My child's report cards",
+                    'listable'   => true,
+                    'minTrust'   => 'substantial',
+                    // Server-side lifecycle filter, mirroring report-card's own
+                    // "never draft/rapportvergadering-review/finalised" requirement —
+                    // a guardian must only ever see a published-to-parents ReportCard,
+                    // never one still under internal review. Key is singular `filter`
+                    // (ContributionController::collection() reads $collection['filter'],
+                    // applied by PortalObjectReader::readCollection() BEFORE the scope
+                    // filter, so it can only ever subset the guardian's own rows —
+                    // mirrors pipelinq's PortalContributionProvider's own `filter` usage).
+                    'filter'     => ['lifecycle' => 'published-to-parents'],
+                    'fields'     => [
+                        'learnerRef',
+                        'reportPeriodId',
+                        'subjectGrades',
+                        'attendanceSummary',
+                        'mentorComment',
+                        'docudeskDocumentRef',
+                    ],
+                ],
+            ],
+            // No parent create action yet. A guardian reporting an absence for
+            // a child would supply the child `learnerRef` in the create body,
+            // but portaliq's writer only server-stamps the scope field
+            // (`submittedByRef` = the guardian) — it does NOT verify that a
+            // client-supplied cross-reference (`learnerRef`) is one of the
+            // guardian's own children. Shipping it would be a write IDOR (a
+            // guardian filing an excuse on another child's record). Parent
+            // READS are safe (the reverse `via` join verifies the child set per
+            // row); the create waits on portaliq validating create-body
+            // cross-refs against the subject's reverse-join set. Tracked as a
+            // portaliq writer follow-up; re-add here once that lands.
+            'actions'       => [],
+            'notifications' => [],
+        ];
+
+    }//end parentContribution()
+
+    /**
+     * Manifest for the `praktijkopleider` audience (the workplace supervisor conducting BPV).
+     *
+     * `subject.subjectRef` is the praktijkopleider's own `Praktijkopleider` object UUID — a
+     * DIRECT scope key on `BpvPlacement` (`praktijkopleiderId == subject.subjectRef`), unlike
+     * `parent`'s reverse one-hop join, because the placement literally belongs to that
+     * praktijkopleider (no join required). This follows the `student` shape (direct match,
+     * safe to ship create-actions), not the `parent` shape (no create yet, pending a
+     * cross-ref-validating writer). Both create-actions are `minTrust: substantial` — an
+     * official werkproces assessment and a POK signature both feed diploma-track evidence,
+     * the same trust floor `portal-parent` set for guardian actions over minor data.
+     *
+     * Field projection: the read collection excludes `schoolCoachId` (internal staff
+     * identity) and `leerbedrijfVerification.raw` (the SBB provider's raw payload may carry
+     * more than the erkenning status) — mirrors the staff-only-column drop table in
+     * portal-contribution/design.md.
+     *
+     * eportfolio: gains one new direct-matched collection, `poSharedPortfolios`, over
+     * `portfolio-share` (NOT a `via` join — `PortfolioShare` itself carries
+     * `sharedWithPraktijkopleiderId`, so no cross-object resolution is needed, exactly the
+     * same direct-scope shape `poBpvPlacements` above already uses). `filter: {lifecycle:
+     * active}` is applied BEFORE the scope filter (mirrors `parentReportCards`'s own
+     * `filter` usage) so a `revoked` share resolves no rows. The collection exposes the
+     * grant's own `portfolioId`/`entryIds` pointer fields — resolving those into the
+     * referenced `Portfolio`/`PortfolioEntry` content is downstream of this manifest (this
+     * class stays a pure, I/O-free declaration per its own class docblock); it does not
+     * declare a second `via`-joined collection here because the documented `via` contract
+     * (`openspec/changes/portal-parent/design.md`'s `isValidVia()` key set — exactly
+     * `{register, schema, scopeField, targetField, match}`) has no hook to filter the
+     * *joined* schema by its own lifecycle, so a `via`-based `portfolio`/`portfolio-entry`
+     * collection could not honour "a revoked share resolves no rows". Resolving
+     * `portfolioId`/`entryIds` into the referenced `Portfolio`/`PortfolioEntry` content is
+     * therefore left to the portal client reading those objects directly, out of this
+     * manifest's declarative scope — flagged as a follow-up once portaliq's `via` contract
+     * grows a joined-schema filter hook.
+     *
+     * @return array<string, mixed> The praktijkopleider manifest.
+     *
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-access-is-a-direct-scope-portalcontributionprovider-audience
+     * @spec openspec/changes/bpv-praktijkovereenkomst/specs/bpv/spec.md#requirement-praktijkopleider-portal-actions-never-trust-client-supplied-identity
+     * @spec openspec/changes/eportfolio/specs/eportfolio/spec.md#requirement-bpv-praktijkopleider-and-external-assessor-sharing-reuse-the-adr-046-portal-audience-mechanism
+     */
+    private function praktijkopleiderContribution(): array
+    {
+        return [
+            'label'         => 'Scholiq',
+            'collections'   => [
+                [
+                    'id'         => 'poBpvPlacements',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'bpv-placement',
+                    'scopeField' => 'praktijkopleiderId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'label'      => 'My BPV placements',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    'fields'     => [
+                        'praktijkopleiderId',
+                        'learnerRef',
+                        'curriculumPlanId',
+                        'leerbedrijfName',
+                        'periodFrom',
+                        'periodTo',
+                        'lifecycle',
+                    ],
+                ],
+                [
+                    'id'         => 'poSharedPortfolios',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'portfolio-share',
+                    'scopeField' => 'sharedWithPraktijkopleiderId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'label'      => 'Portfolios shared with me',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    // Only active grants resolve — a revoked share must return no rows.
+                    'filter'     => ['lifecycle' => 'active'],
+                    'fields'     => [
+                        'portfolioId',
+                        'entryIds',
+                        'sharedWithKind',
+                        'sharedBy',
+                        'expiresAt',
+                        'lifecycle',
+                    ],
+                ],
+            ],
+            'actions'       => [
+                [
+                    'id'         => 'createWerkprocesAssessment',
+                    'type'       => 'create',
+                    'label'      => 'Submit a werkproces assessment',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'werkproces-assessment',
+                    'scopeField' => 'assessorId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'bpvPlacementId',
+                        'curriculumPlanId',
+                        'componentId',
+                        'kwalificatiedossierCode',
+                        'kerntaakCode',
+                        'werkprocesCode',
+                        'werkprocesLabel',
+                        'beoordeling',
+                        'toelichting',
+                    ],
+                ],
+                [
+                    'id'         => 'signPraktijkovereenkomst',
+                    'type'       => 'create',
+                    'label'      => 'Sign the praktijkovereenkomst',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'pok-signature',
+                    'scopeField' => 'signerId',
+                    'scopeClaim' => 'praktijkopleiderId',
+                    'minTrust'   => 'substantial',
+                    'fields'     => [
+                        'subjectId',
+                        'subjectVersion',
+                        'assuranceLevel',
+                        'method',
+                        'evidenceRef',
+                    ],
+                ],
+            ],
+            'notifications' => [],
+        ];
+
+    }//end praktijkopleiderContribution()
+
+    /**
+     * Manifest for the `external-assessor` audience (a non-BPV external assessor granted
+     * read-only portfolio access, no Nextcloud account — `ExternalAssessor` schema).
+     *
+     * The fourth audience, added following the exact mechanism `bpv-praktijkovereenkomst`
+     * used to add `praktijkopleider` as the third: one more `getAudiences()` value, one
+     * more `getContribution()` branch, and this method. `subject.subjectRef` is the
+     * assessor's own `ExternalAssessor` object UUID — a DIRECT scope key on
+     * `PortfolioShare.sharedWithExternalAssessorId`, the same direct-match shape
+     * `praktijkopleiderContribution()`'s new `poSharedPortfolios` collection uses (see that
+     * method's docblock for why this stays a direct `portfolio-share` read rather than a
+     * `via`-joined `portfolio` one). Zero create-actions — external-assessor access is
+     * read-only per the brief.
+     *
+     * @return array<string, mixed> The external-assessor manifest.
+     *
+     * @spec openspec/changes/eportfolio/specs/eportfolio/spec.md#requirement-bpv-praktijkopleider-and-external-assessor-sharing-reuse-the-adr-046-portal-audience-mechanism
+     */
+    private function externalAssessorContribution(): array
+    {
+        return [
+            'label'         => 'Scholiq',
+            'collections'   => [
+                [
+                    'id'         => 'eaSharedPortfolios',
+                    'register'   => self::REGISTER,
+                    'schema'     => 'portfolio-share',
+                    'scopeField' => 'sharedWithExternalAssessorId',
+                    'scopeClaim' => 'externalAssessorId',
+                    'label'      => 'Portfolios shared with me',
+                    'listable'   => true,
+                    'minTrust'   => 'low',
+                    // Only active grants resolve — a revoked share must return no rows.
+                    'filter'     => ['lifecycle' => 'active'],
+                    'fields'     => [
+                        'portfolioId',
+                        'entryIds',
+                        'sharedWithKind',
+                        'sharedBy',
+                        'expiresAt',
+                        'lifecycle',
+                    ],
+                ],
+            ],
+            'actions'       => [],
+            'notifications' => [],
+        ];
+
+    }//end externalAssessorContribution()
+}//end class

@@ -5,15 +5,18 @@
  * added to `scholiq_register.json` by the `avg-verwerkingsregister` change.
  *
  * Scholiq is a THIN CONSUMER of OpenRegister's platform processing-activity
- * register (OR-PA-1..9): it declares its seven processing activities as
- * `x-openregister-processing` catalogue annotations and opts the carrying
- * schemas into OpenRegister's per-access read-logging. The ProcessingActivity
- * entity, validation, lifecycle, versioning, review-due notifications, the
- * aggregate Art. 30 export, and the access gating all live in OpenRegister
- * (ADR-022); Scholiq owns NO export service, controller, schema, or template.
+ * register (OR-PA-1..9): it declares its ten processing activities (seven
+ * from the original catalogue plus the three pupil-dossier-notes activities
+ * — scholiq-pupil-dossier-notes, scholiq-behaviour-incidents,
+ * scholiq-wellbeing-checkins) as `x-openregister-processing` catalogue
+ * annotations and opts the carrying schemas into OpenRegister's per-access
+ * read-logging. The ProcessingActivity entity, validation, lifecycle,
+ * versioning, review-due notifications, the aggregate Art. 30 export, and
+ * the access gating all live in OpenRegister (ADR-022); Scholiq owns NO
+ * export service, controller, schema, or template.
  *
  * These tests assert:
- *   - the seven activities are declared with the required catalogue fields;
+ *   - the ten activities are declared with the required catalogue fields;
  *   - each annotation opts the schema into read-logging and attributes to its
  *     own activity code (resolvable by OpenRegister's ProcessingLogService);
  *   - owner/review fields are present so OR-PA-1 review notifications fire,
@@ -62,15 +65,17 @@ class ProcessingActivityCatalogueTest extends TestCase
      * @var array<string, string>
      */
     private const ACTIVITY_SCHEMAS = [
-        'LearnerProfile'   => 'scholiq-learner-administration',
-        'AttendanceRecord' => 'scholiq-attendance-leerplicht',
-        'Assessment'       => 'scholiq-grading-assessment',
-        'Attestation'      => 'scholiq-attestations',
-        'Credential'       => 'scholiq-credentialing',
-        'DataExchangeJob'  => 'scholiq-data-exchange',
-        'AiFeature'        => 'scholiq-ai-features',
+        'LearnerProfile'    => 'scholiq-learner-administration',
+        'AttendanceRecord'  => 'scholiq-attendance-leerplicht',
+        'Assessment'        => 'scholiq-grading-assessment',
+        'Attestation'       => 'scholiq-attestations',
+        'Credential'        => 'scholiq-credentialing',
+        'DataExchangeJob'   => 'scholiq-data-exchange',
+        'AiFeature'         => 'scholiq-ai-features',
+        'DossierNote'       => 'scholiq-pupil-dossier-notes',
+        'BehaviourIncident' => 'scholiq-behaviour-incidents',
+        'WellbeingCheckIn'  => 'scholiq-wellbeing-checkins',
     ];
-
 
     /**
      * Load the register configuration once per test.
@@ -89,14 +94,13 @@ class ProcessingActivityCatalogueTest extends TestCase
 
     }//end setUp()
 
-
     /**
-     * The seven activities are declared, each on its carrying schema, with the
+     * The ten activities are declared, each on its carrying schema, with the
      * required Art. 30 catalogue fields and its own attribution code.
      *
      * @return void
      */
-    public function testSevenActivitiesDeclaredWithCatalogueFields(): void
+    public function testTenActivitiesDeclaredWithCatalogueFields(): void
     {
         $schemas = $this->config['components']['schemas'] ?? [];
         $codes   = [];
@@ -116,10 +120,9 @@ class ProcessingActivityCatalogueTest extends TestCase
             $codes[] = $processing['code'];
         }
 
-        $this->assertCount(7, array_unique($codes), 'Exactly seven distinct activity codes expected');
+        $this->assertCount(10, array_unique($codes), 'Exactly ten distinct activity codes expected');
 
-    }//end testSevenActivitiesDeclaredWithCatalogueFields()
-
+    }//end testTenActivitiesDeclaredWithCatalogueFields()
 
     /**
      * Each annotation opts the schema into read-logging and attributes reads
@@ -152,7 +155,6 @@ class ProcessingActivityCatalogueTest extends TestCase
 
     }//end testActivitiesOptInToReadLoggingAndSelfAttribute()
 
-
     /**
      * Each activity carries owner/review fields so OpenRegister's review-due
      * notification (OR-PA-1) fires — and Scholiq ships NO notification rule of
@@ -178,11 +180,14 @@ class ProcessingActivityCatalogueTest extends TestCase
             // No notification rule referencing processing-activity reviews lives
             // in the carrying schema — the platform owns the notification.
             $encoded = (string) json_encode($schemas[$schemaName]['x-openregister-notifications'] ?? []);
-            $this->assertStringNotContainsStringIgnoringCase('review', $encoded, "$schemaName MUST NOT declare a processing-activity review notification rule");
+            $this->assertStringNotContainsStringIgnoringCase(
+                'review',
+                $encoded,
+                "$schemaName MUST NOT declare a processing-activity review notification rule"
+            );
         }
 
     }//end testOwnerReviewFieldsPresentAndNoScholiqNotificationRule()
-
 
     /**
      * The register requires the OpenRegister version that ships the per-access
@@ -199,7 +204,6 @@ class ProcessingActivityCatalogueTest extends TestCase
         $this->assertMatchesRegularExpression('/0\.2\.(1[4-9]|[2-9][0-9]|[3-9])/', $constraint, 'OpenRegister constraint MUST be >= 0.2.14');
 
     }//end testRegisterRequiresProcessingCapableOpenRegister()
-
 
     /**
      * The compliance audit-pack writer includes the platform-generated
@@ -237,7 +241,6 @@ class ProcessingActivityCatalogueTest extends TestCase
 
     }//end testAuditPackIncludesVerwerkingsregisterAndFailsLoudly()
 
-
     /**
      * Scholiq ships NO endpoint or controller that aggregates / exports
      * processing activities — that surface is OpenRegister's (OR-PA-7), per
@@ -248,7 +251,7 @@ class ProcessingActivityCatalogueTest extends TestCase
     public function testNoScholiqProcessingExportEndpointExists(): void
     {
         $routesPath = __DIR__.'/../../../appinfo/routes.php';
-        $routes     = require $routesPath;
+        $routes     = include $routesPath;
         $this->assertIsArray($routes);
 
         $names = [];
@@ -270,8 +273,17 @@ class ProcessingActivityCatalogueTest extends TestCase
         // No controller class implements an aggregation/export surface.
         $controllerDir = __DIR__.'/../../../lib/Controller';
         $this->assertDirectoryExists($controllerDir);
-        $hits = glob($controllerDir.'/*ProcessingActivit*Controller.php') ?: [];
-        $hits = array_merge($hits, (glob($controllerDir.'/*Verwerking*Controller.php') ?: []));
+        $hits = glob($controllerDir.'/*ProcessingActivit*Controller.php');
+        if ($hits === false) {
+            $hits = [];
+        }
+
+        $verwerkingHits = glob($controllerDir.'/*Verwerking*Controller.php');
+        if ($verwerkingHits === false) {
+            $verwerkingHits = [];
+        }
+
+        $hits = array_merge($hits, $verwerkingHits);
         $this->assertSame([], $hits, 'Scholiq MUST NOT ship a processing-activity / verwerkingsregister controller');
 
         // No schema named ProcessingActivity is defined in scholiq's register —

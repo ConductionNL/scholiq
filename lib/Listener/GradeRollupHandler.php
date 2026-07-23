@@ -48,6 +48,8 @@ use DateTimeImmutable;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\Scholiq\Grading\GradeFormulaEvaluator;
+use OCA\Scholiq\Grading\GradeVisibilityResolver;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 
@@ -55,6 +57,7 @@ use OCP\EventDispatcher\IEventListener;
  * Bridges GradeEntry.published → FinalGrade recompute and AssessmentResult.graded → GradeEntry creation.
  *
  * @implements IEventListener<Event>
+ * @spec       openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#requirement-persist-grading-domain-objects-in-openregister
  */
 class GradeRollupHandler implements IEventListener
 {
@@ -64,18 +67,23 @@ class GradeRollupHandler implements IEventListener
     private const FINAL_GRADE_SCHEMA       = 'final-grade';
     private const ASSESSMENT_RESULT_SCHEMA = 'assessment-result';
     private const LEARNER_PROFILE_SCHEMA   = 'learner-profile';
+    private const CURRICULUM_PLAN_SCHEMA   = 'curriculum-plan';
 
     /**
      * Constructor.
      *
-     * @param ObjectService         $objectService OpenRegister object access.
-     * @param GradeFormulaEvaluator $evaluator     Formula evaluation engine.
+     * @param ObjectService           $objectService      OpenRegister object access.
+     * @param GradeFormulaEvaluator   $evaluator          Formula evaluation engine.
+     * @param GradeVisibilityResolver $visibilityResolver Scheduled-visibility-window resolver.
+     * @param ITimeFactory            $timeFactory        NC time source (injectable "now" for tests).
      *
      * @return void
      */
     public function __construct(
         private readonly ObjectService $objectService,
         private readonly GradeFormulaEvaluator $evaluator,
+        private readonly GradeVisibilityResolver $visibilityResolver,
+        private readonly ITimeFactory $timeFactory,
     ) {
     }//end __construct()
 
@@ -121,6 +129,7 @@ class GradeRollupHandler implements IEventListener
      * @return void
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-5
+     * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#requirement-persist-grading-domain-objects-in-openregister
      */
     private function handleGradeEntryPublished(ObjectTransitionedEvent $event): void
     {
@@ -133,6 +142,9 @@ class GradeRollupHandler implements IEventListener
             return;
         }
 
+        // FinalGrade recompute is unaffected by / does not wait on visibleFrom —
+        // it recomputes at publish, not at visibleFrom (spec: "Roll-up is a
+        // declared calculation, not a TimedJob").
         $this->recomputeFinalGrade(
             learnerId: $learnerId,
             curriculumPlanId: $curriculumPlanId,
@@ -140,9 +152,93 @@ class GradeRollupHandler implements IEventListener
             entry: $entry
         );
 
-        $this->fanOutParentNotifications(learnerId: $learnerId, gradeEntry: $entry);
+        $visibleFrom = $this->resolveAndPersistVisibleFrom(curriculumPlanId: $curriculumPlanId, entry: $entry);
+
+        $this->fanOutParentNotifications(learnerId: $learnerId, gradeEntry: $entry, visibleFrom: $visibleFrom);
 
     }//end handleGradeEntryPublished()
+
+    /**
+     * Resolve the effective `visibleFrom` for this publish and persist it onto the GradeEntry.
+     *
+     * An explicit teacher override (already present on `$entry['visibleFrom']`, set by the
+     * frontend as part of the same publish action) wins; otherwise the value is resolved from
+     * the governing CurriculumPlan's `gradeVisibilityPolicy`.
+     *
+     * The write below only ever changes the `visibleFrom` field — `lifecycle` stays `published`
+     * — so it does not re-trigger the `publish` transition (no recursive ObjectTransitionedEvent),
+     * and it reuses `$entry`'s own `id` so OpenRegister updates the existing row in place rather
+     * than creating a duplicate (the concern #183 flags for `fanOutParentNotifications()` below
+     * does not apply here since we never strip or omit the id).
+     *
+     * @param string $curriculumPlanId Plan UUID governing this entry.
+     * @param array  $entry            The published GradeEntry data (event snapshot).
+     *
+     * @return string ISO-8601 resolved `visibleFrom`.
+     *
+     * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#scenario-curriculumplan-supplies-the-default-visibility-policy-when-a-teacher-does-not-override
+     */
+    private function resolveAndPersistVisibleFrom(string $curriculumPlanId, array $entry): string
+    {
+        $policy = $this->fetchGradeVisibilityPolicy(curriculumPlanId: $curriculumPlanId);
+
+        $override = $entry['visibleFrom'] ?? null;
+        if (is_string($override) === false || $override === '') {
+            $override = null;
+        }
+
+        $resolved = $this->visibilityResolver->resolve(
+            override: $override,
+            policy: $policy,
+            publishedAt: DateTimeImmutable::createFromMutable($this->timeFactory->getDateTime())
+        );
+
+        $visibleFrom = $resolved->format(\DATE_ATOM);
+
+        $this->objectService->saveObject(
+            register: self::SCHOLIQ_REGISTER,
+            schema: self::GRADE_ENTRY_SCHEMA,
+            object: array_merge($entry, ['visibleFrom' => $visibleFrom])
+        );
+
+        return $visibleFrom;
+
+    }//end resolveAndPersistVisibleFrom()
+
+    /**
+     * Fetch the governing CurriculumPlan's `gradeVisibilityPolicy`, if any.
+     *
+     * @param string $curriculumPlanId Plan UUID.
+     *
+     * @return array<string, mixed>|null
+     *
+     * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#scenario-curriculumplan-supplies-the-default-visibility-policy-when-a-teacher-does-not-override
+     */
+    private function fetchGradeVisibilityPolicy(string $curriculumPlanId): ?array
+    {
+        $plan = $this->objectService->find(
+            id: $curriculumPlanId,
+            register: self::SCHOLIQ_REGISTER,
+            schema: self::CURRICULUM_PLAN_SCHEMA
+        );
+
+        if ($plan === null) {
+            return null;
+        }
+
+        $planData = $plan;
+        if (is_array($plan) === false) {
+            $planData = $plan->jsonSerialize();
+        }
+
+        $policy = $planData['gradeVisibilityPolicy'] ?? null;
+        if (is_array($policy) === false) {
+            return null;
+        }
+
+        return $policy;
+
+    }//end fetchGradeVisibilityPolicy()
 
     /**
      * Find or create the FinalGrade, evaluate, and persist.
@@ -220,14 +316,18 @@ class GradeRollupHandler implements IEventListener
      * Parents require an explicit PHP bridge per the design doc (§3.2).
      * Notification is best-effort — a failure here does not roll back the FinalGrade recompute.
      *
-     * @param string $learnerId  NC user ID.
-     * @param array  $gradeEntry Published GradeEntry data.
+     * @param string $learnerId   NC user ID.
+     * @param array  $gradeEntry  Published GradeEntry data.
+     * @param string $visibleFrom ISO-8601 resolved visibleFrom, stamped onto every fanned-out
+     *                            GradeNotification so parent notifications fire on the same
+     *                            schedule as the learner's.
      *
      * @return void
      *
      * @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-22
+     * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#requirement-persist-grading-domain-objects-in-openregister
      */
-    private function fanOutParentNotifications(string $learnerId, array $gradeEntry): void
+    private function fanOutParentNotifications(string $learnerId, array $gradeEntry, string $visibleFrom): void
     {
         $profiles = $this->objectService->findAll(
                 [
@@ -284,6 +384,7 @@ class GradeRollupHandler implements IEventListener
                     'learnerId'      => $gradeEntry['learnerId'] ?? '',
                     'courseId'       => $gradeEntry['courseId'] ?? null,
                     'idempotencyKey' => $sourceId.'-parent-'.$parentId,
+                    'visibleFrom'    => $visibleFrom,
                     'tenant_id'      => $gradeEntry['tenant_id'] ?? '',
                     '_notification'  => [
                         'event'          => 'gradePublished',

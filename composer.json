@@ -14,13 +14,9 @@
 			"OCA\\Scholiq\\": "lib/"
 		}
 	},
-	"autoload-dev": {
-		"psr-4": {
-			"OCA\\OpenRegister\\": "tests/Stubs/"
-		}
-	},
 	"require": {
-		"php": "^8.3"
+		"php": "^8.3",
+		"ext-zip": "*"
 	},
 	"require-dev": {
 		"cyclonedx/cyclonedx-php-composer": "^6.2",

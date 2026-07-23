@@ -28,17 +28,53 @@ use OCA\Scholiq\Lifecycle\AttendanceFlagCreationHandler;
 use OCA\Scholiq\Lifecycle\ExcuseApprovalHandler;
 use OCA\Scholiq\Lifecycle\RolloverExecutionHandler;
 use OCA\Scholiq\Lifecycle\XapiCompletionHandler;
+use OCA\Scholiq\Listener\AssessmentDrawResolver;
+use OCA\Scholiq\Listener\ItemAnalysisRecomputeHandler;
+use OCA\Scholiq\Listener\BpvLeerbedrijfVerificationHandler;
+use OCA\Scholiq\Listener\CohortTalkMembershipHandler;
+use OCA\Scholiq\Listener\CompetencyAttainmentRollupHandler;
+use OCA\Scholiq\Listener\ConferenceScheduleGenerator;
 use OCA\Scholiq\Listener\CredentialIssuanceHandler;
 use OCA\Scholiq\Listener\DataExchangeRunHandler;
+use OCA\Scholiq\Listener\RejectionMappingHandler;
+use OCA\Scholiq\Listener\EnrolmentPrerequisiteListener;
+use OCA\Scholiq\Listener\ExemptionGrantHandler;
+use OCA\Scholiq\Listener\FraudCaseDecisionHandler;
+use OCA\Scholiq\Listener\BsaProgressFlagHandler;
+use OCA\Scholiq\Listener\EngagementSignalHandler;
+use OCA\Scholiq\Listener\LearnerEngagementRollupHandler;
+use OCA\Scholiq\Listener\PointAwardTriggerHandler;
+use OCA\Scholiq\Listener\EnrolmentProgressRollupHandler;
+use OCA\Scholiq\Listener\LessonProgressHandler;
+use OCA\Scholiq\Listener\PeerFeedbackAggregator;
+use OCA\Scholiq\Lifecycle\PortfolioShareGrantHandler;
+use OCA\Scholiq\Listener\PortfolioGradeEmitHandler;
 use OCA\Scholiq\Mcp\ScholiqToolProvider;
 use OCA\Scholiq\Listener\GradeRollupHandler;
 use OCA\Scholiq\Listener\LearningPlanEvaluationHandler;
+use OCA\Scholiq\Listener\ReportCardComposer;
+use OCA\Scholiq\Listener\ReportCardPublishHandler;
+use OCA\Scholiq\Listener\SupportRequestSubmitHandler;
+use OCA\Scholiq\Listener\WerkprocesGradeEmitHandler;
+use OCA\Scholiq\Listener\EvaluationInvitationProvisioningHandler;
+use OCA\Scholiq\Listener\CourseEvaluationResponseSubmittedHandler;
+use OCA\Scholiq\Listener\CourseQualityScoreRollupHandler;
+use OCA\Scholiq\Listener\AdmissionsWaitlistPromoter;
+use OCA\Scholiq\Listener\ApplicationConversionHandler;
+use OCA\Scholiq\Listener\SubjectChoiceValidator;
+use OCA\Scholiq\Listener\SubjectChoiceEnrolmentBridge;
+use OCA\Scholiq\Listener\PaymentTransactionStatusHandler;
+use OCA\Scholiq\Listener\SessionChangeNoticeHandler;
+use OCA\Scholiq\Listener\SessionConflictListener;
+use OCA\Scholiq\Timetabling\TimetableImportHandler;
 use OCA\Scholiq\Repair\InitializeSettings;
 use OCA\Scholiq\Service\ActionAuthService;
 use OCA\Scholiq\Service\SettingsService;
 use OCA\OpenRegister\AppHost\Bootstrap;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -50,7 +86,7 @@ use Psr\Container\ContainerInterface;
  *
  * Per ADR-031: DI registrations limited to legitimate PHP seams only:
  *   - Cryptographic operations (Cmi5LaunchTokenService)
- *   - Lifecycle guards (AiFeatureDpoAckGuard)
+ *   - Lifecycle guards (AssessmentPublishGuard)
  *   - NC framework requirements (controllers, event listeners)
  *
  * NOT registered: AuditTrail, AuditedController, AiFeatureRegistry,
@@ -238,6 +274,30 @@ class Application extends App implements IBootstrap
             listener: DataExchangeRunHandler::class
         );
 
+        // ADR-031 legitimate exception: DataExchangeJob lifecycle →
+        // succeeded/partial/failed bridge (duo-afkeurmelding-correction). When a
+        // job finishes, this handler walks result.validationReport and either
+        // creates ExchangeRejection rows (first pass) or updates rejections
+        // referencing this job as their resubmittedJobId (resubmission-outcome
+        // pass) — see RejectionMappingHandler's own docblock.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: RejectionMappingHandler::class
+        );
+
+        // ADR-031 legitimate exception: SupportRequest `submit` transition → auto-queue
+        // the SWV zorgvraag DataExchangeJob bridge. Mirrors AttendanceFlagCreationHandler's
+        // "queue a DataExchangeJob on this trigger" shape. Creates a DataExchangeJob
+        // (target: swv, scope.schema: support-request) in `queued`, advances it into
+        // `pending-parent-review` via TransitionEngine, and stamps the job id back onto
+        // the SupportRequest. Composition of the OSO-format dossier itself is handled by
+        // DataExchangeRunHandler's target switch when the job later transitions to
+        // `running` — this listener only creates and queues it.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SupportRequestSubmitHandler::class
+        );
+
         // ADR-031 legitimate exception: RolloverPlan `previewed → executing`
         // (and `failed → executing` retry) → run the chunked, idempotent
         // jaarovergang via RolloverService, then drive the plan to
@@ -249,7 +309,414 @@ class Application extends App implements IBootstrap
             listener: RolloverExecutionHandler::class
         );
 
+        // ADR-031 legitimate exception: BpvPlacement `checkLeerbedrijf` self-transition
+        // (→ sbb-verification-pending) → resolve the configured
+        // ProvidesLeerbedrijfVerification adapter (if any) and write the SBB
+        // erkend-leerbedrijf verification result back onto the placement.
+        // No provider configured is a no-op — Scholiq ships no bundled SBB adapter.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BpvLeerbedrijfVerificationHandler::class
+        );
+
+        // ADR-031 legitimate exception: WerkprocesAssessment `confirmed` transition →
+        // GradeEntry create/update bridge, matching GradeRollupHandler's cross-schema
+        // write-bridge shape. WerkprocesAssessment computes no final grade itself.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: WerkprocesGradeEmitHandler::class
+        );
+
+        // ADR-031 legitimate exception: ConferenceRound `generate`/`regenerate` →
+        // ConferenceSlot generation bridge. Runs the greedy, submission-order,
+        // earliest-fit conflict-free slot-assignment algorithm (design.md) over
+        // submitted/locked TeacherAvailability and submitted/waitlisted
+        // ConferenceSignup rows for the round, writing ConferenceSlot objects.
+        // Not expressible as a schema declaration — a genuine allocation algorithm.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ConferenceScheduleGenerator::class
+        );
+
+        // ADR-031 legitimate exception: ReportPeriod `compose` transition →
+        // ReportCard composition bridge (report-card-composer), mirroring
+        // DataExchangeRunHandler::composeLeerplichtDossier()/
+        // composeSwvDossier()'s "assemble from multiple linked objects" shape
+        // — NOT the DataExchangeJob queue those methods live in. Also handles
+        // ReportCard's own `recompose` self-loop (single-learner re-run).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReportCardComposer::class
+        );
+
+        // ADR-031 legitimate exception: ReportCard `publishToParents` →
+        // ReportCardParentNotification fan-out bridge, mirroring
+        // GradeRollupHandler::fanOutParentNotifications()'s reasoning and
+        // shape exactly (OR's declarative notifications address a single
+        // field, not LearnerProfile.parentIds[]).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ReportCardPublishHandler::class
+        );
+
+        // ADR-031 legitimate exception: ExemptionCase `granted` → GradeEntry
+        // (sourceKind: exemption) create + publish bridge. Creates a GradeEntry
+        // with value:null and drives it through the *existing* publish transition
+        // so the standard audit trail and gradePublished notification fire
+        // unchanged, per exam-board-case-handling design §4.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ExemptionGrantHandler::class
+        );
+
+        // ADR-031 legitimate exception: FraudCase `decided` (verdict: fraud-proven)
+        // → contested GradeEntry.invalidate bridge. Only acts on a still-concept
+        // linked GradeEntry; a published entry is left untouched (defensive —
+        // FraudCaseBlockGuard should have prevented that state), per
+        // exam-board-case-handling design §4.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: FraudCaseDecisionHandler::class
+        );
+
+        // ADR-031 legitimate exception: GradeEntry.published → BsaTrajectory
+        // at-risk check → BsaProgressFlag creation bridge (bsa-study-progress-guard).
+        // Listens for the same event GradeRollupHandler reacts to (a learner's
+        // earned credits can only change when a GradeEntry publishes). Resolves
+        // the Programme(s) the published Course belongs to, evaluates every
+        // active BsaTrajectory in scope via BsaProgressEvaluator, and creates a
+        // BsaProgressFlag (open) when the learner falls below interimNormEcts
+        // once the interim-check window has opened. NOT a TimedJob (ADR-022);
+        // never auto-acts against the learner.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: BsaProgressFlagHandler::class
+        );
+
+        // ADR-031 legitimate exception: WerkprocesAssessment creation ->
+        // server-side competencyId resolution bridge, and GradeEntry.published /
+        // WerkprocesAssessment.confirmed -> CompetencyAttainment roll-up bridge
+        // (competency-framework). One class, registered against both OR event
+        // classes — handle() branches on instanceof. Mirrors GradeRollupHandler/
+        // WerkprocesGradeEmitHandler's cross-schema write-bridge shape; never a
+        // TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: CompetencyAttainmentRollupHandler::class
+        );
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CompetencyAttainmentRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics): xAPI
+        // completion statement -> per-lesson LessonCompletion upsert bridge.
+        // Listens for the SAME ObjectCreatedEvent<XapiStatement> XapiCompletionHandler
+        // already consumes — a sibling listener, NOT an edit to that class. No
+        // mandatoryTraining or last-lesson gate: every resolvable completed/passed
+        // statement produces or updates a LessonCompletion row.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: LessonProgressHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics):
+        // LessonCompletion creation -> Enrolment.progressPercent recompute bridge.
+        // Listens for ObjectCreatedEvent<LessonCompletion>; the DSL has no division
+        // operator (verified), mirrors FinalGrade/GradeRollupHandler's shape.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: EnrolmentProgressRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (learning-progress-and-analytics): xAPI
+        // statement -> EngagementScore recompute + EngagementRiskThreshold check ->
+        // EngagementRiskFlag creation bridge. Listens for the SAME
+        // ObjectCreatedEvent<XapiStatement> LessonProgressHandler independently
+        // reacts to. Mirrors BsaProgressFlagHandler's combined evaluate-then-flag
+        // shape. Rule-based only — no AI/ML inference; never auto-acts against the
+        // learner.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: EngagementSignalHandler::class
+        );
+
+        // ADR-031 legitimate exception (adaptive-release-and-prerequisites):
+        // Enrolment prerequisite gate. Listens for OR's ObjectCreatingEvent on
+        // the enrolment schema and vetoes the create (stopPropagation) when the
+        // target Course's prerequisiteCourseIds are not all satisfied by a
+        // completed Enrolment the learner already holds. A requires-style
+        // x-openregister-lifecycle guard CANNOT enforce this — Enrolment has no
+        // transition into its initial `pending` state — so this is a raw
+        // creation-time hook, mirroring decidesk's SubmissionDeadlineListener /
+        // larpingapp's CharacterRequirementListener.
+        $context->registerEventListener(
+            event: ObjectCreatingEvent::class,
+            listener: EnrolmentPrerequisiteListener::class
+        );
+
+        // ADR-031 legitimate exception (assessment-item-pools-and-analysis):
+        // AssessmentResult creation -> server-side item-pool draw + shuffle
+        // resolution bridge. Listens for OR's ObjectCreatedEvent, filtered to
+        // schema `assessment-result`. Resolves and persists drawnItemRefs —
+        // never trusts a client-supplied value, mirroring the trust boundary
+        // AssessmentScoringHandler already enforces for autoScore. Populated
+        // for EVERY attempt (fixed or random-draw) so exam-board review/
+        // appeal always has a faithful reconstruction of what the learner saw.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: AssessmentDrawResolver::class
+        );
+
+        // ADR-031 legitimate exception (assessment-item-pools-and-analysis):
+        // AssessmentResult.graded -> ItemStatistics/AssessmentReliability
+        // recompute + ItemRevisionFlag creation bridge. Listens for the SAME
+        // ObjectTransitionedEvent<AssessmentResult, graded> GradeRollupHandler
+        // already reacts to (a sibling listener, not an edit to that class).
+        // The statistics themselves (p-value, corrected item-total
+        // correlation, distractor analysis, Cronbach's alpha) are computed by
+        // ItemAnalysisService — arithmetic that exceeds OR's declarative
+        // aggregation engine (design.md's aggregation-engine-insufficiency
+        // table). Never auto-alters the flagged Item.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ItemAnalysisRecomputeHandler::class
+        );
+
+        // ADR-031 legitimate exception (talk-classroom-spaces): Enrolment
+        // activate/withdraw -> Cohort Talk conversation participant sync
+        // bridge. Cohort and Session both declare linkedTypes: ["talk"],
+        // consuming OpenRegister's existing TalkLinkService/TalkLinksController
+        // unchanged; the one genuinely new piece is keeping a Cohort's
+        // enrolled learners in sync with its linked conversation's
+        // participant list, an external-API bridge with a cross-object
+        // lookup (Enrolment.cohortId -> linked Talk rooms) not expressible
+        // as a schema declaration. Fails soft (no-op, logged) when Talk is
+        // unavailable or the Cohort has no room linked yet.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CohortTalkMembershipHandler::class
+        );
+
+        // ADR-031 legitimate exception (peer-and-self-assessment): PeerReview
+        // `released` -> PeerFeedbackSummary recompute bridge (reviewCount,
+        // averageScore, and the anonymity-projected feedbackItems[].reviewerId).
+        // Mirrors GradeRollupHandler's "recompute on publish" shape — this
+        // register's x-openregister-aggregations vocabulary is count/count_distinct
+        // only and cannot conditionally redact a field per matching row.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PeerFeedbackAggregator::class
+        );
+
+        // ADR-031 legitimate exception (eportfolio): Portfolio `graded` transition →
+        // concept GradeEntry create + back-link bridge, mirroring
+        // GradeRollupHandler::handleAssessmentResultGraded()/WerkprocesGradeEmitHandler's
+        // existing cross-schema write-bridge shape exactly. Portfolio computes no
+        // final grade itself.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PortfolioGradeEmitHandler::class
+        );
+
+        // ADR-031 legitimate exception (eportfolio): PortfolioShare `grant` transition
+        // (draft -> active) -> native NC Files read-only share creation for
+        // sharedWithKind=teacher, via OCP\Share\IManager. The same class is ALSO
+        // referenced as the transition's `requires:` guard in scholiq_register.json
+        // (self-grant block) — this registration only wires its IEventListener half;
+        // praktijkopleider/external-assessor visibility is served declaratively by
+        // PortalContributionProvider, not by this listener.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PortfolioShareGrantHandler::class
+        );
+
+        // ADR-031 legitimate exception (engagement-gamification): Enrolment
+        // `completed` / Submission `submitted` (isLate:false) / GradeEntry
+        // `published` (GradeFormulaEvaluator passed:true) -> idempotency-keyed
+        // PointAward creation bridge. Mirrors GradeRollupHandler/
+        // BsaProgressFlagHandler's event-to-object-write shape exactly; no
+        // invented event sources (see design.md "Event -> points mechanics").
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PointAwardTriggerHandler::class
+        );
+
+        // ADR-031 legitimate exception (engagement-gamification): PointAward
+        // creation -> LearnerEngagement totals/level/streak recompute bridge,
+        // plus the streak-milestone bonus-award check (recursion-guarded on
+        // sourceKind). Mirrors GradeRollupHandler's FinalGrade roll-up shape;
+        // NOT a TimedJob (ADR-022) and NOT a declarative sum aggregation (no
+        // sum metric is precedented anywhere in this register).
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: LearnerEngagementRollupHandler::class
+        );
+
+        $this->registerWalletOfferConcludedListener(context: $context);
+
+        // ADR-031 legitimate exception (course-evaluation): EvaluationCampaign
+        // `open` transition -> one EvaluationInvitation per learner in scope
+        // (resolved from courseIds/cohortIds via the referenced
+        // Cohort.learnerIds) provisioning bridge. Idempotency-keyed so a
+        // duplicate/replayed open event does not create duplicate invitations.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: EvaluationInvitationProvisioningHandler::class
+        );
+
+        // ADR-031 legitimate exception (course-evaluation): CourseEvaluationResponse
+        // `submit` transition -> the caller's own EvaluationInvitation flip
+        // (hasResponded:true, respondedAt:now). Re-resolves the SAME
+        // session-caller identity CourseEvaluationEligibilityGuard used —
+        // the response itself carries no identity field to read from — and
+        // never writes a field referencing the response back onto the
+        // invitation (design.md Decision 2's anonymity mechanism, second half).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CourseEvaluationResponseSubmittedHandler::class
+        );
+
+        // ADR-031 legitimate exception (course-evaluation): CourseEvaluationResponse
+        // `submit` transition -> CourseQualityScore find-or-create + recompute
+        // bridge, mirroring GradeRollupHandler/FinalGrade's shape exactly.
+        // Averaging (CourseQualityScoreEvaluator) is beyond this register's
+        // proven declarative count/count_distinct aggregation metrics; NOT a
+        // TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: CourseQualityScoreRollupHandler::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // Application `withdrawn`/`rejected` FROM `placed` -> oldest-submittedAt
+        // waitlisted Application promotion bridge. Mirrors
+        // ConferenceScheduleGenerator's freed-resource-promotes-oldest shape;
+        // re-runs the normal `promote` transition (and therefore
+        // AdmissionsDecisionGuard's capacity branch) rather than writing the
+        // lifecycle field directly.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: AdmissionsWaitlistPromoter::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // Application `placed` -> LearnerProfile + Enrolment (source:
+        // admission) creation bridge, then drives the Application through its
+        // existing `convert` transition. NC user-account/LMS provisioning is
+        // explicitly NOT part of this bridge (design.md Non-Goals).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: ApplicationConversionHandler::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // SubjectChoice `submitted` -> electiveRules/capacity validation
+        // bridge, writing `validated`/`needs-revision` (+ validationErrors[])
+        // directly, mirroring ConferenceScheduleGenerator's
+        // route-to-one-of-two-states shape rather than a `requires` guard.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SubjectChoiceValidator::class
+        );
+
+        // ADR-031 legitimate exception (admissions-and-subject-choice):
+        // SubjectChoice `approved -> locked` -> Enrolment (source:
+        // subject-choice) creation bridge, one per selected elective course
+        // not already enrolled. Mirrors ExcuseApprovalHandler's cross-schema
+        // write-bridge shape.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SubjectChoiceEnrolmentBridge::class
+        );
+
+        // ADR-031 legitimate exception (school-payments): PaymentTransaction
+        // `succeeded`/`refunded` -> Order paid/partially-paid roll-up and
+        // refund cascade (revoking any active Entitlements reachable through
+        // the Order's OrderLines). Event-driven, NOT a TimedJob (ADR-022).
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: PaymentTransactionStatusHandler::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution): Session
+        // `cancel`/`substitute-teacher`/`substitute-teacher-in-progress` ->
+        // affectedLearnerIds/affectedParentIds/changedAt materialisation
+        // bridge, mirroring ConferenceRound.invitedLearnerIds's cross-schema
+        // two-hop join shape (Cohort.learnerIds -> each LearnerProfile.
+        // parentIds), so the declared x-openregister-notifications rules'
+        // kind:field recipients can resolve without a runtime join.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: SessionChangeNoticeHandler::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution): Session
+        // create/update -> TimetableConflictDetector pairwise overlap scan
+        // dispatcher. Registered against BOTH ObjectCreatedEvent and
+        // ObjectUpdatedEvent (the latter is a real OpenRegister event class
+        // with no prior scholiq listener precedent, needed here since a
+        // Session's roomId/startsAt/endsAt can be edited via the generic OR
+        // object-update endpoint without any lifecycle transition). The
+        // actual scan algorithm lives in TimetableConflictDetector, not here
+        // — it only ever creates TimetableConflict rows, never edits a
+        // Session.
+        $context->registerEventListener(
+            event: ObjectCreatedEvent::class,
+            listener: SessionConflictListener::class
+        );
+        $context->registerEventListener(
+            event: ObjectUpdatedEvent::class,
+            listener: SessionConflictListener::class
+        );
+
+        // ADR-031 legitimate exception (timetabling-and-substitution):
+        // DataExchangeJob lifecycle -> running bridge, filtered to target:
+        // timetable-import (DataExchangeRunHandler bails out for this target
+        // — see its own handle()). Pulls a generated timetable from
+        // OpenConnector and idempotently upserts Session objects by
+        // externalRef, then triggers TimetableConflictDetector's batch scan.
+        // No Zermelo/Untis/Xedule wire protocol is implemented in Scholiq.
+        $context->registerEventListener(
+            event: ObjectTransitionedEvent::class,
+            listener: TimetableImportHandler::class
+        );
+
     }//end register()
+
+    /**
+     * Register the openconnector wallet-claim listener.
+     *
+     * Scholiq delegates EUDI-wallet offer creation/revocation to
+     * openconnector's `eudi-wallet-credential-issuance` REST adapter
+     * ({@see \OCA\Scholiq\Service\WalletOfferDelegationService}). This
+     * listener would consume the terminal "wallet holder claimed the offer"
+     * signal, but as documented on
+     * {@see \OCA\Scholiq\Listener\WalletOfferConcludedListener}'s docblock,
+     * openconnector's merged adapter defines no such event — the
+     * `class_exists` guard below evaluates false today and this
+     * registration is a no-op. Kept `class_exists`-guarded by FQN string
+     * (not `::class`) so scholiq carries no hard compile-time dependency on
+     * the optional openconnector app, mirroring
+     * `procest\AppInfo\Application::registerDecisionListeners()`.
+     *
+     * @param IRegistrationContext $context Registration context.
+     *
+     * @return void
+     *
+     * @spec openspec/changes/eudi-wallet-credential-push/specs/certification/spec.md#requirement-recordwalletclaim-transition-syncs-wallet-claim-status-back-onto-the-credential
+     */
+    private function registerWalletOfferConcludedListener(IRegistrationContext $context): void
+    {
+        if (class_exists('\\OCA\\OpenConnector\\Event\\WalletOfferConcludedEvent') === false) {
+            return;
+        }
+
+        $context->registerEventListener(
+            event: 'OCA\OpenConnector\Event\WalletOfferConcludedEvent',
+            listener: \OCA\Scholiq\Listener\WalletOfferConcludedListener::class
+        );
+    }//end registerWalletOfferConcludedListener()
 
     /**
      * Boot the application.

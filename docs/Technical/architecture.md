@@ -362,7 +362,159 @@ scholiq/
 
 ---
 
-## 7. References
+## 7. OOAPI 5.0 catalog-publication contract (cross-repo)
+
+Scholiq does **not** serve `/ooapi/v5/*` itself — `course-management`'s "Publish course catalog via OOAPI
+5.0" requirement and `data-exchange`'s "Delegate wire protocols to OpenConnector" requirement both name
+OOAPI as a protocol Scholiq must not implement (see `openspec/changes/delegate-ooapi-to-opencatalogi/`,
+which resolved a prior self-contradiction between those two specs). Scholiq's obligation stops at the
+**publication contract**: which objects are eligible, how they map to OOAPI 5.0 resources, and the
+`DataExchangeJob` that carries the sync request. The public endpoint and the wire-format adapter are owned
+by other apps in the fleet.
+
+**Who owns what:**
+
+| Concern | Owner |
+|---|---|
+| Eligible objects (`Course`/`Programme` with `lifecycle: published`; `Cohort` as a course "run") | Scholiq (this contract) |
+| Field mapping (below) | Scholiq (this contract) |
+| Publish/archive → `DataExchangeJob` queuing (`direction: sync`, `target: ooapi-catalog`) | Scholiq's existing `lifecycle` + `DataExchangeJob` machinery |
+| Field-mapping adapter / `Synchronization` target | OpenConnector (`ooapi-catalog-publication`, tracked as a filed issue — not built in this repo) |
+| Public `/ooapi/v5/*` HTTP surface, faceting | OpenCatalogi — **already shipped**, see `opencatalogi/openspec/changes/ooapi-catalog-publication/` |
+
+**Field mapping (OOAPI 5.0 ↔ Scholiq ↔ RIO):**
+
+| OOAPI 5.0 resource | Scholiq object | Key Scholiq fields | RIO model (keyed when present) |
+|---|---|---|---|
+| `course` | `Course` | `code`, `name`, `name_nl`, `description`, `level`, `language` | `opleidingseenheid` |
+| `program` | `Programme` | `name`, `code`, `level`, `description`, `courseIds` | `aangeboden opleiding` |
+| `offering` | `Cohort` | `programmeId`/`courseId`, `period`, `academicYear`, `teacherIds`, `learnerIds` | `aangeboden opleiding` (per-run instance) |
+
+Neither `Course`, `Programme`, nor `Cohort` carries a RIO identifier field today — RIO keying is described as
+"when the institution has recorded one" because most PO/VO/MBO-corporate tenants have no RIO registration
+(RIO is HBO/WO-centric). Adding an optional `rioId`-style field is deferred to whichever change actually
+implements the OpenConnector adapter.
+
+This item was previously an undifferentiated "OOAPI 5.0 catalog publication" line in the course-management
+roadmap; it is now split three ways per the table above, with OpenCatalogi's third of the split already
+merged (`ooapi-catalog-publication`) and OpenConnector's `ooapi-catalog` `Synchronization` target
+outstanding.
+
+---
+
+## 8. LTI 1.3 tool placement (cross-repo)
+
+Scholiq does **not** implement any LTI protocol code — OIDC third-party-initiated login, `id_token`
+signing/verification, JWKS, or Assignment & Grade Services (AGS)/NRPS wire handling all live in
+OpenConnector's `lti-13-platform` adapter (`openconnector/openspec/changes/lti-13-platform/`).
+Scholiq's obligation is the **consuming-app contract** the adapter defines (REQ-LTI-010): model a
+placement inside a Course/Lesson, delegate the launch, and translate an AGS score CloudEvent into a
+`GradeEntry`. See `openspec/changes/lti-tool-placement/`.
+
+**Who owns what:**
+
+| Concern | Owner |
+|---|---|
+| `LtiToolPlacement` (which Lesson/Course, which grading component) | Scholiq (this contract) |
+| Launch delegation (`LtiToolPlacementController::launch`) | Scholiq — thin, opaque REST proxy, no LTI claim parsing |
+| OIDC login/launch, `id_token` signing/verification, JWKS, AGS/NRPS protocol | OpenConnector — **already shipped** for the Tool-role/inbound surface; the Platform-role launch-initiation REST wrapper this contract assumes is **not yet exposed** (see the "known gap" note below) |
+| AGS score → `GradeEntry` (via `LtiAgsScorePollJob`) | Scholiq (this contract) |
+| Grade destination mapping (`curriculumPlanId`/`gradeEntryComponentId`/`gradeScaleId`) | Scholiq, configured once per placement, never auto-derived from the LTI payload |
+
+**Admin bootstrap (once per tool placement), per REQ-LTI-010:**
+
+1. On the OpenConnector side, create an `lti_deployment` naming this Scholiq instance's launch-resolve
+   endpoint as `launchTargetUrl`. `gradeSink`/`rosterSource` are informational only — OpenConnector never
+   writes to Scholiq's register directly (REQ-LTI-007); grade passback flows through the CloudEvent +
+   poll job below instead. Note the returned `lti_deployment` UUID — it is the
+   `LtiToolPlacement.openconnectorDeploymentId` value.
+2. Still on OpenConnector, create an `event_subscription` filtered to
+   `type = 'nl.conduction.lti.ags.score.received'`, `style = 'pull'`. Set the resulting subscription UUID
+   as Scholiq's `scholiq.lti_ags_subscription_id` app-config value
+   (`occ config:app:set scholiq lti_ags_subscription_id --value=<uuid>`) — `LtiAgsScorePollJob` no-ops
+   until this is set.
+3. Set `scholiq.openconnector_api_token` (already required for `DataExchangeRunHandler`) and the new
+   `scholiq.openconnector_api_user` — an NC username, in a group authorized for OpenConnector's
+   `event.pull` action — as the app-password pair `LtiAgsScorePollJob` uses to authenticate its pull call
+   (`EventsController::pull()` requires an authenticated NC session + group authorization, not a bearer
+   token — see the class docblock on `LtiAgsScorePollJob` for the full auth-shape note).
+4. In Scholiq, create the `LtiToolPlacement` object (via the generic OpenRegister object-save path —
+   no dedicated create UI ships in this change) naming the `lessonId`/`courseId`, the
+   `openconnectorDeploymentId` from step 1, and, when grade passback is wanted, the
+   `curriculumPlanId`/`gradeEntryComponentId`/`gradeScaleId` triple. Set `Lesson.contentType = 'lti'` and
+   `Lesson.contentRef` to the new placement's UUID.
+
+**NRPS (roster) is explicitly out of scope** for this change (design.md Non-goals) — `lti_deployment
+.rosterSource` exists on the OpenConnector contract but Scholiq does not yet configure or consume it.
+Exposing Scholiq's `Enrolment`/`Cohort` membership through OpenConnector's ADR-008 register/schema read
+path is a real, separate follow-up.
+
+**Known gap (documented, not silently dropped):** `LtiToolPlacementController::launch()` calls an
+*assumed* OpenConnector REST endpoint for Platform-role launch initiation (REQ-LTI-006). Verified against
+OpenConnector HEAD at the time this change was built: the merged adapter exposes
+`LtiLaunchService::initiatePlatformLaunch()` only as an in-process PHP service method — no HTTP route
+wraps it (`appinfo/routes.php` in the OpenConnector repo covers only the Tool-role inbound surface).
+Until OpenConnector adds a thin REST wrapper around that method, the launch call in this contract 404s.
+The assumed request/response shape is documented on `LtiToolPlacementController::OPENCONNECTOR_LAUNCH_PATH`.
+
+---
+
+## 8a. Timetabling operational layer (`timetabling-and-substitution`, cross-repo import seam)
+
+Scholiq does not generate a timetable — that stays permanently Zermelo's/Untis's job. This change adds the
+*operational* layer between "an external optimiser produced a timetable" and "a learner/teacher sees today's
+reality":
+
+- **`Room`** (`lib/Settings/scholiq_register.json`) — a plain bookable resource (`capacity`, `kind`,
+  `facilities`, `buildingCode`/`floor`), no lifecycle, the same resource-metadata shape as `Material`.
+  `Session` gains an additive `roomId` ($ref `Room`, kept alongside the existing free-text `location`),
+  `externalRef` (timetable-import idempotency key), and substitution fields (`substituteTeacherId`,
+  `changeReasonKind`, `changeReason`, `affectedLearnerIds`, `affectedParentIds`, `changedAt`).
+- **Import seam** — a generated timetable is pulled via the existing `DataExchangeJob`/`DataMappingProfile`
+  mechanism (`target: timetable-import`, `direction: import`), never a parallel job schema. Three seeded
+  `DataMappingProfile` rows (Zermelo/Untis/Xedule) declare the field mapping;
+  `OCA\Scholiq\Timetabling\TimetableImportHandler` (an ADR-031 external-system bridge, the same shape as
+  `DataExchangeRunHandler`) resolves the profile in reverse and idempotently upserts `Session` objects keyed
+  by `externalRef`. `DataExchangeRunHandler` bails out for this target so exactly one handler owns the job.
+- **Conflict detection, not resolution** — `OCA\Scholiq\Timetabling\TimetableConflictDetector` (an
+  ADR-031 cross-object write bridge, the same class as `ConferenceScheduleGenerator`) pairwise-scans
+  `Session`s in the affected date window for teacher/room/cohort/learner double-booking,
+  room-capacity-exceeded, and exam-clash, writing idempotent `TimetableConflict` rows — it never edits a
+  `Session`. `OCA\Scholiq\Listener\SessionConflictListener` triggers it on `Session` create/update
+  (`ObjectCreatedEvent`/`ObjectUpdatedEvent` — the fleet's first use of `ObjectUpdatedEvent`); the import
+  handler triggers it once in batch after a successful import.
+- **Substitution / lesuitval-vervanging** — `Session.cancel` (now guarded) and two new self-loop
+  transitions, `substitute-teacher` (`scheduled` → `scheduled`) and `substitute-teacher-in-progress`
+  (`in-progress` → `in-progress`), both requiring `OCA\Scholiq\Lifecycle\SessionChangeGuard` (caller must be
+  a `Cohort.teacherIds` member or admin/coordinator; `changeReasonKind` always required,
+  `substituteTeacherId` required for the substitute transitions). Split into two action names because
+  `TransitionEngine::transition()` resolves a single scalar `to` value — an array `from` converging on one
+  `to` is only correct for a state-changing transition (`cancel`), not a true multi-state self-loop.
+  `OCA\Scholiq\Listener\SessionChangeNoticeHandler` materialises `affectedLearnerIds`/`affectedParentIds`
+  (mirroring `ConferenceRound.invitedLearnerIds`) and a server-stamped `changedAt` at both transitions, so
+  the declared `x-openregister-notifications` rules can resolve recipients without a runtime join.
+- **`ExamAccommodation`** — a learner's approved, evidence-backed exam entitlement (extra time, separate
+  room, reader, etc.). `create` is open to learner/parent-portal roles; `approve` is restricted to
+  admin/compliance-officer/mentor via `OCA\Scholiq\Lifecycle\ExamAccommodationApprovalGuard` (a PHP guard,
+  since no `x-openregister-authorization` key expresses a per-transition role gate in this register).
+  Wiring the effective time limit into `TakeAssessmentView`/`AssessmentResult` is an explicit
+  `assessment`-capability follow-up, not built here.
+- **Dagrooster** — `TimetableController::mine()` (`personal-timetable`, still read-only, no new write
+  endpoint) projects `roomId`/resolved `Room` detail, `lifecycle`, and substitution fields per `Session`,
+  plus a same-day `changes` list (Sessions whose `changedAt` falls today, regardless of the requested
+  window).
+- **Frontend** — declarative `Room`/`TimetableConflict`/`ExamAccommodation` index/detail pages in
+  `src/manifest.json`; two named custom views, `src/dialogs/SubstitutionModal.vue` (cancel/substitute,
+  opened from `MyTimetable.vue`) and `src/views/TimetableConflictQueue.vue` (the coordinator's
+  acknowledge/resolve review queue).
+- **Out of scope, tracked as cross-repo follow-ups**: the OpenConnector Zermelo/Untis/Xedule wire adapters
+  themselves (`ConductionNL/openconnector`), and wiring `ExamAccommodation` into the `assessment` capability.
+
+See `openspec/changes/timetabling-and-substitution/` for the full proposal/design/specs.
+
+---
+
+## 9. References
 
 - Hydra ADR-022: `hydra/openspec/architecture/adr-022-apps-consume-or-abstractions.md`
 - Hydra ADR-024: `hydra/openspec/architecture/adr-024-app-manifest.md`
@@ -373,4 +525,7 @@ scholiq/
 - Schema source: `lib/Settings/scholiq_register.json`
 - Manifest source: `src/manifest.json`
 - Applied specs: `openspec/changes/` (6 directories)
+- OOAPI 5.0 catalog-publication contract: `openspec/changes/delegate-ooapi-to-opencatalogi/` (this repo,
+  spec-consistency only); `opencatalogi/openspec/changes/ooapi-catalog-publication/` (merged, opencatalogi
+  side)
 - Specs summary: `docs/SPECS.md`

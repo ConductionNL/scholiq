@@ -160,11 +160,12 @@ class ExternalTrainingService
      * shared evidence attachment is uploaded once and linked per record by the
      * caller (OR file-attachment API); this method only creates the records.
      *
-     * @param array<string>        $learnerIds The learners attending the session.
-     * @param array<string,mixed>  $shared     Shared fields: title, provider,
-     *                                          kind, completedAt, regulationSlug?,
-     *                                          validUntil?, evidenceNote?,
-     *                                          submittedBy, tenant_id.
+     * @param array<string>       $learnerIds The learners attending the session.
+     * @param array<string,mixed> $shared     Shared fields: title, provider,
+     *                                        kind, completedAt,
+     *                                        regulationSlug?, validUntil?,
+     *                                        evidenceNote?, submittedBy,
+     *                                        tenant_id.
      *
      * @return string The generated batchId (empty when nothing was created).
      *
@@ -189,14 +190,14 @@ class ExternalTrainingService
 
         foreach ($learnerIds as $learnerId) {
             $record = [
-                'learnerId'    => $learnerId,
-                'title'        => (string) $shared['title'],
-                'provider'     => (string) $shared['provider'],
-                'kind'         => (string) ($shared['kind'] ?? 'classroom'),
-                'completedAt'  => (string) $shared['completedAt'],
-                'submittedBy'  => (string) $shared['submittedBy'],
-                'batchId'      => $batchId,
-                'tenant_id'    => (string) $shared['tenant_id'],
+                'learnerId'   => $learnerId,
+                'title'       => (string) $shared['title'],
+                'provider'    => (string) $shared['provider'],
+                'kind'        => (string) ($shared['kind'] ?? 'classroom'),
+                'completedAt' => (string) $shared['completedAt'],
+                'submittedBy' => (string) $shared['submittedBy'],
+                'batchId'     => $batchId,
+                'tenant_id'   => (string) $shared['tenant_id'],
             ];
 
             if (($shared['regulationSlug'] ?? '') !== '') {
@@ -232,7 +233,7 @@ class ExternalTrainingService
      * credential's UUID back onto the record as `credentialId`. No Credential
      * schema change is introduced.
      *
-     * @param array<string,mixed> $record The verified external-training record.
+     * @param array<string,mixed> $record   The verified external-training record.
      * @param string              $issuedBy NC user ID / issuer name on the credential.
      *
      * @return array<string,mixed> The Credential object payload to save.
@@ -302,7 +303,7 @@ class ExternalTrainingService
         );
 
         foreach ($rows as $row) {
-            $cred = $this->toArray($row);
+            $cred = $this->toArray(row: $row);
 
             if (($cred['lifecycle'] ?? '') === 'revoked' || ($cred['lifecycle'] ?? '') === 'expired') {
                 continue;
@@ -342,7 +343,7 @@ class ExternalTrainingService
         );
 
         foreach ($rows as $row) {
-            $rec = $this->toArray($row);
+            $rec = $this->toArray(row: $row);
             if ($this->isExpired(value: ($rec['validUntil'] ?? null), now: $now) === true) {
                 continue;
             }
@@ -406,7 +407,7 @@ class ExternalTrainingService
      */
     private function generateBatchId(): string
     {
-        $bytes = random_bytes(16);
+        $bytes    = random_bytes(16);
         $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);
         $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
 

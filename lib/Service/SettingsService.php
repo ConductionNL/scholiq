@@ -176,7 +176,19 @@ class SettingsService
                 ];
             }
 
+            // Content-address the version so the import re-runs whenever the register
+            // definition changes, even if info.version was not bumped. Without this, dropping
+            // the forced import (below) would let a schema change silently no-op on an
+            // OpenRegister that predates the content-aware gate (#426): OR's app-level fast-skip
+            // would compare only info.version and skip. Appending a sha256 of the definitional
+            // payload makes any content change bump the version and re-import — matching the
+            // `+frag.<hash>` pattern the fragmented apps (hrmq/doriath/procest/shillinq) use.
             $configVersion = ($configData['info']['version'] ?? '0.0.0');
+            $definitional  = ($configData['components'] ?? $configData);
+            $encoded       = json_encode($definitional);
+            if ($encoded !== false) {
+                $configVersion .= '+def.'.substr(hash('sha256', $encoded), 0, 12);
+            }
 
             $configurationService = $this->container->get('OCA\OpenRegister\Service\ConfigurationService');
             $result = $configurationService->importFromApp(appId: Application::APP_ID, data: $configData, version: $configVersion, force: $force);

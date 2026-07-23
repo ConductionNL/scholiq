@@ -8,6 +8,11 @@
      for the same learner + curriculumPlan).
   3. The delta to the learner's FinalGrade (fetched from the FinalGrade schema).
 
+  The lifecycle badge shows a distinct "scheduled" state — instead of
+  "published" — while `entry.lifecycle === 'published'` but `entry.visibleFrom`
+  is still in the future, i.e. the entry has published but its scheduled
+  visibility window (grade-visibility-scheduling) has not opened yet.
+
   Route param: :id (GradeEntry UUID).
   Uses Options API + direct fetch (no custom Pinia store modules).
 
@@ -15,6 +20,7 @@
   Copyright (C) 2026 Conduction B.V.
 
   @spec openspec/changes/retrofit-2026-05-24-annotate-scholiq/tasks.md#task-30
+  @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#scenario-gradeentry-schema-carries-a-scheduled-visibility-window
 -->
 
 <template>
@@ -41,9 +47,12 @@
 				</p>
 				<span
 					class="grade-impact__lifecycle-badge"
-					:class="`grade-impact__lifecycle-badge--${entry.lifecycle}`">
-					{{ entry.lifecycle }}
+					:class="`grade-impact__lifecycle-badge--${lifecycleBadgeState}`">
+					{{ isScheduled ? t('scholiq', 'scheduled') : entry.lifecycle }}
 				</span>
+				<p v-if="isScheduled" class="grade-impact__meta">
+					{{ t('scholiq', 'Visible to the learner from {date}', { date: formatDate(entry.visibleFrom) }) }}
+				</p>
 			</header>
 
 			<!-- Grade value block -->
@@ -159,6 +168,38 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * True when this entry has published but its scheduled visibility window
+		 * (visibleFrom) has not opened yet — the learner-facing notification has
+		 * not fired.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#scenario-gradeentry-schema-carries-a-scheduled-visibility-window
+		 */
+		isScheduled() {
+			if (!this.entry || this.entry.lifecycle !== 'published' || !this.entry.visibleFrom) {
+				return false
+			}
+
+			const visibleFrom = new Date(this.entry.visibleFrom)
+			return !Number.isNaN(visibleFrom.getTime()) && visibleFrom.getTime() > Date.now()
+		},
+
+		/**
+		 * The CSS modifier / display state for the lifecycle badge — 'scheduled'
+		 * overrides 'published' while the visibility window is still in the future.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/grade-visibility-scheduling/specs/grading/spec.md#scenario-gradeentry-schema-carries-a-scheduled-visibility-window
+		 */
+		lifecycleBadgeState() {
+			if (this.isScheduled) {
+				return 'scheduled'
+			}
+
+			return this.entry?.lifecycle
+		},
+
 		/**
 		 * The weight of the plan component matching this entry's componentId.
 		 *
@@ -458,6 +499,11 @@ export default {
 .grade-impact__lifecycle-badge--revised {
 	background: var(--color-primary);
 	color: var(--color-primary-text);
+}
+
+.grade-impact__lifecycle-badge--scheduled {
+	background: var(--color-warning);
+	color: var(--color-main-background);
 }
 
 .grade-impact__section {
